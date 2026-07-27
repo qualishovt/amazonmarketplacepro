@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — IntelliPresta Marketplaces Pro</title>
+<style>
+    body { font-family: Georgia, 'Times New Roman', serif; max-width: 760px; margin: 40px auto; padding: 0 20px;
+           color: #2d3338; line-height: 1.65; }
+    h1 { font-size: 28px; border-bottom: 2px solid #25b2a8; padding-bottom: 10px; }
+    h2 { font-size: 20px; margin-top: 32px; color: #1d5c56; }
+    .updated { color: #888; font-size: 14px; }
+    footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 14px; color: #666; }
+</style>
+</head>
+<body>
+<h1>Privacy Policy — Marketplaces Pro</h1>
+<p class="updated">Last updated: July 2026</p>
+
+<p>Marketplaces Pro is a PrestaShop module developed by IntelliPresta that connects a merchant's
+own PrestaShop store to online marketplaces such as Amazon and eBay. This policy explains what
+data is involved and where it lives.</p>
+
+<h2>The short version</h2>
+<p><strong>Your data stays on your own server.</strong> Marketplaces Pro runs inside your PrestaShop
+installation. Marketplace data it processes — orders, buyer details needed for fulfillment, product
+listings, prices, stock levels — is stored in your own shop's database, on infrastructure you control.
+IntelliPresta does not receive, store, or have access to that data.</p>
+
+<h2>What our servers do handle</h2>
+<p>IntelliPresta operates a small authorization service (on intellipresta.com) whose only job is to
+complete the secure connection between your shop and the marketplace:</p>
+<ul>
+    <li>During connection, it exchanges the one-time authorization code issued by the marketplace
+        for the access credentials of your shop, and passes them to your shop.</li>
+    <li>During operation, it periodically exchanges your shop's stored credential for short-lived
+        access tokens on request from your shop.</li>
+</ul>
+<p>This service is <strong>stateless</strong>: it stores no tokens, no personal data, no order or
+product data, and keeps no database. Credentials pass through it over encrypted (TLS) connections
+only for the duration of each request.</p>
+
+<h2>Marketplace buyer data</h2>
+<p>Order information (including buyer names and shipping addresses where the marketplace provides
+them) is retrieved by your shop directly from the marketplace's API solely for order fulfillment,
+and is stored only in your shop's own order system. Each merchant is the data controller for their
+own shop's data. Buyer data is never transmitted to IntelliPresta.</p>
+
+<h2>Account deletion notifications</h2>
+<p>Where marketplaces (such as eBay) send account-closure notifications, our endpoint acknowledges
+them. As we store no user data centrally, no central deletion is required; merchants are responsible
+for honoring deletion obligations for data held in their own shops, and the module provides tooling
+to assist.</p>
+
+<h2>Cookies and analytics</h2>
+<p>The authorization service sets no cookies and runs no analytics.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy or data handling: <a href="mailto:support@intellipresta.com">support@intellipresta.com</a>.</p>
+
+<footer>© IntelliPresta — intellipresta.com</footer>
+</body>
+</html>

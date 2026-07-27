@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>amazonmarketplacepro</name>
+	<displayName><![CDATA[Amazon Marketplace Pro]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Full Amazon integration: sync products, import orders, update stock &amp; prices, push shipments, handle returns &mdash; all automated.]]></description>
+	<author><![CDATA[IntelliPresta]]></author>
+	<tab><![CDATA[market_place]]></tab>
+	<confirmUninstall><![CDATA[Are you sure? All Amazon sync data will be removed.]]></confirmUninstall>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>

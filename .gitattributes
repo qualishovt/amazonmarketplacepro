@@ -1,0 +1,8 @@
+# Files excluded from the module ZIP built with:
+#   git archive --format=zip --prefix=marketplacespro/ -o marketplacespro.zip HEAD
+relay-server/    export-ignore
+.claude/         export-ignore
+.idea/           export-ignore
+.gitignore       export-ignore
+.gitattributes   export-ignore
+Readme.md        export-ignore
