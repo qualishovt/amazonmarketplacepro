@@ -129,13 +129,20 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
         $env = Configuration::get('AMZPRO_ENVIRONMENT');
         $createdAfter = ($env === 'production')
-            ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-30 days'))
+            ? AmazonOrderImporter::configuredCreatedAfter()
             : 'TEST_CASE_200';
 
         $summary = $importer->importNewOrders($createdAfter);
         if ($summary === false) {
             return array('success' => false, 'error' => $importer->getLastError());
         }
+
+        $this->sendReportEmail('Order import', array(
+            'Fetched' => $summary['fetched'],
+            'Imported new' => $summary['imported_new'],
+            'Already staged' => $summary['already'],
+            'Items unmatched' => $summary['items_unmatched'],
+        ));
 
         return array('success' => true, 'action' => 'import_orders', 'summary' => $summary);
     }
@@ -160,9 +167,19 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
         $sync->setMock($useMock);
 
+        // Expired change-queue entries age out before each sync.
+        require_once dirname(__FILE__) . '/../../classes/AmazonListingSettings.php';
+        AmazonListingSettings::purgeQueue();
+
         // Refresh PS side, then push
         $sync->syncPrestashopSide();
         $pushResult = $sync->pushToAmazon(100);
+
+        $this->sendReportEmail('Stock sync', array(
+            'Candidates' => isset($pushResult['candidates']) ? $pushResult['candidates'] : 0,
+            'Pushed' => isset($pushResult['pushed']) ? $pushResult['pushed'] : 0,
+            'Failed' => isset($pushResult['failed']) ? $pushResult['failed'] : 0,
+        ));
 
         return array('success' => true, 'action' => 'sync_stock', 'summary' => $pushResult);
     }
@@ -640,5 +657,38 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         header('Content-Type: application/json');
         echo json_encode($data);
         exit;
+    }
+
+    /**
+     * Plain-text summary of a cron run, sent to the configured report
+     * address. Silently disabled when no address is set.
+     */
+    private function sendReportEmail($subject, $stats)
+    {
+        $to = trim((string) Configuration::get('AMZPRO_REPORT_EMAIL'));
+        if ($to === '' || !Validate::isEmail($to)) {
+            return;
+        }
+
+        $lines = array();
+        foreach ($stats as $label => $value) {
+            $lines[] = $label . ': ' . $value;
+        }
+        $body = 'Amazon Marketplace Pro — ' . $subject . ' report' . "\n"
+            . date('Y-m-d H:i:s') . "\n\n" . implode("\n", $lines);
+
+        try {
+            Mail::send(
+                (int) Configuration::get('PS_LANG_DEFAULT'),
+                'contact', // stock PS template: {message} in a plain wrapper
+                'Amazon Marketplace Pro: ' . $subject,
+                array('{message}' => $body,
+                      '{email}' => (string) Configuration::get('PS_SHOP_EMAIL'),
+                      '{attached_file}' => ''),
+                $to
+            );
+        } catch (Exception $e) {
+            // Reporting must never fail the cron run itself.
+        }
     }
 }

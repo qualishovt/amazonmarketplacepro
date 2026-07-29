@@ -312,6 +312,56 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_fe
     KEY `processing_status` (`processing_status`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting` (
+    `id_amazonmarketplacepro_entity_setting` INT(11) NOT NULL AUTO_INCREMENT,
+    `entity_type` VARCHAR(16) NOT NULL,
+    `id_entity` INT(11) NOT NULL,
+    `price_markup` VARCHAR(16) NOT NULL DEFAULT \'\',
+    `shipping_delay` INT(11) NOT NULL DEFAULT -1,
+    `gpsr_contact` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `country_of_origin` VARCHAR(4) NOT NULL DEFAULT \'\',
+    `sync` TINYINT(1) NOT NULL DEFAULT 1,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_entity_setting`),
+    UNIQUE KEY `entity` (`entity_type`, `id_entity`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` (
+    `id_amazonmarketplacepro_product_setting` INT(11) NOT NULL AUTO_INCREMENT,
+    `id_product` INT(11) NOT NULL,
+    `sync` TINYINT(1) NOT NULL DEFAULT 1,
+    `gpsr_contact` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_product_setting`),
+    UNIQUE KEY `id_product` (`id_product`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` (
+    `id_amazonmarketplacepro_queue` INT(11) NOT NULL AUTO_INCREMENT,
+    `id_product` INT(11) NOT NULL,
+    `reason` VARCHAR(128) NOT NULL DEFAULT \'\',
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_queue`),
+    UNIQUE KEY `id_product` (`id_product`),
+    KEY `active` (`active`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template` (
+    `id_amazonmarketplacepro_shipping_template` INT(11) NOT NULL AUTO_INCREMENT,
+    `basis` VARCHAR(16) NOT NULL DEFAULT \'price\',
+    `min_value` DECIMAL(20,6) NOT NULL DEFAULT 0,
+    `max_value` DECIMAL(20,6) NOT NULL DEFAULT 0,
+    `template_name` VARCHAR(128) NOT NULL DEFAULT \'\',
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_shipping_template`),
+    KEY `basis` (`basis`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_log` (
     `id_amazonmarketplacepro_log` INT(11) NOT NULL AUTO_INCREMENT,
     `level` VARCHAR(16) NOT NULL DEFAULT \'info\',

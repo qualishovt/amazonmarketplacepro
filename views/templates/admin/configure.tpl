@@ -29,14 +29,16 @@
 
 <div class="row">
 <div class="col-lg-2 col-md-3">
-<div class="row">
-<div class="col-lg-2 col-md-3">
     <div id="mkpro-sidebar">
-        <div class="mkpro-nav-header">{l s='Amazon' mod='amazonmarketplacepro'}</div>
         <ul class="nav nav-pills nav-stacked" id="mkpro-tabs">
             <li class="active"><a href="#tab-settings" data-toggle="tab"><i class="icon-cogs"></i> {l s='Settings' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-pending" data-toggle="tab"><i class="icon-pause"></i> {l s='Pending Orders' mod='amazonmarketplacepro'}{if $pending_orders} <span class="badge">{$pending_orders|count}</span>{/if}</a></li>
             <li><a href="#tab-products" data-toggle="tab"><i class="icon-th-list"></i> {l s='Products' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-markup" data-toggle="tab"><i class="icon-sliders"></i> {l s='Markup & Rules' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-prodrules" data-toggle="tab"><i class="icon-check-square-o"></i> {l s='Product Rules' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-queue" data-toggle="tab"><i class="icon-list-ol"></i> {l s='Queue' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-orphans" data-toggle="tab"><i class="icon-unlink"></i> {l s='Orphans' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-returns" data-toggle="tab"><i class="icon-undo"></i> {l s='Returns' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-fba" data-toggle="tab"><i class="icon-truck"></i> {l s='FBA' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-repricing" data-toggle="tab"><i class="icon-usd"></i> {l s='Repricing' mod='amazonmarketplacepro'}</a></li>
@@ -92,6 +94,21 @@
                     {/if}
                 </div>
             </div>
+        {elseif $mkpro_manual_connected}
+            <div class="alert alert-success">
+                <i class="icon-check"></i> {l s='Connected with manual SP-API credentials' mod='amazonmarketplacepro'}
+                {if $mkpro_dev_mode} ({if $mkpro_environment == 'sandbox'}{l s='sandbox app' mod='amazonmarketplacepro'}{else}{l s='production app' mod='amazonmarketplacepro'}{/if}){/if}
+                {if $mkpro_seller_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_seller_id|escape:'htmlall':'UTF-8'}</strong>{/if}
+                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Test Amazon Connection" below to verify the link.' mod='amazonmarketplacepro'}</small>
+            </div>
+            <div class="form-group">
+                <div class="col-lg-offset-3 col-lg-6">
+                    <button type="submit" name="mkproDisconnectAmazon" class="btn btn-default"
+                            onclick="return confirm('{l s='Clear the stored token for this environment?' mod='amazonmarketplacepro' js=1}');">
+                        <i class="icon-unlink"></i> {l s='Disconnect' mod='amazonmarketplacepro'}
+                    </button>
+                </div>
+            </div>
         {else}
             {if $mkpro_dev_mode && $mkpro_other_env_connected}
                 <div class="alert alert-info">
@@ -99,6 +116,12 @@
                     {l s='Not connected in this environment yet. The other environment is still connected — switching back restores it without re-authorizing.' mod='amazonmarketplacepro'}
                 </div>
             {/if}
+            {if $mkpro_auth_mode == 'manual'}
+                <div class="alert alert-info">
+                    <i class="icon-info-circle"></i>
+                    {l s='Manual credentials mode: fill in the Manual SP-API Credentials panel below (client ID, secret, refresh token from self-authorization) and click Save Settings. The OAuth "Connect to Amazon" button is not used in this mode.' mod='amazonmarketplacepro'}
+                </div>
+            {else}
             <div class="form-group">
                 <div class="col-lg-offset-3 col-lg-6">
                     <button type="submit" name="mkproConnectAmazon" class="btn btn-primary btn-lg">
@@ -107,6 +130,7 @@
                     <p class="help-block">{l s='Select your marketplace below first, then click Connect. You will be sent to Amazon Seller Central to approve the connection — no credentials to copy.' mod='amazonmarketplacepro'}</p>
                 </div>
             </div>
+            {/if}
         {/if}
 
         {if $mkpro_dev_mode}
@@ -135,7 +159,7 @@
             </div>
         </div>
         {if $mkpro_dev_mode}
-        <div class="form-group">
+        <div class="form-group" id="mkpro-beta-group"{if $mkpro_environment == 'sandbox'} style="display:none;"{/if}>
             <label class="control-label col-lg-3">{l s='Beta authorization (draft app)' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_oauth_beta" class="form-control">
@@ -143,7 +167,7 @@
                     <option value="0"{if !$mkpro_oauth_beta} selected="selected"{/if}>{l s='Disabled (app is published)' mod='amazonmarketplacepro'}</option>
                 </select>
                 <p class="help-block">
-                    {l s='Adds version=beta to the Seller Central consent page, which unpublished apps require. It affects the "Connect to Amazon" button only — it has no effect on API calls, and none at all when the token was obtained by self-authorization instead of the consent flow.' mod='amazonmarketplacepro'}
+                    {l s='Adds version=beta to the Seller Central consent page, which unpublished apps require. It affects the "Connect to Amazon" button only — it has no effect on API calls, and none at all when the token was obtained by self-authorization instead of the consent flow. Applies to the production app only: the sandbox app is never published, so sandbox connects always send version=beta.' mod='amazonmarketplacepro'}
                 </p>
             </div>
         </div>
@@ -156,21 +180,30 @@
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='LWA Client ID' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
-                <input type="text" name="mkpro_client_id" value="{$mkpro_client_id|escape:'htmlall':'UTF-8'}" class="form-control" />
-                <p class="help-block">{l s='From Seller Central > Apps & Services > Develop Apps' mod='amazonmarketplacepro'}</p>
+                <input type="text" name="mkpro_client_id" value="{$mkpro_client_id|escape:'htmlall':'UTF-8'}" class="form-control" autocomplete="off" placeholder="amzn1.application-oa2-client...." />
+                <p class="help-block">{l s='From Seller Central > Apps & Services > Develop Apps ("View credentials"). It starts with amzn1.application-oa2-client — it is NOT an e-mail address.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
+        {* Secrets are write-only: never echoed back into the page (autofill
+           managers corrupt/blank prefilled password fields), and an empty
+           field on save keeps the stored value. *}
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='LWA Client Secret' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
-                <input type="password" name="mkpro_client_secret" value="{$mkpro_client_secret|escape:'htmlall':'UTF-8'}" class="form-control" />
+                <input type="password" name="mkpro_client_secret" value="" class="form-control" autocomplete="new-password"
+                       placeholder="{if $mkpro_client_secret}{l s='Stored — leave empty to keep the current secret' mod='amazonmarketplacepro'}{else}{l s='amzn1.oa2-cs.v1...' mod='amazonmarketplacepro'}{/if}" />
+                {if $mkpro_client_secret}<p class="help-block">{l s='A client secret is stored. Enter a new value only to replace it.' mod='amazonmarketplacepro'}</p>{/if}
             </div>
         </div>
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='LWA Refresh Token' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
-                <input type="password" name="mkpro_refresh_token" value="{$mkpro_refresh_token|escape:'htmlall':'UTF-8'}" class="form-control" />
-                <p class="help-block">{l s='Generated when you authorize your app in Seller Central' mod='amazonmarketplacepro'}</p>
+                <input type="password" name="mkpro_refresh_token" value="" class="form-control" autocomplete="new-password"
+                       placeholder="{if $mkpro_refresh_token}{l s='Stored — leave empty to keep the current token' mod='amazonmarketplacepro'}{else}Atzr|...{/if}" />
+                <p class="help-block">
+                    {l s='Generated when you authorize your app in Seller Central.' mod='amazonmarketplacepro'}
+                    {if $mkpro_refresh_token} {l s='A token is stored for this environment; enter a new one only to replace it (use Disconnect to clear it).' mod='amazonmarketplacepro'}{/if}
+                </p>
             </div>
         </div>
         <div class="form-group">
@@ -273,6 +306,224 @@
         </div>
     </div>
 
+    {* ── SKU & Export Filters ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-filter"></i> {l s='SKU & Export Filters' mod='amazonmarketplacepro'}</div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='SKU source' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_sku_source" class="form-control">
+                    <option value="reference"{if $mkpro_sku_source == 'reference' || !$mkpro_sku_source} selected="selected"{/if}>{l s='Reference' mod='amazonmarketplacepro'}</option>
+                    <option value="ean13"{if $mkpro_sku_source == 'ean13'} selected="selected"{/if}>{l s='EAN code' mod='amazonmarketplacepro'}</option>
+                    <option value="supplier_reference"{if $mkpro_sku_source == 'supplier_reference'} selected="selected"{/if}>{l s='Supplier reference' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Which PrestaShop field becomes the Amazon SKU. Products with an empty source field are not exported. Changing this on a live catalog creates NEW listings under the new SKUs.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='SKU prefix' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_sku_prefix" value="{$mkpro_sku_prefix|escape:'htmlall':'UTF-8'}" class="form-control" style="max-width:220px;" />
+                <p class="help-block">{l s='Added in front of the SKU, separated by a dash (e.g. prefix AMZ makes AMZ-REF123).' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Price range (min / max)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="row">
+                    <div class="col-xs-4"><input type="number" min="0" step="0.01" name="mkpro_price_min" value="{$mkpro_price_min|escape:'htmlall':'UTF-8'}" class="form-control" /></div>
+                    <div class="col-xs-4"><input type="number" min="0" step="0.01" name="mkpro_price_max" value="{$mkpro_price_max|escape:'htmlall':'UTF-8'}" class="form-control" /></div>
+                </div>
+                <p class="help-block">{l s='Only export products whose final price (after markup) falls inside this range. 0 disables a bound.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Quantity min.' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="number" min="0" name="mkpro_qty_min" value="{$mkpro_qty_min|escape:'htmlall':'UTF-8'}" class="form-control" style="max-width:120px;" />
+                <p class="help-block">{l s='Only export products with at least this much stock. 0 disables the filter.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Use specific prices' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_use_specific_prices" class="form-control">
+                    <option value="0"{if !$mkpro_use_specific_prices} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_use_specific_prices} selected="selected"{/if}>{l s='Enabled' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Customer group for prices' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_specific_price_group" class="form-control">
+                    <option value="0">{l s='-- Default --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_specific_price_group == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+                <p class="help-block">{l s='Specific prices of this group are applied to exported prices (before markup).' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Report e-mail' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_report_email" value="{$mkpro_report_email|escape:'htmlall':'UTF-8'}" class="form-control" />
+                <p class="help-block">{l s='Cron runs (order import, stock sync) send a short report to this address. Empty = no reports.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+    </div>
+
+    {* ── Sync Options ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-exchange"></i> {l s='Sync Options' mod='amazonmarketplacepro'}</div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Listings sync mode' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_sync_mode" class="form-control">
+                    <option value="normal"{if $mkpro_sync_mode == 'normal' || !$mkpro_sync_mode} selected="selected"{/if}>{l s='Normal (full listing data)' mod='amazonmarketplacepro'}</option>
+                    <option value="price"{if $mkpro_sync_mode == 'price'} selected="selected"{/if}>{l s='Price only' mod='amazonmarketplacepro'}</option>
+                    <option value="quantity"{if $mkpro_sync_mode == 'quantity'} selected="selected"{/if}>{l s='Quantity only' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Price/quantity modes send small partial updates instead of the full listing — much faster for large catalogs.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Force all quantities to zero' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_force_zero_qty" class="form-control">
+                    <option value="0"{if !$mkpro_force_zero_qty} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_force_zero_qty} selected="selected"{/if}>{l s='Enabled — publish 0 stock for everything' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Emergency switch (holidays, stock freeze): every pushed offer carries quantity 0. Listings stay online but show unavailable.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Export only products with ASIN' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_only_with_asin" class="form-control">
+                    <option value="0"{if !$mkpro_only_with_asin} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_only_with_asin} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Limit export to N lines' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_export_limit" class="form-control">
+                    <option value="0"{if !$mkpro_export_limit} selected="selected"{/if}>{l s='No limit' mod='amazonmarketplacepro'}</option>
+                    {foreach from=[100, 200, 300, 400, 500, 1000, 1500] item=lim}
+                        <option value="{$lim}"{if $mkpro_export_limit == $lim} selected="selected"{/if}>{$lim}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Treat PrestaShop EAN-13 field as' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_ean_as" class="form-control">
+                    <option value="EAN"{if $mkpro_ean_as != 'UPC'} selected="selected"{/if}>EAN</option>
+                    <option value="UPC"{if $mkpro_ean_as == 'UPC'} selected="selected"{/if}>UPC</option>
+                </select>
+                <p class="help-block">{l s='Choose UPC if you store 12-digit US barcodes in the EAN field.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Export only products updated in the last' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_delta_hours" class="form-control">
+                    <option value="0"{if !$mkpro_delta_hours} selected="selected"{/if}>{l s='Ignore (export everything)' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_delta_hours == 1} selected="selected"{/if}>{l s='1 hour' mod='amazonmarketplacepro'}</option>
+                    <option value="3"{if $mkpro_delta_hours == 3} selected="selected"{/if}>{l s='3 hours' mod='amazonmarketplacepro'}</option>
+                    <option value="6"{if $mkpro_delta_hours == 6} selected="selected"{/if}>{l s='6 hours' mod='amazonmarketplacepro'}</option>
+                    <option value="24"{if $mkpro_delta_hours == 24} selected="selected"{/if}>{l s='24 hours' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Strongly recommended for large catalogs: only recently changed products (or products queued by rule changes — see the Queue tab) are exported.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Delete queue entries after' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_queue_ttl_days" class="form-control">
+                    <option value="1"{if $mkpro_queue_ttl_days == 1} selected="selected"{/if}>{l s='1 day' mod='amazonmarketplacepro'}</option>
+                    <option value="7"{if $mkpro_queue_ttl_days == 7 || !$mkpro_queue_ttl_days} selected="selected"{/if}>{l s='7 days' mod='amazonmarketplacepro'}</option>
+                    <option value="15"{if $mkpro_queue_ttl_days == 15} selected="selected"{/if}>{l s='15 days' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Condition note (Used)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_cond_note_used" value="{$mkpro_cond_note_used|escape:'htmlall':'UTF-8'}" class="form-control" />
+                <p class="help-block">{l s='Sent as the condition note when the item condition is any "Used" grade.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Condition note (Refurbished)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_cond_note_refurb" value="{$mkpro_cond_note_refurb|escape:'htmlall':'UTF-8'}" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    {* ── Shipping Templates by range ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-truck"></i> {l s='Shipping Templates by Price/Weight Range' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">{l s='Assign different Seller Central shipping templates depending on the product price or weight. When disabled (or no range matches), the single template name from Listing Defaults is used.' mod='amazonmarketplacepro'}</p>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Use range-based templates' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_ship_tpl_enabled" class="form-control">
+                    <option value="0"{if !$mkpro_ship_tpl_enabled} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_ship_tpl_enabled} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Ranges based on' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_ship_tpl_basis" class="form-control">
+                    <option value="price"{if $mkpro_ship_tpl_basis != 'weight'} selected="selected"{/if}>{l s='Price' mod='amazonmarketplacepro'}</option>
+                    <option value="weight"{if $mkpro_ship_tpl_basis == 'weight'} selected="selected"{/if}>{l s='Weight' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <table class="table" id="shiptpl-table" style="max-width:700px;">
+            <thead><tr>
+                <th>{l s='Basis' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Min (incl.)' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Max (excl., 0 = open)' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Template name' mod='amazonmarketplacepro'}</th><th></th>
+            </tr></thead>
+            <tbody>
+                {if $shipping_templates}
+                    {foreach from=$shipping_templates item=tpl}
+                    <tr>
+                        <td>{$tpl.basis|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$tpl.min_value|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$tpl.max_value|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$tpl.template_name|escape:'htmlall':'UTF-8'}</td>
+                        <td><button type="button" class="btn btn-xs btn-danger shiptpl-delete" data-id="{$tpl.id_amazonmarketplacepro_shipping_template|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr id="shiptpl-empty"><td colspan="5" class="text-center text-muted">{l s='No template ranges yet.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+        <div class="form-inline">
+            <select id="shiptpl-basis" class="form-control">
+                <option value="price">{l s='Price' mod='amazonmarketplacepro'}</option>
+                <option value="weight">{l s='Weight' mod='amazonmarketplacepro'}</option>
+            </select>
+            <input type="number" step="0.01" min="0" id="shiptpl-min" class="form-control" placeholder="{l s='Min' mod='amazonmarketplacepro'}" style="width:100px;" />
+            <input type="number" step="0.01" min="0" id="shiptpl-max" class="form-control" placeholder="{l s='Max' mod='amazonmarketplacepro'}" style="width:100px;" />
+            <input type="text" id="shiptpl-name" class="form-control" placeholder="{l s='Template name (from Seller Central)' mod='amazonmarketplacepro'}" style="width:280px;" />
+            <button type="button" id="shiptpl-add" class="btn btn-success"><i class="icon-plus"></i> {l s='Add range' mod='amazonmarketplacepro'}</button>
+        </div>
+        <div id="shiptpl-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
     {* ── Carrier Mapping ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-truck"></i> {l s='Carrier Mapping (shipment confirmations)' mod='amazonmarketplacepro'}</div>
@@ -328,6 +579,95 @@
                     <option value="1"{if $mkpro_auto_review_request} selected="selected"{/if}>{l s='Enabled (via request_reviews cron)' mod='amazonmarketplacepro'}</option>
                 </select>
                 <p class="help-block">{l s='Sends Amazon\'s standard review solicitation for each delivered order (once per order, in Amazon\'s allowed window).' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Download orders in the last' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="input-group" style="max-width:260px;">
+                    <input type="number" min="1" name="mkpro_order_lookback_value" value="{$mkpro_order_lookback_value|escape:'htmlall':'UTF-8'}" class="form-control" />
+                    <span class="input-group-btn" style="width:120px;">
+                        <select name="mkpro_order_lookback_unit" class="form-control">
+                            <option value="days"{if $mkpro_order_lookback_unit != 'hours'} selected="selected"{/if}>{l s='days' mod='amazonmarketplacepro'}</option>
+                            <option value="hours"{if $mkpro_order_lookback_unit == 'hours'} selected="selected"{/if}>{l s='hours' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </span>
+                </div>
+                <p class="help-block">{l s='Lookback window for order imports (manual and cron).' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Import FBA orders' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_import_fba_orders" class="form-control">
+                    <option value="1"{if $mkpro_import_fba_orders} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                    <option value="0"{if !$mkpro_import_fba_orders} selected="selected"{/if}>{l s='No (skip orders fulfilled by Amazon)' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='FBA orders state' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_fba_order_state" class="form-control">
+                    <option value="0">{l s='-- Same as default order state --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$order_states item=state}
+                        <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if $mkpro_fba_order_state == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+                <p class="help-block">{l s='PS state given to imported FBA orders (e.g. Shipped — Amazon already handles delivery).' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Shipped orders state' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_order_state_shipped" class="form-control">
+                    <option value="0">{l s='-- Same as default order state --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$order_states item=state}
+                        <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if $mkpro_order_state_shipped == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+                <p class="help-block">{l s='PS state for orders Amazon already reports as Shipped at import time.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Prioritize ASIN when matching products' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_prioritize_asin" class="form-control">
+                    <option value="0"{if !$mkpro_prioritize_asin} selected="selected"{/if}>{l s='No (match by SKU first)' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_prioritize_asin} selected="selected"{/if}>{l s='Yes (match by ASIN first)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='ASIN matching uses the SKU-ASIN mapping built by product syncs and "Match ASINs by EAN".' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Use an anonymized e-mail for customers' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_fake_email" class="form-control">
+                    <option value="0"{if !$mkpro_fake_email} selected="selected"{/if}>{l s='No (keep the Amazon relay address)' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_fake_email} selected="selected"{/if}>{l s='Yes (order-id@marketplace.amazon)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Amazon relay addresses expire after a while; a synthetic address avoids bounced shop e-mails. Buyer messaging via Amazon still works.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Customer group for Amazon buyers' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_customer_group" class="form-control">
+                    <option value="0">{l s='-- Shop default --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_customer_group == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Orders without enough stock' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_skip_no_stock" class="form-control">
+                    <option value="0"{if !$mkpro_skip_no_stock} selected="selected"{/if}>{l s='Create the PS order anyway' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_skip_no_stock} selected="selected"{/if}>{l s='Park in Pending Orders for manual review' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='When enabled, staged orders whose products lack stock (and cannot be ordered out of stock) wait in the Pending Orders tab instead of becoming PS orders.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
         <div class="form-group">
@@ -993,6 +1333,291 @@
     </div>
 </div>
 
+{* ═══════════════════════ PENDING ORDERS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-pending">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-pause"></i> {l s='Pending Orders (insufficient stock)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Amazon orders that could not become PrestaShop orders because a product lacks stock. Restock the product and re-run "Create PrestaShop Orders", force-create the order regardless, or remove it.' mod='amazonmarketplacepro'}</p>
+        {if !$mkpro_skip_no_stock}
+            <div class="alert alert-info">{l s='Stock-checking is currently off. Enable "Orders without enough stock → Park in Pending Orders" in Settings > Order Import Settings.' mod='amazonmarketplacepro'}</div>
+        {/if}
+        <div id="pending-result" style="display:none; margin-bottom:10px;"></div>
+        <table class="table" id="pending-table">
+            <thead><tr>
+                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Order date' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Items' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Total' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Parked since' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Actions' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {if $pending_orders}
+                    {foreach from=$pending_orders item=po}
+                    <tr data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}">
+                        <td>{$po.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$po.purchase_date|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$po.item_list|escape:'htmlall':'UTF-8'}</small></td>
+                        <td>{$po.order_total|escape:'htmlall':'UTF-8'} {$po.currency|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$po.date_upd|escape:'htmlall':'UTF-8'}</small></td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-success pending-create" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-check"></i> {l s='Create anyway' mod='amazonmarketplacepro'}</button>
+                            <button type="button" class="btn btn-xs btn-danger pending-delete" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button>
+                        </td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="6" class="text-center text-muted">{l s='No pending orders.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{* ═══════════════════════ MARKUP & RULES TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-markup">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-sliders"></i> {l s='Price Markup, Handling Delay & GPSR' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">
+            {l s='Markups are fixed values ("5.99") or percentages ("10%"), applied to the exported price. Rules cascade per product: category, then manufacturer, then supplier — the first source with a value wins; the defaults below apply when none matches.' mod='amazonmarketplacepro'}
+        </p>
+        <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
+            <input type="hidden" name="mkpro_markup_sources_present" value="1" />
+            <input type="hidden" name="mkpro_delay_sources_present" value="1" />
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Default price markup' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-6">
+                    <input type="text" name="mkpro_default_markup" value="{$mkpro_default_markup|escape:'htmlall':'UTF-8'}" class="form-control" style="max-width:150px;" placeholder="{l s='e.g. 10% or 2.50' mod='amazonmarketplacepro'}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Get price markups from' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-6">
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_markup_sources[]" value="category"{if in_array('category', $mkpro_markup_sources)} checked="checked"{/if} /> {l s='Categories' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_markup_sources[]" value="manufacturer"{if in_array('manufacturer', $mkpro_markup_sources)} checked="checked"{/if} /> {l s='Manufacturers' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_markup_sources[]" value="supplier"{if in_array('supplier', $mkpro_markup_sources)} checked="checked"{/if} /> {l s='Suppliers' mod='amazonmarketplacepro'}</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Default shipping delay (days)' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-6">
+                    <input type="number" min="0" name="mkpro_default_delay" value="{$mkpro_default_delay|escape:'htmlall':'UTF-8'}" class="form-control" style="max-width:120px;" />
+                    <p class="help-block">{l s='Handling time sent with every offer. 0 = do not send.' mod='amazonmarketplacepro'}</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Get shipping delay from' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-6">
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_delay_sources[]" value="category"{if in_array('category', $mkpro_delay_sources)} checked="checked"{/if} /> {l s='Categories' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_delay_sources[]" value="manufacturer"{if in_array('manufacturer', $mkpro_delay_sources)} checked="checked"{/if} /> {l s='Manufacturers' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" name="mkpro_delay_sources[]" value="supplier"{if in_array('supplier', $mkpro_delay_sources)} checked="checked"{/if} /> {l s='Suppliers' mod='amazonmarketplacepro'}</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='GPSR: give priority to' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-6">
+                    <select name="mkpro_gpsr_priority" class="form-control" style="max-width:250px;">
+                        <option value="manufacturer"{if $mkpro_gpsr_priority != 'supplier'} selected="selected"{/if}>{l s='Manufacturers' mod='amazonmarketplacepro'}</option>
+                        <option value="supplier"{if $mkpro_gpsr_priority == 'supplier'} selected="selected"{/if}>{l s='Suppliers' mod='amazonmarketplacepro'}</option>
+                    </select>
+                    <p class="help-block">{l s='GPSR responsible-person contact (e-mail or URL) sent with full listings. A per-product contact (Product Rules tab) always wins; below that, this priority decides between manufacturer and supplier contacts. The contact must already be registered in Seller Central > Account Health > Product Policy Compliance.' mod='amazonmarketplacepro'}</p>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button type="submit" name="submitMkproSettings" class="btn btn-default pull-right">
+                    <i class="process-icon-save"></i> {l s='Save Defaults' mod='amazonmarketplacepro'}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {* Per-entity rule tables *}
+    {foreach from=['category' => $entity_categories, 'manufacturer' => $entity_manufacturers, 'supplier' => $entity_suppliers] key=etype item=erows}
+    <div class="panel">
+        <div class="panel-heading">
+            <i class="icon-{if $etype == 'category'}sitemap{elseif $etype == 'manufacturer'}building{else}truck{/if}"></i>
+            {if $etype == 'category'}{l s='Category Rules' mod='amazonmarketplacepro'}
+            {elseif $etype == 'manufacturer'}{l s='Manufacturer Rules' mod='amazonmarketplacepro'}
+            {else}{l s='Supplier Rules' mod='amazonmarketplacepro'}{/if}
+        </div>
+        <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+            <table class="table entity-table" data-type="{$etype}">
+                <thead><tr>
+                    <th>ID</th>
+                    <th>{l s='Name' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Price markup' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Shipping delay (days)' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='GPSR e-mail or link' mod='amazonmarketplacepro'}</th>
+                    {if $etype == 'manufacturer'}<th>{l s='Country of origin' mod='amazonmarketplacepro'}</th>{/if}
+                    <th>{l s='Sync' mod='amazonmarketplacepro'}</th>
+                </tr></thead>
+                <tbody>
+                    {if $erows}
+                        {foreach from=$erows item=er}
+                        <tr data-id="{$er.id_entity|escape:'htmlall':'UTF-8'}">
+                            <td>{$er.id_entity|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$er.name|escape:'htmlall':'UTF-8'}</td>
+                            <td><input type="text" class="form-control input-sm ent-markup" value="{$er.price_markup|escape:'htmlall':'UTF-8'}" placeholder="10% / 2.50" style="width:90px;" /></td>
+                            <td><input type="number" min="0" class="form-control input-sm ent-delay" value="{$er.shipping_delay|escape:'htmlall':'UTF-8'}" style="width:80px;" /></td>
+                            <td><input type="text" class="form-control input-sm ent-gpsr" value="{$er.gpsr_contact|escape:'htmlall':'UTF-8'}" style="min-width:180px;" /></td>
+                            {if $etype == 'manufacturer'}<td><input type="text" maxlength="2" class="form-control input-sm ent-coo" value="{$er.country_of_origin|escape:'htmlall':'UTF-8'}" placeholder="CN" style="width:60px;" /></td>{/if}
+                            <td>
+                                <select class="form-control input-sm ent-sync" style="width:70px;">
+                                    <option value="1"{if $er.sync} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                                    <option value="0"{if !$er.sync} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                                </select>
+                            </td>
+                        </tr>
+                        {/foreach}
+                    {else}
+                        <tr><td colspan="7" class="text-center text-muted">{l s='Nothing found.' mod='amazonmarketplacepro'}</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn btn-primary entity-save" data-type="{$etype}"><i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}</button>
+            <span class="entity-result" style="margin-left:10px;"></span>
+        </div>
+        <p class="help-block" style="margin-top:8px;">{l s='Saving queues the affected products so the next delta sync resends them.' mod='amazonmarketplacepro'}</p>
+    </div>
+    {/foreach}
+</div>
+
+{* ═══════════════════════ PRODUCT RULES TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-prodrules">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-check-square-o"></i> {l s='Per-Product Rules' mod='amazonmarketplacepro'} <small>({l s='first 500 products' mod='amazonmarketplacepro'})</small></div>
+        <p class="help-block">{l s='Switch individual products out of the Amazon sync, or give a product its own GPSR contact (overrides manufacturer/supplier contacts).' mod='amazonmarketplacepro'}</p>
+        <input type="text" id="prodrules-filter" class="form-control" placeholder="{l s='Filter by name or reference...' mod='amazonmarketplacepro'}" style="max-width:320px; margin-bottom:10px;" />
+        <div class="table-responsive" style="max-height:480px; overflow-y:auto;">
+            <table class="table" id="prodrules-table">
+                <thead><tr>
+                    <th>ID</th>
+                    <th>{l s='Reference' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Name' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Sync' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='GPSR e-mail or link' mod='amazonmarketplacepro'}</th>
+                </tr></thead>
+                <tbody>
+                    {if $product_rules}
+                        {foreach from=$product_rules item=pr}
+                        <tr data-id="{$pr.id_product|escape:'htmlall':'UTF-8'}">
+                            <td>{$pr.id_product|escape:'htmlall':'UTF-8'}</td>
+                            <td><code>{$pr.reference|escape:'htmlall':'UTF-8'}</code></td>
+                            <td class="pr-name">{$pr.name|escape:'htmlall':'UTF-8'}</td>
+                            <td>
+                                <select class="form-control input-sm pr-sync" style="width:70px;">
+                                    <option value="1"{if $pr.sync} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                                    <option value="0"{if !$pr.sync} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="form-control input-sm pr-gpsr" value="{$pr.gpsr_contact|escape:'htmlall':'UTF-8'}" style="min-width:200px;" /></td>
+                        </tr>
+                        {/foreach}
+                    {else}
+                        <tr><td colspan="5" class="text-center text-muted">{l s='No active products found.' mod='amazonmarketplacepro'}</td></tr>
+                    {/if}
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top:10px;">
+            <button type="button" id="prodrules-save" class="btn btn-primary"><i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}</button>
+            <span id="prodrules-result" style="margin-left:10px;"></span>
+        </div>
+    </div>
+</div>
+
+{* ═══════════════════════ QUEUE TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-queue">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list-ol"></i> {l s='Change Queue' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">
+            {l s='Products modified in PrestaShop or touched by rule changes (markup, delay, GPSR, sync switches). With "Export only products updated in the last N hours" enabled in Settings > Sync Options, active entries here are included in the next sync even if the product itself was not modified recently. After a successful sync, sent entries are set inactive; entries older than the configured retention are purged automatically.' mod='amazonmarketplacepro'}
+        </p>
+        <div class="form-inline" style="margin-bottom:10px;">
+            <select id="queue-op" class="form-control">
+                <option value="">{l s='-- Select an action --' mod='amazonmarketplacepro'}</option>
+                <option value="enable">{l s='Enable all' mod='amazonmarketplacepro'}</option>
+                <option value="disable">{l s='Disable all' mod='amazonmarketplacepro'}</option>
+                <option value="purge">{l s='Purge expired entries' mod='amazonmarketplacepro'}</option>
+                <option value="clear">{l s='Remove all' mod='amazonmarketplacepro'}</option>
+            </select>
+            <button type="button" id="queue-run" class="btn btn-primary">{l s='Perform action' mod='amazonmarketplacepro'}</button>
+            <span id="queue-result" style="margin-left:10px;"></span>
+        </div>
+        <table class="table" id="queue-table">
+            <thead><tr>
+                <th>{l s='Product ID' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Reference' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Name' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Reason' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Active' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Added' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Updated' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {if $queue_rows}
+                    {foreach from=$queue_rows item=q}
+                    <tr>
+                        <td>{$q.id_product|escape:'htmlall':'UTF-8'}</td>
+                        <td><code>{$q.reference|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$q.name|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$q.reason|escape:'htmlall':'UTF-8'}</td>
+                        <td>{if $q.active}<span class="badge badge-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="badge badge-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                        <td><small>{$q.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                        <td><small>{$q.date_upd|escape:'htmlall':'UTF-8'}</small></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="7" class="text-center text-muted">{l s='Queue is empty.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{* ═══════════════════════ ORPHANS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-orphans">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-unlink"></i> {l s='Orphaned Listings' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">
+            {l s='Amazon listings that no longer map to a sellable PrestaShop product — the product was deleted, deactivated, or its SKU changed. Run "Sync Amazon to PS" (Products tab) first so this list reflects your live inventory, then fix the products or delete the listings on Amazon.' mod='amazonmarketplacepro'}
+        </p>
+        <button type="button" id="orphans-refresh" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Get orphaned products' mod='amazonmarketplacepro'}</button>
+        <div id="orphans-result" style="display:none; margin-top:10px;"></div>
+        <table class="table" id="orphans-table" style="margin-top:10px;">
+            <thead><tr>
+                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                <th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Amazon title' mod='amazonmarketplacepro'}</th>
+                <th>{l s='PS Product' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Reason' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {if $orphan_rows}
+                    {foreach from=$orphan_rows item=orp}
+                    <tr>
+                        <td><code>{$orp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$orp.amazon_asin|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$orp.amazon_title|truncate:60:'...':true|escape:'htmlall':'UTF-8'}</td>
+                        <td>{if $orp.id_product > 0}#{$orp.id_product|escape:'htmlall':'UTF-8'}{else}-{/if}</td>
+                        <td>{$orp.reason|escape:'htmlall':'UTF-8'}</td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="5" class="text-center text-muted">{l s='No orphaned listings found. Run an Amazon-side sync to refresh.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {* ═══════════════════════ CRON TAB ═══════════════════════ *}
 <div class="tab-pane" id="tab-cron">
 
@@ -1184,7 +1809,6 @@
 </div>{* end row *}
 
 {* ═══════════════════════ JAVASCRIPT ═══════════════════════ *}
-<script type="text/javascript">
 <script type="text/javascript">
 (function () {
     /* ── Helper: HTML-escape ── */
@@ -2273,6 +2897,257 @@
                 }
             }, 'marketplace_id='+encodeURIComponent(id));
         });
+    })();
+
+    /* ──────── ENTITY RULES (categories / manufacturers / suppliers) ──────── */
+    (function () {
+        var buttons = document.querySelectorAll('.entity-save');
+        for (var b = 0; b < buttons.length; b++) {
+            buttons[b].addEventListener('click', function () {
+                var btn = this;
+                var type = btn.getAttribute('data-type');
+                var table = document.querySelector('.entity-table[data-type="' + type + '"]');
+                var resultEl = btn.parentNode.querySelector('.entity-result');
+                if (!table) return;
+
+                var rows = [];
+                var trs = table.querySelectorAll('tbody tr[data-id]');
+                for (var i = 0; i < trs.length; i++) {
+                    var tr = trs[i];
+                    var coo = tr.querySelector('.ent-coo');
+                    rows.push({
+                        id: tr.getAttribute('data-id'),
+                        markup: tr.querySelector('.ent-markup').value,
+                        delay: tr.querySelector('.ent-delay').value,
+                        gpsr: tr.querySelector('.ent-gpsr').value,
+                        coo: coo ? coo.value : '',
+                        sync: tr.querySelector('.ent-sync').value
+                    });
+                }
+
+                btn.disabled = true;
+                resultEl.textContent = 'Saving...';
+                ajaxPost('{$ajax_save_entity_settings_url|escape:'javascript':'UTF-8'}', function (data) {
+                    btn.disabled = false;
+                    if (!data || !data.success) {
+                        resultEl.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Save failed') + '</span>';
+                        return;
+                    }
+                    resultEl.innerHTML = '<span class="text-success">' + esc(data.saved) + ' rule(s) saved, ' + esc(data.queued) + ' product(s) queued.</span>';
+                }, 'entity_type=' + encodeURIComponent(type) + '&rows=' + encodeURIComponent(JSON.stringify(rows)));
+            });
+        }
+    })();
+
+    /* ──────── PRODUCT RULES ──────── */
+    (function () {
+        var btn = document.getElementById('prodrules-save');
+        var result = document.getElementById('prodrules-result');
+        var filter = document.getElementById('prodrules-filter');
+        if (!btn) return;
+
+        if (filter) {
+            filter.addEventListener('input', function () {
+                var needle = filter.value.toLowerCase();
+                var trs = document.querySelectorAll('#prodrules-table tbody tr[data-id]');
+                for (var i = 0; i < trs.length; i++) {
+                    var txt = trs[i].textContent.toLowerCase();
+                    trs[i].style.display = (needle === '' || txt.indexOf(needle) !== -1) ? '' : 'none';
+                }
+            });
+        }
+
+        btn.addEventListener('click', function () {
+            var rows = [];
+            var trs = document.querySelectorAll('#prodrules-table tbody tr[data-id]');
+            for (var i = 0; i < trs.length; i++) {
+                rows.push({
+                    id: trs[i].getAttribute('data-id'),
+                    sync: trs[i].querySelector('.pr-sync').value,
+                    gpsr: trs[i].querySelector('.pr-gpsr').value
+                });
+            }
+            btn.disabled = true;
+            result.textContent = 'Saving...';
+            ajaxPost('{$ajax_save_product_rules_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Save failed') + '</span>';
+                    return;
+                }
+                result.innerHTML = '<span class="text-success">' + esc(data.saved) + ' product rule(s) saved.</span>';
+            }, 'rows=' + encodeURIComponent(JSON.stringify(rows)));
+        });
+    })();
+
+    /* ──────── QUEUE ──────── */
+    (function () {
+        var btn = document.getElementById('queue-run');
+        var sel = document.getElementById('queue-op');
+        var result = document.getElementById('queue-result');
+        if (!btn || !sel) return;
+
+        btn.addEventListener('click', function () {
+            var op = sel.value;
+            if (!op) { result.innerHTML = '<span class="text-danger">Select an action first.</span>'; return; }
+            if (op === 'clear' && !confirm('Remove ALL queue entries?')) return;
+
+            btn.disabled = true;
+            result.textContent = 'Working...';
+            ajaxPost('{$ajax_queue_action_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Action failed') + '</span>';
+                    return;
+                }
+                var tbody = document.querySelector('#queue-table tbody');
+                var rows = data.queue || [];
+                var h = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var q = rows[i];
+                    h += '<tr><td>' + esc(q.id_product) + '</td><td><code>' + esc(q.reference || '') + '</code></td>'
+                        + '<td>' + esc(q.name || '') + '</td><td>' + esc(q.reason) + '</td>'
+                        + '<td>' + (parseInt(q.active, 10) ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-default">No</span>') + '</td>'
+                        + '<td><small>' + esc(q.date_add) + '</small></td><td><small>' + esc(q.date_upd) + '</small></td></tr>';
+                }
+                tbody.innerHTML = h || '<tr><td colspan="7" class="text-center text-muted">Queue is empty.</td></tr>';
+                result.innerHTML = '<span class="text-success">Done.</span>';
+            }, 'queue_op=' + encodeURIComponent(op));
+        });
+    })();
+
+    /* ──────── ORPHANS ──────── */
+    (function () {
+        var btn = document.getElementById('orphans-refresh');
+        var out = document.getElementById('orphans-result');
+        if (!btn) return;
+
+        btn.addEventListener('click', function () {
+            btn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Looking for orphaned listings...</div>';
+
+            ajaxPost('{$ajax_refresh_orphans_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : 'Refresh failed') + '</div>';
+                    return;
+                }
+                var rows = data.orphans || [];
+                out.innerHTML = '<div class="alert alert-' + (rows.length ? 'warning' : 'success') + '">'
+                    + esc(rows.length) + ' orphaned listing(s).' + (data.notice ? ' ' + esc(data.notice) : '') + '</div>';
+                var tbody = document.querySelector('#orphans-table tbody');
+                var h = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var o = rows[i];
+                    h += '<tr><td><code>' + esc(o.seller_sku) + '</code></td><td>' + esc(o.amazon_asin) + '</td>'
+                        + '<td>' + esc((o.amazon_title || '').substring(0, 60)) + '</td>'
+                        + '<td>' + (parseInt(o.id_product, 10) > 0 ? '#' + esc(o.id_product) : '-') + '</td>'
+                        + '<td>' + esc(o.reason) + '</td></tr>';
+                }
+                tbody.innerHTML = h || '<tr><td colspan="5" class="text-center text-muted">No orphaned listings found.</td></tr>';
+            });
+        });
+    })();
+
+    /* ──────── PENDING ORDERS ──────── */
+    (function () {
+        var out = document.getElementById('pending-result');
+        if (!out) return;
+
+        function act(op, id, row) {
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Working...</div>';
+            ajaxPost('{$ajax_pending_order_action_url|escape:'javascript':'UTF-8'}', function (data) {
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : 'Action failed') + '</div>';
+                    return;
+                }
+                out.innerHTML = '<div class="alert alert-success">' + esc(data.message || 'Done.') + '</div>';
+                if (row) row.remove();
+                var tbody = document.querySelector('#pending-table tbody');
+                if (tbody && !tbody.querySelector('tr[data-id]')) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending orders.</td></tr>';
+                }
+            }, 'pending_op=' + encodeURIComponent(op) + '&id_staged=' + encodeURIComponent(id));
+        }
+
+        document.addEventListener('click', function (e) {
+            var create = e.target.closest('.pending-create');
+            if (create) {
+                if (!confirm('Create this PS order even though stock is insufficient?')) return;
+                act('create', create.getAttribute('data-id'), create.closest('tr'));
+                return;
+            }
+            var del = e.target.closest('.pending-delete');
+            if (del) {
+                if (!confirm('Remove this pending order? It will not become a PS order.')) return;
+                act('delete', del.getAttribute('data-id'), del.closest('tr'));
+            }
+        });
+    })();
+
+    /* ──────── SHIPPING TEMPLATE RANGES ──────── */
+    (function () {
+        var btn = document.getElementById('shiptpl-add');
+        var out = document.getElementById('shiptpl-result');
+        if (!btn) return;
+
+        function renderRows(templates) {
+            var tbody = document.querySelector('#shiptpl-table tbody');
+            var h = '';
+            for (var i = 0; i < templates.length; i++) {
+                var t = templates[i];
+                h += '<tr><td>' + esc(t.basis) + '</td><td>' + esc(t.min_value) + '</td><td>' + esc(t.max_value) + '</td>'
+                    + '<td>' + esc(t.template_name) + '</td>'
+                    + '<td><button type="button" class="btn btn-xs btn-danger shiptpl-delete" data-id="' + esc(t.id_amazonmarketplacepro_shipping_template) + '"><i class="icon-trash"></i></button></td></tr>';
+            }
+            tbody.innerHTML = h || '<tr id="shiptpl-empty"><td colspan="5" class="text-center text-muted">No template ranges yet.</td></tr>';
+        }
+
+        function show(cls, msg) {
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-' + cls + '">' + esc(msg) + '</div>';
+        }
+
+        btn.addEventListener('click', function () {
+            var name = document.getElementById('shiptpl-name').value.trim();
+            if (!name) { show('danger', 'Enter the template name exactly as in Seller Central.'); return; }
+            btn.disabled = true;
+            ajaxPost('{$ajax_save_shipping_template_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) { show('danger', (data && data.error) ? data.error : 'Save failed'); return; }
+                renderRows(data.templates || []);
+                show('success', 'Range saved.');
+                document.getElementById('shiptpl-name').value = '';
+            }, 'basis=' + encodeURIComponent(document.getElementById('shiptpl-basis').value)
+                + '&min_value=' + encodeURIComponent(document.getElementById('shiptpl-min').value || '0')
+                + '&max_value=' + encodeURIComponent(document.getElementById('shiptpl-max').value || '0')
+                + '&template_name=' + encodeURIComponent(name));
+        });
+
+        document.addEventListener('click', function (e) {
+            var del = e.target.closest('.shiptpl-delete');
+            if (!del) return;
+            ajaxPost('{$ajax_delete_shipping_template_url|escape:'javascript':'UTF-8'}', function (data) {
+                if (data && data.success) renderRows(data.templates || []);
+            }, 'id_template=' + encodeURIComponent(del.getAttribute('data-id')));
+        });
+    })();
+
+    /* ──────── Beta authorization visibility (production app only) ──────── */
+    (function () {
+        var envSel = document.querySelector('select[name="mkpro_environment"]');
+        var betaGroup = document.getElementById('mkpro-beta-group');
+        if (!envSel || !betaGroup) return;
+
+        function toggle() {
+            // Sandbox connects always send version=beta, so the choice only
+            // exists for the production app.
+            betaGroup.style.display = (envSel.value === 'sandbox') ? 'none' : '';
+        }
+        envSel.addEventListener('change', toggle);
+        toggle();
     })();
 
     /* ──────── Remember active tab ──────── */

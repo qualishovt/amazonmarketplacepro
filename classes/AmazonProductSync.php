@@ -497,33 +497,66 @@ class AmazonProductSync
 
         $shopUrl = $this->getShopBaseUrl();
 
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
+
+        // Export filters & delta-sync context.
+        $priceMin = (float) Configuration::get('AMZPRO_PRICE_MIN');
+        $priceMax = (float) Configuration::get('AMZPRO_PRICE_MAX');
+        $qtyMin = (int) Configuration::get('AMZPRO_QTY_MIN');
+        $deltaHours = (int) Configuration::get('AMZPRO_DELTA_HOURS');
+        $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : array();
+        $deltaCutoff = ($deltaHours > 0) ? date('Y-m-d H:i:s', time() - $deltaHours * 3600) : null;
+        $filteredOut = 0;
+
         $out = array();
         $seen = array();
         $baseRowIndex = array();   // id_product => index in $out (base product rows)
         $comboRowIndexes = array(); // id_product => list of indexes in $out (combination rows)
         $familyAttrKeys = array(); // id_product => array('color' => true, 'size' => true, ...)
 
-        // Base products with a reference.
-        $sql = 'SELECT p.`id_product`, p.`reference` AS sku, p.`price`, p.`ean13`,
-                       p.`id_category_default`,
+        // Base products. The SKU is built from the configured source field
+        // (reference / EAN / supplier reference) plus the optional prefix,
+        // so rows are pre-filtered only on being active.
+        $sql = 'SELECT p.`id_product`, p.`reference`, p.`supplier_reference`, p.`price`, p.`ean13`,
+                       p.`weight`, p.`date_upd`, p.`id_category_default`,
                        pl.`name`, pl.`description`, pl.`description_short`,
                        m.`name` AS manufacturer_name
                 FROM `' . _DB_PREFIX_ . 'product` p
                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ' AND pl.`id_shop` = ' . $idShop . ')
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
-                WHERE p.`reference` IS NOT NULL AND p.`reference` <> \'\'
+                WHERE p.`active` = 1
                 ORDER BY p.`id_product`
                 LIMIT ' . (int) self::MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $sku = trim($r['sku']);
+                $sku = AmazonListingSettings::buildSku($r);
                 if ($sku === '' || isset($seen[$sku])) {
                     continue;
                 }
-                $seen[$sku] = true;
                 $idProduct = (int) $r['id_product'];
+
+                if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
+                    $filteredOut++;
+                    continue;
+                }
+                if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
+                    && $r['date_upd'] < $deltaCutoff) {
+                    continue;
+                }
+
+                $price = AmazonListingSettings::applySpecificPrice((float) $r['price'], $idProduct, 0);
+                $price = AmazonListingSettings::applyMarkup($price, $idProduct);
+                $quantity = $this->getQuantity($idProduct, 0, $idShop);
+
+                if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
+                    || ($qtyMin > 0 && $quantity < $qtyMin)) {
+                    $filteredOut++;
+                    continue;
+                }
+
+                $seen[$sku] = true;
                 $images = $this->getProductImageUrls($idProduct, 0, $shopUrl);
 
                 $baseRowIndex[$idProduct] = count($out);
@@ -532,8 +565,8 @@ class AmazonProductSync
                     'id_product' => $idProduct,
                     'id_product_attribute' => 0,
                     'name' => $r['name'],
-                    'price' => (float) $r['price'],
-                    'quantity' => $this->getQuantity($idProduct, 0, $idShop),
+                    'price' => $price,
+                    'quantity' => $quantity,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
                     'manufacturer' => (string) $r['manufacturer_name'],
@@ -544,31 +577,59 @@ class AmazonProductSync
             }
         }
 
-        // Combinations with their own reference.
-        $sql = 'SELECT pa.`id_product`, pa.`id_product_attribute`, pa.`reference` AS sku,
-                       pa.`ean13` AS combo_ean,
+        // Combinations (their own reference / EAN / supplier reference).
+        $sql = 'SELECT pa.`id_product`, pa.`id_product_attribute`, pa.`reference`,
+                       pa.`supplier_reference`, pa.`ean13` AS combo_ean,
                        (p.`price` + pa.`price`) AS price, pl.`name`,
-                       pl.`description`, pl.`description_short`,
-                       p.`ean13` AS product_ean, p.`id_category_default`,
+                       pl.`description`, pl.`description_short`, p.`date_upd`,
+                       p.`ean13` AS product_ean, p.`supplier_reference` AS product_supplier_ref,
+                       p.`id_category_default`,
                        m.`name` AS manufacturer_name
                 FROM `' . _DB_PREFIX_ . 'product_attribute` pa
                 INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = pa.`id_product`)
                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ' AND pl.`id_shop` = ' . $idShop . ')
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
-                WHERE pa.`reference` IS NOT NULL AND pa.`reference` <> \'\'
+                WHERE p.`active` = 1
                 ORDER BY pa.`id_product_attribute`
                 LIMIT ' . (int) self::MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $sku = trim($r['sku']);
+                // Combination falls back to the base product's identifiers.
+                $skuRow = array(
+                    'reference' => $r['reference'],
+                    'ean13' => (trim((string) $r['combo_ean']) !== '') ? $r['combo_ean'] : $r['product_ean'],
+                    'supplier_reference' => (trim((string) $r['supplier_reference']) !== '')
+                        ? $r['supplier_reference'] : $r['product_supplier_ref'],
+                );
+                $sku = AmazonListingSettings::buildSku($skuRow);
                 if ($sku === '' || isset($seen[$sku])) {
                     continue;
                 }
-                $seen[$sku] = true;
                 $idProduct = (int) $r['id_product'];
                 $idPa = (int) $r['id_product_attribute'];
+
+                if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
+                    $filteredOut++;
+                    continue;
+                }
+                if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
+                    && $r['date_upd'] < $deltaCutoff) {
+                    continue;
+                }
+
+                $price = AmazonListingSettings::applySpecificPrice((float) $r['price'], $idProduct, $idPa);
+                $price = AmazonListingSettings::applyMarkup($price, $idProduct);
+                $quantity = $this->getQuantity($idProduct, $idPa, $idShop);
+
+                if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
+                    || ($qtyMin > 0 && $quantity < $qtyMin)) {
+                    $filteredOut++;
+                    continue;
+                }
+
+                $seen[$sku] = true;
 
                 // Get variation-specific name (append attribute values)
                 $comboName = $r['name'];
@@ -605,8 +666,8 @@ class AmazonProductSync
                     'id_product' => $idProduct,
                     'id_product_attribute' => $idPa,
                     'name' => $comboName,
-                    'price' => (float) $r['price'],
-                    'quantity' => $this->getQuantity($idProduct, $idPa, $idShop),
+                    'price' => $price,
+                    'quantity' => $quantity,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
                     'manufacturer' => (string) $r['manufacturer_name'],
@@ -643,6 +704,15 @@ class AmazonProductSync
                 $out[$i]['parent_sku'] = $parentSku;
                 $out[$i]['variation_theme'] = $theme;
             }
+        }
+
+        if ($filteredOut > 0) {
+            $this->notices[] = $filteredOut . ' product(s) excluded by export filters '
+                . '(price min/max, quantity min, or sync switched off).';
+        }
+        if ($deltaCutoff !== null) {
+            $this->notices[] = 'Delta export: only products updated in the last ' . $deltaHours
+                . ' hour(s) or queued by rule changes were collected.';
         }
 
         return $out;
@@ -1136,12 +1206,21 @@ class AmazonProductSync
      */
     public function pushToAmazon($limit = 25)
     {
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $this->ensureTables();
         $this->notices = array();
 
         $limit = (int) $limit;
+        // A configured export line limit caps every push batch.
+        $exportLimit = (int) Configuration::get('AMZPRO_EXPORT_LIMIT');
+        if ($exportLimit > 0 && $exportLimit < $limit) {
+            $limit = $exportLimit;
+        }
+
+        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
+
         $rows = Db::getInstance()->executeS(
-            'SELECT p.`seller_sku`, p.`id_product`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
+            'SELECT p.`seller_sku`, p.`id_product`, p.`id_product_attribute`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
                     p.`ps_description`, p.`ps_description_short`, p.`ps_manufacturer`,
                     p.`ps_ean13`, p.`ps_id_category_default`, p.`ps_images`, p.`amazon_asin`,
                     p.`parent_sku`, p.`is_parent`, p.`variation_theme`, p.`variation_attributes`,
@@ -1150,7 +1229,8 @@ class AmazonProductSync
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (cm.`id_category` = p.`ps_id_category_default`
                      AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')
+             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . $limit
         );
@@ -1160,21 +1240,29 @@ class AmazonProductSync
 
         if (empty($rows)) {
             $this->notices[] = 'Nothing to push. Run "Sync PrestaShop -> Amazon" first, '
-                . 'and make sure there are ps_only / conflict rows to send.';
+                . 'and make sure there are ps_only / conflict rows to send.'
+                . ($onlyWithAsin ? ' Note: "Export only products with ASIN" is enabled.' : '');
         }
 
         $results = array();
         $pushed = 0;
         $failed = 0;
+        $pushedProductIds = array();
         foreach ($rows as $r) {
             $res = $this->pushOne($r);
             $results[] = $res;
             if ($res['status'] === 'ACCEPTED') {
                 $pushed++;
+                if (!empty($r['id_product'])) {
+                    $pushedProductIds[] = (int) $r['id_product'];
+                }
             } else {
                 $failed++;
             }
         }
+
+        // Synced products leave the change queue (they're no longer "modified").
+        AmazonListingSettings::deactivateQueued($pushedProductIds);
 
         if ($this->useMock) {
             $this->notices[] = 'MOCK MODE: submissions are simulated — no real Amazon call was made.';
@@ -1204,9 +1292,33 @@ class AmazonProductSync
             return array('sku' => $sku, 'status' => 'SKIPPED', 'issues' => 'No seller id configured (production only).');
         }
 
+        // Price-only / quantity-only modes send a partial PATCH instead of a
+        // full listing replace.
+        $syncMode = (string) Configuration::get('AMZPRO_SYNC_MODE');
+        if (($syncMode === 'price' || $syncMode === 'quantity') && empty($r['is_parent'])) {
+            $body = $this->buildPatchBody($r, $syncMode);
+            $resp = $this->client->request(
+                'PATCH',
+                '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
+                array('marketplaceIds' => $this->marketplaceId),
+                $body
+            );
+            if ($resp === false) {
+                return array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+            }
+            $status = (is_array($resp['body']) && isset($resp['body']['status']))
+                ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
+            $issues = (is_array($resp['body']) && isset($resp['body']['issues']))
+                ? json_encode($resp['body']['issues']) : '';
+            return array('sku' => $sku, 'status' => $status, 'issues' => $issues);
+        }
+
         // Optional: delete the listing entirely when it runs out of stock
         // (instead of publishing quantity 0). Parents are never deleted.
+        // Skipped while "force all quantities to zero" is on — that mode means
+        // "publish 0 everywhere", not "delist the whole catalog".
         if (Configuration::get('AMZPRO_DELETE_WHEN_OOS')
+            && !Configuration::get('AMZPRO_FORCE_ZERO_QTY')
             && empty($r['is_parent'])
             && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
             $resp = $this->client->request(
@@ -1258,10 +1370,18 @@ class AmazonProductSync
      */
     public function collectFeedMessages($limit = 500)
     {
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $this->ensureTables();
 
+        $exportLimit = (int) Configuration::get('AMZPRO_EXPORT_LIMIT');
+        if ($exportLimit > 0 && $exportLimit < (int) $limit) {
+            $limit = $exportLimit;
+        }
+        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
+        $syncMode = (string) Configuration::get('AMZPRO_SYNC_MODE');
+
         $rows = Db::getInstance()->executeS(
-            'SELECT p.`seller_sku`, p.`id_product`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
+            'SELECT p.`seller_sku`, p.`id_product`, p.`id_product_attribute`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
                     p.`ps_description`, p.`ps_description_short`, p.`ps_manufacturer`,
                     p.`ps_ean13`, p.`ps_id_category_default`, p.`ps_images`, p.`amazon_asin`,
                     p.`parent_sku`, p.`is_parent`, p.`variation_theme`, p.`variation_attributes`,
@@ -1270,7 +1390,8 @@ class AmazonProductSync
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (cm.`id_category` = p.`ps_id_category_default`
                      AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')
+             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . (int) $limit
         );
@@ -1280,12 +1401,32 @@ class AmazonProductSync
 
         $messages = array();
         $skipped = array();
+        $idProducts = array();
         $messageId = 1;
 
         foreach ($rows as $r) {
             $sku = $r['seller_sku'];
 
+            // Price-only / quantity-only modes patch the offer instead of
+            // replacing the whole listing. Parents carry no offer — skip them.
+            if ($syncMode === 'price' || $syncMode === 'quantity') {
+                if (!empty($r['is_parent'])) {
+                    continue;
+                }
+                $messages[] = array_merge(
+                    array(
+                        'messageId' => $messageId++,
+                        'sku' => $sku,
+                        'operationType' => 'PATCH',
+                    ),
+                    $this->buildPatchBody($r, $syncMode)
+                );
+                $idProducts[] = (int) $r['id_product'];
+                continue;
+            }
+
             if (Configuration::get('AMZPRO_DELETE_WHEN_OOS')
+                && !Configuration::get('AMZPRO_FORCE_ZERO_QTY')
                 && empty($r['is_parent'])
                 && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
                 $messages[] = array(
@@ -1294,6 +1435,7 @@ class AmazonProductSync
                     'operationType' => 'DELETE',
                     'productType' => 'PRODUCT',
                 );
+                $idProducts[] = (int) $r['id_product'];
                 continue;
             }
 
@@ -1311,9 +1453,51 @@ class AmazonProductSync
                 ),
                 $body
             );
+            $idProducts[] = (int) $r['id_product'];
         }
 
-        return array('messages' => $messages, 'skipped' => $skipped);
+        return array('messages' => $messages, 'skipped' => $skipped, 'id_products' => $idProducts);
+    }
+
+    /**
+     * Partial update body (price-only or quantity-only sync mode) for both the
+     * Listings Items PATCH call and JSON_LISTINGS_FEED PATCH messages.
+     *
+     * @param array  $r    Staged row
+     * @param string $mode 'price' | 'quantity'
+     * @return array array('productType' => ..., 'patches' => array(...))
+     */
+    private function buildPatchBody($r, $mode)
+    {
+        if ($mode === 'quantity') {
+            $patch = array(
+                'op' => 'replace',
+                'path' => '/attributes/fulfillment_availability',
+                'value' => array(array(
+                    'fulfillment_channel_code' => 'DEFAULT',
+                    'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+                    'marketplace_id' => $this->marketplaceId,
+                )),
+            );
+        } else {
+            $offer = array(
+                'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
+                'marketplace_id' => $this->marketplaceId,
+                'our_price' => array(array(
+                    'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
+                )),
+            );
+            $patch = array(
+                'op' => 'replace',
+                'path' => '/attributes/purchasable_offer',
+                'value' => array($offer),
+            );
+        }
+
+        return array(
+            'productType' => !empty($r['amazon_product_type']) ? $r['amazon_product_type'] : 'PRODUCT',
+            'patches' => array($patch),
+        );
     }
 
     /**
@@ -1428,6 +1612,19 @@ class AmazonProductSync
      */
     private function buildFullListingBody($r, $bulletPoints, $images)
     {
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
+        $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
+
+        $availability = array(
+            'fulfillment_channel_code' => 'DEFAULT',
+            'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+        );
+        // Handling time (category/manufacturer/supplier cascade, module default)
+        $delay = AmazonListingSettings::resolveDelay($idProduct);
+        if ($delay > 0) {
+            $availability['lead_time_to_ship_max_days'] = $delay;
+        }
+
         $attributes = array(
             'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
             'item_name' => array(array(
@@ -1441,11 +1638,42 @@ class AmazonProductSync
                     'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
                 )),
             )),
-            'fulfillment_availability' => array(array(
-                'fulfillment_channel_code' => 'DEFAULT',
-                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-            )),
+            'fulfillment_availability' => array($availability),
         );
+
+        // Condition note for used / refurbished listings
+        $condNote = $this->conditionNote();
+        if ($condNote !== '') {
+            $attributes['condition_note'] = array(array(
+                'value' => $condNote,
+                'marketplace_id' => $this->marketplaceId,
+            ));
+        }
+
+        // GPSR responsible-person contact (product > manufacturer/supplier priority)
+        $gpsr = AmazonListingSettings::resolveGpsrContact($idProduct);
+        if ($gpsr !== '') {
+            if (filter_var($gpsr, FILTER_VALIDATE_EMAIL)) {
+                $attributes['gpsr_manufacturer_email_address'] = array(array(
+                    'value' => $gpsr,
+                    'marketplace_id' => $this->marketplaceId,
+                ));
+            } else {
+                $attributes['gpsr_manufacturer_reference'] = array(array(
+                    'value' => $gpsr,
+                    'marketplace_id' => $this->marketplaceId,
+                ));
+            }
+        }
+
+        // Country of origin (from the manufacturer rule)
+        $coo = AmazonListingSettings::resolveCountryOfOrigin($idProduct);
+        if ($coo !== '') {
+            $attributes['country_of_origin'] = array(array(
+                'value' => $coo,
+                'marketplace_id' => $this->marketplaceId,
+            ));
+        }
 
         // Description
         $desc = isset($r['ps_description']) ? strip_tags(trim((string) $r['ps_description'])) : '';
@@ -1479,10 +1707,15 @@ class AmazonProductSync
             ));
         }
 
-        // EAN / external product ID
+        // EAN / external product ID. The merchant can force the field to be
+        // treated as UPC (US barcodes stored in the EAN-13 field).
         $ean = isset($r['ps_ean13']) ? trim((string) $r['ps_ean13']) : '';
         if ($ean !== '' && strlen($ean) >= 8) {
-            $idType = (strlen($ean) === 13) ? 'EAN' : 'UPC';
+            if (Configuration::get('AMZPRO_EAN_AS') === 'UPC') {
+                $idType = 'UPC';
+            } else {
+                $idType = (strlen($ean) === 13) ? 'EAN' : 'UPC';
+            }
             $attributes['externally_assigned_product_identifier'] = array(array(
                 'type' => $idType,
                 'value' => $ean,
@@ -1510,9 +1743,12 @@ class AmazonProductSync
         // required fields, GPSR/compliance data, etc.)
         $attributes = $this->applyAttributeTemplate($attributes, $r);
 
-        // Shipping template + B2B price
+        // Shipping template (price/weight ranges when enabled) + B2B price
         $attributes = AmazonSpApiClient::enrichOfferAttributes(
-            $attributes, $this->marketplaceId, (float) $r['ps_price']
+            $attributes, $this->marketplaceId, (float) $r['ps_price'],
+            AmazonListingSettings::resolveShippingTemplate(
+                (float) $r['ps_price'], $this->productWeight($r)
+            )
         );
 
         return array(
@@ -1520,6 +1756,42 @@ class AmazonProductSync
             'requirements' => 'LISTING',
             'attributes' => $attributes,
         );
+    }
+
+    /** Condition note for the configured (non-new) listing condition, or ''. */
+    private function conditionNote()
+    {
+        $condition = AmazonSpApiClient::listingCondition();
+        if (strpos($condition, 'used') === 0) {
+            return trim((string) Configuration::get('AMZPRO_COND_NOTE_USED'));
+        }
+        if (strpos($condition, 'refurbished') === 0) {
+            return trim((string) Configuration::get('AMZPRO_COND_NOTE_REFURB'));
+        }
+
+        return '';
+    }
+
+    /** Product (+combination impact) weight for shipping-template ranges. */
+    private function productWeight($r)
+    {
+        $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
+        if (!$idProduct) {
+            return 0.0;
+        }
+        $idPa = isset($r['id_product_attribute']) ? (int) $r['id_product_attribute'] : 0;
+
+        $weight = (float) Db::getInstance()->getValue(
+            'SELECT `weight` FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . $idProduct
+        );
+        if ($idPa) {
+            $weight += (float) Db::getInstance()->getValue(
+                'SELECT `weight` FROM `' . _DB_PREFIX_ . 'product_attribute`
+                 WHERE `id_product_attribute` = ' . $idPa
+            );
+        }
+
+        return $weight;
     }
 
     /**
@@ -1608,6 +1880,18 @@ class AmazonProductSync
      */
     private function buildOfferOnlyBody($r)
     {
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
+        $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
+
+        $availability = array(
+            'fulfillment_channel_code' => 'DEFAULT',
+            'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+        );
+        $delay = AmazonListingSettings::resolveDelay($idProduct);
+        if ($delay > 0) {
+            $availability['lead_time_to_ship_max_days'] = $delay;
+        }
+
         $attributes = array(
             'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
             'purchasable_offer' => array(array(
@@ -1617,11 +1901,16 @@ class AmazonProductSync
                     'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
                 )),
             )),
-            'fulfillment_availability' => array(array(
-                'fulfillment_channel_code' => 'DEFAULT',
-                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-            )),
+            'fulfillment_availability' => array($availability),
         );
+
+        $condNote = $this->conditionNote();
+        if ($condNote !== '') {
+            $attributes['condition_note'] = array(array(
+                'value' => $condNote,
+                'marketplace_id' => $this->marketplaceId,
+            ));
+        }
 
         // A known ASIN lets Amazon match the offer to the right catalog page.
         if (!empty($r['amazon_asin'])) {
@@ -1631,9 +1920,12 @@ class AmazonProductSync
             ));
         }
 
-        // Shipping template + B2B price
+        // Shipping template (price/weight ranges when enabled) + B2B price
         $attributes = AmazonSpApiClient::enrichOfferAttributes(
-            $attributes, $this->marketplaceId, (float) $r['ps_price']
+            $attributes, $this->marketplaceId, (float) $r['ps_price'],
+            AmazonListingSettings::resolveShippingTemplate(
+                (float) $r['ps_price'], $this->productWeight($r)
+            )
         );
 
         return array(

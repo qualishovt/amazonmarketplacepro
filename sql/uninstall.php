@@ -12,6 +12,10 @@ if (!defined('_PS_VERSION_')) {
 
 $sql = array();
 
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting`';
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`';
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`';
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`';

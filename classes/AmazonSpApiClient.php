@@ -102,7 +102,9 @@ class AmazonSpApiClient
      */
     public static function storedRefreshToken($sandbox = null)
     {
-        return (string) Configuration::get(self::refreshTokenKey($sandbox));
+        // Connection state is stored globally: the admin (any shop context)
+        // and the front/cron controllers must all see the same token.
+        return (string) Configuration::getGlobalValue(self::refreshTokenKey($sandbox));
     }
 
     /**
@@ -123,6 +125,10 @@ class AmazonSpApiClient
      */
     public static function effectiveQuantity($rawQuantity)
     {
+        // Panic switch: publish 0 for everything (e.g. before holidays).
+        if (Configuration::get('AMZPRO_FORCE_ZERO_QTY')) {
+            return 0;
+        }
         $buffer = (int) Configuration::get('AMZPRO_STOCK_BUFFER');
         $qty = (int) $rawQuantity - max(0, $buffer);
         return ($qty > 0) ? $qty : 0;
@@ -151,12 +157,16 @@ class AmazonSpApiClient
      * @param array  $attributes    Listing attributes (by reference semantics via return)
      * @param string $marketplaceId
      * @param float  $priceTaxIncl  The B2C price the B2B discount applies to
+     * @param string|null $templateOverride Resolved shipping template name (e.g. from
+     *                                      price/weight ranges); null = use the static config
      * @return array
      */
-    public static function enrichOfferAttributes($attributes, $marketplaceId, $priceTaxIncl)
+    public static function enrichOfferAttributes($attributes, $marketplaceId, $priceTaxIncl, $templateOverride = null)
     {
         // Shipping template assignment
-        $template = trim((string) Configuration::get('AMZPRO_SHIPPING_TEMPLATE'));
+        $template = ($templateOverride !== null)
+            ? trim((string) $templateOverride)
+            : trim((string) Configuration::get('AMZPRO_SHIPPING_TEMPLATE'));
         if ($template !== '' && !isset($attributes['merchant_shipping_group'])) {
             $attributes['merchant_shipping_group'] = array(array(
                 'value' => $template,

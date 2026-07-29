@@ -43,8 +43,13 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
     {
         require_once _PS_MODULE_DIR_ . 'amazonmarketplacepro/classes/AmazonSpApiClient.php';
 
+        // Connection state lives in GLOBAL configuration rows. This front
+        // controller runs in shop context, where plain get()/updateValue()
+        // would read/create shop-scoped rows that shadow what the admin
+        // wrote — the nonce would never match and the token would be
+        // invisible to the back office.
         $nonce = (string) Tools::getValue('nonce');
-        $expected = (string) Configuration::get('AMZPRO_OAUTH_NONCE');
+        $expected = (string) Configuration::getGlobalValue('AMZPRO_OAUTH_NONCE');
 
         if ($expected === '' || $nonce === '' || !hash_equals($expected, $nonce)) {
             $this->htmlPage(
@@ -56,7 +61,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         }
 
         // Nonce is single-use.
-        Configuration::updateValue('AMZPRO_OAUTH_NONCE', '');
+        Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', '');
 
         $error = (string) Tools::getValue('mkpro_oauth_error');
         if ($error !== '') {
@@ -77,24 +82,29 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         }
 
         // Sandbox and production tokens are stored apart — see refreshTokenKey().
-        Configuration::updateValue(AmazonSpApiClient::refreshTokenKey(), $refreshToken);
-        Configuration::updateValue('AMZPRO_AUTH_MODE', 'connect');
+        Configuration::updateGlobalValue(AmazonSpApiClient::refreshTokenKey(), $refreshToken);
+        Configuration::updateGlobalValue('AMZPRO_AUTH_MODE', 'connect');
 
         // Amazon tells us the seller's id — that's the Merchant Token the
         // Listings API needs, so the merchant never has to look it up.
         $sellingPartnerId = (string) Tools::getValue('selling_partner_id');
         if ($sellingPartnerId !== '') {
-            Configuration::updateValue('AMZPRO_SELLING_PARTNER_ID', $sellingPartnerId);
-            Configuration::updateValue('AMZPRO_SELLER_ID', $sellingPartnerId);
+            Configuration::updateGlobalValue('AMZPRO_SELLING_PARTNER_ID', $sellingPartnerId);
+            Configuration::updateGlobalValue('AMZPRO_SELLER_ID', $sellingPartnerId);
         }
 
-        // A connected app talks to the real API.
-        Configuration::updateValue('AMZPRO_ENVIRONMENT', 'production');
-        Configuration::updateValue('AMZPRO_USE_MOCK', '0');
+        // A connected customer shop talks to the real API. Dev shops keep
+        // their selected environment — the token was just stored in that
+        // environment's slot, so forcing production would orphan a sandbox
+        // token and break the sandbox connection state.
+        if (!Configuration::get('AMZPRO_DEV_MODE')) {
+            Configuration::updateGlobalValue('AMZPRO_ENVIRONMENT', 'production');
+            Configuration::updateGlobalValue('AMZPRO_USE_MOCK', '0');
+        }
 
         // Send the merchant back to the admin page they clicked Connect on.
-        $returnUrl = (string) Configuration::get('AMZPRO_OAUTH_RETURN_URL');
-        Configuration::updateValue('AMZPRO_OAUTH_RETURN_URL', '');
+        $returnUrl = (string) Configuration::getGlobalValue('AMZPRO_OAUTH_RETURN_URL');
+        Configuration::updateGlobalValue('AMZPRO_OAUTH_RETURN_URL', '');
         if ($returnUrl !== '' && preg_match('#^https?://#i', $returnUrl)) {
             $sep = (strpos($returnUrl, '?') !== false) ? '&' : '?';
             Tools::redirect($returnUrl . $sep . 'mkpro_connected=1');

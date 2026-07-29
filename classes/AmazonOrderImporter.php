@@ -209,10 +209,19 @@ class AmazonOrderImporter
         } while ($nextToken !== null);
 
         $summary['fetched'] = count($orders);
+        $importFba = (Configuration::get('AMZPRO_IMPORT_FBA_ORDERS') === false)
+            ? true : (bool) Configuration::get('AMZPRO_IMPORT_FBA_ORDERS');
+        $skippedFba = 0;
 
         foreach ($orders as $order) {
             $amazonId = isset($order['AmazonOrderId']) ? $order['AmazonOrderId'] : null;
             if ($amazonId === null || $amazonId === '') {
+                continue;
+            }
+            // FBA (AFN) orders are shipped by Amazon; importing them is optional.
+            if (!$importFba && isset($order['FulfillmentChannel'])
+                && $order['FulfillmentChannel'] === 'AFN') {
+                $skippedFba++;
                 continue;
             }
             if ($this->orderExists($amazonId)) {
@@ -229,7 +238,7 @@ class AmazonOrderImporter
             $orderTax = 0;
 
             foreach ($items as $idx => $it) {
-                $res = $this->resolveProduct($it['seller_sku']);
+                $res = $this->resolveProduct($it['seller_sku'], isset($it['asin']) ? $it['asin'] : '');
                 $items[$idx]['id_product'] = $res['id_product'];
                 $items[$idx]['id_product_attribute'] = $res['id_product_attribute'];
                 if ($res['id_product']) {
@@ -256,7 +265,28 @@ class AmazonOrderImporter
             $summary['items_unmatched'] += $unmatched;
         }
 
+        if ($skippedFba > 0) {
+            $summary['skipped_fba'] = $skippedFba;
+        }
+
         return $summary;
+    }
+
+    /**
+     * The CreatedAfter date for order imports, from the configured lookback
+     * window (e.g. "7 days" or "12 hours").
+     *
+     * @return string ISO-8601 timestamp
+     */
+    public static function configuredCreatedAfter()
+    {
+        $value = (int) Configuration::get('AMZPRO_ORDER_LOOKBACK_VALUE');
+        if ($value <= 0) {
+            $value = 7;
+        }
+        $unit = (Configuration::get('AMZPRO_ORDER_LOOKBACK_UNIT') === 'hours') ? 3600 : 86400;
+
+        return gmdate('Y-m-d\TH:i:s\Z', time() - $value * $unit);
     }
 
     /**
@@ -415,9 +445,25 @@ class AmazonOrderImporter
      *
      * @return array array('id_product' => int, 'id_product_attribute' => int)
      */
-    private function resolveProduct($sku)
+    private function resolveProduct($sku, $asin = '')
     {
         $res = array('id_product' => 0, 'id_product_attribute' => 0);
+
+        // Optional: trust the ASIN before the SKU. Uses the staged product
+        // table, where "Match ASINs by EAN" / Amazon syncs record the mapping.
+        $asin = trim((string) $asin);
+        if ($asin !== '' && Configuration::get('AMZPRO_PRIORITIZE_ASIN')) {
+            $row = Db::getInstance()->getRow(
+                'SELECT `id_product`, `id_product_attribute`
+                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                 WHERE `amazon_asin` = \'' . pSQL($asin) . '\' AND `id_product` > 0'
+            );
+            if ($row && (int) $row['id_product']) {
+                $res['id_product'] = (int) $row['id_product'];
+                $res['id_product_attribute'] = (int) $row['id_product_attribute'];
+                return $res;
+            }
+        }
 
         $sku = trim((string) $sku);
         if ($sku === '') {

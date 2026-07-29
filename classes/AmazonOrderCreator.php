@@ -102,6 +102,7 @@ class AmazonOrderCreator
             'total' => count($rows),
             'created' => 0,
             'skipped' => 0,
+            'pending' => 0,
             'failed' => 0,
             'errors' => array(),
         );
@@ -117,7 +118,10 @@ class AmazonOrderCreator
             }
 
             $result = $this->createOneOrder($row);
-            if ($result === false) {
+            if ($result === 'pending_stock') {
+                $summary['pending']++;
+                $this->notices[] = $amazonId . ': moved to Pending Orders (' . $this->lastError . ')';
+            } elseif ($result === false) {
                 $summary['failed']++;
                 $summary['errors'][] = $amazonId . ': ' . $this->lastError;
             } else {
@@ -132,9 +136,11 @@ class AmazonOrderCreator
      * Create a single PS order from a staged Amazon order row.
      *
      * @param array $stagedOrder Row from amazonmarketplacepro_order
-     * @return int|false PS order ID on success, false on failure
+     * @param bool  $force       Skip the out-of-stock gate (Pending Orders "create anyway")
+     * @return int|string|false PS order ID on success, 'pending_stock' when the
+     *                          order was parked in Pending Orders, false on failure
      */
-    public function createOneOrder($stagedOrder)
+    public function createOneOrder($stagedOrder, $force = false)
     {
         $this->lastError = null;
         $amazonId = $stagedOrder['amazon_order_id'];
@@ -151,9 +157,34 @@ class AmazonOrderCreator
             return false;
         }
 
-        // 1. Find or create customer
+        // Out-of-stock gate: orders whose products lack stock (and cannot be
+        // ordered out of stock) are parked in Pending Orders instead of
+        // being created. FBA orders ship from Amazon stock — never parked.
+        $channel = isset($stagedOrder['fulfillment_channel']) ? $stagedOrder['fulfillment_channel'] : 'MFN';
+        if (!$force && $channel !== 'AFN' && Configuration::get('AMZPRO_SKIP_NO_STOCK')) {
+            $shortages = $this->stockShortages($items);
+            if (!empty($shortages)) {
+                Db::getInstance()->execute(
+                    'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                     SET `import_status` = \'pending_stock\',
+                         `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+                     WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
+                );
+                $this->lastError = 'insufficient stock: ' . implode('; ', $shortages);
+                return 'pending_stock';
+            }
+        }
+
+        // 1. Find or create customer (optionally under an anonymized address)
+        $buyerEmail = $stagedOrder['buyer_email'];
+        if (Configuration::get('AMZPRO_FAKE_EMAIL') && trim((string) $buyerEmail) !== '') {
+            // Amazon relay addresses expire; a stable synthetic address keeps
+            // one customer account per buyer order without leaking PII.
+            $buyerEmail = Tools::strtolower(preg_replace('/[^a-zA-Z0-9\-]/', '', $amazonId))
+                . '@marketplace.amazon';
+        }
         $customer = $this->findOrCreateCustomer(
-            $stagedOrder['buyer_email'],
+            $buyerEmail,
             $stagedOrder['buyer_name']
         );
         if (!$customer || !$customer->id) {
@@ -230,6 +261,18 @@ class AmazonOrderCreator
         $totalPaidTaxExcl = $totalProducts + $shippingTotal - $totalDiscount;
         $totalPaidTaxIncl = $orderTotal;
 
+        // Order state: FBA and already-shipped orders can land in their own
+        // states (both optional; default state otherwise).
+        $idOrderState = $this->idOrderState;
+        $fbaState = (int) Configuration::get('AMZPRO_FBA_ORDER_STATE');
+        $shippedState = (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED');
+        if ($channel === 'AFN' && $fbaState > 0) {
+            $idOrderState = $fbaState;
+        } elseif (isset($stagedOrder['order_status']) && $stagedOrder['order_status'] === 'Shipped'
+            && $shippedState > 0) {
+            $idOrderState = $shippedState;
+        }
+
         $order = new Order();
         $order->id_customer = (int) $customer->id;
         $order->id_address_delivery = (int) $address->id;
@@ -240,7 +283,7 @@ class AmazonOrderCreator
         $order->id_shop = $this->idShop;
         $order->id_shop_group = (int) Context::getContext()->shop->id_shop_group;
         $order->id_carrier = $this->idCarrier;
-        $order->current_state = $this->idOrderState;
+        $order->current_state = $idOrderState;
         $order->payment = 'Amazon Marketplace';
         $order->module = 'marketplacespro';
         $order->total_paid = $totalPaidTaxIncl;
@@ -284,7 +327,7 @@ class AmazonOrderCreator
         $history = new OrderHistory();
         $history->id_order = (int) $order->id;
         $history->id_employee = 0;
-        $history->changeIdOrderState($this->idOrderState, (int) $order->id);
+        $history->changeIdOrderState($idOrderState, (int) $order->id);
         $history->add();
 
         // 9. Create OrderPayment
@@ -348,22 +391,69 @@ class AmazonOrderCreator
         // Parse name
         $parts = $this->splitName($fullName);
 
+        // Amazon buyers can be filed under a dedicated customer group (own
+        // pricing/tax rules, easy filtering). Falls back to the shop default.
+        $idGroup = (int) Configuration::get('AMZPRO_CUSTOMER_GROUP');
+        if ($idGroup <= 0) {
+            $idGroup = (int) Configuration::get('PS_CUSTOMER_GROUP');
+        }
+
         $customer = new Customer();
         $customer->email = $email;
         $customer->firstname = $parts['firstname'];
         $customer->lastname = $parts['lastname'];
         $customer->passwd = md5(uniqid((string) rand(), true));
-        $customer->id_default_group = (int) Configuration::get('PS_CUSTOMER_GROUP');
+        $customer->id_default_group = $idGroup;
         $customer->id_lang = $this->idLang;
         $customer->id_shop = $this->idShop;
         $customer->active = 1;
         $customer->is_guest = 1;
 
         if ($customer->add()) {
+            $customer->addGroups(array($idGroup));
             return $customer;
         }
 
         return false;
+    }
+
+    /**
+     * Items that cannot be fulfilled from PrestaShop stock (and whose product
+     * does not allow out-of-stock orders).
+     *
+     * @param array $items Matched staged order items
+     * @return array Human-readable shortage descriptions, empty when fulfillable
+     */
+    private function stockShortages($items)
+    {
+        $shortages = array();
+        foreach ($items as $it) {
+            $idProduct = (int) $it['id_product'];
+            if (!$idProduct) {
+                continue;
+            }
+            $idPa = (int) $it['id_product_attribute'];
+            $qty = max(1, (int) $it['quantity']);
+
+            $available = (int) StockAvailable::getQuantityAvailableByProduct(
+                $idProduct, $idPa ? $idPa : null, $this->idShop
+            );
+            if ($available >= $qty) {
+                continue;
+            }
+
+            // Products configured to accept out-of-stock orders don't block.
+            $oosBehaviour = (int) StockAvailable::outOfStock($idProduct, $this->idShop);
+            $acceptsOos = ($oosBehaviour === 1)
+                || ($oosBehaviour === 2 && Configuration::get('PS_ORDER_OUT_OF_STOCK'));
+            if ($acceptsOos) {
+                continue;
+            }
+
+            $shortages[] = $it['seller_sku'] . ' ordered ' . $qty . ', available ' . $available;
+        }
+
+        return $shortages;
     }
 
     /**

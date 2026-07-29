@@ -84,7 +84,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.0.0';
+        $this->version = '1.1.0';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -137,6 +137,45 @@ class AmazonMarketplacePro extends Module
         // hidden for customers; IntelliPresta enables this flag on dev shops.
         Configuration::updateValue('AMZPRO_DEV_MODE', '0');
 
+        // SKU & export filters
+        Configuration::updateValue('AMZPRO_SKU_PREFIX', '');
+        Configuration::updateValue('AMZPRO_SKU_SOURCE', 'reference');
+        Configuration::updateValue('AMZPRO_PRICE_MIN', '0');
+        Configuration::updateValue('AMZPRO_PRICE_MAX', '0');
+        Configuration::updateValue('AMZPRO_QTY_MIN', '0');
+        Configuration::updateValue('AMZPRO_USE_SPECIFIC_PRICES', '0');
+        Configuration::updateValue('AMZPRO_SPECIFIC_PRICE_GROUP', '0');
+        Configuration::updateValue('AMZPRO_REPORT_EMAIL', '');
+        // Markup / handling delay cascades
+        Configuration::updateValue('AMZPRO_DEFAULT_MARKUP', '');
+        Configuration::updateValue('AMZPRO_MARKUP_SOURCES', 'category,manufacturer,supplier');
+        Configuration::updateValue('AMZPRO_DEFAULT_DELAY', '0');
+        Configuration::updateValue('AMZPRO_DELAY_SOURCES', 'category,manufacturer,supplier');
+        Configuration::updateValue('AMZPRO_GPSR_PRIORITY', 'manufacturer');
+        // Sync modes & options
+        Configuration::updateValue('AMZPRO_SYNC_MODE', 'normal');
+        Configuration::updateValue('AMZPRO_FORCE_ZERO_QTY', '0');
+        Configuration::updateValue('AMZPRO_ONLY_WITH_ASIN', '0');
+        Configuration::updateValue('AMZPRO_EXPORT_LIMIT', '0');
+        Configuration::updateValue('AMZPRO_EAN_AS', 'EAN');
+        Configuration::updateValue('AMZPRO_DELTA_HOURS', '0');
+        Configuration::updateValue('AMZPRO_COND_NOTE_USED', '');
+        Configuration::updateValue('AMZPRO_COND_NOTE_REFURB', '');
+        Configuration::updateValue('AMZPRO_QUEUE_TTL_DAYS', '7');
+        // Shipping template ranges
+        Configuration::updateValue('AMZPRO_SHIP_TPL_ENABLED', '0');
+        Configuration::updateValue('AMZPRO_SHIP_TPL_BASIS', 'price');
+        // Extended order import
+        Configuration::updateValue('AMZPRO_ORDER_LOOKBACK_VALUE', '7');
+        Configuration::updateValue('AMZPRO_ORDER_LOOKBACK_UNIT', 'days');
+        Configuration::updateValue('AMZPRO_IMPORT_FBA_ORDERS', '1');
+        Configuration::updateValue('AMZPRO_FBA_ORDER_STATE', '0');
+        Configuration::updateValue('AMZPRO_ORDER_STATE_SHIPPED', '0');
+        Configuration::updateValue('AMZPRO_PRIORITIZE_ASIN', '0');
+        Configuration::updateValue('AMZPRO_FAKE_EMAIL', '0');
+        Configuration::updateValue('AMZPRO_CUSTOMER_GROUP', '0');
+        Configuration::updateValue('AMZPRO_SKIP_NO_STOCK', '0');
+
         // "Connect with Amazon" (IntelliPresta relay) settings
         Configuration::updateValue('AMZPRO_AUTH_MODE', 'connect');
         // Left empty on purpose: the app ids are baked into AmazonSpApiClient
@@ -176,6 +215,18 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_TAX_MODE', 'AMZPRO_LISTING_LANG',
             'AMZPRO_CARRIER_MAP', 'AMZPRO_SHIPPING_TEMPLATE', 'AMZPRO_B2B_DISCOUNT',
             'AMZPRO_VCS_ENABLED', 'AMZPRO_DEV_MODE',
+            'AMZPRO_SKU_PREFIX', 'AMZPRO_SKU_SOURCE', 'AMZPRO_PRICE_MIN', 'AMZPRO_PRICE_MAX',
+            'AMZPRO_QTY_MIN', 'AMZPRO_USE_SPECIFIC_PRICES', 'AMZPRO_SPECIFIC_PRICE_GROUP',
+            'AMZPRO_REPORT_EMAIL', 'AMZPRO_DEFAULT_MARKUP', 'AMZPRO_MARKUP_SOURCES',
+            'AMZPRO_DEFAULT_DELAY', 'AMZPRO_DELAY_SOURCES', 'AMZPRO_GPSR_PRIORITY',
+            'AMZPRO_SYNC_MODE', 'AMZPRO_FORCE_ZERO_QTY', 'AMZPRO_ONLY_WITH_ASIN',
+            'AMZPRO_EXPORT_LIMIT', 'AMZPRO_EAN_AS', 'AMZPRO_DELTA_HOURS',
+            'AMZPRO_COND_NOTE_USED', 'AMZPRO_COND_NOTE_REFURB', 'AMZPRO_QUEUE_TTL_DAYS',
+            'AMZPRO_SHIP_TPL_ENABLED', 'AMZPRO_SHIP_TPL_BASIS',
+            'AMZPRO_ORDER_LOOKBACK_VALUE', 'AMZPRO_ORDER_LOOKBACK_UNIT',
+            'AMZPRO_IMPORT_FBA_ORDERS', 'AMZPRO_FBA_ORDER_STATE', 'AMZPRO_ORDER_STATE_SHIPPED',
+            'AMZPRO_PRIORITIZE_ASIN', 'AMZPRO_FAKE_EMAIL', 'AMZPRO_CUSTOMER_GROUP',
+            'AMZPRO_SKIP_NO_STOCK',
         );
         foreach ($keys as $k) {
             Configuration::deleteByName($k);
@@ -199,9 +250,10 @@ class AmazonMarketplacePro extends Module
         }
         if (Tools::isSubmit('mkproDisconnectAmazon')) {
             // Only the active environment's token — the other stays connected.
-            Configuration::updateValue(AmazonSpApiClient::refreshTokenKey(), '');
-            Configuration::updateValue('AMZPRO_SELLING_PARTNER_ID', '');
-            Configuration::updateValue('AMZPRO_OAUTH_NONCE', '');
+            // Global scope, matching where the oauth controller stores them.
+            Configuration::updateGlobalValue(AmazonSpApiClient::refreshTokenKey(), '');
+            Configuration::updateGlobalValue('AMZPRO_SELLING_PARTNER_ID', '');
+            Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', '');
         }
 
         // ── AJAX handlers (exit early with JSON) ──
@@ -240,6 +292,13 @@ class AmazonMarketplacePro extends Module
             'ajaxImportCatalog'      => 'runImportCatalog',
             'ajaxSubmitFeed'         => 'runSubmitFeed',
             'ajaxPollFeeds'          => 'runPollFeeds',
+            'ajaxSaveEntitySettings' => 'runSaveEntitySettings',
+            'ajaxSaveProductRules'   => 'runSaveProductRules',
+            'ajaxQueueAction'        => 'runQueueAction',
+            'ajaxRefreshOrphans'     => 'runRefreshOrphans',
+            'ajaxPendingOrderAction' => 'runPendingOrderAction',
+            'ajaxSaveShippingTemplate'   => 'runSaveShippingTemplate',
+            'ajaxDeleteShippingTemplate' => 'runDeleteShippingTemplate',
         );
         foreach ($ajaxActions as $submit => $method) {
             if (Tools::isSubmit($submit)) {
@@ -306,6 +365,18 @@ class AmazonMarketplacePro extends Module
         $promotions = $this->getPromotions();
         $promotionStats = $this->getPromotionStats();
 
+        // ── Markup / rules / queue / orphans / pending data ──
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+        $entityCategories = $this->getEntityRows('category');
+        $entityManufacturers = $this->getEntityRows('manufacturer');
+        $entitySuppliers = $this->getEntityRows('supplier');
+        $productRules = $this->getProductRules(500);
+        $queueRows = AmazonListingSettings::getQueue(200);
+        $orphanRows = AmazonListingSettings::getOrphanedProducts(200);
+        $pendingOrders = $this->getPendingStockOrders();
+        $shippingTemplates = AmazonListingSettings::getShippingTemplates();
+        $customerGroups = Group::getGroups($this->context->language->id);
+
         $this->context->smarty->assign(array(
             'module_dir'  => $this->_path,
             'confirm_msg' => $confirmMsg,
@@ -345,6 +416,10 @@ class AmazonMarketplacePro extends Module
             'mkpro_relay_url'       => Configuration::get('AMZPRO_RELAY_URL'),
             'mkpro_oauth_beta'      => Configuration::get('AMZPRO_OAUTH_BETA'),
             'mkpro_connected'       => (AmazonSpApiClient::storedRefreshToken() != ''),
+            // Manual mode is "connected" as soon as a token is stored for the
+            // active environment — the OAuth Connect flow is never used there.
+            'mkpro_manual_connected' => (Configuration::get('AMZPRO_AUTH_MODE') === 'manual'
+                && AmazonSpApiClient::storedRefreshToken() != ''),
             // Sandbox and production hold separate tokens; knowing the inactive
             // one is connected lets the UI promise that switching back is free.
             'mkpro_other_env_connected' => (AmazonSpApiClient::storedRefreshToken(
@@ -385,6 +460,60 @@ class AmazonMarketplacePro extends Module
             'promotions' => $promotions,
             'promotion_stats' => $promotionStats,
 
+            // SKU & export filters
+            'mkpro_sku_prefix'   => Configuration::get('AMZPRO_SKU_PREFIX'),
+            'mkpro_sku_source'   => Configuration::get('AMZPRO_SKU_SOURCE'),
+            'mkpro_price_min'    => (float) Configuration::get('AMZPRO_PRICE_MIN'),
+            'mkpro_price_max'    => (float) Configuration::get('AMZPRO_PRICE_MAX'),
+            'mkpro_qty_min'      => (int) Configuration::get('AMZPRO_QTY_MIN'),
+            'mkpro_use_specific_prices' => Configuration::get('AMZPRO_USE_SPECIFIC_PRICES'),
+            'mkpro_specific_price_group' => (int) Configuration::get('AMZPRO_SPECIFIC_PRICE_GROUP'),
+            'mkpro_report_email' => Configuration::get('AMZPRO_REPORT_EMAIL'),
+
+            // Markup / delay / GPSR
+            'mkpro_default_markup' => Configuration::get('AMZPRO_DEFAULT_MARKUP'),
+            'mkpro_default_delay'  => (int) Configuration::get('AMZPRO_DEFAULT_DELAY'),
+            'mkpro_markup_sources' => explode(',', (string) Configuration::get('AMZPRO_MARKUP_SOURCES')),
+            'mkpro_delay_sources'  => explode(',', (string) Configuration::get('AMZPRO_DELAY_SOURCES')),
+            'mkpro_gpsr_priority'  => Configuration::get('AMZPRO_GPSR_PRIORITY'),
+
+            // Sync options
+            'mkpro_sync_mode'      => Configuration::get('AMZPRO_SYNC_MODE'),
+            'mkpro_force_zero_qty' => Configuration::get('AMZPRO_FORCE_ZERO_QTY'),
+            'mkpro_only_with_asin' => Configuration::get('AMZPRO_ONLY_WITH_ASIN'),
+            'mkpro_export_limit'   => (int) Configuration::get('AMZPRO_EXPORT_LIMIT'),
+            'mkpro_ean_as'         => Configuration::get('AMZPRO_EAN_AS'),
+            'mkpro_delta_hours'    => (int) Configuration::get('AMZPRO_DELTA_HOURS'),
+            'mkpro_cond_note_used'   => Configuration::get('AMZPRO_COND_NOTE_USED'),
+            'mkpro_cond_note_refurb' => Configuration::get('AMZPRO_COND_NOTE_REFURB'),
+            'mkpro_queue_ttl_days' => (int) Configuration::get('AMZPRO_QUEUE_TTL_DAYS'),
+
+            // Shipping template ranges
+            'mkpro_ship_tpl_enabled' => Configuration::get('AMZPRO_SHIP_TPL_ENABLED'),
+            'mkpro_ship_tpl_basis'   => Configuration::get('AMZPRO_SHIP_TPL_BASIS'),
+            'shipping_templates'     => $shippingTemplates,
+
+            // Extended order import
+            'mkpro_order_lookback_value' => (int) Configuration::get('AMZPRO_ORDER_LOOKBACK_VALUE'),
+            'mkpro_order_lookback_unit'  => Configuration::get('AMZPRO_ORDER_LOOKBACK_UNIT'),
+            'mkpro_import_fba_orders'    => Configuration::get('AMZPRO_IMPORT_FBA_ORDERS'),
+            'mkpro_fba_order_state'      => (int) Configuration::get('AMZPRO_FBA_ORDER_STATE'),
+            'mkpro_order_state_shipped'  => (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED'),
+            'mkpro_prioritize_asin'      => Configuration::get('AMZPRO_PRIORITIZE_ASIN'),
+            'mkpro_fake_email'           => Configuration::get('AMZPRO_FAKE_EMAIL'),
+            'mkpro_customer_group'       => (int) Configuration::get('AMZPRO_CUSTOMER_GROUP'),
+            'mkpro_skip_no_stock'        => Configuration::get('AMZPRO_SKIP_NO_STOCK'),
+            'customer_groups'            => $customerGroups,
+
+            // Rules / queue / orphans / pending
+            'entity_categories'    => $entityCategories,
+            'entity_manufacturers' => $entityManufacturers,
+            'entity_suppliers'     => $entitySuppliers,
+            'product_rules'        => $productRules,
+            'queue_rows'           => $queueRows,
+            'orphan_rows'          => $orphanRows,
+            'pending_orders'       => $pendingOrders,
+
             // AJAX URLs
             'ajax_test_amazon_url'          => $baseUrl . '&ajaxTestAmazon=1',
             'ajax_import_orders_url'        => $baseUrl . '&ajaxImportAmazonOrders=1',
@@ -420,6 +549,13 @@ class AmazonMarketplacePro extends Module
             'ajax_import_catalog_url'       => $baseUrl . '&ajaxImportCatalog=1',
             'ajax_submit_feed_url'          => $baseUrl . '&ajaxSubmitFeed=1',
             'ajax_poll_feeds_url'           => $baseUrl . '&ajaxPollFeeds=1',
+            'ajax_save_entity_settings_url' => $baseUrl . '&ajaxSaveEntitySettings=1',
+            'ajax_save_product_rules_url'   => $baseUrl . '&ajaxSaveProductRules=1',
+            'ajax_queue_action_url'         => $baseUrl . '&ajaxQueueAction=1',
+            'ajax_refresh_orphans_url'      => $baseUrl . '&ajaxRefreshOrphans=1',
+            'ajax_pending_order_action_url' => $baseUrl . '&ajaxPendingOrderAction=1',
+            'ajax_save_shipping_template_url'   => $baseUrl . '&ajaxSaveShippingTemplate=1',
+            'ajax_delete_shipping_template_url' => $baseUrl . '&ajaxDeleteShippingTemplate=1',
 
             // Cron URLs
             'cron_import_orders_url'   => $cronBase . '&action=import_orders',
@@ -477,6 +613,37 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_SHIPPING_TEMPLATE'       => 'mkpro_shipping_template',
             'AMZPRO_B2B_DISCOUNT'            => 'mkpro_b2b_discount',
             'AMZPRO_VCS_ENABLED'             => 'mkpro_vcs_enabled',
+            'AMZPRO_SKU_PREFIX'              => 'mkpro_sku_prefix',
+            'AMZPRO_SKU_SOURCE'              => 'mkpro_sku_source',
+            'AMZPRO_PRICE_MIN'               => 'mkpro_price_min',
+            'AMZPRO_PRICE_MAX'               => 'mkpro_price_max',
+            'AMZPRO_QTY_MIN'                 => 'mkpro_qty_min',
+            'AMZPRO_USE_SPECIFIC_PRICES'     => 'mkpro_use_specific_prices',
+            'AMZPRO_SPECIFIC_PRICE_GROUP'    => 'mkpro_specific_price_group',
+            'AMZPRO_REPORT_EMAIL'            => 'mkpro_report_email',
+            'AMZPRO_DEFAULT_MARKUP'          => 'mkpro_default_markup',
+            'AMZPRO_DEFAULT_DELAY'           => 'mkpro_default_delay',
+            'AMZPRO_GPSR_PRIORITY'           => 'mkpro_gpsr_priority',
+            'AMZPRO_SYNC_MODE'               => 'mkpro_sync_mode',
+            'AMZPRO_FORCE_ZERO_QTY'          => 'mkpro_force_zero_qty',
+            'AMZPRO_ONLY_WITH_ASIN'          => 'mkpro_only_with_asin',
+            'AMZPRO_EXPORT_LIMIT'            => 'mkpro_export_limit',
+            'AMZPRO_EAN_AS'                  => 'mkpro_ean_as',
+            'AMZPRO_DELTA_HOURS'             => 'mkpro_delta_hours',
+            'AMZPRO_COND_NOTE_USED'          => 'mkpro_cond_note_used',
+            'AMZPRO_COND_NOTE_REFURB'        => 'mkpro_cond_note_refurb',
+            'AMZPRO_QUEUE_TTL_DAYS'          => 'mkpro_queue_ttl_days',
+            'AMZPRO_SHIP_TPL_ENABLED'        => 'mkpro_ship_tpl_enabled',
+            'AMZPRO_SHIP_TPL_BASIS'          => 'mkpro_ship_tpl_basis',
+            'AMZPRO_ORDER_LOOKBACK_VALUE'    => 'mkpro_order_lookback_value',
+            'AMZPRO_ORDER_LOOKBACK_UNIT'     => 'mkpro_order_lookback_unit',
+            'AMZPRO_IMPORT_FBA_ORDERS'       => 'mkpro_import_fba_orders',
+            'AMZPRO_FBA_ORDER_STATE'         => 'mkpro_fba_order_state',
+            'AMZPRO_ORDER_STATE_SHIPPED'     => 'mkpro_order_state_shipped',
+            'AMZPRO_PRIORITIZE_ASIN'         => 'mkpro_prioritize_asin',
+            'AMZPRO_FAKE_EMAIL'              => 'mkpro_fake_email',
+            'AMZPRO_CUSTOMER_GROUP'          => 'mkpro_customer_group',
+            'AMZPRO_SKIP_NO_STOCK'           => 'mkpro_skip_no_stock',
         );
 
         // Developer-only fields are hidden from the customer form; without
@@ -496,7 +663,26 @@ class AmazonMarketplacePro extends Module
             if (!Tools::getIsset($formName)) {
                 continue;
             }
-            Configuration::updateValue($configKey, Tools::getValue($formName, ''));
+            $value = Tools::getValue($formName, '');
+
+            // Secrets are never echoed back into the form (and browser
+            // autofill loves to blank or overwrite password fields), so an
+            // empty submit means "keep the stored value" — clearing a token
+            // is what the Disconnect button is for.
+            if (($configKey === AmazonSpApiClient::refreshTokenKey()
+                    || $configKey === 'AMZPRO_CLIENT_SECRET')
+                && trim($value) === '') {
+                continue;
+            }
+
+            // Connection state is global — same rows the oauth controller
+            // and the connection status checks use, whatever the shop context.
+            if ($configKey === AmazonSpApiClient::refreshTokenKey()
+                || $configKey === 'AMZPRO_SELLER_ID') {
+                Configuration::updateGlobalValue($configKey, $value);
+            } else {
+                Configuration::updateValue($configKey, $value);
+            }
         }
 
         // Carrier map arrives as an array: mkpro_carrier_map[id_carrier] = code
@@ -510,6 +696,24 @@ class AmazonMarketplacePro extends Module
                 }
             }
             Configuration::updateValue('AMZPRO_CARRIER_MAP', json_encode($clean));
+        }
+
+        // Markup / delay cascade sources arrive as checkbox arrays.
+        foreach (array('AMZPRO_MARKUP_SOURCES' => 'mkpro_markup_sources',
+                       'AMZPRO_DELAY_SOURCES' => 'mkpro_delay_sources') as $configKey => $formName) {
+            if (!Tools::getIsset($formName . '_present')) {
+                continue; // form section not on the submitted page
+            }
+            $sources = Tools::getValue($formName);
+            $clean = array();
+            if (is_array($sources)) {
+                foreach ($sources as $s) {
+                    if (in_array($s, array('category', 'manufacturer', 'supplier'))) {
+                        $clean[] = $s;
+                    }
+                }
+            }
+            Configuration::updateValue($configKey, implode(',', $clean));
         }
 
         // Allow regenerating cron token
@@ -534,14 +738,16 @@ class AmazonMarketplacePro extends Module
         $relayUrl = AmazonSpApiClient::relayUrl();
 
         // One-time nonce so only this connect attempt can store a token.
+        // Global scope: the front oauth controller (shop context) must read
+        // the exact row this admin request (any shop context) writes.
         $nonce = Tools::substr(md5(uniqid((string) rand(), true)), 0, 32);
-        Configuration::updateValue('AMZPRO_OAUTH_NONCE', $nonce);
+        Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', $nonce);
 
         // Remember the admin page the merchant clicked Connect on, so the
         // oauth controller can send them straight back after success. Stored
         // locally only — never sent to Amazon or the relay.
         if (isset($_SERVER['REQUEST_URI'])) {
-            Configuration::updateValue(
+            Configuration::updateGlobalValue(
                 'AMZPRO_OAUTH_RETURN_URL',
                 Tools::getShopDomainSsl(true) . $_SERVER['REQUEST_URI']
             );
@@ -568,7 +774,9 @@ class AmazonMarketplacePro extends Module
             'redirect_uri' => $relayUrl . '/callback.php',
         );
         // Draft (unpublished) apps can only be authorized with version=beta.
-        if (Configuration::get('AMZPRO_OAUTH_BETA')) {
+        // The sandbox app is never published, so sandbox always sends it;
+        // the stored setting only governs the production app.
+        if (AmazonSpApiClient::isSandboxEnv() || Configuration::get('AMZPRO_OAUTH_BETA')) {
             $params['version'] = 'beta';
         }
 
@@ -710,6 +918,305 @@ class AmazonMarketplacePro extends Module
         return is_array($rows) ? $rows : array();
     }
 
+    /* ─────────────────── Markup / rules / queue helpers ─────────────────── */
+
+    /**
+     * Categories, manufacturers or suppliers joined with their module rules
+     * (markup, delay, GPSR contact, country of origin, sync switch).
+     */
+    private function getEntityRows($type)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $idLang = (int) $this->context->language->id;
+        $idShop = (int) $this->context->shop->id;
+        if (!$idShop) {
+            $idShop = 1;
+        }
+
+        if ($type === 'category') {
+            $sql = 'SELECT c.`id_category` AS id_entity, cl.`name`
+                    FROM `' . _DB_PREFIX_ . 'category` c
+                    INNER JOIN `' . _DB_PREFIX_ . 'category_lang` cl
+                        ON (cl.`id_category` = c.`id_category` AND cl.`id_lang` = ' . $idLang . '
+                            AND cl.`id_shop` = ' . $idShop . ')
+                    WHERE c.`id_category` > 1 AND c.`active` = 1
+                    ORDER BY cl.`name` ASC';
+        } elseif ($type === 'manufacturer') {
+            $sql = 'SELECT `id_manufacturer` AS id_entity, `name`
+                    FROM `' . _DB_PREFIX_ . 'manufacturer` ORDER BY `name` ASC';
+        } else {
+            $sql = 'SELECT `id_supplier` AS id_entity, `name`
+                    FROM `' . _DB_PREFIX_ . 'supplier` ORDER BY `name` ASC';
+        }
+
+        $rows = Db::getInstance()->executeS($sql);
+        if (!is_array($rows)) {
+            $rows = array();
+        }
+
+        $settings = AmazonListingSettings::getEntitySettings($type);
+        foreach ($rows as &$row) {
+            $id = (int) $row['id_entity'];
+            $s = isset($settings[$id]) ? $settings[$id] : null;
+            $row['price_markup'] = $s ? $s['price_markup'] : '';
+            $row['shipping_delay'] = ($s && (int) $s['shipping_delay'] >= 0) ? (int) $s['shipping_delay'] : '';
+            $row['gpsr_contact'] = $s ? $s['gpsr_contact'] : '';
+            $row['country_of_origin'] = $s ? $s['country_of_origin'] : '';
+            $row['sync'] = $s ? (int) $s['sync'] : 1;
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /** Products joined with their per-product module rules (sync, GPSR). */
+    private function getProductRules($limit = 500)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $idLang = (int) $this->context->language->id;
+        $rows = Db::getInstance()->executeS(
+            'SELECT p.`id_product`, p.`reference`, pl.`name`
+             FROM `' . _DB_PREFIX_ . 'product` p
+             INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                 ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ')
+             WHERE p.`active` = 1
+             GROUP BY p.`id_product`
+             ORDER BY p.`id_product` ASC
+             LIMIT ' . (int) $limit
+        );
+        if (!is_array($rows)) {
+            $rows = array();
+        }
+
+        $settings = AmazonListingSettings::getProductSettings();
+        foreach ($rows as &$row) {
+            $id = (int) $row['id_product'];
+            $s = isset($settings[$id]) ? $settings[$id] : null;
+            $row['sync'] = $s ? (int) $s['sync'] : 1;
+            $row['gpsr_contact'] = $s ? $s['gpsr_contact'] : '';
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /** Staged orders parked because of insufficient stock. */
+    private function getPendingStockOrders()
+    {
+        $rows = Db::getInstance()->executeS(
+            'SELECT o.`id_amazonmarketplacepro_order`, o.`amazon_order_id`, o.`purchase_date`,
+                    o.`order_total`, o.`currency`, o.`date_upd`,
+                    GROUP_CONCAT(CONCAT(i.`seller_sku`, \' x\', i.`quantity`) SEPARATOR \', \') AS item_list
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
+                 ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
+             WHERE o.`import_status` = \'pending_stock\'
+             GROUP BY o.`id_amazonmarketplacepro_order`
+             ORDER BY o.`purchase_date` ASC'
+        );
+
+        return is_array($rows) ? $rows : array();
+    }
+
+    /**
+     * Save a batch of entity rules. Rows whose values changed queue their
+     * products for the next delta sync.
+     */
+    protected function runSaveEntitySettings()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $type = trim((string) Tools::getValue('entity_type'));
+        if (!in_array($type, array('category', 'manufacturer', 'supplier'))) {
+            return array('success' => false, 'error' => 'Unknown entity type.');
+        }
+        $rows = json_decode((string) Tools::getValue('rows'), true);
+        if (!is_array($rows)) {
+            return array('success' => false, 'error' => 'Invalid rows payload.');
+        }
+
+        $before = AmazonListingSettings::getEntitySettings($type);
+        $saved = 0;
+        $queued = 0;
+        foreach ($rows as $row) {
+            $id = isset($row['id']) ? (int) $row['id'] : 0;
+            if (!$id) {
+                continue;
+            }
+            $markup = isset($row['markup']) ? trim((string) $row['markup']) : '';
+            $delay = (isset($row['delay']) && $row['delay'] !== '') ? (int) $row['delay'] : -1;
+            $gpsr = isset($row['gpsr']) ? trim((string) $row['gpsr']) : '';
+            $coo = isset($row['coo']) ? trim((string) $row['coo']) : '';
+            $sync = isset($row['sync']) ? (int) $row['sync'] : 1;
+
+            $old = isset($before[$id]) ? $before[$id] : null;
+            $changed = !$old
+                || $old['price_markup'] !== $markup
+                || (int) $old['shipping_delay'] !== $delay
+                || $old['gpsr_contact'] !== $gpsr
+                || $old['country_of_origin'] !== Tools::strtoupper($coo)
+                || (int) $old['sync'] !== $sync;
+            // Untouched rows with no stored setting and no values don't need a row.
+            if (!$old && $markup === '' && $delay < 0 && $gpsr === '' && $coo === '' && $sync == 1) {
+                continue;
+            }
+
+            AmazonListingSettings::saveEntitySetting($type, $id, $markup, $delay, $gpsr, $coo, $sync);
+            $saved++;
+            if ($changed) {
+                $queued += AmazonListingSettings::enqueueEntityProducts(
+                    $type, $id, $type . ' rules changed'
+                );
+            }
+        }
+
+        $this->logActivity('info', 'rules', 'Saved ' . $saved . ' ' . $type . ' rule(s), queued ' . $queued . ' product(s).');
+
+        return array('success' => true, 'saved' => $saved, 'queued' => $queued);
+    }
+
+    protected function runSaveProductRules()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $rows = json_decode((string) Tools::getValue('rows'), true);
+        if (!is_array($rows)) {
+            return array('success' => false, 'error' => 'Invalid rows payload.');
+        }
+
+        $before = AmazonListingSettings::getProductSettings();
+        $saved = 0;
+        foreach ($rows as $row) {
+            $id = isset($row['id']) ? (int) $row['id'] : 0;
+            if (!$id) {
+                continue;
+            }
+            $sync = isset($row['sync']) ? (int) $row['sync'] : 1;
+            $gpsr = isset($row['gpsr']) ? trim((string) $row['gpsr']) : '';
+
+            $old = isset($before[$id]) ? $before[$id] : null;
+            if (!$old && $sync == 1 && $gpsr === '') {
+                continue;
+            }
+            $changed = !$old || (int) $old['sync'] !== $sync || $old['gpsr_contact'] !== $gpsr;
+
+            AmazonListingSettings::saveProductSetting($id, $sync, $gpsr);
+            $saved++;
+            if ($changed) {
+                AmazonListingSettings::enqueueProduct($id, 'product rules changed');
+            }
+        }
+
+        return array('success' => true, 'saved' => $saved);
+    }
+
+    protected function runQueueAction()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $op = trim((string) Tools::getValue('queue_op'));
+        if ($op === 'purge') {
+            AmazonListingSettings::purgeQueue();
+        } elseif (in_array($op, array('enable', 'disable', 'clear'))) {
+            AmazonListingSettings::queueAction($op);
+        } else {
+            return array('success' => false, 'error' => 'Unknown queue action.');
+        }
+
+        return array('success' => true, 'queue' => AmazonListingSettings::getQueue(200));
+    }
+
+    protected function runRefreshOrphans()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $orphans = AmazonListingSettings::getOrphanedProducts(500);
+
+        return array(
+            'success' => true,
+            'orphans' => $orphans,
+            'notice' => 'Orphans are computed from the last Amazon-side sync. '
+                . 'Run "Sync Amazon to PS" (Products tab) first for an up-to-date list.',
+        );
+    }
+
+    protected function runPendingOrderAction()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
+
+        $idStaged = (int) Tools::getValue('id_staged');
+        $op = trim((string) Tools::getValue('pending_op'));
+
+        $row = Db::getInstance()->getRow(
+            'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+             WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
+               AND `import_status` = \'pending_stock\''
+        );
+        if (!$row) {
+            return array('success' => false, 'error' => 'Pending order not found.');
+        }
+
+        if ($op === 'delete') {
+            Db::getInstance()->execute(
+                'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                 SET `import_status` = \'cancelled\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+                 WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
+            );
+            $this->logActivity('info', 'pending_orders', $row['amazon_order_id'] . ' removed from pending orders.');
+
+            return array('success' => true, 'message' => 'Pending order removed.');
+        }
+
+        if ($op === 'create') {
+            $idCarrier = (int) Configuration::get('AMZPRO_DEFAULT_CARRIER');
+            $idOrderState = (int) Configuration::get('AMZPRO_DEFAULT_ORDER_STATE');
+            if (!$idOrderState) {
+                $idOrderState = (int) Configuration::get('PS_OS_PAYMENT');
+            }
+            $creator = new AmazonOrderCreator($idCarrier, $idOrderState);
+            $result = $creator->createOneOrder($row, true);
+            if ($result === false || $result === 'pending_stock') {
+                return array('success' => false, 'error' => (string) $creator->getLastError());
+            }
+            $this->logActivity('info', 'pending_orders',
+                $row['amazon_order_id'] . ' force-created as PS order #' . (int) $result . ' despite missing stock.');
+
+            return array('success' => true, 'message' => 'PS order #' . (int) $result . ' created.', 'id_order' => (int) $result);
+        }
+
+        return array('success' => false, 'error' => 'Unknown pending order action.');
+    }
+
+    protected function runSaveShippingTemplate()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        $name = trim((string) Tools::getValue('template_name'));
+        if ($name === '') {
+            return array('success' => false, 'error' => 'Template name is required.');
+        }
+        AmazonListingSettings::saveShippingTemplate(
+            Tools::getValue('basis'),
+            (float) Tools::getValue('min_value'),
+            (float) Tools::getValue('max_value'),
+            $name,
+            (int) Tools::getValue('id_template')
+        );
+
+        return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
+    }
+
+    protected function runDeleteShippingTemplate()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+
+        AmazonListingSettings::deleteShippingTemplate((int) Tools::getValue('id_template'));
+
+        return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
+    }
+
     /* ─────────────────── Feature: Connection Test ─────────────────── */
 
     protected function runAmazonConnectionTest()
@@ -814,7 +1321,7 @@ class AmazonMarketplacePro extends Module
         $importer = new AmazonOrderImporter($client, $this->getMarketplaceId());
 
         $createdAfter = $this->isProduction()
-            ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-30 days'))
+            ? AmazonOrderImporter::configuredCreatedAfter()
             : 'TEST_CASE_200';
         $summary = $importer->importNewOrders($createdAfter);
 
@@ -1036,6 +1543,12 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'feed_submit',
             'Feed ' . $feedId . ' submitted with ' . count($collected['messages']) . ' message(s).'
         );
+
+        // Products included in the feed leave the change queue.
+        if (!empty($collected['id_products'])) {
+            require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+            AmazonListingSettings::deactivateQueued($collected['id_products']);
+        }
 
         $result['success'] = true;
         $result['feed_id'] = $feedId;
@@ -1601,12 +2114,14 @@ class AmazonMarketplacePro extends Module
      */
     public function hookActionProductSave($params)
     {
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
+        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
+        if (!$idProduct) {
             return;
         }
 
-        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
-        if (!$idProduct) {
+        $this->enqueueForDeltaSync($idProduct, 'product saved');
+
+        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
             return;
         }
 
@@ -1615,12 +2130,14 @@ class AmazonMarketplacePro extends Module
 
     public function hookActionProductUpdate($params)
     {
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
+        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
+        if (!$idProduct) {
             return;
         }
 
-        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
-        if (!$idProduct) {
+        $this->enqueueForDeltaSync($idProduct, 'product updated');
+
+        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
             return;
         }
 
@@ -1628,16 +2145,36 @@ class AmazonMarketplacePro extends Module
     }
 
     /**
+     * Track a modified product in the change queue so delta exports
+     * ("only products updated in the last N hours") pick it up.
+     */
+    private function enqueueForDeltaSync($idProduct, $reason)
+    {
+        // Only worth tracking when delta exports are in use.
+        if ((int) Configuration::get('AMZPRO_DELTA_HOURS') <= 0) {
+            return;
+        }
+        try {
+            require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+            AmazonListingSettings::enqueueProduct($idProduct, $reason);
+        } catch (Exception $e) {
+            // Queueing must never break product saves.
+        }
+    }
+
+    /**
      * When stock quantity is updated (BO, import, or other module), push to Amazon.
      */
     public function hookActionUpdateQuantity($params)
     {
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
+        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
+        if (!$idProduct) {
             return;
         }
 
-        $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
-        if (!$idProduct) {
+        $this->enqueueForDeltaSync($idProduct, 'quantity changed');
+
+        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
             return;
         }
 
