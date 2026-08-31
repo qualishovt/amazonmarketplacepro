@@ -10,6 +10,7 @@ if (!file_exists(dirname(__FILE__) . '/config.php')) {
     exit(json_encode(array('error' => 'relay_not_configured', 'error_description' => 'config.php is missing on the relay server.')));
 }
 require_once dirname(__FILE__) . '/config.php';
+require_once dirname(__FILE__) . '/secrets.php';
 
 define('IPRESTA_LWA_TOKEN_URL', 'https://api.amazon.com/auth/o2/token');
 
@@ -38,10 +39,24 @@ function ipresta_lwa_request($params, $sandbox = false)
             );
         }
         $params['client_id'] = IPRESTA_LWA_SANDBOX_CLIENT_ID;
-        $params['client_secret'] = IPRESTA_LWA_SANDBOX_CLIENT_SECRET;
+        $params['client_secret'] = ipresta_secret('IPRESTA_LWA_SANDBOX_CLIENT_SECRET');
     } else {
         $params['client_id'] = IPRESTA_LWA_CLIENT_ID;
-        $params['client_secret'] = IPRESTA_LWA_CLIENT_SECRET;
+        $params['client_secret'] = ipresta_secret('IPRESTA_LWA_CLIENT_SECRET');
+    }
+
+    // A decryption failure must not fall through as an empty secret - LWA
+    // would answer invalid_client and send us hunting the wrong problem.
+    if ($params['client_secret'] === '') {
+        return array(
+            'status' => 500,
+            'data' => array(
+                'error' => 'secret_unavailable',
+                'error_description' => 'The relay could not read its LWA client secret. '
+                    . 'Check the master key configuration.',
+            ),
+            'raw' => '',
+        );
     }
 
     $ch = curl_init();

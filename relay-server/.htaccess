@@ -1,0 +1,43 @@
+# IntelliPresta relay — access controls.
+#
+# Amazon's Key Security Control Guidance, Network Protection 1.1, asks what
+# restricts public access to file servers and developer endpoints. This is part
+# of that answer: only the three endpoints that need to be reachable are, and
+# everything else in this directory is refused.
+#
+# Verify after deploying - each of these must answer 403:
+#   https://intellipresta.com/spapi/config.php
+#   https://intellipresta.com/spapi/secrets.php
+#   https://intellipresta.com/spapi/secret-tool.php
+
+# No directory listing.
+Options -Indexes
+
+# Configuration, crypto helpers and the CLI tool are never served.
+# secret-tool.php also refuses to run outside CLI, so this is defence in depth.
+<FilesMatch "^(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Key material must never be served, wherever it ends up.
+<FilesMatch "\.(key|pem|env)$|^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# If PHP is ever mis-served as plain text, this keeps the source from being
+# handed out verbatim. It does not replace the rules above.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
