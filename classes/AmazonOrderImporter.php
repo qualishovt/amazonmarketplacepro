@@ -61,6 +61,8 @@ class AmazonOrderImporter
     {
         $engine = defined('_MYSQL_ENGINE_') ? _MYSQL_ENGINE_ : 'InnoDB';
 
+        $this->ensureOrderColumns();
+
         $sqls = array();
         $sqls[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` (
             `id_amazonmarketplacepro_order` INT(11) NOT NULL AUTO_INCREMENT,
@@ -140,6 +142,48 @@ class AmazonOrderImporter
      *
      * @return array|false Summary counts, or false on API error (see getLastError())
      */
+    /**
+     * Columns added after 1.0 so status rules and carrier mapping have
+     * something to route on.
+     */
+    private function ensureOrderColumns()
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $rows = Db::getInstance()->executeS(
+            'SHOW TABLES LIKE \'' . _DB_PREFIX_ . 'amazonmarketplacepro_order\''
+        );
+        if (empty($rows)) {
+            return; // fresh install: the CREATE below already has them
+        }
+
+        $existing = array();
+        $cols = Db::getInstance()->executeS(
+            'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`'
+        );
+        if (is_array($cols)) {
+            foreach ($cols as $c) {
+                $existing[$c['Field']] = true;
+            }
+        }
+        $add = array(
+            'ship_service_level' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
+            'is_business' => 'TINYINT(1) NOT NULL DEFAULT 0',
+        );
+        foreach ($add as $name => $definition) {
+            if (!isset($existing[$name])) {
+                Db::getInstance()->execute(
+                    'ALTER TABLE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                     ADD `' . bqSQL($name) . '` ' . $definition
+                );
+            }
+        }
+    }
+
     public function importNewOrders($createdAfter)
     {
         $this->ensureTables();
@@ -260,6 +304,16 @@ class AmazonOrderImporter
 
             $this->insertOrder($order, $items, $matched, $unmatched, $address, $shippingTotal, $shippingTax, $orderTax);
 
+            // Remote Cart: an unpaid Amazon order still takes the stock off
+            // the shelf so no other channel can sell the same unit.
+            if (isset($order['OrderStatus']) && $order['OrderStatus'] === 'Pending') {
+                require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
+                $held = AmazonRemoteCart::reserve($amazonId, $items);
+                if ($held > 0) {
+                    $summary['reserved'] = (isset($summary['reserved']) ? $summary['reserved'] : 0) + $held;
+                }
+            }
+
             $summary['imported_new']++;
             $summary['items_matched'] += $matched;
             $summary['items_unmatched'] += $unmatched;
@@ -267,6 +321,15 @@ class AmazonOrderImporter
 
         if ($skippedFba > 0) {
             $summary['skipped_fba'] = $skippedFba;
+        }
+
+        // Reservations whose order has since been paid or cancelled are
+        // settled on every import, not only by the cron.
+        require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
+        if (AmazonRemoteCart::isEnabled()) {
+            $summary['reservations_settled'] = AmazonRemoteCart::convertConfirmed();
+            $expired = AmazonRemoteCart::releaseExpired();
+            $summary['reservations_expired'] = $expired['orders'];
         }
 
         return $summary;
@@ -471,6 +534,42 @@ class AmazonOrderImporter
         }
         $ref = pSQL($sku);
 
+        // Merchants already selling on Amazon under different seller SKUs
+        // record the Amazon SKU on the product's Amazon tab. Checked in every
+        // mode except the id one, where the SKU is not a reference at all.
+        $strategy = (string) Configuration::get('AMZPRO_ORDER_MATCH');
+        if ($strategy !== 'id') {
+            $idProduct = (int) Db::getInstance()->getValue(
+                'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`
+                 WHERE `override_sku` = \'' . $ref . '\' AND `override_sku` <> \'\''
+            );
+            if ($idProduct) {
+                $res['id_product'] = $idProduct;
+                return $res;
+            }
+        }
+
+        // "SKU is built from PrestaShop ids" shops: 123 or 123_45.
+        if ($strategy === 'id') {
+            if (preg_match('/^(\d+)(?:[_-](\d+))?$/', $sku, $m)) {
+                $idProduct = (int) Db::getInstance()->getValue(
+                    'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
+                     WHERE `id_product` = ' . (int) $m[1]
+                );
+                if ($idProduct) {
+                    $res['id_product'] = $idProduct;
+                    $res['id_product_attribute'] = isset($m[2]) ? (int) $m[2] : 0;
+                    return $res;
+                }
+            }
+        }
+
+        // A configured SKU prefix is not part of the PrestaShop reference.
+        $prefix = trim((string) Configuration::get('AMZPRO_SKU_PREFIX'));
+        if ($prefix !== '' && strpos($sku, $prefix . '-') === 0) {
+            $ref = pSQL(Tools::substr($sku, Tools::strlen($prefix) + 1));
+        }
+
         // Try combination reference first
         $row = Db::getInstance()->getRow(
             'SELECT `id_product`, `id_product_attribute`
@@ -527,9 +626,17 @@ class AmazonOrderImporter
         $name = isset($order['BuyerInfo']['BuyerName']) ? $order['BuyerInfo']['BuyerName'] : '';
         $marketplace = isset($order['MarketplaceId']) ? $order['MarketplaceId'] : $this->marketplaceId;
 
-        // FBA vs MFN, Prime
+        // FBA vs MFN, Prime, Amazon Business, and the shipping speed Amazon
+        // promised the buyer — all three drive PS status/carrier routing.
         $fulfillmentChannel = isset($order['FulfillmentChannel']) ? $order['FulfillmentChannel'] : 'MFN';
         $isPrime = !empty($order['IsPrime']) ? 1 : 0;
+        $isBusiness = !empty($order['IsBusinessOrder']) ? 1 : 0;
+        $shipServiceLevel = '';
+        if (!empty($order['ShipmentServiceLevelCategory'])) {
+            $shipServiceLevel = $order['ShipmentServiceLevelCategory'];
+        } elseif (!empty($order['ShipServiceLevel'])) {
+            $shipServiceLevel = $order['ShipServiceLevel'];
+        }
 
         $now = date('Y-m-d H:i:s');
 
@@ -539,7 +646,7 @@ class AmazonOrderImporter
              `shipping_total`, `shipping_tax`, `order_tax`, `amazon_fees`,
              `ship_address1`, `ship_address2`, `ship_city`, `ship_state`,
              `ship_postal_code`, `ship_country_code`, `ship_phone`,
-             `items_matched`, `items_unmatched`,
+             `items_matched`, `items_unmatched`, `ship_service_level`, `is_business`,
              `raw_json`, `id_order`, `import_status`, `date_add`, `date_upd`)
             VALUES (
                 \'' . pSQL($amazonId) . '\',
@@ -565,6 +672,8 @@ class AmazonOrderImporter
                 \'' . pSQL($address['phone']) . '\',
                 ' . (int) $matched . ',
                 ' . (int) $unmatched . ',
+                \'' . pSQL($shipServiceLevel) . '\',
+                ' . (int) $isBusiness . ',
                 \'' . pSQL(json_encode($order), true) . '\',
                 0,
                 \'imported\',

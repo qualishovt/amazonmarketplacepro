@@ -91,6 +91,7 @@ class AmazonOrderCreator
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
                     ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
                 WHERE o.`id_order` = 0 AND o.`import_status` = \'imported\'
+                  AND o.`order_status` <> \'Pending\'
                 GROUP BY o.`id_amazonmarketplacepro_order`
                 ORDER BY o.`purchase_date` ASC';
         $rows = Db::getInstance()->executeS($sql);
@@ -175,6 +176,11 @@ class AmazonOrderCreator
             }
         }
 
+        // Hand any Remote Cart hold back before creating the order: the order
+        // creation below decrements the same stock through the normal flow.
+        require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
+        AmazonRemoteCart::convert($amazonId);
+
         // 1. Find or create customer (optionally under an anonymized address)
         $buyerEmail = $stagedOrder['buyer_email'];
         if (Configuration::get('AMZPRO_FAKE_EMAIL') && trim((string) $buyerEmail) !== '') {
@@ -213,7 +219,8 @@ class AmazonOrderCreator
         $cart->id_address_invoice = (int) $address->id;
         $cart->id_currency = $idCurrency;
         $cart->id_lang = $this->idLang;
-        $cart->id_carrier = $this->idCarrier;
+        $idCarrier = self::resolveCarrier($stagedOrder, $this->idCarrier);
+        $cart->id_carrier = $idCarrier;
         $cart->id_shop = $this->idShop;
         $cart->secure_key = $customer->secure_key;
         $cart->add();
@@ -261,17 +268,9 @@ class AmazonOrderCreator
         $totalPaidTaxExcl = $totalProducts + $shippingTotal - $totalDiscount;
         $totalPaidTaxIncl = $orderTotal;
 
-        // Order state: FBA and already-shipped orders can land in their own
-        // states (both optional; default state otherwise).
-        $idOrderState = $this->idOrderState;
-        $fbaState = (int) Configuration::get('AMZPRO_FBA_ORDER_STATE');
-        $shippedState = (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED');
-        if ($channel === 'AFN' && $fbaState > 0) {
-            $idOrderState = $fbaState;
-        } elseif (isset($stagedOrder['order_status']) && $stagedOrder['order_status'] === 'Shipped'
-            && $shippedState > 0) {
-            $idOrderState = $shippedState;
-        }
+        // Order state: an advanced rule matching this order's flags wins;
+        // otherwise the FBA / already-shipped states, else the default.
+        $idOrderState = self::resolveOrderState($stagedOrder, $this->idOrderState);
 
         $order = new Order();
         $order->id_customer = (int) $customer->id;
@@ -282,10 +281,10 @@ class AmazonOrderCreator
         $order->id_lang = $this->idLang;
         $order->id_shop = $this->idShop;
         $order->id_shop_group = (int) Context::getContext()->shop->id_shop_group;
-        $order->id_carrier = $this->idCarrier;
+        $order->id_carrier = $idCarrier;
         $order->current_state = $idOrderState;
         $order->payment = 'Amazon Marketplace';
-        $order->module = 'marketplacespro';
+        $order->module = 'amazonmarketplacepro';
         $order->total_paid = $totalPaidTaxIncl;
         $order->total_paid_tax_incl = $totalPaidTaxIncl;
         $order->total_paid_tax_excl = $totalPaidTaxExcl;
@@ -362,6 +361,81 @@ class AmazonOrderCreator
     }
 
     /**
+     * PrestaShop state for an imported order.
+     *
+     * Advanced status rules are evaluated in order; each condition is 1 (must
+     * be set), 0 (must not be set) or -1 (don't care) over the Prime, FBA and
+     * Amazon Business flags. The first match wins, which lets a merchant route
+     * e.g. "Prime + Business" somewhere of its own.
+     *
+     * @return int
+     */
+    public static function resolveOrderState($stagedOrder, $defaultState)
+    {
+        $isPrime = !empty($stagedOrder['is_prime']) ? 1 : 0;
+        $isFba = (isset($stagedOrder['fulfillment_channel']) && $stagedOrder['fulfillment_channel'] === 'AFN') ? 1 : 0;
+        $isBusiness = !empty($stagedOrder['is_business']) ? 1 : 0;
+
+        $rules = json_decode((string) Configuration::get('AMZPRO_STATUS_RULES'), true);
+        if (is_array($rules)) {
+            foreach ($rules as $rule) {
+                if (empty($rule['state'])) {
+                    continue;
+                }
+                $matches = self::flagMatches($rule, 'prime', $isPrime)
+                    && self::flagMatches($rule, 'fba', $isFba)
+                    && self::flagMatches($rule, 'business', $isBusiness);
+                if ($matches) {
+                    return (int) $rule['state'];
+                }
+            }
+        }
+
+        $fbaState = (int) Configuration::get('AMZPRO_FBA_ORDER_STATE');
+        $shippedState = (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED');
+        if ($isFba && $fbaState > 0) {
+            return $fbaState;
+        }
+        if (isset($stagedOrder['order_status']) && $stagedOrder['order_status'] === 'Shipped'
+            && $shippedState > 0) {
+            return $shippedState;
+        }
+
+        return (int) $defaultState;
+    }
+
+    /** A rule condition of -1 (or missing) means "don't care". */
+    private static function flagMatches($rule, $key, $actual)
+    {
+        $want = isset($rule[$key]) ? (int) $rule[$key] : -1;
+
+        return ($want < 0) || ($want === (int) $actual);
+    }
+
+    /**
+     * Carrier for an imported order: mapped from the shipping speed Amazon
+     * promised (Standard, Expedited, NextDay...), else the configured default.
+     *
+     * @return int
+     */
+    public static function resolveCarrier($stagedOrder, $defaultCarrier)
+    {
+        $level = isset($stagedOrder['ship_service_level']) ? trim((string) $stagedOrder['ship_service_level']) : '';
+        if ($level !== '') {
+            $map = json_decode((string) Configuration::get('AMZPRO_CARRIER_MAP_IN'), true);
+            if (is_array($map)) {
+                foreach ($map as $amazonLevel => $idCarrier) {
+                    if ((int) $idCarrier > 0 && Tools::strtolower($amazonLevel) === Tools::strtolower($level)) {
+                        return (int) $idCarrier;
+                    }
+                }
+            }
+        }
+
+        return (int) $defaultCarrier;
+    }
+
+    /**
      * Find an existing customer by email, or create a new one.
      *
      * @return Customer|false
@@ -373,12 +447,12 @@ class AmazonOrderCreator
             $email = 'amazon-buyer-' . md5(uniqid((string) rand(), true)) . '@marketplace.local';
         }
 
-        // Try to find existing customer
+        // Try to find existing customer. No LIMIT here: getValue() appends its
+        // own, and a duplicated LIMIT makes the query fail silently.
         $idCustomer = (int) Db::getInstance()->getValue(
             'SELECT `id_customer` FROM `' . _DB_PREFIX_ . 'customer`
              WHERE `email` = \'' . pSQL($email) . '\'
-             AND `id_shop` = ' . $this->idShop . '
-             LIMIT 1'
+             AND `id_shop` = ' . $this->idShop
         );
 
         if ($idCustomer) {
@@ -486,8 +560,7 @@ class AmazonOrderCreator
                 'SELECT `id_state` FROM `' . _DB_PREFIX_ . 'state`
                  WHERE `id_country` = ' . $idCountry . '
                    AND (`iso_code` = \'' . pSQL($stateCode) . '\'
-                        OR `name` = \'' . pSQL($stateCode) . '\')
-                 LIMIT 1'
+                        OR `name` = \'' . pSQL($stateCode) . '\')'
             );
         }
 

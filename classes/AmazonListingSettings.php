@@ -277,6 +277,201 @@ class AmazonListingSettings
         return self::applyMarkupString($price, $markup);
     }
 
+    /**
+     * Round an exported price per the configured policy.
+     *
+     * none    — leave it alone (still normalised to 2 decimals)
+     * cents   — nearest cent
+     * smart   — up to the nearest .99 (15.93 becomes 15.99)
+     * integer — nearest whole unit
+     */
+    public static function applyRounding($price)
+    {
+        $price = (float) $price;
+        switch ((string) Configuration::get('AMZPRO_ROUNDING')) {
+            case 'smart':
+                $rounded = floor($price) + 0.99;
+                if ($rounded < $price) {
+                    $rounded += 1;
+                }
+                return round($rounded, 2);
+            case 'integer':
+                return (float) round($price, 0);
+            case 'cents':
+                return round($price, 2);
+            default:
+                return round($price, 2);
+        }
+    }
+
+    /**
+     * A dated PrestaShop specific price becomes an Amazon sale price: Amazon
+     * stores the window and shows the discount only while it is open, so
+     * future promotions can be pushed ahead of time.
+     *
+     * @return array|false array('price' => float, 'from' => 'Y-m-d', 'to' => 'Y-m-d')
+     */
+    public static function resolveSaleSchedule($basePrice, $idProduct, $idProductAttribute)
+    {
+        if (!Configuration::get('AMZPRO_SEND_SALE_PRICE')) {
+            return false;
+        }
+
+        $idShop = (int) Context::getContext()->shop->id;
+        $row = Db::getInstance()->getRow(
+            'SELECT `price`, `reduction`, `reduction_type`, `from`, `to`
+             FROM `' . _DB_PREFIX_ . 'specific_price`
+             WHERE `id_product` = ' . (int) $idProduct . '
+               AND (`id_product_attribute` = 0 OR `id_product_attribute` = ' . (int) $idProductAttribute . ')
+               AND (`id_shop` = 0 OR `id_shop` = ' . $idShop . ')
+               AND `from` <> \'0000-00-00 00:00:00\' AND `to` <> \'0000-00-00 00:00:00\'
+               AND `to` >= \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+             ORDER BY `id_product_attribute` DESC, `from` ASC'
+        );
+        if (!$row) {
+            return false;
+        }
+
+        $sale = (isset($row['price']) && (float) $row['price'] > 0)
+            ? (float) $row['price'] : (float) $basePrice;
+        if ((float) $row['reduction'] > 0) {
+            $sale = ($row['reduction_type'] === 'percentage')
+                ? $sale * (1 - (float) $row['reduction'])
+                : $sale - (float) $row['reduction'];
+        }
+        $sale = self::applyRounding(max(0, $sale));
+        if ($sale <= 0 || $sale >= (float) $basePrice) {
+            return false;
+        }
+
+        return array(
+            'price' => $sale,
+            'from' => date('Y-m-d', strtotime($row['from'])),
+            'to' => date('Y-m-d', strtotime($row['to'])),
+        );
+    }
+
+    /**
+     * Amazon Business pricing for a product.
+     *
+     * The B2B price itself comes from the flat discount setting, and the
+     * quantity ladder from PrestaShop specific prices addressed to the
+     * configured business customer group with a from_quantity above 1 — which
+     * is exactly how a merchant already expresses "buy 10, save 5%" in
+     * PrestaShop. Nothing new to maintain in two places.
+     *
+     * @return array|false array('price' => float, 'levels' => array, 'discount_type' => string)
+     */
+    public static function resolveBusinessPricing($basePrice, $idProduct, $idProductAttribute)
+    {
+        $flat = (float) Configuration::get('AMZPRO_B2B_DISCOUNT');
+        $idGroup = (int) Configuration::get('AMZPRO_BUSINESS_GROUP');
+        if ($flat <= 0 && $idGroup <= 0) {
+            return false;
+        }
+
+        $price = ($flat > 0 && $flat < 100)
+            ? self::applyRounding($basePrice * (1 - $flat / 100))
+            : self::applyRounding($basePrice);
+
+        $levels = array();
+        $discountType = 'PERCENT_OFF';
+        if ($idGroup > 0) {
+            $idShop = (int) Context::getContext()->shop->id;
+            $rows = Db::getInstance()->executeS(
+                'SELECT `from_quantity`, `reduction`, `reduction_type`, `price`
+                 FROM `' . _DB_PREFIX_ . 'specific_price`
+                 WHERE `id_product` = ' . (int) $idProduct . '
+                   AND `id_group` = ' . $idGroup . '
+                   AND `from_quantity` > 1
+                   AND (`id_product_attribute` = 0 OR `id_product_attribute` = ' . (int) $idProductAttribute . ')
+                   AND (`id_shop` = 0 OR `id_shop` = ' . $idShop . ')
+                 ORDER BY `from_quantity` ASC'
+            );
+            if (is_array($rows)) {
+                $seen = array();
+                foreach ($rows as $r) {
+                    $qty = (int) $r['from_quantity'];
+                    if ($qty < 2 || isset($seen[$qty])) {
+                        continue;
+                    }
+                    $value = 0;
+                    if ((float) $r['reduction'] > 0) {
+                        if ($r['reduction_type'] === 'percentage') {
+                            $discountType = 'PERCENT_OFF';
+                            $value = round((float) $r['reduction'] * 100, 2);
+                        } else {
+                            $discountType = 'FIXED_AMOUNT';
+                            $value = round((float) $r['reduction'], 2);
+                        }
+                    } elseif ((float) $r['price'] > 0 && (float) $r['price'] < $price) {
+                        // A flat tier price expressed as an amount off.
+                        $discountType = 'FIXED_AMOUNT';
+                        $value = round($price - (float) $r['price'], 2);
+                    }
+                    if ($value <= 0) {
+                        continue;
+                    }
+                    $seen[$qty] = true;
+                    $levels[] = array('lower_bound' => $qty, 'value' => $value);
+                }
+            }
+        }
+
+        // Amazon accepts at most five tiers.
+        $levels = array_slice($levels, 0, 5);
+
+        return array('price' => $price, 'levels' => $levels, 'discount_type' => $discountType);
+    }
+
+    /**
+     * Attach the Amazon Business offer (price + quantity ladder) to a listing
+     * that already carries a B2C purchasable_offer.
+     *
+     * @param array $attributes by reference
+     */
+    public static function applyBusinessPricing(&$attributes, $marketplaceId, $basePrice, $idProduct, $idProductAttribute)
+    {
+        if (!isset($attributes['purchasable_offer'][0]) || $basePrice <= 0) {
+            return;
+        }
+        $b2b = self::resolveBusinessPricing($basePrice, $idProduct, $idProductAttribute);
+        if ($b2b === false || $b2b['price'] <= 0) {
+            return;
+        }
+
+        $offer = array(
+            'audience' => 'B2B',
+            'currency' => AmazonSpApiClient::currencyForMarketplace($marketplaceId),
+            'marketplace_id' => $marketplaceId,
+            'our_price' => array(array(
+                'schedule' => array(array('value_with_tax' => $b2b['price'])),
+            )),
+        );
+        if (!empty($b2b['levels'])) {
+            $offer['quantity_discount_plan'] = array(array(
+                'schedule' => array(array(
+                    'discount_type' => $b2b['discount_type'],
+                    'levels' => $b2b['levels'],
+                )),
+            ));
+        }
+
+        $attributes['purchasable_offer'][] = $offer;
+    }
+
+    /** Amazon condition for a PrestaShop condition (new / used / refurbished). */
+    public static function mapCondition($psCondition)
+    {
+        $map = json_decode((string) Configuration::get('AMZPRO_CONDITION_MAP'), true);
+        $psCondition = trim((string) $psCondition);
+        if (is_array($map) && $psCondition !== '' && !empty($map[$psCondition])) {
+            return (string) $map[$psCondition];
+        }
+
+        return '';
+    }
+
     public static function applyMarkupString($price, $markup)
     {
         $price = (float) $price;
@@ -325,6 +520,7 @@ class AmazonListingSettings
      */
     public static function resolveGpsrContact($idProduct)
     {
+        // The per-product contact (Amazon tab of the product page) wins.
         $products = self::getProductSettings();
         if (isset($products[(int) $idProduct])
             && trim((string) $products[(int) $idProduct]['gpsr_contact']) !== '') {
@@ -645,10 +841,13 @@ class AmazonListingSettings
     public static function purgeQueue()
     {
         $days = max(1, (int) Configuration::get('AMZPRO_QUEUE_TTL_DAYS'));
+        // PHP-computed cutoff: date_upd is written with PHP's clock, which
+        // may not share MySQL's timezone.
+        $cutoff = date('Y-m-d H:i:s', time() - $days * 86400);
 
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
-             WHERE `date_upd` < DATE_SUB(NOW(), INTERVAL ' . $days . ' DAY)'
+             WHERE `date_upd` < \'' . pSQL($cutoff) . '\''
         );
     }
 

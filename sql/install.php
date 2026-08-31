@@ -362,6 +362,67 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_sh
     KEY `basis` (`basis`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation` (
+    `id_amazonmarketplacepro_reservation` INT(11) NOT NULL AUTO_INCREMENT,
+    `amazon_order_id` VARCHAR(64) NOT NULL,
+    `order_item_id` VARCHAR(64) NOT NULL DEFAULT \'\',
+    `seller_sku` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `id_product` INT(11) NOT NULL DEFAULT 0,
+    `id_product_attribute` INT(11) NOT NULL DEFAULT 0,
+    `quantity` INT(11) NOT NULL DEFAULT 0,
+    `id_shop` INT(11) NOT NULL DEFAULT 1,
+    `status` VARCHAR(16) NOT NULL DEFAULT \'reserved\',
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_reservation`),
+    UNIQUE KEY `order_item` (`amazon_order_id`, `order_item_id`),
+    KEY `status` (`status`),
+    KEY `id_product` (`id_product`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_pt_schema` (
+    `id_amazonmarketplacepro_pt_schema` INT(11) NOT NULL AUTO_INCREMENT,
+    `product_type` VARCHAR(128) NOT NULL,
+    `marketplace_id` VARCHAR(32) NOT NULL,
+    `display_name` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `attributes_json` LONGTEXT NULL,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_pt_schema`),
+    UNIQUE KEY `type_marketplace` (`product_type`, `marketplace_id`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` (
+    `id_amazonmarketplacepro_profile` INT(11) NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(128) NOT NULL DEFAULT \'\',
+    `product_type` VARCHAR(128) NOT NULL DEFAULT \'\',
+    `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
+    `browse_nodes` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `is_variation` TINYINT(1) NOT NULL DEFAULT 0,
+    `variation_attributes` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `attributes_json` LONGTEXT NULL,
+    `raw_attributes_json` TEXT NULL,
+    `latency` INT(11) NOT NULL DEFAULT -1,
+    `shipping_template` VARCHAR(128) NOT NULL DEFAULT \'\',
+    `price_markup` VARCHAR(16) NOT NULL DEFAULT \'\',
+    `gtin_exemption` TINYINT(1) NOT NULL DEFAULT 0,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_amazonmarketplacepro_profile`),
+    KEY `marketplace_id` (`marketplace_id`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` (
+    `id_amazonmarketplacepro_profile_category` INT(11) NOT NULL AUTO_INCREMENT,
+    `id_profile` INT(11) NOT NULL,
+    `id_category` INT(11) NOT NULL,
+    `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
+    PRIMARY KEY (`id_amazonmarketplacepro_profile_category`),
+    UNIQUE KEY `cat_marketplace` (`id_category`, `marketplace_id`),
+    KEY `id_profile` (`id_profile`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_log` (
     `id_amazonmarketplacepro_log` INT(11) NOT NULL AUTO_INCREMENT,
     `level` VARCHAR(16) NOT NULL DEFAULT \'info\',

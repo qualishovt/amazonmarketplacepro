@@ -168,8 +168,7 @@ class AmazonReturnManager
             $exists = (bool) Db::getInstance()->getValue(
                 'SELECT `id_amazonmarketplacepro_return` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
                  WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\'
-                   AND `status` = \'Canceled\'
-                 LIMIT 1'
+                   AND `status` = \'Canceled\''
             );
             if ($exists) {
                 $summary['already']++;
@@ -283,8 +282,7 @@ class AmazonReturnManager
                 $exists = (bool) Db::getInstance()->getValue(
                     'SELECT `id_amazonmarketplacepro_return` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
                      WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\'
-                       AND `order_item_id` = \'' . pSQL($orderItemId) . '\'
-                     LIMIT 1'
+                       AND `order_item_id` = \'' . pSQL($orderItemId) . '\''
                 );
                 if ($exists) {
                     continue;

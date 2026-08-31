@@ -35,10 +35,12 @@
             <li><a href="#tab-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-pending" data-toggle="tab"><i class="icon-pause"></i> {l s='Pending Orders' mod='amazonmarketplacepro'}{if $pending_orders} <span class="badge">{$pending_orders|count}</span>{/if}</a></li>
             <li><a href="#tab-products" data-toggle="tab"><i class="icon-th-list"></i> {l s='Products' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-profiles" data-toggle="tab"><i class="icon-magic"></i> {l s='Profiles' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-markup" data-toggle="tab"><i class="icon-sliders"></i> {l s='Markup & Rules' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-prodrules" data-toggle="tab"><i class="icon-check-square-o"></i> {l s='Product Rules' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-queue" data-toggle="tab"><i class="icon-list-ol"></i> {l s='Queue' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-orphans" data-toggle="tab"><i class="icon-unlink"></i> {l s='Orphans' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#tab-tools" data-toggle="tab"><i class="icon-wrench"></i> {l s='Tools' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-returns" data-toggle="tab"><i class="icon-undo"></i> {l s='Returns' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-fba" data-toggle="tab"><i class="icon-truck"></i> {l s='FBA' mod='amazonmarketplacepro'}</a></li>
             <li><a href="#tab-repricing" data-toggle="tab"><i class="icon-usd"></i> {l s='Repricing' mod='amazonmarketplacepro'}</a></li>
@@ -177,6 +179,19 @@
     {* ── Amazon SP-API Credentials (manual mode) ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-key"></i> {l s='Manual SP-API Credentials (advanced — not needed with Connect)' mod='amazonmarketplacepro'}</div>
+        <div class="alert alert-warning">
+            <i class="icon-warning"></i>
+            <strong>{l s='All three values below must come from the SAME registered app.' mod='amazonmarketplacepro'}</strong>
+            {l s='A refresh token is bound to the app that issued it. Pairing a token from one app with another app\'s client ID and secret still yields an access token, but every SP-API call then fails with 403 Unauthorized. When you switch app — sandbox to production, for instance — replace the client ID and secret too, not only the token.' mod='amazonmarketplacepro'}
+        </div>
+        {if $mkpro_dev_mode}
+            <p class="help-block">
+                {l s='Active environment:' mod='amazonmarketplacepro'}
+                <strong>{if $mkpro_environment == 'sandbox'}{l s='Sandbox app' mod='amazonmarketplacepro'}{else}{l s='Production app' mod='amazonmarketplacepro'}{/if}</strong>
+                — {l s='the credentials here must belong to that app.' mod='amazonmarketplacepro'}
+                {l s='Active app id:' mod='amazonmarketplacepro'} <code>{$mkpro_lwa_app_id|escape:'htmlall':'UTF-8'}</code>
+            </p>
+        {/if}
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='LWA Client ID' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
@@ -304,6 +319,20 @@
                 <p class="help-block">{l s='Optional. 0 disables it. When set, every offer also carries a business price for Amazon Business buyers, discounted by this percentage from your normal price.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='B2B quantity discounts from group' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_business_group" class="form-control">
+                    <option value="0">{l s='-- No quantity ladder --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_business_group == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+                <p class="help-block">
+                    {l s='Pick the PrestaShop customer group you use for trade customers. Its specific prices with a minimum quantity above 1 become Amazon Business volume tiers — so "buy 10, save 5%" is expressed once, in PrestaShop, and exported. Amazon accepts up to five tiers.' mod='amazonmarketplacepro'}
+                </p>
+            </div>
+        </div>
     </div>
 
     {* ── SKU & Export Filters ── *}
@@ -399,6 +428,36 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send images' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_send_images" class="form-control">
+                    <option value="1"{if $mkpro_send_images != '0'} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                    <option value="0"{if $mkpro_send_images == '0'} selected="selected"{/if}>{l s='No — keep the images already on Amazon' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Amazon fetches every image URL you send, which slows large pushes. Many merchants send images on the first publish, then switch this off.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send full product data' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_extended_data" class="form-control">
+                    <option value="1"{if $mkpro_extended_data != '0'} selected="selected"{/if}>{l s='Yes — title, description, bullets, brand, images' mod='amazonmarketplacepro'}</option>
+                    <option value="0"{if $mkpro_extended_data == '0'} selected="selected"{/if}>{l s='No — offer only (price and stock)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Offer-only never rewrites the Amazon listing content, which is what you want once your listings are established or when you sell on someone else\'s catalogue page.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send the entire catalogue' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_full_catalog" class="form-control">
+                    <option value="0"{if !$mkpro_full_catalog} selected="selected"{/if}>{l s='No — respect the delta window below' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_full_catalog} selected="selected"{/if}>{l s='Yes — ignore the delta window and export everything' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='For a first publish, or after changing a setting that affects every listing. Switch it back off afterwards — Amazon limits how much you may send.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Export only products with ASIN' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_only_with_asin" class="form-control">
@@ -449,6 +508,80 @@
                     <option value="7"{if $mkpro_queue_ttl_days == 7 || !$mkpro_queue_ttl_days} selected="selected"{/if}>{l s='7 days' mod='amazonmarketplacepro'}</option>
                     <option value="15"{if $mkpro_queue_ttl_days == 15} selected="selected"{/if}>{l s='15 days' mod='amazonmarketplacepro'}</option>
                 </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Price rounding' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_rounding" class="form-control">
+                    <option value="cents"{if $mkpro_rounding != 'smart' && $mkpro_rounding != 'integer'} selected="selected"{/if}>{l s='Nearest cent (default)' mod='amazonmarketplacepro'}</option>
+                    <option value="smart"{if $mkpro_rounding == 'smart'} selected="selected"{/if}>{l s='Smart — round up to .99 (15.93 becomes 15.99)' mod='amazonmarketplacepro'}</option>
+                    <option value="integer"{if $mkpro_rounding == 'integer'} selected="selected"{/if}>{l s='Whole number (15.99 becomes 16)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Applied after markups and specific prices, to every exported price including sale and list prices.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send sale prices' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_send_sale_price" class="form-control">
+                    <option value="0"{if !$mkpro_send_sale_price} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_send_sale_price} selected="selected"{/if}>{l s='Enabled — export dated specific prices as Amazon sales' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='A PrestaShop specific price with a start AND an end date becomes a sale price with the same window. Amazon shows the discount only inside it, so upcoming promotions can be pushed in advance. Undated specific prices are handled by the "Use specific prices" setting instead.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send list price (strikethrough)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_send_list_price" class="form-control">
+                    <option value="0"{if !$mkpro_send_list_price} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_send_list_price} selected="selected"{/if}>{l s='Enabled' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Sends the pre-discount shop price as the crossed-out list price, when it is higher than the exported price.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Preorder' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_preorder" class="form-control">
+                    <option value="0"{if !$mkpro_preorder} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_preorder} selected="selected"{/if}>{l s='Enabled — send the availability date as Amazon restock date' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Products whose PrestaShop availability date is in the future are listed with that restock date, so Amazon can show preorder messaging.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Condition mapping' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <table class="table" style="max-width:520px; margin-bottom:6px;">
+                    <thead><tr><th>{l s='PrestaShop condition' mod='amazonmarketplacepro'}</th><th>{l s='Amazon condition' mod='amazonmarketplacepro'}</th></tr></thead>
+                    <tbody>
+                        {foreach from=['new', 'used', 'refurbished'] item=psCond}
+                        <tr>
+                            <td style="vertical-align:middle;">{$psCond|escape:'htmlall':'UTF-8'}</td>
+                            <td>
+                                <select name="mkpro_cond_map_{$psCond}" class="form-control input-sm">
+                                    {foreach from=$amazon_conditions key=azCode item=azLabel}
+                                        <option value="{$azCode|escape:'htmlall':'UTF-8'}"{if $mkpro_condition_map[$psCond] == $azCode} selected="selected"{/if}>{$azLabel|escape:'htmlall':'UTF-8'}</option>
+                                    {/foreach}
+                                </select>
+                            </td>
+                        </tr>
+                        {/foreach}
+                    </tbody>
+                </table>
+                <p class="help-block">{l s='PrestaShop only has three conditions; this maps them onto Amazon\'s richer set. A per-product condition on the product\'s Amazon tab overrides this.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Listing title format' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_title_format" class="form-control">
+                    <option value="name"{if $mkpro_title_format != 'brand_name_attrs'} selected="selected"{/if}>{l s='Product name as-is' mod='amazonmarketplacepro'}</option>
+                    <option value="brand_name_attrs"{if $mkpro_title_format == 'brand_name_attrs'} selected="selected"{/if}>{l s='Brand - Product name - Attributes (Amazon guideline)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Keep names as-is if your titles are already optimised for Amazon. The brand is skipped when the name already starts with it.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
         <div class="form-group">
@@ -630,6 +763,16 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Match order lines by' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_order_match" class="form-control">
+                    <option value="reference"{if $mkpro_order_match != 'id'} selected="selected"{/if}>{l s='Reference / Override SKU (recommended)' mod='amazonmarketplacepro'}</option>
+                    <option value="id"{if $mkpro_order_match == 'id'} selected="selected"{/if}>{l s='PrestaShop IDs (Amazon SKU looks like 123 or 123_45)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='The default tries the per-product Override SKU first, then the reference, then EAN. Choose the ID mode only if your Amazon SKUs were built from PrestaShop product and combination ids.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Prioritize ASIN when matching products' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_prioritize_asin" class="form-control">
@@ -661,6 +804,28 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Remote Cart (reserve stock for unpaid orders)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_remote_cart" class="form-control">
+                    <option value="0"{if !$mkpro_remote_cart} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_remote_cart} selected="selected"{/if}>{l s='Enabled' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">
+                    {l s='Amazon exposes a checkout in progress as a "Pending" order. With this on, the module takes those units out of PrestaShop stock immediately so no other channel can sell them, and gives them back if the order never becomes payable. Requires importing Pending orders — the module does that automatically once this is enabled — and the remote_cart cron to settle holds.' mod='amazonmarketplacepro'}
+                </p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Release a hold after' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="input-group" style="max-width:200px;">
+                    <input type="number" min="1" max="72" name="mkpro_remote_cart_ttl" value="{$mkpro_remote_cart_ttl|escape:'htmlall':'UTF-8'}" class="form-control" />
+                    <span class="input-group-addon">{l s='hours' mod='amazonmarketplacepro'}</span>
+                </div>
+                <p class="help-block">{l s='Grace period before an order still stuck in Pending has its stock returned. 4 hours is a safe default — Amazon can take a while to move an order to Unshipped.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Orders without enough stock' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_skip_no_stock" class="form-control">
@@ -689,6 +854,166 @@
                         <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if $mkpro_default_order_state == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
                     {/foreach}
                 </select>
+            </div>
+        </div>
+    </div>
+
+    {* ── Incoming carrier mapping & status routing ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-random"></i> {l s='Imported Order Routing' mod='amazonmarketplacepro'}</div>
+
+        <p class="help-block">{l s='Amazon tells you the delivery speed it promised the buyer. Map each one onto a PrestaShop carrier so imported orders carry the right shipping method; unmapped speeds use the default carrier above.' mod='amazonmarketplacepro'}</p>
+        <table class="table" style="max-width:600px;">
+            <thead><tr><th>{l s='Amazon shipping speed' mod='amazonmarketplacepro'}</th><th>{l s='PrestaShop carrier' mod='amazonmarketplacepro'}</th></tr></thead>
+            <tbody>
+                {foreach from=$amazon_ship_levels item=level}
+                <tr>
+                    <td>{$level|escape:'htmlall':'UTF-8'}</td>
+                    <td>
+                        <select name="mkpro_carrier_map_in[{$level|escape:'htmlall':'UTF-8'}]" class="form-control">
+                            <option value="0">{l s='-- Default carrier --' mod='amazonmarketplacepro'}</option>
+                            {foreach from=$carriers item=carrier}
+                                <option value="{$carrier.id_carrier|escape:'htmlall':'UTF-8'}"{if isset($mkpro_carrier_map_in[$level]) && $mkpro_carrier_map_in[$level] == $carrier.id_carrier} selected="selected"{/if}>{$carrier.name|escape:'htmlall':'UTF-8'}</option>
+                            {/foreach}
+                        </select>
+                    </td>
+                </tr>
+                {/foreach}
+            </tbody>
+        </table>
+
+        <div class="panel-heading" style="margin-top:15px;"><i class="icon-sitemap"></i> {l s='Advanced status rules' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">{l s='Give particular kinds of order their own PrestaShop status — for example Prime orders in a bright status your warehouse cannot miss, or FBA orders straight to Shipped. Rules are evaluated top to bottom and the first match wins; "Any" ignores that flag. A rule with no status is skipped.' mod='amazonmarketplacepro'}</p>
+        <table class="table" style="max-width:800px;">
+            <thead><tr>
+                <th>{l s='Prime' mod='amazonmarketplacepro'}</th>
+                <th>{l s='FBA' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Amazon Business' mod='amazonmarketplacepro'}</th>
+                <th>{l s='PrestaShop status' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {section name=ruleRow start=0 loop=4}
+                {assign var=i value=$smarty.section.ruleRow.index}
+                <tr>
+                    {foreach from=['prime', 'fba', 'business'] item=flag}
+                    <td>
+                        <select name="mkpro_rule_{$flag}[{$i}]" class="form-control input-sm">
+                            <option value="-1"{if !isset($mkpro_status_rules[$i]) || $mkpro_status_rules[$i][$flag] == -1} selected="selected"{/if}>{l s='Any' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i][$flag] == 1} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i][$flag] === 0} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </td>
+                    {/foreach}
+                    <td>
+                        <select name="mkpro_rule_state[{$i}]" class="form-control input-sm">
+                            <option value="0">{l s='-- No rule --' mod='amazonmarketplacepro'}</option>
+                            {foreach from=$order_states item=state}
+                                <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i].state == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
+                            {/foreach}
+                        </select>
+                    </td>
+                </tr>
+                {/section}
+            </tbody>
+        </table>
+
+        <div class="panel-heading" style="margin-top:15px;"><i class="icon-envelope"></i> {l s='Invoice by e-mail' mod='amazonmarketplacepro'}</div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='E-mail the invoice to the buyer' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_invoice_email" class="form-control">
+                    <option value="0"{if !$mkpro_invoice_email} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_invoice_email} selected="selected"{/if}>{l s='Enabled' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Sends the PrestaShop invoice PDF to the buyer when the order reaches the status below. Skipped when the buyer e-mail is anonymised.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Send it on status' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_invoice_email_state" class="form-control">
+                    <option value="0">{l s='-- Never --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$order_states item=state}
+                        <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if $mkpro_invoice_email_state == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Extra attachment' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_invoice_attachment" value="{$mkpro_invoice_attachment|escape:'htmlall':'UTF-8'}" class="form-control" placeholder="terms.pdf" />
+                <p class="help-block">{l s='Optional PDF filename to attach alongside the invoice (terms, returns policy). Upload it into the module\'s docs/ folder.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+    </div>
+
+    {* ── Inbound buyer messages ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-inbox"></i> {l s='Buyer Replies (inbound)' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">
+            {l s='Amazon has no API for reading what a buyer writes back — replies are delivered by e-mail to your seller address. Point the module at that mailbox and it files any message quoting an Amazon order into PrestaShop\'s Customer Service, against the right order.' mod='amazonmarketplacepro'}
+        </p>
+        {if !$mkpro_imap_available}
+            <div class="alert alert-warning">
+                <i class="icon-warning"></i>
+                {l s='The PHP IMAP extension is not installed on this server, so this feature cannot run. Ask your host to enable ext-imap; the settings below will be saved in the meantime.' mod='amazonmarketplacepro'}
+            </div>
+        {/if}
+        <div class="alert alert-info">
+            <i class="icon-info-circle"></i>
+            {l s='This stores a mailbox password in your shop database. Use a dedicated mailbox or an app password rather than your main account credentials, and give it read access only.' mod='amazonmarketplacepro'}
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Read buyer replies' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_imap_enabled" class="form-control">
+                    <option value="0"{if !$mkpro_imap_enabled} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_imap_enabled} selected="selected"{/if}>{l s='Enabled' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='IMAP host / port' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="row">
+                    <div class="col-xs-7"><input type="text" name="mkpro_imap_host" value="{$mkpro_imap_host|escape:'htmlall':'UTF-8'}" class="form-control" placeholder="imap.example.com" /></div>
+                    <div class="col-xs-3"><input type="number" name="mkpro_imap_port" value="{$mkpro_imap_port|escape:'htmlall':'UTF-8'}" class="form-control" /></div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Mailbox user' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" name="mkpro_imap_user" value="{$mkpro_imap_user|escape:'htmlall':'UTF-8'}" class="form-control" autocomplete="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Mailbox password' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="password" name="mkpro_imap_password" value="" class="form-control" autocomplete="new-password"
+                       placeholder="{if $mkpro_imap_password_set}{l s='Stored — leave empty to keep it' mod='amazonmarketplacepro'}{else}{l s='Mailbox or app password' mod='amazonmarketplacepro'}{/if}" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Folder / SSL' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="row">
+                    <div class="col-xs-5"><input type="text" name="mkpro_imap_folder" value="{$mkpro_imap_folder|escape:'htmlall':'UTF-8'}" class="form-control" placeholder="INBOX" /></div>
+                    <div class="col-xs-5">
+                        <select name="mkpro_imap_ssl" class="form-control">
+                            <option value="1"{if $mkpro_imap_ssl} selected="selected"{/if}>{l s='Use SSL' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if !$mkpro_imap_ssl} selected="selected"{/if}>{l s='No SSL' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-lg-offset-3 col-lg-6">
+                <button type="button" id="inbox-fetch" class="btn btn-primary"><i class="icon-download"></i> {l s='Fetch buyer replies now' mod='amazonmarketplacepro'}</button>
+                <p class="help-block">{l s='Save the settings first. Only unread messages are read, and a message is marked read only once it is safely in Customer Service. Schedule the fetch_messages cron for hands-free operation.' mod='amazonmarketplacepro'}</p>
+                <div id="inbox-result" style="display:none; margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -847,6 +1172,22 @@
         </div>
         <p class="help-block">{l s='Products found on Amazon but missing in PrestaShop are created as INACTIVE products (title, description, brand, price, stock, images) for review. Prices are imported without a tax group — assign one before activating.' mod='amazonmarketplacepro'}</p>
         <div id="import-catalog-result" style="display:none; margin-bottom:10px;"></div>
+
+        <hr />
+        <h4>{l s='Update existing products from Amazon' mod='amazonmarketplacepro'}</h4>
+        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run an "Sync Amazon to PS" first so the staged data is current.' mod='amazonmarketplacepro'}</p>
+        <div style="margin-bottom:8px;">
+            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
+            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
+            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="quantity" /> {l s='Stock' mod='amazonmarketplacepro'}</label>
+            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="features" /> {l s='Bullet points as features' mod='amazonmarketplacepro'}</label>
+            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="hide" /> {l s='Deactivate what Amazon no longer carries' mod='amazonmarketplacepro'}</label>
+        </div>
+        <button type="button" id="amz-update-run" class="btn btn-warning">
+            <i class="icon-cloud-download"></i> {l s='Update from Amazon' mod='amazonmarketplacepro'}
+        </button>
+        <p class="help-block">{l s='This overwrites PrestaShop data and cannot be undone — back up first. Prices arrive tax-inclusive from Amazon and are converted using each product\'s tax rule.' mod='amazonmarketplacepro'}</p>
+        <div id="amz-update-result" style="display:none; margin-top:10px;"></div>
     </div>
 
     {* ── Bulk Feeds ── *}
@@ -1373,7 +1714,224 @@
             </tbody>
         </table>
     </div>
+
+    {* ── Remote Cart reservations ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-lock"></i> {l s='Reserved Stock (Remote Cart)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Units held for Amazon checkouts that are not payable yet. They have already been taken out of PrestaShop stock, so no other channel can sell them. Each hold is either handed over when the order becomes payable, or returned once it expires.' mod='amazonmarketplacepro'}</p>
+        {if !$mkpro_remote_cart}
+            <div class="alert alert-info">{l s='Remote Cart is off. Enable it in Settings > Order Import Settings to start reserving stock, and schedule the remote_cart cron (Automation tab).' mod='amazonmarketplacepro'}</div>
+        {/if}
+        <table class="table">
+            <thead><tr>
+                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
+                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Qty held' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Amazon status' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Held since' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {if $reservations}
+                    {foreach from=$reservations item=res}
+                    <tr>
+                        <td>{$res.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
+                        <td><code>{$res.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$res.product_name|escape:'htmlall':'UTF-8'}</td>
+                        <td><span class="badge badge-warning">{$res.quantity|escape:'htmlall':'UTF-8'}</span></td>
+                        <td><span class="badge badge-default">{if $res.order_status}{$res.order_status|escape:'htmlall':'UTF-8'}{else}In Cart{/if}</span></td>
+                        <td><small>{$res.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="6" class="text-center text-muted">{l s='No stock is currently reserved.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+{* ═══════════════════════ PROFILES TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-profiles">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-magic"></i> {l s='Listing Profiles' mod='amazonmarketplacepro'}</div>
+        <p class="help-block">
+            {l s='A profile pins one Amazon product type (SHIRT, FASHION_RING, ...) and answers, once, every attribute that product type requires. Amazon publishes those requirements as a schema; the module downloads it and builds the form below, so you fill in real fields instead of hand-writing JSON. Bind the profile to PrestaShop categories and every product in them is listed with the right shape.' mod='amazonmarketplacepro'}
+        </p>
+        <p class="help-block">
+            <strong>{l s='Each category belongs to at most one profile.' mod='amazonmarketplacepro'}</strong>
+            {l s='Profiles take precedence over the simpler Category Mapping on the Products tab, which stays available as a fallback.' mod='amazonmarketplacepro'}
+        </p>
+
+        <table class="table" id="profiles-table">
+            <thead><tr>
+                <th>{l s='Name' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Amazon product type' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Variations' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Categories' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Browse nodes' mod='amazonmarketplacepro'}</th>
+                <th></th>
+            </tr></thead>
+            <tbody>
+                {if $profiles}
+                    {foreach from=$profiles item=prof}
+                    <tr data-id="{$prof.id_amazonmarketplacepro_profile|escape:'htmlall':'UTF-8'}">
+                        <td><strong>{$prof.name|escape:'htmlall':'UTF-8'}</strong></td>
+                        <td><code>{$prof.product_type|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{if $prof.is_variation}<span class="label label-info">{$prof.variation_attributes|escape:'htmlall':'UTF-8'}</span>{else}<span class="text-muted">&mdash;</span>{/if}</td>
+                        <td>{$prof.category_count|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$prof.browse_nodes|escape:'htmlall':'UTF-8'}</small></td>
+                        <td style="white-space:nowrap;">
+                            <button type="button" class="btn btn-xs btn-default profile-edit" data-id="{$prof.id_amazonmarketplacepro_profile|escape:'htmlall':'UTF-8'}"><i class="icon-pencil"></i> {l s='Edit' mod='amazonmarketplacepro'}</button>
+                            <button type="button" class="btn btn-xs btn-danger profile-delete" data-id="{$prof.id_amazonmarketplacepro_profile|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button>
+                        </td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr id="profiles-empty"><td colspan="6" class="text-center text-muted">{l s='No profiles yet. Create one below to list products Amazon does not already carry.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+        <button type="button" id="profile-new" class="btn btn-success"><i class="icon-plus"></i> {l s='New profile' mod='amazonmarketplacepro'}</button>
+    </div>
+
+    {* ── Profile editor ── *}
+    <div class="panel" id="profile-editor" style="display:none;">
+        <div class="panel-heading"><i class="icon-pencil"></i> <span id="profile-editor-title">{l s='New profile' mod='amazonmarketplacepro'}</span></div>
+        <input type="hidden" id="profile-id" value="0" />
+
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Profile name' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" id="profile-name" class="form-control" placeholder="{l s='e.g. Skirts - Women' mod='amazonmarketplacepro'}" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Amazon product type' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="input-group" style="max-width:460px;">
+                    <input type="text" id="pt-search" class="form-control" placeholder="{l s='Search Amazon product types (e.g. shirt, ring, toy)' mod='amazonmarketplacepro'}" />
+                    <span class="input-group-btn">
+                        <button type="button" id="pt-search-btn" class="btn btn-default"><i class="icon-search"></i> {l s='Search' mod='amazonmarketplacepro'}</button>
+                    </span>
+                </div>
+                <div style="margin-top:8px;">
+                    <select id="pt-results" class="form-control" style="max-width:460px;" size="1">
+                        <option value="">{l s='-- Search, then pick a product type --' mod='amazonmarketplacepro'}</option>
+                    </select>
+                </div>
+                <div style="margin-top:8px;">
+                    <button type="button" id="pt-load" class="btn btn-primary"><i class="icon-download"></i> {l s='Load required fields' mod='amazonmarketplacepro'}</button>
+                    <button type="button" id="pt-refresh" class="btn btn-default"><i class="icon-refresh"></i> {l s='Refresh from Amazon' mod='amazonmarketplacepro'}</button>
+                    <span id="pt-status" style="margin-left:10px;"></span>
+                </div>
+                <p class="help-block">{l s='Schemas are cached for 30 days per marketplace. Amazon decides required fields dynamically, so a few may only surface as errors on the first feed — add them from the optional list below when that happens.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+
+        {* Attribute form, rendered from the schema *}
+        <div id="profile-attributes-wrap" style="display:none;">
+            <div class="panel-heading" style="margin-top:10px;"><i class="icon-asterisk"></i> {l s='Required attributes' mod='amazonmarketplacepro'}</div>
+            <div id="attrs-required"></div>
+
+            <div class="panel-heading" style="margin-top:10px;"><i class="icon-plus-square-o"></i> {l s='Optional attributes' mod='amazonmarketplacepro'}</div>
+            <div class="form-group">
+                <div class="col-lg-9 col-lg-offset-3">
+                    <input type="text" id="attrs-filter" class="form-control" placeholder="{l s='Filter optional attributes...' mod='amazonmarketplacepro'}" style="max-width:360px;" />
+                </div>
+            </div>
+            <div id="attrs-optional" style="max-height:360px; overflow-y:auto;"></div>
+        </div>
+
+        <div class="panel-heading" style="margin-top:10px;"><i class="icon-cogs"></i> {l s='Profile settings' mod='amazonmarketplacepro'}</div>
+
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Products have variations' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select id="profile-is-variation" class="form-control" style="max-width:200px;">
+                    <option value="0">{l s='No (simple products)' mod='amazonmarketplacepro'}</option>
+                    <option value="1">{l s='Yes (parent + child listings)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='PrestaShop combinations become Amazon variants. The base product reference is the parent SKU; each combination reference is a child SKU and needs its own barcode.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group" id="profile-variation-attrs-group" style="display:none;">
+            <label class="control-label col-lg-3">{l s='Variation attributes' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" id="profile-variation-attributes" class="form-control" style="max-width:360px;" placeholder="{l s='e.g. Size,Color' mod='amazonmarketplacepro'}" />
+                <p class="help-block">
+                    {l s='PrestaShop attribute groups that form the variation axis, comma-separated.' mod='amazonmarketplacepro'}
+                    {if $attribute_groups}<br>{l s='Available in your shop:' mod='amazonmarketplacepro'}
+                        {foreach from=$attribute_groups item=ag name=agl}<code>{$ag.name|escape:'htmlall':'UTF-8'}</code>{if !$smarty.foreach.agl.last}, {/if}{/foreach}
+                    {/if}
+                </p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Recommended browse nodes' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" id="profile-browse-nodes" class="form-control" style="max-width:360px;" placeholder="2494728031" />
+                <p class="help-block">{l s='Amazon category IDs, comma- or semicolon-separated. Required for Canada, Europe and Japan. Node IDs differ per marketplace.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Handling time (days)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="number" min="0" id="profile-latency" class="form-control" style="max-width:120px;" />
+                <p class="help-block">{l s='Overrides the global default for products in this profile. Leave empty to inherit.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Shipping template' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" id="profile-shipping-template" class="form-control" style="max-width:360px;" />
+                <p class="help-block">{l s='Seller Central template name for this profile. Overrides the global template and the price/weight ranges.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='GTIN exemption' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select id="profile-gtin-exemption" class="form-control" style="max-width:280px;">
+                    <option value="0">{l s='No — send EAN/UPC as usual' mod='amazonmarketplacepro'}</option>
+                    <option value="1">{l s='Yes — Amazon granted a barcode exemption' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Only enable when Amazon approved a GTIN exemption for this brand and product type (Seller Central > Catalog > View Selling Applications). The listing is then sent without a barcode.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='PrestaShop categories' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="text" id="profile-cat-filter" class="form-control" placeholder="{l s='Filter categories...' mod='amazonmarketplacepro'}" style="max-width:300px; margin-bottom:6px;" />
+                <div id="profile-categories" style="max-height:240px; overflow-y:auto; border:1px solid #ddd; padding:8px; border-radius:3px;">
+                    {foreach from=$ps_categories item=cat}
+                        <label class="profile-cat-row" style="display:block; font-weight:normal;">
+                            <input type="checkbox" class="profile-cat" value="{$cat.id_category|escape:'htmlall':'UTF-8'}" />
+                            {$cat.name|escape:'htmlall':'UTF-8'} <small class="text-muted">#{$cat.id_category|escape:'htmlall':'UTF-8'}</small>
+                        </label>
+                    {/foreach}
+                </div>
+                <p class="help-block">{l s='Ticking a category here detaches it from any other profile.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Extra attributes (raw JSON)' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <textarea id="profile-raw-json" class="form-control" rows="3" placeholder='&#123;"my_attribute": [&#123;"value": "x"}]}'></textarea>
+                <p class="help-block">{l s='Escape hatch for anything the form above cannot express. Passed to Amazon unchanged.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <button type="button" id="profile-save" class="btn btn-primary"><i class="process-icon-save"></i> {l s='Save profile' mod='amazonmarketplacepro'}</button>
+            <button type="button" id="profile-cancel" class="btn btn-default">{l s='Cancel' mod='amazonmarketplacepro'}</button>
+            <span id="profile-save-result" style="margin-left:10px;"></span>
+        </div>
+    </div>
+</div>
+
+{* ═══════════════════════ (Remote Cart panel lives in the Pending tab) ═══════════════════════ *}
 
 {* ═══════════════════════ MARKUP & RULES TAB ═══════════════════════ *}
 <div class="tab-pane" id="tab-markup">
@@ -1618,6 +2176,76 @@
     </div>
 </div>
 
+{* ═══════════════════════ TOOLS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-tools">
+
+    {* ── Catalogue audit ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-stethoscope"></i> {l s='Catalogue Check' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Amazon matches everything on the reference and the barcode. Products missing either, or sharing a reference with another product, cannot be listed or matched to incoming orders.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="audit-run" class="btn btn-primary"><i class="icon-search"></i> {l s='Check my catalogue' mod='amazonmarketplacepro'}</button>
+        <div id="audit-result" style="display:none; margin-top:12px;"></div>
+    </div>
+
+    {* ── Reference / barcode CSV ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-table"></i> {l s='Reference & Barcode Editor (CSV)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Export every product and combination, fix the references and barcodes in a spreadsheet, then upload the file back. Only reference, EAN, UPC and supplier reference are written; the key and name columns are read-only.' mod='amazonmarketplacepro'}</p>
+        <div class="alert alert-warning">
+            <i class="icon-warning"></i>
+            {l s='This edits your PrestaShop catalogue directly and cannot be undone — back up your database first. Nothing is sent to Amazon. Do it before you publish, or you will create duplicate SKUs on Amazon.' mod='amazonmarketplacepro'}
+        </div>
+        <p>
+            <a href="{$export_references_url|escape:'htmlall':'UTF-8'}" class="btn btn-default">
+                <i class="icon-download"></i> {l s='Export CSV' mod='amazonmarketplacepro'}
+            </a>
+        </p>
+        <div class="form-inline" style="margin-top:10px;">
+            <input type="file" id="reference-file" accept=".csv,text/csv" class="form-control" />
+            <button type="button" id="reference-import" class="btn btn-warning">
+                <i class="icon-upload"></i> {l s='Import CSV' mod='amazonmarketplacepro'}
+            </button>
+        </div>
+        <p class="help-block">{l s='Semicolon-separated, UTF-8. Barcodes are exported with a leading apostrophe so spreadsheets keep them as text; it is removed on import.' mod='amazonmarketplacepro'}</p>
+        <div id="reference-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
+    {* ── Listing deletion ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-trash"></i> {l s='Delete Listings from Amazon' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Removes offers from Amazon for products you no longer sell — deleted, disabled, or switched off for Amazon on the product page. Review the list first: deletion removes the offer and its history on Amazon, which is not reversible from here.' mod='amazonmarketplacepro'}</p>
+        <p class="help-block">{l s='If you only want to stop selling temporarily, publishing quantity 0 (Listing Defaults) keeps the listing and its reviews alive.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="deletions-list" class="btn btn-primary"><i class="icon-search"></i> {l s='Find listings to delete' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="deletions-send" class="btn btn-danger" style="margin-left:10px;" disabled="disabled">
+            <i class="icon-trash"></i> {l s='Delete selected from Amazon' mod='amazonmarketplacepro'}
+        </button>
+        <div id="deletions-result" style="display:none; margin-top:10px;"></div>
+        <table class="table" id="deletions-table" style="display:none; margin-top:10px;">
+            <thead><tr>
+                <th style="width:30px;"><input type="checkbox" id="deletions-all" /></th>
+                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                <th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Why' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    {* ── Feed payloads ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-file-code-o"></i> {l s='Submitted Feed Payloads' mod='amazonmarketplacepro'}</div>
+        <p>{l s='The exact JSON sent to Amazon for each bulk feed is kept here. Amazon support (and ours) will ask for it whenever a listing is rejected for a reason the report does not explain.' mod='amazonmarketplacepro'}</p>
+        <div id="feed-payload-hint" class="alert alert-info">
+            {l s='Submit a bulk feed from the Products tab, then come back — each feed will appear with a download link. Feeds sent before this version have no stored payload.' mod='amazonmarketplacepro'}
+        </div>
+        <div class="form-inline">
+            <input type="text" id="feed-payload-id" class="form-control" placeholder="{l s='Feed ID' mod='amazonmarketplacepro'}" style="width:260px;" />
+            <a href="#" id="feed-payload-download" class="btn btn-default"><i class="icon-download"></i> {l s='Download this feed\'s JSON' mod='amazonmarketplacepro'}</a>
+        </div>
+    </div>
+</div>
+
 {* ═══════════════════════ CRON TAB ═══════════════════════ *}
 <div class="tab-pane" id="tab-cron">
 
@@ -1694,6 +2322,16 @@
                     <td><strong>{l s='Bulk Feed Cycle (large catalogs)' mod='amazonmarketplacepro'}</strong></td>
                     <td><code style="font-size:11px; word-break:break-all;">{$cron_process_feeds_url|escape:'htmlall':'UTF-8'}</code></td>
                     <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Buyer replies (IMAP inbox)' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_messages_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Remote Cart (settle stock holds)' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_remote_cart_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
                 </tr>
                 <tr>
                     <td><strong>{l s='VCS Invoice Upload' mod='amazonmarketplacepro'}</strong></td>
@@ -2899,6 +3537,327 @@
         });
     })();
 
+    /* ──────── LISTING PROFILES (Amazon product type schemas) ──────── */
+    (function () {
+        var editor = document.getElementById('profile-editor');
+        if (!editor) return;
+
+        var psFields = {$profile_ps_fields|@json_encode nofilter};
+        var schemaAttributes = [];   // loaded schema
+        var pendingValues = {};      // stored profile values while the schema loads
+
+        function el(id) { return document.getElementById(id); }
+        function status(msg, cls) {
+            el('pt-status').innerHTML = msg ? '<span class="text-' + (cls || 'muted') + '">' + esc(msg) + '</span>' : '';
+        }
+
+        /* Build the source selector + value control for one attribute. */
+        function attrRow(attr) {
+            var name = attr.name;
+            var enumKeys = [];
+            for (var k in attr.enum) { if (attr.enum.hasOwnProperty(k)) enumKeys.push(k); }
+
+            var h = '<div class="form-group amz-attr" data-name="' + esc(name) + '" data-label="'
+                + esc((attr.title + ' ' + name).toLowerCase()) + '">'
+                + '<label class="control-label col-lg-3">' + esc(attr.title)
+                + (attr.required ? ' <span class="text-danger">*</span>' : '')
+                + '<br><small class="text-muted"><code>' + esc(name) + '</code></small></label>'
+                + '<div class="col-lg-6">'
+                + '<div class="row"><div class="col-xs-4">'
+                + '<select class="form-control input-sm attr-src">'
+                + '<option value="">' + 'Not set' + '</option>'
+                + (enumKeys.length ? '<option value="allowed">Amazon value</option>' : '')
+                + '<option value="ps">PrestaShop field</option>'
+                + '<option value="fixed">Fixed text</option>'
+                + '</select></div>'
+                + '<div class="col-xs-8">';
+
+            // Amazon allowed values
+            h += '<select class="form-control input-sm attr-allowed" style="display:none;">';
+            h += '<option value="">-- pick a value --</option>';
+            for (var i = 0; i < enumKeys.length; i++) {
+                h += '<option value="' + esc(enumKeys[i]) + '">' + esc(attr.enum[enumKeys[i]]) + '</option>';
+            }
+            h += '</select>';
+
+            // PrestaShop field
+            h += '<select class="form-control input-sm attr-ps" style="display:none;">';
+            h += '<option value="">-- pick a field --</option>';
+            for (var f in psFields) {
+                if (psFields.hasOwnProperty(f)) h += '<option value="' + esc(f) + '">' + esc(psFields[f]) + '</option>';
+            }
+            h += '<option value="__feature">Product feature (type the name)</option>';
+            h += '<option value="__attribute">Combination attribute (type the group)</option>';
+            h += '</select>';
+            h += '<input type="text" class="form-control input-sm attr-ps-extra" style="display:none; margin-top:4px;" placeholder="Feature / attribute group name" />';
+
+            // Fixed literal
+            h += '<input type="text" class="form-control input-sm attr-fixed" style="display:none;" />';
+
+            h += '</div></div>';
+            if (attr.description) {
+                h += '<p class="help-block" style="margin-bottom:0;"><small>' + esc(attr.description) + '</small></p>';
+            }
+            h += '</div></div>';
+
+            return h;
+        }
+
+        function wireRow(row) {
+            var src = row.querySelector('.attr-src');
+            function sync() {
+                row.querySelector('.attr-allowed').style.display = (src.value === 'allowed') ? '' : 'none';
+                row.querySelector('.attr-ps').style.display = (src.value === 'ps') ? '' : 'none';
+                row.querySelector('.attr-fixed').style.display = (src.value === 'fixed') ? '' : 'none';
+                var psSel = row.querySelector('.attr-ps');
+                var extra = row.querySelector('.attr-ps-extra');
+                extra.style.display = (src.value === 'ps' && (psSel.value === '__feature' || psSel.value === '__attribute')) ? '' : 'none';
+            }
+            src.addEventListener('change', sync);
+            row.querySelector('.attr-ps').addEventListener('change', sync);
+            sync();
+        }
+
+        function renderSchema(attributes) {
+            schemaAttributes = attributes || [];
+            var req = '', opt = '';
+            for (var i = 0; i < schemaAttributes.length; i++) {
+                var a = schemaAttributes[i];
+                if (a.required) req += attrRow(a); else opt += attrRow(a);
+            }
+            el('attrs-required').innerHTML = req || '<p class="help-block col-lg-offset-3">Amazon lists no strictly required extra attributes for this product type.</p>';
+            el('attrs-optional').innerHTML = opt || '<p class="help-block col-lg-offset-3">No optional attributes.</p>';
+            el('profile-attributes-wrap').style.display = 'block';
+
+            var rows = editor.querySelectorAll('.amz-attr');
+            for (var r = 0; r < rows.length; r++) wireRow(rows[r]);
+
+            applyPendingValues();
+        }
+
+        /* Re-apply a saved profile's values once its schema is on screen. */
+        function applyPendingValues() {
+            for (var name in pendingValues) {
+                if (!pendingValues.hasOwnProperty(name)) continue;
+                var spec = pendingValues[name];
+                var row = editor.querySelector('.amz-attr[data-name="' + name.replace(/"/g, '') + '"]');
+                if (!row) continue;
+                row.querySelector('.attr-src').value = spec.src || '';
+                if (spec.src === 'allowed') {
+                    row.querySelector('.attr-allowed').value = spec.value || '';
+                } else if (spec.src === 'fixed') {
+                    row.querySelector('.attr-fixed').value = spec.value || '';
+                } else if (spec.src === 'ps') {
+                    var v = spec.value || '';
+                    var psSel = row.querySelector('.attr-ps');
+                    if (v.indexOf('feature:') === 0) {
+                        psSel.value = '__feature';
+                        row.querySelector('.attr-ps-extra').value = v.substring(8);
+                    } else if (v.indexOf('attribute:') === 0) {
+                        psSel.value = '__attribute';
+                        row.querySelector('.attr-ps-extra').value = v.substring(10);
+                    } else {
+                        psSel.value = v;
+                    }
+                }
+                wireRow(row);
+            }
+            pendingValues = {};
+        }
+
+        function collectAttributes() {
+            var out = {};
+            var rows = editor.querySelectorAll('.amz-attr');
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var src = row.querySelector('.attr-src').value;
+                if (!src) continue;
+                var value = '';
+                if (src === 'allowed') {
+                    value = row.querySelector('.attr-allowed').value;
+                } else if (src === 'fixed') {
+                    value = row.querySelector('.attr-fixed').value;
+                } else if (src === 'ps') {
+                    value = row.querySelector('.attr-ps').value;
+                    if (value === '__feature') value = 'feature:' + row.querySelector('.attr-ps-extra').value;
+                    else if (value === '__attribute') value = 'attribute:' + row.querySelector('.attr-ps-extra').value;
+                }
+                if (!value) continue;
+                out[row.getAttribute('data-name')] = { src: src, value: value };
+            }
+            return out;
+        }
+
+        /* ── product type search ── */
+        el('pt-search-btn').addEventListener('click', function () {
+            var btn = this;
+            btn.disabled = true;
+            status('Asking Amazon for matching product types...');
+            ajaxPost('{$ajax_search_product_types_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) { status((data && data.error) ? data.error : 'Search failed', 'danger'); return; }
+                var sel = el('pt-results');
+                sel.innerHTML = '<option value="">-- ' + data.product_types.length + ' result(s) --</option>';
+                for (var i = 0; i < data.product_types.length; i++) {
+                    var pt = data.product_types[i];
+                    sel.innerHTML += '<option value="' + esc(pt.name) + '">' + esc(pt.displayName) + ' (' + esc(pt.name) + ')</option>';
+                }
+                sel.size = Math.min(10, Math.max(2, data.product_types.length + 1));
+                status(data.product_types.length + ' product type(s) found — pick one and load its fields.', 'success');
+            }, 'keywords=' + encodeURIComponent(el('pt-search').value));
+        });
+
+        function loadSchema(refresh) {
+            var pt = el('pt-results').value;
+            if (!pt) { status('Pick a product type first.', 'danger'); return; }
+            status('Downloading the attribute schema from Amazon...');
+            ajaxPost('{$ajax_load_pt_schema_url|escape:'javascript':'UTF-8'}', function (data) {
+                if (!data || !data.success) { status((data && data.error) ? data.error : 'Load failed', 'danger'); return; }
+                renderSchema(data.attributes);
+                status(esc(data.display_name) + ': ' + data.required_count + ' required, '
+                    + (data.attributes.length - data.required_count) + ' optional attribute(s).', 'success');
+            }, 'product_type=' + encodeURIComponent(pt) + (refresh ? '&refresh=1' : ''));
+        }
+        el('pt-load').addEventListener('click', function () { loadSchema(false); });
+        el('pt-refresh').addEventListener('click', function () { loadSchema(true); });
+
+        /* ── optional attribute filter ── */
+        el('attrs-filter').addEventListener('input', function () {
+            var needle = this.value.toLowerCase();
+            var rows = el('attrs-optional').querySelectorAll('.amz-attr');
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].style.display = (!needle || rows[i].getAttribute('data-label').indexOf(needle) !== -1) ? '' : 'none';
+            }
+        });
+        el('profile-cat-filter').addEventListener('input', function () {
+            var needle = this.value.toLowerCase();
+            var rows = document.querySelectorAll('#profile-categories .profile-cat-row');
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].style.display = (!needle || rows[i].textContent.toLowerCase().indexOf(needle) !== -1) ? '' : 'none';
+            }
+        });
+        el('profile-is-variation').addEventListener('change', function () {
+            el('profile-variation-attrs-group').style.display = (this.value === '1') ? '' : 'none';
+        });
+
+        /* ── open / reset the editor ── */
+        function resetEditor() {
+            el('profile-id').value = '0';
+            el('profile-name').value = '';
+            el('pt-search').value = '';
+            el('pt-results').innerHTML = '<option value="">-- Search, then pick a product type --</option>';
+            el('pt-results').size = 1;
+            el('profile-browse-nodes').value = '';
+            el('profile-latency').value = '';
+            el('profile-shipping-template').value = '';
+            el('profile-gtin-exemption').value = '0';
+            el('profile-is-variation').value = '0';
+            el('profile-variation-attributes').value = '';
+            el('profile-variation-attrs-group').style.display = 'none';
+            el('profile-raw-json').value = '';
+            el('profile-attributes-wrap').style.display = 'none';
+            el('attrs-required').innerHTML = '';
+            el('attrs-optional').innerHTML = '';
+            el('profile-save-result').innerHTML = '';
+            status('');
+            var boxes = document.querySelectorAll('.profile-cat');
+            for (var i = 0; i < boxes.length; i++) boxes[i].checked = false;
+            pendingValues = {};
+        }
+
+        el('profile-new').addEventListener('click', function () {
+            resetEditor();
+            el('profile-editor-title').textContent = 'New profile';
+            editor.style.display = 'block';
+            editor.scrollIntoView({ behavior: 'smooth' });
+        });
+        el('profile-cancel').addEventListener('click', function () {
+            editor.style.display = 'none';
+        });
+
+        /* ── edit an existing profile ── */
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.profile-edit');
+            if (!btn) return;
+            ajaxPost('{$ajax_get_profile_url|escape:'javascript':'UTF-8'}', function (data) {
+                if (!data || !data.success) { alert((data && data.error) ? data.error : 'Could not load the profile.'); return; }
+                var p = data.profile;
+                resetEditor();
+                el('profile-editor-title').textContent = 'Edit profile: ' + p.name;
+                el('profile-id').value = p.id_amazonmarketplacepro_profile;
+                el('profile-name').value = p.name;
+                el('pt-results').innerHTML = '<option value="' + esc(p.product_type) + '" selected>' + esc(p.product_type) + '</option>';
+                el('profile-browse-nodes').value = p.browse_nodes || '';
+                el('profile-latency').value = (parseInt(p.latency, 10) >= 0) ? p.latency : '';
+                el('profile-shipping-template').value = p.shipping_template || '';
+                el('profile-gtin-exemption').value = parseInt(p.gtin_exemption, 10) ? '1' : '0';
+                el('profile-is-variation').value = parseInt(p.is_variation, 10) ? '1' : '0';
+                el('profile-variation-attributes').value = p.variation_attributes || '';
+                el('profile-variation-attrs-group').style.display = parseInt(p.is_variation, 10) ? '' : 'none';
+                el('profile-raw-json').value = p.raw_attributes_json || '';
+
+                var cats = p.categories || [];
+                var boxes = document.querySelectorAll('.profile-cat');
+                for (var i = 0; i < boxes.length; i++) {
+                    boxes[i].checked = (cats.indexOf(parseInt(boxes[i].value, 10)) !== -1);
+                }
+
+                pendingValues = p.attributes || {};
+                editor.style.display = 'block';
+                editor.scrollIntoView({ behavior: 'smooth' });
+                // Pull the schema so the stored values have rows to land in.
+                loadSchema(false);
+            }, 'id_profile=' + encodeURIComponent(btn.getAttribute('data-id')));
+        });
+
+        /* ── delete ── */
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.profile-delete');
+            if (!btn) return;
+            if (!confirm('Delete this profile? Its categories fall back to the Category Mapping.')) return;
+            ajaxPost('{$ajax_delete_profile_url|escape:'javascript':'UTF-8'}', function (data) {
+                if (data && data.success) {
+                    var row = btn.closest('tr');
+                    if (row) row.remove();
+                }
+            }, 'id_profile=' + encodeURIComponent(btn.getAttribute('data-id')));
+        });
+
+        /* ── save ── */
+        el('profile-save').addEventListener('click', function () {
+            var btn = this;
+            var out = el('profile-save-result');
+            var cats = [];
+            var boxes = document.querySelectorAll('.profile-cat');
+            for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) cats.push(boxes[i].value); }
+
+            btn.disabled = true;
+            out.innerHTML = 'Saving...';
+            var params = 'id_profile=' + encodeURIComponent(el('profile-id').value)
+                + '&name=' + encodeURIComponent(el('profile-name').value)
+                + '&product_type=' + encodeURIComponent(el('pt-results').value)
+                + '&browse_nodes=' + encodeURIComponent(el('profile-browse-nodes').value)
+                + '&is_variation=' + encodeURIComponent(el('profile-is-variation').value)
+                + '&variation_attributes=' + encodeURIComponent(el('profile-variation-attributes').value)
+                + '&latency=' + encodeURIComponent(el('profile-latency').value)
+                + '&shipping_template=' + encodeURIComponent(el('profile-shipping-template').value)
+                + '&gtin_exemption=' + encodeURIComponent(el('profile-gtin-exemption').value)
+                + '&raw_attributes_json=' + encodeURIComponent(el('profile-raw-json').value)
+                + '&attributes=' + encodeURIComponent(JSON.stringify(collectAttributes()))
+                + '&categories=' + encodeURIComponent(JSON.stringify(cats));
+
+            ajaxPost('{$ajax_save_profile_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    out.innerHTML = '<span class="text-danger">' + esc((data && data.error) ? data.error : 'Save failed') + '</span>';
+                    return;
+                }
+                out.innerHTML = '<span class="text-success">Profile saved. ' + esc(data.queued) + ' product(s) queued for the next sync. Reload the page to refresh the list.</span>';
+                el('profile-id').value = data.id_profile;
+            }, params);
+        });
+    })();
+
     /* ──────── ENTITY RULES (categories / manufacturers / suppliers) ──────── */
     (function () {
         var buttons = document.querySelectorAll('.entity-save');
@@ -3148,6 +4107,236 @@
         }
         envSel.addEventListener('change', toggle);
         toggle();
+    })();
+
+    /* ──────── UPDATE EXISTING PRODUCTS FROM AMAZON ──────── */
+    (function () {
+        var btn = document.getElementById('amz-update-run');
+        var out = document.getElementById('amz-update-result');
+        if (!btn) return;
+
+        btn.addEventListener('click', function () {
+            var ops = [];
+            var boxes = document.querySelectorAll('.amz-update-op');
+            for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) ops.push(boxes[i].value); }
+            if (!ops.length) {
+                out.style.display = 'block';
+                out.innerHTML = '<div class="alert alert-danger">Tick at least one thing to update.</div>';
+                return;
+            }
+            if (!confirm('This overwrites PrestaShop data for products that exist on both sides. Continue?')) return;
+
+            btn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Updating from Amazon...</div>';
+            ajaxPost('{$ajax_update_from_amazon_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Update failed') + '</div>';
+                    return;
+                }
+                var s = data.summary;
+                var h = '<div class="alert alert-success">'
+                    + esc(s.candidates) + ' matched product(s) &middot; '
+                    + esc(s.content) + ' content &middot; ' + esc(s.price) + ' price &middot; '
+                    + esc(s.quantity) + ' stock &middot; ' + esc(s.features) + ' feature(s) &middot; '
+                    + esc(s.hidden) + ' deactivated &middot; ' + esc(s.failed) + ' failed</div>';
+                if (data.notices) {
+                    for (var n = 0; n < data.notices.length; n++) {
+                        h += '<div class="alert alert-warning">' + esc(data.notices[n]) + '</div>';
+                    }
+                }
+                out.innerHTML = h;
+            }, 'operations=' + encodeURIComponent(JSON.stringify(ops)));
+        });
+    })();
+
+    /* ──────── INBOUND BUYER MESSAGES ──────── */
+    (function () {
+        var btn = document.getElementById('inbox-fetch');
+        var out = document.getElementById('inbox-result');
+        if (!btn) return;
+
+        btn.addEventListener('click', function () {
+            btn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Connecting to the mailbox...</div>';
+            ajaxPost('{$ajax_fetch_buyer_messages_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Fetch failed') + '</div>';
+                    return;
+                }
+                var s = data.summary;
+                var h = '<div class="alert alert-success">' + esc(s.scanned) + ' unread message(s) scanned &middot; '
+                    + esc(s.matched) + ' quoting an Amazon order &middot; ' + esc(s.filed)
+                    + ' filed into Customer Service &middot; ' + esc(s.skipped) + ' left alone</div>';
+                if (data.notices) {
+                    for (var n = 0; n < data.notices.length; n++) {
+                        h += '<div class="alert alert-warning">' + esc(data.notices[n]) + '</div>';
+                    }
+                }
+                out.innerHTML = h;
+            });
+        });
+    })();
+
+    /* ──────── TOOLS: catalogue audit, CSV, deletions, feed payloads ──────── */
+    (function () {
+        var auditBtn = document.getElementById('audit-run');
+        if (!auditBtn) return;
+
+        /* Catalogue check */
+        auditBtn.addEventListener('click', function () {
+            var out = document.getElementById('audit-result');
+            auditBtn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Checking...</div>';
+            ajaxPost('{$ajax_audit_catalogue_url|escape:'javascript':'UTF-8'}', function (data) {
+                auditBtn.disabled = false;
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">Check failed</div>'; return; }
+                var a = data.audit;
+                var problems = a.no_reference + a.duplicate_references + a.combinations_no_reference;
+                var h = '<table class="table" style="max-width:560px;"><tbody>'
+                    + '<tr><td>Active products with no reference</td><td>' + badge(a.no_reference) + '</td></tr>'
+                    + '<tr><td>Duplicated references</td><td>' + badge(a.duplicate_references) + '</td></tr>'
+                    + '<tr><td>Combinations with no reference</td><td>' + badge(a.combinations_no_reference) + '</td></tr>'
+                    + '<tr><td>Active products with no EAN and no UPC</td><td>' + badge(a.no_barcode) + '</td></tr>'
+                    + '</tbody></table>';
+                h += problems === 0
+                    ? '<div class="alert alert-success">Your catalogue is ready to sync.</div>'
+                    : '<div class="alert alert-warning">Fix these with the CSV editor below before publishing — Amazon cannot match products without a unique reference.</div>';
+                out.innerHTML = h;
+            });
+        });
+
+        function badge(n) {
+            n = parseInt(n, 10) || 0;
+            return '<span class="badge badge-' + (n > 0 ? 'warning' : 'success') + '">' + n + '</span>';
+        }
+
+        /* CSV import (multipart, so not via ajaxPost) */
+        var importBtn = document.getElementById('reference-import');
+        importBtn.addEventListener('click', function () {
+            var input = document.getElementById('reference-file');
+            var out = document.getElementById('reference-result');
+            if (!input.files || !input.files.length) {
+                out.style.display = 'block';
+                out.innerHTML = '<div class="alert alert-danger">Choose a CSV file first.</div>';
+                return;
+            }
+            if (!confirm('This rewrites references and barcodes in your PrestaShop catalogue. Continue?')) return;
+
+            importBtn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Importing...</div>';
+
+            var fd = new FormData();
+            fd.append('reference_file', input.files[0]);
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '{$ajax_import_references_url|escape:'javascript':'UTF-8'}', true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                importBtn.disabled = false;
+                var data = null;
+                try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Import failed') + '</div>';
+                    return;
+                }
+                var s = data.summary;
+                var h = '<div class="alert alert-success">' + esc(s.updated) + ' row(s) updated &middot; '
+                    + esc(s.skipped) + ' skipped</div>';
+                if (s.errors && s.errors.length) {
+                    for (var i = 0; i < s.errors.length && i < 25; i++) {
+                        h += '<div class="alert alert-warning">' + esc(s.errors[i]) + '</div>';
+                    }
+                    if (s.errors.length > 25) {
+                        h += '<div class="alert alert-warning">...and ' + esc(s.errors.length - 25) + ' more.</div>';
+                    }
+                }
+                out.innerHTML = h;
+            };
+            xhr.send(fd);
+        });
+
+        /* Deletion pipeline: list, then send */
+        var listBtn = document.getElementById('deletions-list');
+        var sendBtn = document.getElementById('deletions-send');
+        var table = document.getElementById('deletions-table');
+        var out = document.getElementById('deletions-result');
+
+        listBtn.addEventListener('click', function () {
+            listBtn.disabled = true;
+            out.style.display = 'block';
+            out.innerHTML = '<div class="alert alert-info">Looking for listings whose product is gone or excluded...</div>';
+            ajaxPost('{$ajax_list_deletions_url|escape:'javascript':'UTF-8'}', function (data) {
+                listBtn.disabled = false;
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">Lookup failed</div>'; return; }
+                var rows = data.candidates || [];
+                var tbody = table.querySelector('tbody');
+                var h = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var c = rows[i];
+                    h += '<tr><td><input type="checkbox" class="deletion-pick" value="' + esc(c.seller_sku) + '" /></td>'
+                        + '<td><code>' + esc(c.seller_sku) + '</code></td>'
+                        + '<td>' + esc(c.amazon_asin || '') + '</td>'
+                        + '<td>' + esc(c.ps_name || '') + '</td>'
+                        + '<td>' + esc(c.reason) + '</td></tr>';
+                }
+                tbody.innerHTML = h;
+                table.style.display = rows.length ? '' : 'none';
+                sendBtn.disabled = rows.length === 0;
+                out.innerHTML = '<div class="alert alert-' + (rows.length ? 'warning' : 'success') + '">'
+                    + esc(rows.length) + ' listing(s) would be deleted. Tick the ones you really want gone.</div>';
+            });
+        });
+
+        var allBox = document.getElementById('deletions-all');
+        allBox.addEventListener('change', function () {
+            var boxes = table.querySelectorAll('.deletion-pick');
+            for (var i = 0; i < boxes.length; i++) boxes[i].checked = allBox.checked;
+        });
+
+        sendBtn.addEventListener('click', function () {
+            var picked = [];
+            var boxes = table.querySelectorAll('.deletion-pick');
+            for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) picked.push(boxes[i].value); }
+            if (!picked.length) {
+                out.innerHTML = '<div class="alert alert-danger">Nothing selected.</div>';
+                return;
+            }
+            if (!confirm('Delete ' + picked.length + ' listing(s) from Amazon? The offers and their history go with them.')) return;
+
+            sendBtn.disabled = true;
+            out.innerHTML = '<div class="alert alert-info">Deleting from Amazon...</div>';
+            ajaxPost('{$ajax_delete_listings_url|escape:'javascript':'UTF-8'}', function (data) {
+                sendBtn.disabled = false;
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Deletion failed') + '</div>'; return; }
+                var s = data.summary;
+                var h = '<div class="alert alert-' + (s.failed ? 'warning' : 'success') + '">'
+                    + esc(s.requested) + ' requested &middot; ' + esc(s.deleted) + ' deleted &middot; ' + esc(s.failed) + ' failed</div>';
+                if (s.results && s.results.length) {
+                    h += '<table class="table"><thead><tr><th>SKU</th><th>Status</th><th>Issues</th></tr></thead><tbody>';
+                    for (var i = 0; i < s.results.length; i++) {
+                        h += '<tr><td>' + esc(s.results[i].sku) + '</td><td>' + statusBadge(s.results[i].status)
+                            + '</td><td>' + esc(s.results[i].issues) + '</td></tr>';
+                    }
+                    h += '</tbody></table>';
+                }
+                out.innerHTML = h;
+            }, 'skus=' + encodeURIComponent(JSON.stringify(picked)));
+        });
+
+        /* Feed payload download */
+        var dl = document.getElementById('feed-payload-download');
+        dl.addEventListener('click', function (e) {
+            e.preventDefault();
+            var id = document.getElementById('feed-payload-id').value.replace(/^\s+|\s+$/g, '');
+            if (!id) { alert('Enter a feed id — you will find it on the Products tab after submitting a bulk feed.'); return; }
+            window.location.href = '{$download_feed_url|escape:'javascript':'UTF-8'}&feed_id=' + encodeURIComponent(id);
+        });
     })();
 
     /* ──────── Remember active tab ──────── */

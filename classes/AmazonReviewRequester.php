@@ -187,7 +187,7 @@ class AmazonReviewRequester
              WHERE `review_requested` = ' . (int) self::STATE_PENDING . '
                AND `order_status` NOT IN (\'Canceled\', \'Cancelled\')
                AND `purchase_date` IS NOT NULL
-               AND `purchase_date` < DATE_SUB(NOW(), INTERVAL 5 DAY)
+               AND `purchase_date` < \'' . pSQL(date('Y-m-d H:i:s', time() - 5 * 86400)) . '\'
              ORDER BY `purchase_date` ASC
              LIMIT ' . (int) $limit
         );

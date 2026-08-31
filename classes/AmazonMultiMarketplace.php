@@ -48,6 +48,9 @@ class AmazonMultiMarketplace
         'A1C3SOZRARQ6R3'  => 'Amazon.pl (Poland)',
         'A2NODRKZP88ZB9'  => 'Amazon.se (Sweden)',
         'AMEN7PMS3EDWL'   => 'Amazon.com.be (Belgium)',
+        'A28R8C7NBKEWEA'  => 'Amazon.ie (Ireland)',
+        'ARBP9OOSHTCHU'   => 'Amazon.eg (Egypt)',
+        'AE08WJ6YKNBMC'   => 'Amazon.co.za (South Africa)',
         'A33AVAJ2PDY3EV'  => 'Amazon.com.tr (Turkey)',
         'A21TJRUUN4KGV'   => 'Amazon.in (India)',
         'A2VIGQ35RCS4UG'  => 'Amazon.ae (UAE)',
@@ -65,7 +68,8 @@ class AmazonMultiMarketplace
         'APJ6JRA9NG5V4'  => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
         'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL'  => 'EU',
         'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV'  => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
-        'A17E79C6D8DWNP' => 'EU', 'A19VAU5U5O7RUS' => 'FE',
+        'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU'  => 'EU',
+        'AE08WJ6YKNBMC'  => 'EU', 'A19VAU5U5O7RUS' => 'FE',
         'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
     );
 

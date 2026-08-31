@@ -174,20 +174,9 @@ class AmazonSpApiClient
             ));
         }
 
-        // Amazon Business price (B2B audience offer)
-        $discount = (float) Configuration::get('AMZPRO_B2B_DISCOUNT');
-        if ($discount > 0 && $discount < 100 && $priceTaxIncl > 0
-            && isset($attributes['purchasable_offer'])) {
-            $b2bPrice = round($priceTaxIncl * (1 - $discount / 100), 2);
-            $attributes['purchasable_offer'][] = array(
-                'audience' => 'B2B',
-                'currency' => self::currencyForMarketplace($marketplaceId),
-                'marketplace_id' => $marketplaceId,
-                'our_price' => array(array(
-                    'schedule' => array(array('value_with_tax' => $b2bPrice)),
-                )),
-            );
-        }
+        // Amazon Business offer (price + quantity ladder) is built by
+        // AmazonListingSettings::applyBusinessPricing(), which needs the
+        // product to read its tier prices — the caller applies it.
 
         return $attributes;
     }
@@ -207,6 +196,9 @@ class AmazonSpApiClient
         'A1C3SOZRARQ6R3' => 'PLN', // Poland
         'A2NODRKZP88ZB9' => 'SEK', // Sweden
         'AMEN7PMS3EDWL'  => 'EUR', // Belgium
+        'A28R8C7NBKEWEA' => 'EUR', // Ireland
+        'ARBP9OOSHTCHU'  => 'EGP', // Egypt
+        'AE08WJ6YKNBMC'  => 'ZAR', // South Africa
         'A33AVAJ2PDY3EV' => 'TRY', // Turkey
         'A21TJRUUN4KGV'  => 'INR', // India
         'A2VIGQ35RCS4UG' => 'AED', // UAE
@@ -215,6 +207,41 @@ class AmazonSpApiClient
         'A39IBJ37TRP1C6' => 'AUD', // Australia
         'A1VC38T7YXB528' => 'JPY', // Japan
     );
+
+    /** Marketplaces served by each Amazon FBA fulfilment network. */
+    private static $fbaChannels = array(
+        'AMAZON_NA' => array('ATVPDKIKX0DER', 'A2EUQ1WTGCTBG2', 'A1AM78C64UM0Y8', 'A2Q3Y263D00KMC'),
+        'AMAZON_JP' => array('A1VC38T7YXB528'),
+        'AMAZON_AU' => array('A39IBJ37TRP1C6'),
+        'AMAZON_SG' => array('A19VAU5U5O7RUS'),
+        'AMAZON_IN' => array('A21TJRUUN4KGV'),
+    );
+
+    /**
+     * The fulfilment channel code that marks a listing as Fulfilled by Amazon.
+     *
+     * The code names the FBA network, not the marketplace, so it differs by
+     * region — sending AMAZON_NA on a European listing is rejected. Amazon
+     * publishes the exact values a seller may use in their Product Type
+     * Definitions schema, so a merchant whose account differs can pin it.
+     *
+     * @return string
+     */
+    public static function fbaChannelCode($marketplaceId)
+    {
+        $override = trim((string) Configuration::get('AMZPRO_FBA_CHANNEL_CODE'));
+        if ($override !== '') {
+            return $override;
+        }
+        foreach (self::$fbaChannels as $code => $marketplaces) {
+            if (in_array($marketplaceId, $marketplaces)) {
+                return $code;
+            }
+        }
+
+        // Everything else in the catalogue is a European marketplace.
+        return 'AMAZON_EU';
+    }
 
     /**
      * @param string $marketplaceId Amazon marketplace id (e.g. ATVPDKIKX0DER)

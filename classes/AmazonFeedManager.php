@@ -84,6 +84,27 @@ class AmazonFeedManager
                 KEY `processing_status` (`processing_status`)
             ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;'
         );
+
+        // Retaining the submitted payload is what makes an Amazon support
+        // ticket answerable; added after the original table shipped.
+        $hasPayload = false;
+        $columns = Db::getInstance()->executeS(
+            'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`'
+        );
+        if (is_array($columns)) {
+            foreach ($columns as $c) {
+                if ($c['Field'] === 'feed_content') {
+                    $hasPayload = true;
+                    break;
+                }
+            }
+        }
+        if (!$hasPayload) {
+            Db::getInstance()->execute(
+                'ALTER TABLE `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
+                 ADD `feed_content` LONGTEXT NULL'
+            );
+        }
     }
 
     /**
@@ -133,7 +154,7 @@ class AmazonFeedManager
 
         if ($this->useMock) {
             $feedId = 'MOCKFEED' . rand(1000, 9999);
-            $this->storeFeed($feedId, $feedType, $messagesCount, 'DONE', $messagesCount, 0, 0, '[]');
+            $this->storeFeed($feedId, $feedType, $messagesCount, 'DONE', $messagesCount, 0, 0, '[]', $content);
             return $feedId;
         }
 
@@ -170,7 +191,7 @@ class AmazonFeedManager
         }
 
         $feedId = $resp['body']['feedId'];
-        $this->storeFeed($feedId, $feedType, $messagesCount, 'SUBMITTED', 0, 0, 0, null);
+        $this->storeFeed($feedId, $feedType, $messagesCount, 'SUBMITTED', 0, 0, 0, null, $content);
 
         return $feedId;
     }
@@ -305,13 +326,13 @@ class AmazonFeedManager
         return $out;
     }
 
-    private function storeFeed($feedId, $feedType, $messagesCount, $status, $accepted, $errors, $warnings, $issuesJson)
+    private function storeFeed($feedId, $feedType, $messagesCount, $status, $accepted, $errors, $warnings, $issuesJson, $payload = null)
     {
         $now = date('Y-m-d H:i:s');
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
              (`feed_id`, `feed_type`, `marketplace_id`, `processing_status`, `messages_count`,
-              `accepted`, `errors`, `warnings`, `issues_json`, `date_add`, `date_upd`)
+              `accepted`, `errors`, `warnings`, `issues_json`, `feed_content`, `date_add`, `date_upd`)
              VALUES (
                 \'' . pSQL($feedId) . '\',
                 \'' . pSQL($feedType) . '\',
@@ -322,9 +343,21 @@ class AmazonFeedManager
                 ' . (int) $errors . ',
                 ' . (int) $warnings . ',
                 ' . ($issuesJson === null ? 'NULL' : '\'' . pSQL($issuesJson, true) . '\'') . ',
+                ' . ($payload === null ? 'NULL' : '\'' . pSQL(Tools::substr($payload, 0, 4000000), true) . '\'') . ',
                 \'' . pSQL($now) . '\',
                 \'' . pSQL($now) . '\'
              )'
+        );
+    }
+
+    /** The exact JSON submitted for a feed, for support tickets. */
+    public function getFeedPayload($feedId)
+    {
+        $this->ensureTable();
+
+        return (string) Db::getInstance()->getValue(
+            'SELECT `feed_content` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
+             WHERE `feed_id` = \'' . pSQL($feedId) . '\''
         );
     }
 

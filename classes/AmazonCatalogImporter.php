@@ -46,6 +46,245 @@ class AmazonCatalogImporter
     }
 
     /**
+     * Pull Amazon-side data onto products that already exist in the shop.
+     *
+     * Reads the staged table, so run an Amazon-side sync first. Each operation
+     * is independent, because merchants rarely want all of them: a shop whose
+     * descriptions are its own will still want stock, and a shop that prices
+     * from Amazon will not want its titles rewritten.
+     *
+     * @param array $operations Any of: content, price, quantity, hide, features
+     * @param int   $limit
+     * @return array Per-operation counts
+     */
+    public function updateFromAmazon($operations, $limit = 500)
+    {
+        $this->lastError = null;
+        $this->notices = array();
+
+        $summary = array(
+            'candidates' => 0, 'content' => 0, 'price' => 0,
+            'quantity' => 0, 'hidden' => 0, 'features' => 0, 'failed' => 0,
+        );
+        $operations = array_intersect(
+            (array) $operations,
+            array('content', 'price', 'quantity', 'hide', 'features')
+        );
+        if (empty($operations)) {
+            $this->lastError = 'No operation selected.';
+            return $summary;
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT ap.*, p.`id_product` AS ps_id
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
+             INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
+             WHERE ap.`amazon_exists` = 1 AND ap.`id_product` > 0
+             ORDER BY ap.`seller_sku` ASC
+             LIMIT ' . (int) $limit
+        );
+        if (!is_array($rows)) {
+            $rows = array();
+        }
+        $summary['candidates'] = count($rows);
+
+        foreach ($rows as $r) {
+            $idProduct = (int) $r['id_product'];
+            $idPa = (int) $r['id_product_attribute'];
+
+            try {
+                $product = new Product($idProduct, false, $this->idLang, $this->idShop);
+                if (!Validate::isLoadedObject($product)) {
+                    $summary['failed']++;
+                    continue;
+                }
+
+                if (in_array('content', $operations)) {
+                    $summary['content'] += $this->applyContent($product, $r) ? 1 : 0;
+                }
+                if (in_array('price', $operations) && (float) $r['amazon_price'] > 0) {
+                    // Amazon prices include tax; PrestaShop stores them net.
+                    $taxRate = (float) $product->getTaxesRate(null);
+                    $net = ($taxRate > 0)
+                        ? (float) $r['amazon_price'] / (1 + $taxRate / 100)
+                        : (float) $r['amazon_price'];
+                    $product->price = round($net, 6);
+                    if ($product->update()) {
+                        $summary['price']++;
+                    }
+                }
+                if (in_array('quantity', $operations)) {
+                    StockAvailable::setQuantity(
+                        $idProduct, $idPa, (int) $r['amazon_quantity'], $this->idShop
+                    );
+                    $summary['quantity']++;
+                }
+                if (in_array('features', $operations)) {
+                    $summary['features'] += $this->applyFeatures($product, $r);
+                }
+            } catch (Exception $e) {
+                $summary['failed']++;
+                $this->notices[] = $r['seller_sku'] . ': ' . $e->getMessage();
+            }
+        }
+
+        // Hiding is computed the other way round: products the shop still
+        // lists but Amazon no longer carries.
+        if (in_array('hide', $operations)) {
+            $summary['hidden'] = $this->hideUnavailable($limit);
+        }
+
+        if (in_array('price', $operations)) {
+            $this->notices[] = 'Prices were converted from Amazon\'s tax-inclusive figures '
+                . 'using each product\'s tax rule — check a few before relying on them.';
+        }
+
+        return $summary;
+    }
+
+    /** Overwrite title and description from the Amazon listing. */
+    private function applyContent($product, $row)
+    {
+        $changed = false;
+
+        $title = trim((string) $row['amazon_title']);
+        if ($title !== '') {
+            $product->name = array($this->idLang => Tools::substr($title, 0, 128));
+            $changed = true;
+        }
+        $description = trim((string) $row['amazon_description']);
+        if ($description !== '') {
+            $product->description = array($this->idLang => $description);
+            $changed = true;
+        }
+        $brand = trim((string) $row['amazon_brand']);
+        if ($brand !== '') {
+            $idManufacturer = (int) Manufacturer::getIdByName($brand);
+            if (!$idManufacturer) {
+                $manufacturer = new Manufacturer();
+                $manufacturer->name = $brand;
+                $manufacturer->active = 1;
+                if ($manufacturer->add()) {
+                    $idManufacturer = (int) $manufacturer->id;
+                }
+            }
+            if ($idManufacturer) {
+                $product->id_manufacturer = $idManufacturer;
+                $changed = true;
+            }
+        }
+
+        return $changed ? (bool) $product->update() : false;
+    }
+
+    /**
+     * Turn the listing's bullet points into PrestaShop features, creating the
+     * feature and its value when they do not exist yet.
+     *
+     * @return int Features attached
+     */
+    private function applyFeatures($product, $row)
+    {
+        if (empty($row['amazon_bullet_points'])) {
+            return 0;
+        }
+        $bullets = json_decode($row['amazon_bullet_points'], true);
+        if (!is_array($bullets)) {
+            return 0;
+        }
+
+        $added = 0;
+        $position = 1;
+        foreach (array_slice($bullets, 0, 5) as $bullet) {
+            $bullet = trim(strip_tags((string) $bullet));
+            if ($bullet === '') {
+                continue;
+            }
+            $featureName = 'Amazon highlight ' . $position;
+            $position++;
+
+            $idFeature = (int) Db::getInstance()->getValue(
+                'SELECT `id_feature` FROM `' . _DB_PREFIX_ . 'feature_lang`
+                 WHERE `name` = \'' . pSQL($featureName) . '\' AND `id_lang` = ' . (int) $this->idLang
+            );
+            if (!$idFeature) {
+                $feature = new Feature();
+                $feature->name = array($this->idLang => $featureName);
+                if (!$feature->add()) {
+                    continue;
+                }
+                $idFeature = (int) $feature->id;
+            }
+
+            $value = Tools::substr($bullet, 0, 255);
+            $idValue = (int) Db::getInstance()->getValue(
+                'SELECT fv.`id_feature_value` FROM `' . _DB_PREFIX_ . 'feature_value` fv
+                 INNER JOIN `' . _DB_PREFIX_ . 'feature_value_lang` fvl
+                     ON (fvl.`id_feature_value` = fv.`id_feature_value` AND fvl.`id_lang` = ' . (int) $this->idLang . ')
+                 WHERE fv.`id_feature` = ' . $idFeature . ' AND fvl.`value` = \'' . pSQL($value) . '\''
+            );
+            if (!$idValue) {
+                $featureValue = new FeatureValue();
+                $featureValue->id_feature = $idFeature;
+                $featureValue->custom = 0;
+                $featureValue->value = array($this->idLang => $value);
+                if (!$featureValue->add()) {
+                    continue;
+                }
+                $idValue = (int) $featureValue->id;
+            }
+
+            Db::getInstance()->execute(
+                'INSERT IGNORE INTO `' . _DB_PREFIX_ . 'feature_product`
+                    (`id_feature`, `id_product`, `id_feature_value`)
+                 VALUES (' . $idFeature . ', ' . (int) $product->id . ', ' . $idValue . ')'
+            );
+            $added++;
+        }
+
+        return $added;
+    }
+
+    /**
+     * Deactivate shop products whose Amazon listing has gone (or run dry),
+     * so the storefront stops offering what the marketplace no longer has.
+     *
+     * @return int Products deactivated
+     */
+    private function hideUnavailable($limit = 500)
+    {
+        $rows = Db::getInstance()->executeS(
+            'SELECT ap.`id_product`, ap.`seller_sku`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
+             INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
+             WHERE ap.`id_product` > 0 AND p.`active` = 1
+               AND (ap.`amazon_exists` = 0 OR ap.`amazon_quantity` <= 0)
+             LIMIT ' . (int) $limit
+        );
+        if (!is_array($rows) || empty($rows)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($rows as $r) {
+            $product = new Product((int) $r['id_product']);
+            if (!Validate::isLoadedObject($product)) {
+                continue;
+            }
+            $product->active = 0;
+            if ($product->update()) {
+                $count++;
+            }
+        }
+        if ($count > 0) {
+            $this->notices[] = $count . ' product(s) deactivated because Amazon no longer carries them '
+                . 'or shows zero stock. They were not deleted — re-enable them from the catalogue.';
+        }
+
+        return $count;
+    }
+
+    /**
      * Import all staged Amazon-only listings as PrestaShop products.
      *
      * @param int $idCategory Target category (0 = shop's Home category)

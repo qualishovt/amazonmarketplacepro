@@ -49,6 +49,9 @@ class AmazonProductSync
         'A1C3SOZRARQ6R3' => 'pl', // Poland
         'A2NODRKZP88ZB9' => 'sv', // Sweden
         'AMEN7PMS3EDWL'  => 'fr', // Belgium
+        'A28R8C7NBKEWEA' => 'en', // Ireland
+        'ARBP9OOSHTCHU'  => 'ar', // Egypt
+        'AE08WJ6YKNBMC'  => 'en', // South Africa
         'A33AVAJ2PDY3EV' => 'tr', // Turkey
         'A21TJRUUN4KGV'  => 'en', // India
         'A2VIGQ35RCS4UG' => 'en', // UAE
@@ -101,6 +104,12 @@ class AmazonProductSync
     public function ensureTables()
     {
         $engine = defined('_MYSQL_ENGINE_') ? _MYSQL_ENGINE_ : 'InnoDB';
+
+        // Profile / override tables are joined by the push/feed queries below.
+        require_once dirname(__FILE__) . '/AmazonProfile.php';
+        require_once dirname(__FILE__) . '/AmazonProductOverride.php';
+        AmazonProfile::ensureTables();
+        AmazonProductOverride::ensureTable();
 
         $sql = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` (
             `id_amazonmarketplacepro_product` INT(11) NOT NULL AUTO_INCREMENT,
@@ -165,6 +174,45 @@ class AmazonProductSync
      *
      * @return array Summary counts (also includes 'ps_scanned')
      */
+    /**
+     * Columns added to the staged product table after 1.0: condition and
+     * availability date feed the condition mapping and preorder features.
+     */
+    private function ensureStagedColumns()
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        $existing = array();
+        $rows = Db::getInstance()->executeS(
+            'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`'
+        );
+        if (is_array($rows)) {
+            foreach ($rows as $r) {
+                $existing[$r['Field']] = true;
+            }
+        }
+        $columns = array(
+            'ps_condition' => 'VARCHAR(32) NOT NULL DEFAULT \'\'',
+            'ps_available_date' => 'DATE NULL',
+            'ps_list_price' => 'DECIMAL(20,6) NOT NULL DEFAULT 0',
+            'sale_price' => 'DECIMAL(20,6) NOT NULL DEFAULT 0',
+            'sale_from' => 'DATE NULL',
+            'sale_to' => 'DATE NULL',
+        );
+        foreach ($columns as $name => $definition) {
+            if (!isset($existing[$name])) {
+                Db::getInstance()->execute(
+                    'ALTER TABLE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                     ADD `' . bqSQL($name) . '` ' . $definition
+                );
+            }
+        }
+    }
+
     public function syncPrestashopSide()
     {
         $this->ensureTables();
@@ -498,12 +546,20 @@ class AmazonProductSync
         $shopUrl = $this->getShopBaseUrl();
 
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
+        require_once dirname(__FILE__) . '/AmazonProductOverride.php';
+        $overrides = AmazonProductOverride::all();
 
         // Export filters & delta-sync context.
         $priceMin = (float) Configuration::get('AMZPRO_PRICE_MIN');
         $priceMax = (float) Configuration::get('AMZPRO_PRICE_MAX');
         $qtyMin = (int) Configuration::get('AMZPRO_QTY_MIN');
         $deltaHours = (int) Configuration::get('AMZPRO_DELTA_HOURS');
+        // "Send entire catalogue" wins over the delta window — the escape
+        // hatch for a first push, or after a settings change that affects
+        // every listing.
+        if (Configuration::get('AMZPRO_FULL_CATALOG')) {
+            $deltaHours = 0;
+        }
         $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : array();
         $deltaCutoff = ($deltaHours > 0) ? date('Y-m-d H:i:s', time() - $deltaHours * 3600) : null;
         $filteredOut = 0;
@@ -519,6 +575,7 @@ class AmazonProductSync
         // so rows are pre-filtered only on being active.
         $sql = 'SELECT p.`id_product`, p.`reference`, p.`supplier_reference`, p.`price`, p.`ean13`,
                        p.`weight`, p.`date_upd`, p.`id_category_default`,
+                       p.`condition` AS ps_condition, p.`available_date`,
                        pl.`name`, pl.`description`, pl.`description_short`,
                        m.`name` AS manufacturer_name
                 FROM `' . _DB_PREFIX_ . 'product` p
@@ -531,11 +588,13 @@ class AmazonProductSync
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $sku = AmazonListingSettings::buildSku($r);
+                $idProduct = (int) $r['id_product'];
+                $sku = AmazonProductOverride::effectiveSku(
+                    $idProduct, AmazonListingSettings::buildSku($r), $overrides
+                );
                 if ($sku === '' || isset($seen[$sku])) {
                     continue;
                 }
-                $idProduct = (int) $r['id_product'];
 
                 if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
                     $filteredOut++;
@@ -546,9 +605,10 @@ class AmazonProductSync
                     continue;
                 }
 
-                $price = AmazonListingSettings::applySpecificPrice((float) $r['price'], $idProduct, 0);
-                $price = AmazonListingSettings::applyMarkup($price, $idProduct);
-                $quantity = $this->getQuantity($idProduct, 0, $idShop);
+                $price = $this->effectivePrice((float) $r['price'], $idProduct, 0, $overrides);
+                $quantity = $this->effectiveStock(
+                    $this->getQuantity($idProduct, 0, $idShop), $idProduct, $overrides
+                );
 
                 if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
                     || ($qtyMin > 0 && $quantity < $qtyMin)) {
@@ -559,6 +619,8 @@ class AmazonProductSync
                 $seen[$sku] = true;
                 $images = $this->getProductImageUrls($idProduct, 0, $shopUrl);
 
+                $sale = AmazonListingSettings::resolveSaleSchedule($price, $idProduct, 0);
+
                 $baseRowIndex[$idProduct] = count($out);
                 $out[] = array(
                     'sku' => $sku,
@@ -567,6 +629,12 @@ class AmazonProductSync
                     'name' => $r['name'],
                     'price' => $price,
                     'quantity' => $quantity,
+                    'condition' => (string) $r['ps_condition'],
+                    'available_date' => $r['available_date'],
+                    'list_price' => (float) $r['price'],
+                    'sale_price' => $sale ? $sale['price'] : 0,
+                    'sale_from' => $sale ? $sale['from'] : null,
+                    'sale_to' => $sale ? $sale['to'] : null,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
                     'manufacturer' => (string) $r['manufacturer_name'],
@@ -582,6 +650,7 @@ class AmazonProductSync
                        pa.`supplier_reference`, pa.`ean13` AS combo_ean,
                        (p.`price` + pa.`price`) AS price, pl.`name`,
                        pl.`description`, pl.`description_short`, p.`date_upd`,
+                       p.`condition` AS ps_condition, p.`available_date`,
                        p.`ean13` AS product_ean, p.`supplier_reference` AS product_supplier_ref,
                        p.`id_category_default`,
                        m.`name` AS manufacturer_name
@@ -619,9 +688,10 @@ class AmazonProductSync
                     continue;
                 }
 
-                $price = AmazonListingSettings::applySpecificPrice((float) $r['price'], $idProduct, $idPa);
-                $price = AmazonListingSettings::applyMarkup($price, $idProduct);
-                $quantity = $this->getQuantity($idProduct, $idPa, $idShop);
+                $price = $this->effectivePrice((float) $r['price'], $idProduct, $idPa, $overrides);
+                $quantity = $this->effectiveStock(
+                    $this->getQuantity($idProduct, $idPa, $idShop), $idProduct, $overrides
+                );
 
                 if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
                     || ($qtyMin > 0 && $quantity < $qtyMin)) {
@@ -661,6 +731,8 @@ class AmazonProductSync
                     $comboRowIndexes[$idProduct][] = count($out);
                 }
 
+                $sale = AmazonListingSettings::resolveSaleSchedule($price, $idProduct, $idPa);
+
                 $out[] = array(
                     'sku' => $sku,
                     'id_product' => $idProduct,
@@ -668,6 +740,12 @@ class AmazonProductSync
                     'name' => $comboName,
                     'price' => $price,
                     'quantity' => $quantity,
+                    'condition' => (string) $r['ps_condition'],
+                    'available_date' => $r['available_date'],
+                    'list_price' => (float) $r['price'],
+                    'sale_price' => $sale ? $sale['price'] : 0,
+                    'sale_from' => $sale ? $sale['from'] : null,
+                    'sale_to' => $sale ? $sale['to'] : null,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
                     'manufacturer' => (string) $r['manufacturer_name'],
@@ -716,6 +794,38 @@ class AmazonProductSync
         }
 
         return $out;
+    }
+
+    /**
+     * Export price for a product: a per-product override wins outright,
+     * otherwise specific prices and the markup cascade apply.
+     */
+    private function effectivePrice($basePrice, $idProduct, $idProductAttribute, $overrides)
+    {
+        if (isset($overrides[$idProduct]) && (float) $overrides[$idProduct]['override_price'] > 0) {
+            return AmazonListingSettings::applyRounding($overrides[$idProduct]['override_price']);
+        }
+
+        $price = AmazonListingSettings::applySpecificPrice($basePrice, $idProduct, $idProductAttribute);
+        $price = AmazonListingSettings::applyMarkup($price, $idProduct);
+
+        return AmazonListingSettings::applyRounding($price);
+    }
+
+    /** Export quantity, honouring the per-product always-in/out-of-stock forcing. */
+    private function effectiveStock($quantity, $idProduct, $overrides)
+    {
+        if (!isset($overrides[$idProduct])) {
+            return $quantity;
+        }
+        if (!empty($overrides[$idProduct]['force_out_of_stock'])) {
+            return 0;
+        }
+        if (!empty($overrides[$idProduct]['force_in_stock'])) {
+            return 999;
+        }
+
+        return $quantity;
     }
 
     /**
@@ -905,6 +1015,8 @@ class AmazonProductSync
              `ps_quantity`, `ps_description`, `ps_description_short`, `ps_manufacturer`,
              `ps_ean13`, `ps_id_category_default`, `ps_images`,
              `parent_sku`, `is_parent`, `variation_theme`, `variation_attributes`,
+             `ps_condition`, `ps_available_date`, `ps_list_price`,
+             `sale_price`, `sale_from`, `sale_to`,
              `amazon_exists`, `sync_direction`, `date_add`, `date_upd`)
             VALUES (
                 \'' . pSQL($row['sku']) . '\',
@@ -924,6 +1036,12 @@ class AmazonProductSync
                 ' . $isParent . ',
                 \'' . pSQL($variationTheme) . '\',
                 \'' . pSQL($variationAttrs) . '\',
+                \'' . pSQL(isset($row['condition']) ? $row['condition'] : '') . '\',
+                ' . (!empty($row['available_date']) ? '\'' . pSQL($row['available_date']) . '\'' : 'NULL') . ',
+                ' . (float) (isset($row['list_price']) ? $row['list_price'] : 0) . ',
+                ' . (float) (isset($row['sale_price']) ? $row['sale_price'] : 0) . ',
+                ' . (!empty($row['sale_from']) ? '\'' . pSQL($row['sale_from']) . '\'' : 'NULL') . ',
+                ' . (!empty($row['sale_to']) ? '\'' . pSQL($row['sale_to']) . '\'' : 'NULL') . ',
                 0,
                 \'\',
                 \'' . pSQL($now) . '\',
@@ -946,6 +1064,12 @@ class AmazonProductSync
                 `is_parent` = VALUES(`is_parent`),
                 `variation_theme` = VALUES(`variation_theme`),
                 `variation_attributes` = VALUES(`variation_attributes`),
+                `ps_condition` = VALUES(`ps_condition`),
+                `ps_available_date` = VALUES(`ps_available_date`),
+                `ps_list_price` = VALUES(`ps_list_price`),
+                `sale_price` = VALUES(`sale_price`),
+                `sale_from` = VALUES(`sale_from`),
+                `sale_to` = VALUES(`sale_to`),
                 `date_upd` = VALUES(`date_upd`)';
         Db::getInstance()->execute($sql);
     }
@@ -1224,11 +1348,37 @@ class AmazonProductSync
                     p.`ps_description`, p.`ps_description_short`, p.`ps_manufacturer`,
                     p.`ps_ean13`, p.`ps_id_category_default`, p.`ps_images`, p.`amazon_asin`,
                     p.`parent_sku`, p.`is_parent`, p.`variation_theme`, p.`variation_attributes`,
-                    cm.`amazon_product_type`, cm.`amazon_browse_node`, cm.`attributes_json`
+                    p.`ps_condition`, p.`ps_available_date`, p.`ps_list_price`,
+                    p.`sale_price`, p.`sale_from`, p.`sale_to`,
+                    cm.`amazon_product_type`, cm.`amazon_browse_node`, cm.`attributes_json`,
+                    pr.`id_amazonmarketplacepro_profile` AS profile_id,
+                    pr.`product_type` AS profile_product_type,
+                    pr.`browse_nodes` AS profile_browse_nodes,
+                    pr.`attributes_json` AS profile_attributes_json,
+                    pr.`raw_attributes_json` AS profile_raw_attributes_json,
+                    pr.`latency` AS profile_latency,
+                    pr.`shipping_template` AS profile_shipping_template,
+                    pr.`gtin_exemption` AS profile_gtin_exemption,
+                    ov.`asin` AS ov_asin, ov.`is_fba` AS ov_is_fba,
+                    ov.`lead_time` AS ov_lead_time, ov.`gift_option` AS ov_gift_option,
+                    ov.`transparency_code` AS ov_transparency_code,
+                    ov.`shipping_template` AS ov_shipping_template,
+                    ov.`browse_node` AS ov_browse_node, ov.`brand` AS ov_brand,
+                    ov.`bullet_points` AS ov_bullet_points,
+                    ov.`condition_type` AS ov_condition_type,
+                    ov.`condition_note` AS ov_condition_note,
+                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (cm.`id_category` = p.`ps_id_category_default`
                      AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
+                 ON (pc.`id_category` = p.`ps_id_category_default`
+                     AND pc.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
+                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1)
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
+                 ON (ov.`id_product` = p.`id_product`)
              WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
@@ -1360,6 +1510,123 @@ class AmazonProductSync
     }
 
     /**
+     * SKUs that would be removed from Amazon by deleteFromAmazon(), so the
+     * merchant can review the list before anything is sent.
+     *
+     * @return array Rows with seller_sku, amazon_asin, ps_name and a reason
+     */
+    public function listDeletionCandidates($limit = 500)
+    {
+        $this->ensureTables();
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT ap.`seller_sku`, ap.`amazon_asin`, ap.`ps_name`, ap.`id_product`,
+                    ap.`ps_exists`, ap.`ps_quantity`, p.`active`,
+                    ov.`sync` AS ov_sync
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
+             LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
+                 ON (ov.`id_product` = ap.`id_product`)
+             WHERE ap.`amazon_exists` = 1
+               AND (ap.`ps_exists` = 0
+                    OR p.`id_product` IS NULL
+                    OR p.`active` = 0
+                    OR ov.`sync` = 0)
+             ORDER BY ap.`seller_sku` ASC
+             LIMIT ' . (int) $limit
+        );
+        if (!is_array($rows)) {
+            return array();
+        }
+
+        foreach ($rows as &$r) {
+            if ((int) $r['id_product'] === 0 || $r['active'] === null) {
+                $r['reason'] = 'No PrestaShop product with this SKU';
+            } elseif (!(int) $r['active']) {
+                $r['reason'] = 'PrestaShop product is disabled';
+            } else {
+                $r['reason'] = 'Excluded from Amazon sync on the product';
+            }
+        }
+        unset($r);
+
+        return $rows;
+    }
+
+    /**
+     * Remove listings from Amazon.
+     *
+     * Deletion is destructive on Amazon's side (the offer goes, and with it
+     * its history), so it never runs implicitly — the caller passes the exact
+     * SKUs, which the UI takes from listDeletionCandidates().
+     *
+     * @param array $skus
+     * @return array array('requested' => int, 'deleted' => int, 'failed' => int, 'results' => array)
+     */
+    public function deleteFromAmazon($skus)
+    {
+        $this->ensureTables();
+        $this->notices = array();
+
+        $summary = array('requested' => 0, 'deleted' => 0, 'failed' => 0, 'results' => array());
+        if (!is_array($skus) || empty($skus)) {
+            return $summary;
+        }
+        if ($this->sellerId === '' && !$this->useMock) {
+            $this->lastError = 'No seller id configured.';
+            return $summary;
+        }
+
+        foreach ($skus as $sku) {
+            $sku = trim((string) $sku);
+            if ($sku === '') {
+                continue;
+            }
+            $summary['requested']++;
+
+            if ($this->useMock) {
+                $summary['deleted']++;
+                $summary['results'][] = array('sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) deletion simulated');
+                continue;
+            }
+
+            $resp = $this->client->request(
+                'DELETE',
+                '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
+                array('marketplaceIds' => $this->marketplaceId)
+            );
+            if ($resp === false) {
+                $summary['failed']++;
+                $summary['results'][] = array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+                continue;
+            }
+
+            $status = (is_array($resp['body']) && isset($resp['body']['status']))
+                ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
+            if ($resp['status'] < 300) {
+                $summary['deleted']++;
+                // The listing is gone: stop treating it as present on Amazon.
+                Db::getInstance()->execute(
+                    'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                     SET `amazon_exists` = 0, `sync_direction` = \'\',
+                         `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+                     WHERE `seller_sku` = \'' . pSQL($sku) . '\''
+                );
+            } else {
+                $summary['failed']++;
+            }
+            $summary['results'][] = array(
+                'sku' => $sku,
+                'status' => $status,
+                'issues' => (is_array($resp['body']) && isset($resp['body']['issues']))
+                    ? json_encode($resp['body']['issues']) : '',
+            );
+        }
+
+        return $summary;
+    }
+
+    /**
      * Collect feed messages for every pending (ps_only / conflict) staged row.
      *
      * Reuses the exact same body building as the per-SKU push, so feed and
@@ -1385,11 +1652,37 @@ class AmazonProductSync
                     p.`ps_description`, p.`ps_description_short`, p.`ps_manufacturer`,
                     p.`ps_ean13`, p.`ps_id_category_default`, p.`ps_images`, p.`amazon_asin`,
                     p.`parent_sku`, p.`is_parent`, p.`variation_theme`, p.`variation_attributes`,
-                    cm.`amazon_product_type`, cm.`amazon_browse_node`, cm.`attributes_json`
+                    p.`ps_condition`, p.`ps_available_date`, p.`ps_list_price`,
+                    p.`sale_price`, p.`sale_from`, p.`sale_to`,
+                    cm.`amazon_product_type`, cm.`amazon_browse_node`, cm.`attributes_json`,
+                    pr.`id_amazonmarketplacepro_profile` AS profile_id,
+                    pr.`product_type` AS profile_product_type,
+                    pr.`browse_nodes` AS profile_browse_nodes,
+                    pr.`attributes_json` AS profile_attributes_json,
+                    pr.`raw_attributes_json` AS profile_raw_attributes_json,
+                    pr.`latency` AS profile_latency,
+                    pr.`shipping_template` AS profile_shipping_template,
+                    pr.`gtin_exemption` AS profile_gtin_exemption,
+                    ov.`asin` AS ov_asin, ov.`is_fba` AS ov_is_fba,
+                    ov.`lead_time` AS ov_lead_time, ov.`gift_option` AS ov_gift_option,
+                    ov.`transparency_code` AS ov_transparency_code,
+                    ov.`shipping_template` AS ov_shipping_template,
+                    ov.`browse_node` AS ov_browse_node, ov.`brand` AS ov_brand,
+                    ov.`bullet_points` AS ov_bullet_points,
+                    ov.`condition_type` AS ov_condition_type,
+                    ov.`condition_note` AS ov_condition_note,
+                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (cm.`id_category` = p.`ps_id_category_default`
                      AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
+                 ON (pc.`id_category` = p.`ps_id_category_default`
+                     AND pc.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
+                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1)
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
+                 ON (ov.`id_product` = p.`id_product`)
              WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
@@ -1512,6 +1805,10 @@ class AmazonProductSync
      */
     private function buildListingRequestBody($r)
     {
+        // A profile bound to the product's category wins over the simpler
+        // category mapping; both feed the same builders below.
+        $r = $this->applyProfile($r);
+
         // Determine if we can do a full listing or offer-only
         $hasProductType = !empty($r['amazon_product_type']);
 
@@ -1524,10 +1821,19 @@ class AmazonProductSync
             }
         }
 
-        // Build bullet points from short description
+        // Build bullet points: the per-product list wins, else derive them
+        // from the short description.
         $bulletPoints = array();
+        if (!empty($r['ov_bullet_points'])) {
+            foreach (preg_split('/[\r\n]+/', (string) $r['ov_bullet_points']) as $line) {
+                $line = trim($line);
+                if ($line !== '') {
+                    $bulletPoints[] = $line;
+                }
+            }
+        }
         $shortDesc = isset($r['ps_description_short']) ? strip_tags(trim((string) $r['ps_description_short'])) : '';
-        if ($shortDesc !== '') {
+        if (empty($bulletPoints) && $shortDesc !== '') {
             // Split by periods or newlines into bullet points
             $parts = preg_split('/[\r\n]+|(?<=\.)\s+/', $shortDesc);
             foreach ($parts as $part) {
@@ -1594,7 +1900,7 @@ class AmazonProductSync
                     'marketplace_id' => $this->marketplaceId,
                 ));
             }
-        } elseif ($hasProductType) {
+        } elseif ($hasProductType && Configuration::get('AMZPRO_EXTENDED_DATA') !== '0') {
             // Standalone full listing with all attributes
             $body = $this->buildFullListingBody($r, $bulletPoints, $images);
         } else {
@@ -1615,20 +1921,39 @@ class AmazonProductSync
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
 
-        $availability = array(
-            'fulfillment_channel_code' => 'DEFAULT',
-            'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-        );
-        // Handling time (category/manufacturer/supplier cascade, module default)
-        $delay = AmazonListingSettings::resolveDelay($idProduct);
-        if ($delay > 0) {
+        // Products marked Fulfilled-by-Amazon carry no merchant quantity:
+        // Amazon owns the stock for that channel.
+        $availability = !empty($r['ov_is_fba'])
+            ? array('fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId))
+            : array(
+                'fulfillment_channel_code' => 'DEFAULT',
+                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+            );
+        // Handling time: profile default first, then the
+        // category/manufacturer/supplier cascade and the module default.
+        $delay = (isset($r['profile_latency']) && (int) $r['profile_latency'] >= 0)
+            ? (int) $r['profile_latency']
+            : AmazonListingSettings::resolveDelay($idProduct);
+        if ($delay > 0 && empty($r['ov_is_fba'])) {
             $availability['lead_time_to_ship_max_days'] = $delay;
         }
 
+        // Condition precedence: the product's own override, then the mapping
+        // of its PrestaShop condition, then the global default.
+        $condition = '';
+        if (!empty($r['ov_condition_type'])) {
+            $condition = (string) $r['ov_condition_type'];
+        } elseif (!empty($r['ps_condition'])) {
+            $condition = AmazonListingSettings::mapCondition($r['ps_condition']);
+        }
+        if ($condition === '') {
+            $condition = AmazonSpApiClient::listingCondition();
+        }
+
         $attributes = array(
-            'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
+            'condition_type' => array(array('value' => $condition)),
             'item_name' => array(array(
-                'value' => $r['ps_name'],
+                'value' => $this->composeTitle($r),
                 'marketplace_id' => $this->marketplaceId,
             )),
             'purchasable_offer' => array(array(
@@ -1641,8 +1966,10 @@ class AmazonProductSync
             'fulfillment_availability' => array($availability),
         );
 
-        // Condition note for used / refurbished listings
-        $condNote = $this->conditionNote();
+        // Condition note: per-product text wins over the global one.
+        $condNote = !empty($r['ov_condition_note'])
+            ? trim((string) $r['ov_condition_note'])
+            : $this->conditionNote($condition);
         if ($condNote !== '') {
             $attributes['condition_note'] = array(array(
                 'value' => $condNote,
@@ -1723,32 +2050,125 @@ class AmazonProductSync
             ));
         }
 
-        // Main image
-        if (!empty($images) && isset($images[0])) {
-            $attributes['main_product_image_locator'] = array(array(
-                'media_location' => $images[0],
+        // Images are optional: hosting them costs Amazon a fetch per SKU, so
+        // large catalogues often push them once and then sync offers only.
+        if (Configuration::get('AMZPRO_SEND_IMAGES') !== '0') {
+            if (!empty($images) && isset($images[0])) {
+                $attributes['main_product_image_locator'] = array(array(
+                    'media_location' => $images[0],
+                    'marketplace_id' => $this->marketplaceId,
+                ));
+            }
+            for ($i = 1; $i < min(count($images), 6); $i++) {
+                $key = 'other_product_image_locator_' . $i;
+                $attributes[$key] = array(array(
+                    'media_location' => $images[$i],
+                    'marketplace_id' => $this->marketplaceId,
+                ));
+            }
+        }
+
+        // Sale price with its window: Amazon stores the schedule and applies
+        // the discount only while it is open.
+        $this->applyPricingExtras($attributes, $r);
+
+        // Preorder: a future availability date becomes Amazon's restock date.
+        if (Configuration::get('AMZPRO_PREORDER') && !empty($r['ps_available_date'])
+            && isset($attributes['fulfillment_availability'][0])
+            && strtotime($r['ps_available_date']) > time()) {
+            $attributes['fulfillment_availability'][0]['restock_date'] =
+                date('Y-m-d', strtotime($r['ps_available_date']));
+        }
+
+        // Gift wrap / gift message availability
+        if (!empty($r['ov_gift_option'])) {
+            $attributes['is_gift_wrap_available'] = array(array(
+                'value' => true, 'marketplace_id' => $this->marketplaceId,
+            ));
+            $attributes['is_gift_message_available'] = array(array(
+                'value' => true, 'marketplace_id' => $this->marketplaceId,
+            ));
+        }
+        // Amazon Transparency programme code
+        if (!empty($r['ov_transparency_code'])) {
+            $attributes['transparency_code'] = array(array(
+                'value' => (string) $r['ov_transparency_code'],
                 'marketplace_id' => $this->marketplaceId,
             ));
         }
-        // Additional images
-        for ($i = 1; $i < min(count($images), 6); $i++) {
-            $key = 'other_product_image_locator_' . $i;
-            $attributes[$key] = array(array(
-                'media_location' => $images[$i],
+
+        // Per-product opt-outs: leave price and/or stock untouched on Amazon.
+        if (isset($r['ov_sync_price']) && !(int) $r['ov_sync_price']) {
+            unset($attributes['purchasable_offer']);
+        }
+        if (isset($r['ov_sync_quantity']) && !(int) $r['ov_sync_quantity']) {
+            unset($attributes['fulfillment_availability']);
+        }
+
+        // Amazon browse nodes (profile or category mapping). Amazon accepts
+        // several; the merchant separates them with a comma or semicolon.
+        $nodes = isset($r['amazon_browse_node']) ? trim((string) $r['amazon_browse_node']) : '';
+        if ($nodes !== '') {
+            $nodeValues = array();
+            foreach (preg_split('/[;,]/', $nodes) as $node) {
+                $node = trim($node);
+                if ($node !== '') {
+                    $nodeValues[] = array('value' => $node, 'marketplace_id' => $this->marketplaceId);
+                }
+            }
+            if (!empty($nodeValues)) {
+                $attributes['recommended_browse_nodes'] = $nodeValues;
+            }
+        }
+
+        // Brand-registered sellers can list without an EAN/UPC when Amazon
+        // granted them a GTIN exemption for the product type.
+        if (!empty($r['profile_gtin_exemption'])) {
+            unset($attributes['externally_assigned_product_identifier']);
+            $attributes['supplier_declared_has_product_identifier_exemption'] = array(array(
+                'value' => true,
                 'marketplace_id' => $this->marketplaceId,
             ));
+        }
+
+        // Profile attribute map (schema-driven: PrestaShop field, Amazon
+        // allowed value, or a fixed literal per attribute).
+        if (!empty($r['profile_attributes_json'])) {
+            require_once dirname(__FILE__) . '/AmazonProfile.php';
+            $profileAttrs = json_decode($r['profile_attributes_json'], true);
+            $sync = $this;
+            $resolved = AmazonProfile::resolveAttributes(
+                $profileAttrs,
+                $r,
+                $this->marketplaceId,
+                function ($idProduct, $featureName) use ($sync) {
+                    return $sync->featureValue($idProduct, $featureName);
+                }
+            );
+            foreach ($resolved as $attrName => $attrValue) {
+                if (!isset($attributes[$attrName])) {
+                    $attributes[$attrName] = $attrValue;
+                }
+            }
         }
 
         // Merge the category's attribute template (product-type specific
         // required fields, GPSR/compliance data, etc.)
         $attributes = $this->applyAttributeTemplate($attributes, $r);
 
-        // Shipping template (price/weight ranges when enabled) + B2B price
-        $attributes = AmazonSpApiClient::enrichOfferAttributes(
-            $attributes, $this->marketplaceId, (float) $r['ps_price'],
-            AmazonListingSettings::resolveShippingTemplate(
+        // Shipping template: the profile's own template wins, then the
+        // price/weight ranges, then the single configured template.
+        $template = (!empty($r['profile_shipping_template']))
+            ? (string) $r['profile_shipping_template']
+            : AmazonListingSettings::resolveShippingTemplate(
                 (float) $r['ps_price'], $this->productWeight($r)
-            )
+            );
+        $attributes = AmazonSpApiClient::enrichOfferAttributes(
+            $attributes, $this->marketplaceId, (float) $r['ps_price'], $template
+        );
+        AmazonListingSettings::applyBusinessPricing(
+            $attributes, $this->marketplaceId, (float) $r['ps_price'],
+            $idProduct, isset($r['id_product_attribute']) ? (int) $r['id_product_attribute'] : 0
         );
 
         return array(
@@ -1758,11 +2178,111 @@ class AmazonProductSync
         );
     }
 
-    /** Condition note for the configured (non-new) listing condition, or ''. */
-    private function conditionNote()
+    /**
+     * Fold a matched listing profile into a staged row.
+     *
+     * The profile's product type, browse nodes, latency and shipping template
+     * take precedence over the category mapping's; its attribute map is kept
+     * separately so buildFullListingBody can resolve it per product.
+     */
+    private function applyProfile($r)
     {
-        $condition = AmazonSpApiClient::listingCondition();
-        if (strpos($condition, 'used') === 0) {
+        if (!empty($r['profile_id'])) {
+            if (!empty($r['profile_product_type'])) {
+                $r['amazon_product_type'] = $r['profile_product_type'];
+            }
+            if (!empty($r['profile_browse_nodes'])) {
+                $r['amazon_browse_node'] = $r['profile_browse_nodes'];
+            }
+            // The profile's raw JSON escape hatch replaces the category one.
+            if (!empty($r['profile_raw_attributes_json'])) {
+                $r['attributes_json'] = $r['profile_raw_attributes_json'];
+            }
+        }
+
+        // Per-product overrides sit above everything else.
+        if (!empty($r['ov_browse_node'])) {
+            $r['amazon_browse_node'] = $r['ov_browse_node'];
+        }
+        if (!empty($r['ov_brand'])) {
+            $r['ps_manufacturer'] = $r['ov_brand'];
+        }
+        if (!empty($r['ov_asin'])) {
+            $r['amazon_asin'] = $r['ov_asin'];
+        }
+        if (isset($r['ov_lead_time']) && (int) $r['ov_lead_time'] >= 0) {
+            $r['profile_latency'] = (int) $r['ov_lead_time'];
+        }
+        if (!empty($r['ov_shipping_template'])) {
+            $r['profile_shipping_template'] = $r['ov_shipping_template'];
+        }
+
+        return $r;
+    }
+
+    /**
+     * Listing title, composed per the configured format.
+     *
+     * Amazon's own guideline is "Brand - Product name - Attributes"; shops
+     * whose product names are already optimised keep them untouched.
+     */
+    private function composeTitle($r)
+    {
+        $name = trim((string) $r['ps_name']);
+        if (Configuration::get('AMZPRO_TITLE_FORMAT') !== 'brand_name_attrs') {
+            return $name;
+        }
+
+        $brand = isset($r['ps_manufacturer']) ? trim((string) $r['ps_manufacturer']) : '';
+        // The staged name already carries the combination's attribute values.
+        $title = ($brand !== '' && stripos($name, $brand) !== 0)
+            ? $brand . ' - ' . $name
+            : $name;
+
+        return Tools::substr($title, 0, 200);
+    }
+
+    /**
+     * Add the sale schedule and the strikethrough list price to a body that
+     * already carries a purchasable_offer.
+     *
+     * @param array $attributes by reference
+     * @param array $r          staged row
+     */
+    private function applyPricingExtras(&$attributes, $r)
+    {
+        if (!isset($attributes['purchasable_offer'][0])) {
+            return;
+        }
+
+        if ((float) $r['sale_price'] > 0 && !empty($r['sale_from']) && !empty($r['sale_to'])) {
+            $attributes['purchasable_offer'][0]['discounted_price'] = array(array(
+                'schedule' => array(array(
+                    'value_with_tax' => (float) $r['sale_price'],
+                    'start_at' => date('c', strtotime($r['sale_from'] . ' 00:00:00')),
+                    'end_at' => date('c', strtotime($r['sale_to'] . ' 23:59:59')),
+                )),
+            ));
+        }
+
+        // The pre-discount shop price becomes Amazon's crossed-out list price.
+        if (Configuration::get('AMZPRO_SEND_LIST_PRICE') && (float) $r['ps_list_price'] > 0
+            && (float) $r['ps_list_price'] > (float) $r['ps_price']) {
+            $attributes['list_price'] = array(array(
+                'value' => AmazonListingSettings::applyRounding($r['ps_list_price']),
+                'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
+                'marketplace_id' => $this->marketplaceId,
+            ));
+        }
+    }
+
+    /** Condition note for a non-new listing condition, or ''. */
+    private function conditionNote($condition = null)
+    {
+        if ($condition === null) {
+            $condition = AmazonSpApiClient::listingCondition();
+        }
+        if (strpos($condition, 'used') === 0 || strpos($condition, 'collectible') === 0) {
             return trim((string) Configuration::get('AMZPRO_COND_NOTE_USED'));
         }
         if (strpos($condition, 'refurbished') === 0) {
@@ -1854,6 +2374,12 @@ class AmazonProductSync
      *
      * @return string '' when the product doesn't have the feature
      */
+    /** Public wrapper so profile attribute resolution can read PS features. */
+    public function featureValue($idProduct, $featureName)
+    {
+        return $this->resolveFeatureValue($idProduct, $featureName);
+    }
+
     private function resolveFeatureValue($idProduct, $featureName)
     {
         if (!$idProduct || $featureName === '') {
@@ -1883,17 +2409,33 @@ class AmazonProductSync
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
 
-        $availability = array(
-            'fulfillment_channel_code' => 'DEFAULT',
-            'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-        );
-        $delay = AmazonListingSettings::resolveDelay($idProduct);
-        if ($delay > 0) {
+        $availability = !empty($r['ov_is_fba'])
+            ? array('fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId))
+            : array(
+                'fulfillment_channel_code' => 'DEFAULT',
+                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+            );
+        $delay = (isset($r['profile_latency']) && (int) $r['profile_latency'] >= 0)
+            ? (int) $r['profile_latency']
+            : AmazonListingSettings::resolveDelay($idProduct);
+        if ($delay > 0 && empty($r['ov_is_fba'])) {
             $availability['lead_time_to_ship_max_days'] = $delay;
         }
 
+        // Condition precedence: the product's own override, then the mapping
+        // of its PrestaShop condition, then the global default.
+        $condition = '';
+        if (!empty($r['ov_condition_type'])) {
+            $condition = (string) $r['ov_condition_type'];
+        } elseif (!empty($r['ps_condition'])) {
+            $condition = AmazonListingSettings::mapCondition($r['ps_condition']);
+        }
+        if ($condition === '') {
+            $condition = AmazonSpApiClient::listingCondition();
+        }
+
         $attributes = array(
-            'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
+            'condition_type' => array(array('value' => $condition)),
             'purchasable_offer' => array(array(
                 'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                 'marketplace_id' => $this->marketplaceId,
@@ -1904,13 +2446,24 @@ class AmazonProductSync
             'fulfillment_availability' => array($availability),
         );
 
-        $condNote = $this->conditionNote();
+        if (isset($r['ov_sync_price']) && !(int) $r['ov_sync_price']) {
+            unset($attributes['purchasable_offer']);
+        }
+        if (isset($r['ov_sync_quantity']) && !(int) $r['ov_sync_quantity']) {
+            unset($attributes['fulfillment_availability']);
+        }
+
+        $condNote = !empty($r['ov_condition_note'])
+            ? trim((string) $r['ov_condition_note'])
+            : $this->conditionNote($condition);
         if ($condNote !== '') {
             $attributes['condition_note'] = array(array(
                 'value' => $condNote,
                 'marketplace_id' => $this->marketplaceId,
             ));
         }
+
+        $this->applyPricingExtras($attributes, $r);
 
         // A known ASIN lets Amazon match the offer to the right catalog page.
         if (!empty($r['amazon_asin'])) {
@@ -1920,12 +2473,16 @@ class AmazonProductSync
             ));
         }
 
-        // Shipping template (price/weight ranges when enabled) + B2B price
+        // Shipping template (price/weight ranges when enabled) + B2B offer
         $attributes = AmazonSpApiClient::enrichOfferAttributes(
             $attributes, $this->marketplaceId, (float) $r['ps_price'],
             AmazonListingSettings::resolveShippingTemplate(
                 (float) $r['ps_price'], $this->productWeight($r)
             )
+        );
+        AmazonListingSettings::applyBusinessPricing(
+            $attributes, $this->marketplaceId, (float) $r['ps_price'],
+            $idProduct, isset($r['id_product_attribute']) ? (int) $r['id_product_attribute'] : 0
         );
 
         return array(

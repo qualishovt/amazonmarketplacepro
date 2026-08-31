@@ -115,8 +115,7 @@ class AmazonPromotionSync
                     'SELECT `id_amazonmarketplacepro_promotion`
                      FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
                      WHERE `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
-                       AND `seller_sku` = \'' . pSQL($item['seller_sku']) . '\'
-                     LIMIT 1'
+                       AND `seller_sku` = \'' . pSQL($item['seller_sku']) . '\''
                 );
 
                 if ($exists) {
@@ -161,8 +160,7 @@ class AmazonPromotionSync
                 $exists = (bool) Db::getInstance()->getValue(
                     'SELECT `id_amazonmarketplacepro_promotion`
                      FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
-                     WHERE `amazon_promotion_id` = \'' . pSQL($genericId) . '\'
-                     LIMIT 1'
+                     WHERE `amazon_promotion_id` = \'' . pSQL($genericId) . '\''
                 );
 
                 if (!$exists) {

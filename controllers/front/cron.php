@@ -102,6 +102,12 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
             case 'process_feeds':
                 $result = $this->actionProcessFeeds();
                 break;
+            case 'remote_cart':
+                $result = $this->actionRemoteCart();
+                break;
+            case 'fetch_messages':
+                $result = $this->actionFetchMessages();
+                break;
             case 'upload_invoices':
                 $result = $this->actionUploadInvoices();
                 break;
@@ -596,7 +602,8 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
                 'APJ6JRA9NG5V4' => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
                 'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL' => 'EU',
                 'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV' => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
-                'A17E79C6D8DWNP' => 'EU', 'A19VAU5U5O7RUS' => 'FE',
+                'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU'  => 'EU',
+                'AE08WJ6YKNBMC'  => 'EU', 'A19VAU5U5O7RUS' => 'FE',
                 'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
             );
             $region = isset($regionMap[$mp]) ? $regionMap[$mp] : 'EU';
@@ -647,6 +654,46 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
                 \'' . pSQL($now) . '\'
              )'
         );
+    }
+
+    /**
+     * Settle Remote Cart reservations: hand over the ones whose order is now
+     * payable, return the stock of the ones that expired.
+     */
+    private function actionRemoteCart()
+    {
+        require_once dirname(__FILE__) . '/../../classes/AmazonRemoteCart.php';
+
+        if (!AmazonRemoteCart::isEnabled()) {
+            return array('success' => true, 'action' => 'remote_cart', 'summary' => array('disabled' => true));
+        }
+
+        $converted = AmazonRemoteCart::convertConfirmed();
+        $expired = AmazonRemoteCart::releaseExpired();
+
+        return array(
+            'success' => true,
+            'action' => 'remote_cart',
+            'summary' => array(
+                'converted_orders' => $converted,
+                'expired_orders' => $expired['orders'],
+                'released_items' => $expired['items'],
+            ),
+        );
+    }
+
+    /** Read buyer replies from the configured mailbox into Customer Service. */
+    private function actionFetchMessages()
+    {
+        require_once dirname(__FILE__) . '/../../classes/AmazonBuyerInbox.php';
+
+        $inbox = new AmazonBuyerInbox();
+        $summary = $inbox->fetchNewMessages(50);
+        if ($summary === false) {
+            return array('success' => false, 'error' => $inbox->getLastError());
+        }
+
+        return array('success' => true, 'action' => 'fetch_messages', 'summary' => $summary);
     }
 
     private function jsonResponse($data, $httpCode = 200)
