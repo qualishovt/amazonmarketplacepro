@@ -35,9 +35,13 @@ switch ($command) {
         echo "Store it ONE of these two ways, never both, and never in config.php.\n";
         echo "Both keep the key on this server - the point is to keep it out of the\n";
         echo "file that holds the ciphertext, and out of the web root.\n\n";
-        echo "  1. RECOMMENDED on shared hosting - key file outside the web root:\n";
-        echo "       umask 077 && printf '%s' '" . $encoded . "' > ~/.ipresta-key\n";
-        echo "       chmod 600 ~/.ipresta-key\n";
+        echo "  1. RECOMMENDED on shared hosting - key file outside the web root.\n";
+        echo "     Run these two lines, paste the key, then press Enter and Ctrl-D:\n\n";
+        echo "       umask 077; cat > ~/.ipresta-key\n";
+        echo "       chmod 600 ~/.ipresta-key\n\n";
+        echo "     Paste it into cat rather than writing a one-liner with the key in\n";
+        echo "     it - a command containing the key is kept in ~/.bash_history and is\n";
+        echo "     visible in the process list to other users on a shared host.\n\n";
         echo "     then in config.php:  define('IPRESTA_KEY_FILE', '/home/USER/.ipresta-key');\n\n";
         echo "  2. A real environment variable, if the host provides one - a panel\n";
         echo "     setting or a vhost directive that you cannot edit over FTP.\n";
