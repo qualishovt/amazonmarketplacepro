@@ -21,6 +21,19 @@ if (PHP_SAPI !== 'cli') {
 
 require_once dirname(__FILE__) . '/secrets.php';
 
+/*
+ * config.php is where IPRESTA_KEY_FILE is defined, so it has to be loaded
+ * before anything asks for the master key - ipresta_master_key() caches its
+ * answer, so a later require would be too late.
+ *
+ * It is optional on purpose: genkey has to run on a fresh install, before
+ * config.php exists.
+ */
+$iprestaConfig = dirname(__FILE__) . '/config.php';
+if (is_readable($iprestaConfig)) {
+    require_once $iprestaConfig;
+}
+
 $command = isset($argv[1]) ? $argv[1] : '';
 
 switch ($command) {
@@ -82,12 +95,10 @@ switch ($command) {
         break;
 
     case 'check':
-        $configFile = dirname(__FILE__) . '/config.php';
-        if (!is_readable($configFile)) {
+        if (!is_readable($iprestaConfig)) {
             fwrite(STDERR, "config.php not found next to this script.\n");
             exit(1);
         }
-        require_once $configFile;
 
         $names = array(
             'IPRESTA_LWA_CLIENT_SECRET',
