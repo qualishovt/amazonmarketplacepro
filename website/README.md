@@ -57,8 +57,13 @@ endpoints live outside it and are untouched by this deployment:
 
 1. **Set the eBay price.** `marketplaces/ebay.html` currently says *Price on request* with a
    `TODO` comment showing the exact markup to paste. The Amazon page is set to
-   € 209.99 one-time, 12 months of updates and support included.
-   Confirm whether both figures are incl. or excl. VAT and say so on the page.
+   € 209.99 one-time including the first 12 months of Business care, then € 60 / year
+   from the second year. Business care covers module updates and e-mail support; it is
+   bundled into year one and optional afterwards. Declining it does not disable the
+   module — updates and support simply stop.
+   The eBay card on `index.html` still claims "12 months of updates and support" — confirm
+   whether eBay follows the same model before publishing that.
+   Confirm whether the figures are incl. or excl. VAT and say so on the page.
 2. **Add your other (non-marketplace) modules** to `index.html` — there is a marked comment
    block showing where, and an "In development" placeholder block below it to replace or
    delete. Keep descriptions factual; superlatives ("best", "#1") are grounds for rejection.
