@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy &amp; Data Handling Policy | IntelliPresta</title>
+<style>
+    body { font-family: Georgia, 'Times New Roman', serif; max-width: 780px; margin: 40px auto; padding: 0 20px;
+           color: #2d3338; line-height: 1.65; }
+    h1 { font-size: 28px; border-bottom: 2px solid #25b2a8; padding-bottom: 10px; }
+    h2 { font-size: 20px; margin-top: 34px; color: #1d5c56; }
+    h3 { font-size: 16px; margin-top: 22px; color: #1d5c56; }
+    .updated { color: #888; font-size: 14px; }
+    table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 15px; }
+    th, td { border: 1px solid #dfe3e5; padding: 8px 12px; text-align: left; vertical-align: top; }
+    th { background: #f6f9f9; }
+    footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 14px; color: #666; }
+    a { color: #1d5c56; }
+</style>
+</head>
+<body>
+
+<h1>Privacy &amp; Data Handling Policy</h1>
+<p class="updated">Last updated: August 2026 &middot; Applies to IntelliPresta's PrestaShop
+modules — including <a href="amazon.html">Amazon Marketplace Pro</a> and
+<a href="ebay.html">eBay Marketplace Pro</a> — and to the IntelliPresta authorisation
+service at intellipresta.com</p>
+
+<p>IntelliPresta develops PrestaShop modules that merchants install in their own stores. Several
+of them — Amazon Marketplace Pro and eBay Marketplace Pro — connect a merchant's PrestaShop
+store to online marketplaces such as Amazon and eBay. This policy describes what data is collected, how it is used, where it is stored,
+how it is protected, with whom it is shared, how long it is kept, and how it is deleted. Where a
+section is specific to marketplace integrations, that is stated.</p>
+
+<h2>1. The architecture, in one paragraph</h2>
+<p>Our modules run <strong>inside the merchant's own PrestaShop installation</strong>, on
+hosting the merchant controls. Marketplace data — listings, prices, stock, orders, and the buyer
+details needed to fulfil them — travels directly between the merchant's server and the
+marketplace's official API, and is stored only in the merchant's own database. IntelliPresta
+operates one small hosted component: an authorisation service that completes the secure connection
+handshake. It keeps no database and stores no data. Each merchant is the data controller for the
+data in their shop; IntelliPresta is not a processor of marketplace or buyer data in normal
+operation.</p>
+
+<h2>2. What data is collected, and why</h2>
+
+<h3>2.1 In the merchant's shop (by a marketplace module)</h3>
+<table>
+    <tr><th>Data</th><th>Source</th><th>Purpose</th></tr>
+    <tr>
+        <td>Product and listing data (titles, descriptions, attributes, prices, stock)</td>
+        <td>The merchant's own catalogue; listing status from the marketplace API</td>
+        <td>Creating and synchronising marketplace listings</td>
+    </tr>
+    <tr>
+        <td>Order data (order id, items, amounts, taxes, delivery speed, fulfilment channel)</td>
+        <td>Marketplace API</td>
+        <td>Creating the corresponding PrestaShop order; accounting</td>
+    </tr>
+    <tr>
+        <td>Buyer contact and delivery data (name, delivery address, marketplace-relay e-mail,
+            phone where provided)</td>
+        <td>Marketplace API, under the authorisations the merchant's seller account grants</td>
+        <td>Solely to fulfil the order: address labels, carrier hand-over, invoices, and
+            order-related communication permitted by the marketplace</td>
+    </tr>
+    <tr>
+        <td>Marketplace fees and settlement figures</td>
+        <td>Marketplace API reports</td>
+        <td>Margin and accounting visibility for the merchant</td>
+    </tr>
+    <tr>
+        <td>API credentials for the merchant's seller account (refresh token; optionally client
+            credentials in advanced configurations)</td>
+        <td>Issued by the marketplace when the merchant approves the connection</td>
+        <td>Authenticating the shop's API calls</td>
+    </tr>
+</table>
+
+<h3>2.2 On IntelliPresta's authorisation service</h3>
+<p>The IntelliPresta authorisation service — <code>intellipresta.com/spapi/</code> for Amazon
+and <code>intellipresta.com/ebay/</code> for eBay — processes, transiently and per request:</p>
+<ul>
+    <li>the one-time authorisation code the marketplace issues when a merchant approves the
+        connection, exchanged immediately for the merchant's credentials and passed to the
+        merchant's shop; and</li>
+    <li>the merchant shop's refresh token, presented by the shop to obtain short-lived access
+        tokens during operation.</li>
+</ul>
+<p>The service is <strong>stateless</strong>: it has no database, stores no tokens, no personal
+data, and no order or product data. Values exist in memory only for the duration of each request
+and are transmitted exclusively over TLS-encrypted connections. It sets no cookies and runs no
+analytics.</p>
+
+<h3>2.3 Support correspondence</h3>
+<p>If a merchant contacts support@intellipresta.com, we hold that correspondence (name, e-mail
+address, and whatever the merchant includes) to answer and to keep a support history.</p>
+
+<h2>3. How data is used</h2>
+<p>Data handled by the module is used only for the purposes in the table above — operating the
+merchant's marketplace business. Specifically, buyer personal data obtained from the marketplace
+is used <strong>only for order fulfilment and permitted order-related communication</strong>. It
+is not used for marketing, profiling, enrichment, or any purpose unrelated to the order, and it is
+never aggregated across merchants — the architecture makes that impossible, since each shop holds
+only its own data.</p>
+
+<h2>4. Where data is stored</h2>
+<ul>
+    <li><strong>Merchant and buyer data:</strong> in the merchant's own PrestaShop database, on
+        the merchant's hosting, in the location the merchant chose.</li>
+    <li><strong>IntelliPresta's authorisation service:</strong> nothing stored (see 2.2).</li>
+    <li><strong>Support correspondence:</strong> in IntelliPresta's e-mail system.</li>
+</ul>
+
+<h2>5. How data is protected</h2>
+<ul>
+    <li>All connections between the merchant's shop, the authorisation service and the
+        marketplace's API use TLS (HTTPS) encryption in transit.</li>
+    <li>Buyer personal data requested from the marketplace uses the marketplace's restricted-data
+        mechanisms: access tokens are scoped to the specific order and data element, obtained per
+        operation, and never stored.</li>
+    <li>The module stores credentials in the shop's configuration, never in source code, and its
+        administration screens never redisplay stored secrets.</li>
+    <li>The authorisation service holds its own credentials in server-side configuration files
+        outside the web root's readable scope, with access restricted to IntelliPresta
+        administrators.</li>
+    <li>Within PrestaShop, access to order and customer data is governed by PrestaShop's own
+        employee-permission system, under the merchant's control.</li>
+</ul>
+
+<h2>6. With whom data is shared</h2>
+<p>IntelliPresta shares no marketplace or buyer data with anyone — it does not hold any. From the
+merchant's shop, data flows only to: (a) the marketplace's own API, as required to operate the
+integration; and (b) parties the merchant themselves engages (for example their carrier, for
+delivery). IntelliPresta uses a hosting provider for intellipresta.com; because the authorisation
+service is stateless, no personal data is stored with that provider. No data is sold, rented, or
+disclosed for advertising purposes — by design there is nothing to sell.</p>
+
+<h2>7. How long data is kept</h2>
+<ul>
+    <li><strong>In the merchant's shop:</strong> retention is under the merchant's control, subject
+        to their legal obligations (e.g. tax law for order records). The module adds no retention
+        of its own beyond the shop's.</li>
+    <li><strong>Authorisation service:</strong> per-request only; nothing is retained.</li>
+    <li><strong>Support correspondence:</strong> kept while relevant to an open licence or
+        obligation, then deleted.</li>
+</ul>
+
+<h2>8. How data is deleted</h2>
+<ul>
+    <li><strong>Disconnecting:</strong> the merchant can revoke the marketplace authorisation at
+        any time from their seller account, or with the module's Disconnect button, which clears
+        the stored credential.</li>
+    <li><strong>Uninstalling:</strong> uninstalling the module removes the module's database
+        tables — staged orders, listing data, logs and settings — from the merchant's shop.
+        Orders already created in PrestaShop remain part of the shop's normal order history,
+        under the merchant's own retention rules.</li>
+    <li><strong>Buyer deletion requests:</strong> merchants are responsible for honouring
+        data-deletion obligations for their own shops; PrestaShop's customer-erasure tooling
+        covers records the module created.</li>
+    <li><strong>Marketplace account-deletion notifications:</strong> IntelliPresta operates a
+        notification endpoint at <code>https://intellipresta.com/ebay/deletion.php</code>,
+        registered for eBay's Marketplace Account Deletion/Closure programme. It completes
+        eBay's challenge-code verification and acknowledges every deletion notification it
+        receives. Because the service holds no eBay user data of any kind, there is nothing to
+        erase centrally; where a merchant's own shop holds records for that buyer, the merchant
+        erases them as the controller, using PrestaShop's customer-erasure tooling.</li>
+    <li><strong>Support correspondence:</strong> deleted on request to
+        support@intellipresta.com.</li>
+</ul>
+
+<h2>9. Your rights</h2>
+<p>For data in a merchant's shop, the merchant is the controller — buyers should direct requests
+(access, correction, deletion) to the shop they bought from, or to the marketplace they used.
+For the little that IntelliPresta itself holds (support correspondence), you can request access,
+correction or deletion at any time via the address below.</p>
+
+<h2>10. Changes to this policy</h2>
+<p>Material changes will be published on this page with an updated date above.</p>
+
+<h2>11. Contact</h2>
+<p>Questions about this policy or data handling:
+<a href="mailto:support@intellipresta.com">support@intellipresta.com</a>.</p>
+
+<footer>© IntelliPresta — <a href="/">intellipresta.com</a> &middot;
+<a href="./">Marketplace modules</a> &middot;
+<a href="amazon.html">Amazon Marketplace Pro</a> &middot;
+<a href="ebay.html">eBay Marketplace Pro</a></footer>
+
+</body>
+</html>

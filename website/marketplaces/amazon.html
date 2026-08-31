@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Marketplace Pro — sell on Amazon from PrestaShop | IntelliPresta</title>
+<meta name="description" content="Amazon Marketplace Pro is a PrestaShop module that connects your store to Amazon: publish listings, synchronise prices and stock, import orders, and automate your marketplace business. Your data stays in your own shop.">
+<style>
+    :root { --brand: #25b2a8; --brand-dark: #1d5c56; --ink: #2d3338; --muted: #667077; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif; margin: 0; color: var(--ink);
+           line-height: 1.65; }
+    a { color: var(--brand-dark); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+    header { border-bottom: 1px solid #e3e7e9; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; flex-wrap: wrap; gap: 12px; }
+    .wordmark { font-size: 22px; font-weight: 700; color: var(--brand-dark); text-decoration: none; }
+    .wordmark span { color: var(--brand); }
+    nav a { margin-left: 22px; text-decoration: none; color: var(--muted); font-size: 15px; }
+    nav a:hover { color: var(--brand-dark); }
+
+    .hero { padding: 56px 0 48px; }
+    .hero h1 { font-size: 34px; line-height: 1.25; margin: 0 0 14px; max-width: 720px; }
+    .hero p.lead { font-size: 19px; color: var(--muted); max-width: 680px; margin: 0 0 24px; }
+    .badge { display: inline-block; background: #eaf7f6; color: var(--brand-dark); border-radius: 20px;
+             padding: 4px 14px; font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+
+    section { padding: 40px 0; border-top: 1px solid #eef1f2; }
+    h2 { font-size: 25px; margin: 0 0 8px; color: var(--brand-dark); }
+    .section-intro { color: var(--muted); max-width: 700px; margin: 0 0 26px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; }
+    .card { border: 1px solid #e3e7e9; border-radius: 8px; padding: 20px 22px; }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; font-size: 15px; color: var(--muted); }
+
+    ol.steps { counter-reset: step; list-style: none; padding: 0; max-width: 700px; }
+    ol.steps li { counter-increment: step; padding: 10px 0 10px 52px; position: relative; }
+    ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 8px; width: 34px; height: 34px;
+        background: var(--brand); color: #fff; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; font-weight: 700; }
+
+    table.pricing { border-collapse: collapse; width: 100%; max-width: 720px; }
+    table.pricing th, table.pricing td { border: 1px solid #e3e7e9; padding: 12px 16px; text-align: left; font-size: 15px; }
+    table.pricing th { background: #f7fafa; }
+    .price { font-size: 18px; font-weight: 700; color: var(--brand-dark); white-space: nowrap; }
+
+    dl.faq dt { font-weight: 600; margin-top: 18px; }
+    dl.faq dd { margin: 6px 0 0; color: var(--muted); max-width: 720px; }
+
+    footer { border-top: 1px solid #e3e7e9; margin-top: 40px; padding: 28px 0 40px; font-size: 14px; color: var(--muted); }
+    footer a { margin-right: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="wrap topbar">
+        <a class="wordmark" href="/">Intelli<span>Presta</span></a>
+        <nav>
+            <a href="./">All modules</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </div>
+</header>
+
+<div class="wrap hero">
+    <span class="badge">PrestaShop module &middot; by IntelliPresta</span>
+    <h1>Amazon Marketplace Pro — sell on Amazon marketplaces from your own PrestaShop store</h1>
+    <p class="lead">
+        Publish your catalogue as Amazon listings, keep prices and stock in sync, and import
+        marketplace orders straight into the PrestaShop back office your team already uses.
+        Everything runs inside your own shop — your product and customer data never passes
+        through our servers.
+    </p>
+</div>
+
+<section id="features">
+    <div class="wrap">
+        <h2>What the module does</h2>
+        <p class="section-intro">
+            Amazon Marketplace Pro covers the full selling cycle: creating listings, keeping them
+            accurate, winning the sale, and handling what comes after it.
+        </p>
+        <div class="grid">
+            <div class="card">
+                <h3>Listing creation with guided profiles</h3>
+                <p>The module downloads the attribute requirements for your product category
+                   directly from the marketplace and presents them as a form — required fields,
+                   allowed values and units included. Map each attribute to a PrestaShop field,
+                   pick a value, or set a default once per profile. Variations (size, colour)
+                   are built from your existing PrestaShop combinations.</p>
+            </div>
+            <div class="card">
+                <h3>Price &amp; stock synchronisation</h3>
+                <p>Prices with per-category, per-manufacturer or per-supplier markups, scheduled
+                   sale prices, quantity buffers and safety switches. Delta exports send only what
+                   changed, respecting marketplace submission limits on large catalogues.</p>
+            </div>
+            <div class="card">
+                <h3>Order import &amp; fulfilment</h3>
+                <p>Marketplace orders become PrestaShop orders with your carriers, statuses and
+                   invoices. Shipment confirmations and tracking numbers flow back automatically.
+                   Orders you fulfil and orders fulfilled by the marketplace (FBA) are told apart
+                   and can be routed to different statuses.</p>
+            </div>
+            <div class="card">
+                <h3>Overselling protection</h3>
+                <p>When a marketplace checkout is in progress but not yet paid, the module can
+                   reserve that stock in PrestaShop so no other channel sells the same unit —
+                   and releases it automatically if the purchase never completes.</p>
+            </div>
+            <div class="card">
+                <h3>Competitive pricing</h3>
+                <p>Track the current featured offer and lowest price for your listings, and apply
+                   your own rules — match, undercut, or hold a margin floor — with suggested
+                   prices you approve before they are sent.</p>
+            </div>
+            <div class="card">
+                <h3>Compliance built in</h3>
+                <p>EU product-safety (GPSR) contact details and country of origin per
+                   manufacturer or product, VAT-aware order import, and support for uploading
+                   your own VAT invoices for sellers enrolled in the marketplace's VAT
+                   Calculation Service.</p>
+            </div>
+            <div class="card">
+                <h3>Fees, finances &amp; reports</h3>
+                <p>Marketplace fees are recorded per order so you can see the true margin of
+                   every sale. Settlement and inventory reports are requested, downloaded and
+                   parsed for you.</p>
+            </div>
+            <div class="card">
+                <h3>Buyer communication</h3>
+                <p>Send permitted, order-related messages and review requests through the
+                   marketplace's official messaging system, and file buyer replies into
+                   PrestaShop's own customer service threads.</p>
+            </div>
+            <div class="card">
+                <h3>Automation</h3>
+                <p>Every recurring job — order import, stock sync, repricing, report polling,
+                   invoice upload — is available as a scheduled task, so day-to-day operation
+                   needs no clicks at all.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works">
+    <div class="wrap">
+        <h2>How it works</h2>
+        <p class="section-intro">
+            Amazon Marketplace Pro is installed like any PrestaShop module and connects to the
+            marketplace through its official API programme.
+        </p>
+        <ol class="steps">
+            <li><strong>Install the module</strong> in your PrestaShop back office (PrestaShop 1.6 – 8 supported).</li>
+            <li><strong>Connect your seller account</strong> with one click. You are sent to the
+                marketplace's own consent page to approve the connection — no credentials to copy,
+                and you can revoke the authorisation from your seller account at any time.</li>
+            <li><strong>Map your categories</strong> to marketplace product types using guided
+                profiles, then publish.</li>
+            <li><strong>Let the scheduled tasks run.</strong> Orders arrive in PrestaShop, stock and
+                prices stay current, and reports collect themselves.</li>
+        </ol>
+        <p class="section-intro" style="margin-top: 18px;">
+            <strong>Where your data lives:</strong> in your own shop's database, on hosting you
+            control. Our connection service only completes the secure authorisation handshake —
+            it stores no product, order or buyer data. Details in our
+            <a href="privacy.html">privacy policy</a>.
+        </p>
+    </div>
+</section>
+
+<section id="pricing">
+    <div class="wrap">
+        <h2>Pricing</h2>
+        <p class="section-intro">
+            One licence per PrestaShop installation, paid once. We take no commission on your
+            marketplace sales and charge no per-order or per-listing fees.
+        </p>
+        <table class="pricing">
+            <tr>
+                <th>Licence</th>
+                <th>What is included</th>
+                <th>Price</th>
+            </tr>
+            <tr>
+                <td><strong>Amazon Marketplace Pro</strong></td>
+                <td>Full module for one PrestaShop installation, every feature listed above,
+                    plus 12 months of updates and e-mail support.</td>
+                <td class="price">€ 209.99 <span style="font-weight:400; color: #888;">one-time</span></td>
+            </tr>
+        </table>
+        <p class="section-intro" style="margin-top: 18px;">
+            <strong>Questions before you buy?</strong> Tell us what your catalogue looks like and
+            which marketplaces you sell on, and we will tell you honestly whether the module fits.
+            E-mail <a href="mailto:support@intellipresta.com">support@intellipresta.com</a> — we
+            reply within one business day.
+        </p>
+    </div>
+</section>
+
+<section id="faq">
+    <div class="wrap">
+        <h2>Frequently asked questions</h2>
+        <dl class="faq">
+            <dt>Which PrestaShop versions are supported?</dt>
+            <dd>PrestaShop 1.6 through 8. The module is tested on each supported minor version.</dd>
+
+            <dt>Which marketplaces can I sell on?</dt>
+            <dd>23 Amazon marketplaces: Europe (Germany, France, Italy, Spain, the Netherlands,
+                Poland, Sweden, Belgium, the UK, Ireland and Turkey), North America (US, Canada,
+                Mexico), Brazil, the Middle East and Africa (the UAE, Saudi Arabia, Egypt and
+                South Africa), Japan, Australia, Singapore and India.
+                Each marketplace has its own listing language and currency handling.</dd>
+
+            <dt>Do I need technical knowledge to set it up?</dt>
+            <dd>Installation is the standard PrestaShop module upload. Connecting your seller
+                account is a single click plus an approval on the marketplace's own website.
+                Scheduled tasks need one-time cron entries, for which the module shows
+                ready-to-copy commands.</dd>
+
+            <dt>Does IntelliPresta see my sales or customer data?</dt>
+            <dd>No. The module runs entirely inside your PrestaShop installation and talks to the
+                marketplace's API directly from your server. Our connection service handles only
+                the authorisation handshake and stores nothing. See the
+                <a href="privacy.html">privacy policy</a> for the full picture.</dd>
+
+            <dt>What happens if I stop using the module?</dt>
+            <dd>Revoke the connection from your seller account (or with the module's Disconnect
+                button) and uninstall. Your listings on the marketplace are unaffected; the data
+                the module stored in your own database is removed on uninstall.</dd>
+
+            <dt>How do I get help?</dt>
+            <dd>E-mail <a href="mailto:support@intellipresta.com">support@intellipresta.com</a>.
+                We answer within one business day. Support is written, in English, and we also
+                answer in German, French, Italian, Spanish and Turkish, using translation
+                assistance where needed. Support is included for the duration of your
+                licence.</dd>
+        </dl>
+    </div>
+</section>
+
+<section id="contact">
+    <div class="wrap">
+        <h2>Contact</h2>
+        <p class="section-intro">
+            IntelliPresta<br>
+            E-mail: <a href="mailto:support@intellipresta.com">support@intellipresta.com</a><br>
+            We answer within one business day. Support is written, in English, and we also answer
+            in German, French, Italian, Spanish and Turkish, using translation assistance where
+            needed.
+        </p>
+        <!--
+            LIVE CHAT: uncomment the line below once the Crisp widget is actually installed and
+            answering. Do not enable it before then - a chat box nobody is behind is worse than
+            no chat box, and the support channels named here are what Amazon reviews.
+        -->
+        <!-- <p class="section-intro">Live chat is available on this page during European business hours.</p> -->
+    </div>
+</section>
+
+<footer>
+    <div class="wrap">
+        <a href="./">All marketplace modules</a>
+        <a href="ebay.html">eBay Marketplace Pro</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="mailto:support@intellipresta.com">Contact</a>
+        <div style="margin-top: 10px;">
+            © IntelliPresta. Amazon Marketplace Pro is developed and maintained by IntelliPresta and is
+            not endorsed by or affiliated with Amazon or PrestaShop. Amazon is a trademark of
+            Amazon.com, Inc. or its affiliates. PrestaShop is a trademark of PrestaShop SA.
+        </div>
+    </div>
+</footer>
+
+<!--
+    CRISP LIVE CHAT - paste the widget snippet here when you enable it, e.g.
+
+    <script type="text/javascript">
+        window.$crisp = [];
+        window.CRISP_WEBSITE_ID = "YOUR-WEBSITE-ID";
+        (function () {
+            var d = document, s = d.createElement("script");
+            s.src = "https://client.crisp.chat/l.js";
+            s.async = 1;
+            d.getElementsByTagName("head")[0].appendChild(s);
+        })();
+    </script>
+
+    Before enabling, note two things:
+
+    1. Crisp sets cookies and loads a third-party script, so this page stops being
+       cookie-free. Under EU ePrivacy rules that needs a consent banner, and
+       marketplaces/privacy.html must be updated - it currently states that no cookies
+       are set and no analytics run.
+    2. Also uncomment the live-chat line in the Contact section above, and add the
+       channel to the Appstore listing only once it is genuinely staffed.
+-->
+
+</body>
+</html>

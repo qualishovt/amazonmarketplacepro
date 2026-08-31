@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marketplace modules for PrestaShop | IntelliPresta</title>
+<meta name="description" content="IntelliPresta marketplace modules for PrestaShop: Amazon Marketplace Pro and eBay Marketplace Pro. Publish listings, sync prices and stock, and import marketplace orders into your own shop.">
+<style>
+    :root { --brand: #25b2a8; --brand-dark: #1d5c56; --ink: #2d3338; --muted: #667077; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif; margin: 0; color: var(--ink);
+           line-height: 1.65; }
+    a { color: var(--brand-dark); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+    header { border-bottom: 1px solid #e3e7e9; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; flex-wrap: wrap; gap: 12px; }
+    .wordmark { font-size: 22px; font-weight: 700; color: var(--brand-dark); text-decoration: none; }
+    .wordmark span { color: var(--brand); }
+    nav a { margin-left: 22px; text-decoration: none; color: var(--muted); font-size: 15px; }
+    nav a:hover { color: var(--brand-dark); }
+
+    .hero { padding: 56px 0 48px; }
+    .hero h1 { font-size: 34px; line-height: 1.25; margin: 0 0 14px; max-width: 720px; }
+    .hero p.lead { font-size: 19px; color: var(--muted); max-width: 680px; margin: 0 0 24px; }
+    .badge { display: inline-block; background: #eaf7f6; color: var(--brand-dark); border-radius: 20px;
+             padding: 4px 14px; font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+
+    section { padding: 40px 0; border-top: 1px solid #eef1f2; }
+    h2 { font-size: 25px; margin: 0 0 8px; color: var(--brand-dark); }
+    .section-intro { color: var(--muted); max-width: 700px; margin: 0 0 26px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; }
+    .card { border: 1px solid #e3e7e9; border-radius: 8px; padding: 20px 22px; }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; font-size: 15px; color: var(--muted); }
+
+    ol.steps { counter-reset: step; list-style: none; padding: 0; max-width: 700px; }
+    ol.steps li { counter-increment: step; padding: 10px 0 10px 52px; position: relative; }
+    ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 8px; width: 34px; height: 34px;
+        background: var(--brand); color: #fff; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; font-weight: 700; }
+
+    table.pricing { border-collapse: collapse; width: 100%; max-width: 720px; }
+    table.pricing th, table.pricing td { border: 1px solid #e3e7e9; padding: 12px 16px; text-align: left; font-size: 15px; }
+    table.pricing th { background: #f7fafa; }
+    .price { font-size: 18px; font-weight: 700; color: var(--brand-dark); white-space: nowrap; }
+
+    dl.faq dt { font-weight: 600; margin-top: 18px; }
+    dl.faq dd { margin: 6px 0 0; color: var(--muted); max-width: 720px; }
+
+    footer { border-top: 1px solid #e3e7e9; margin-top: 40px; padding: 28px 0 40px; font-size: 14px; color: var(--muted); }
+    footer a { margin-right: 18px; }
+    .card h3 a { text-decoration: none; }
+    .cta { display: inline-block; background: var(--brand); color: #fff; text-decoration: none;
+           padding: 8px 18px; border-radius: 5px; font-size: 15px; font-weight: 600; }
+    .cta:hover { background: var(--brand-dark); color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="wrap topbar">
+        <a class="wordmark" href="/">Intelli<span>Presta</span></a>
+        <nav>
+            <a href="/">Home</a>
+            <a href="#modules">Modules</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </div>
+</header>
+
+<div class="wrap hero">
+    <span class="badge">PrestaShop modules &middot; by IntelliPresta</span>
+    <h1>Marketplace modules for PrestaShop</h1>
+    <p class="lead">
+        Sell your PrestaShop catalogue on the marketplaces your customers already use. Each
+        module is a separate product with its own licence, and each runs entirely inside your
+        own shop — your product, order and customer data never passes through our servers.
+    </p>
+</div>
+
+<section id="modules">
+    <div class="wrap">
+        <h2>The modules</h2>
+        <p class="section-intro">
+            One module per marketplace. They can be installed side by side in the same shop, and
+            neither depends on the other.
+        </p>
+        <div class="grid">
+            <div class="card">
+                <h3><a href="amazon.html">Amazon Marketplace Pro</a></h3>
+                <p>Publish your catalogue as Amazon listings with guided product-type profiles,
+                   synchronise prices and stock, import Amazon orders (merchant-fulfilled and FBA),
+                   track fees and competitive pricing, and automate the cycle with scheduled tasks.
+                   Supports Amazon marketplaces in Europe, North America, Japan, Australia,
+                   Singapore, India and the Middle East.</p>
+                <p style="margin-top: 14px;">
+                    <a class="cta" href="amazon.html">Features &amp; pricing</a>
+                </p>
+            </div>
+            <div class="card">
+                <h3><a href="ebay.html">eBay Marketplace Pro</a></h3>
+                <p>Publish your catalogue as eBay listings with category and item-aspect mapping,
+                   multi-variation listings and your own business policies, synchronise prices and
+                   stock, import eBay orders and returns, track fees and seller performance.
+                   Supports 19 eBay sites across Europe, the Americas and Asia-Pacific.</p>
+                <p style="margin-top: 14px;">
+                    <a class="cta" href="ebay.html">Features &amp; pricing</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="privacy">
+    <div class="wrap">
+        <h2>Data handling</h2>
+        <p class="section-intro">
+            Both modules run inside the merchant's own PrestaShop installation and talk to the
+            marketplace's official API directly from the merchant's server. IntelliPresta operates
+            only a stateless authorisation service that completes the connection handshake; it has
+            no database and stores no product, order or buyer data. The full statement — what is
+            collected, how it is used, stored, protected, shared, retained and deleted — is in our
+            <a href="privacy.html">privacy &amp; data handling policy</a>, which covers both
+            modules.
+        </p>
+    </div>
+</section>
+
+<section id="contact">
+    <div class="wrap">
+        <h2>Contact</h2>
+        <p class="section-intro">
+            IntelliPresta<br>
+            E-mail: <a href="mailto:support@intellipresta.com">support@intellipresta.com</a><br>
+            We answer within one business day.
+        </p>
+    </div>
+</section>
+
+<footer>
+    <div class="wrap">
+        <a href="amazon.html">Amazon Marketplace Pro</a>
+        <a href="ebay.html">eBay Marketplace Pro</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="mailto:support@intellipresta.com">Contact</a>
+        <div style="margin-top: 10px;">
+            © IntelliPresta. Our modules are developed and maintained by IntelliPresta and are not
+            endorsed by or affiliated with Amazon, eBay or PrestaShop. Amazon is a trademark of
+            Amazon.com, Inc. or its affiliates. eBay is a trademark of eBay Inc. PrestaShop is a
+            trademark of PrestaShop SA.
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

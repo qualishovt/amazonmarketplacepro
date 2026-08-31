@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eBay Marketplace Pro — sell on eBay from PrestaShop | IntelliPresta</title>
+<meta name="description" content="eBay Marketplace Pro is a PrestaShop module that connects your store to eBay: publish listings, synchronise prices and stock, import orders, and automate your marketplace business. Your data stays in your own shop.">
+<style>
+    :root { --brand: #25b2a8; --brand-dark: #1d5c56; --ink: #2d3338; --muted: #667077; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif; margin: 0; color: var(--ink);
+           line-height: 1.65; }
+    a { color: var(--brand-dark); }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+    header { border-bottom: 1px solid #e3e7e9; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; flex-wrap: wrap; gap: 12px; }
+    .wordmark { font-size: 22px; font-weight: 700; color: var(--brand-dark); text-decoration: none; }
+    .wordmark span { color: var(--brand); }
+    nav a { margin-left: 22px; text-decoration: none; color: var(--muted); font-size: 15px; }
+    nav a:hover { color: var(--brand-dark); }
+
+    .hero { padding: 56px 0 48px; }
+    .hero h1 { font-size: 34px; line-height: 1.25; margin: 0 0 14px; max-width: 720px; }
+    .hero p.lead { font-size: 19px; color: var(--muted); max-width: 680px; margin: 0 0 24px; }
+    .badge { display: inline-block; background: #eaf7f6; color: var(--brand-dark); border-radius: 20px;
+             padding: 4px 14px; font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+
+    section { padding: 40px 0; border-top: 1px solid #eef1f2; }
+    h2 { font-size: 25px; margin: 0 0 8px; color: var(--brand-dark); }
+    .section-intro { color: var(--muted); max-width: 700px; margin: 0 0 26px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; }
+    .card { border: 1px solid #e3e7e9; border-radius: 8px; padding: 20px 22px; }
+    .card h3 { margin: 0 0 8px; font-size: 17px; }
+    .card p { margin: 0; font-size: 15px; color: var(--muted); }
+
+    ol.steps { counter-reset: step; list-style: none; padding: 0; max-width: 700px; }
+    ol.steps li { counter-increment: step; padding: 10px 0 10px 52px; position: relative; }
+    ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 8px; width: 34px; height: 34px;
+        background: var(--brand); color: #fff; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; font-weight: 700; }
+
+    table.pricing { border-collapse: collapse; width: 100%; max-width: 720px; }
+    table.pricing th, table.pricing td { border: 1px solid #e3e7e9; padding: 12px 16px; text-align: left; font-size: 15px; }
+    table.pricing th { background: #f7fafa; }
+    .price { font-size: 18px; font-weight: 700; color: var(--brand-dark); white-space: nowrap; }
+
+    dl.faq dt { font-weight: 600; margin-top: 18px; }
+    dl.faq dd { margin: 6px 0 0; color: var(--muted); max-width: 720px; }
+
+    footer { border-top: 1px solid #e3e7e9; margin-top: 40px; padding: 28px 0 40px; font-size: 14px; color: var(--muted); }
+    footer a { margin-right: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="wrap topbar">
+        <a class="wordmark" href="/">Intelli<span>Presta</span></a>
+        <nav>
+            <a href="./">All modules</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </div>
+</header>
+
+<div class="wrap hero">
+    <span class="badge">PrestaShop module &middot; by IntelliPresta</span>
+    <h1>eBay Marketplace Pro — sell on eBay sites from your own PrestaShop store</h1>
+    <p class="lead">
+        Publish your catalogue as eBay listings, keep prices and stock in sync, and import
+        eBay orders straight into the PrestaShop back office your team already uses.
+        Everything runs inside your own shop — your product and customer data never passes
+        through our servers.
+    </p>
+</div>
+
+<section id="features">
+    <div class="wrap">
+        <h2>What the module does</h2>
+        <p class="section-intro">
+            eBay Marketplace Pro covers the full selling cycle: creating listings, keeping them
+            accurate, winning the sale, and handling what comes after it.
+        </p>
+        <div class="grid">
+            <div class="card">
+                <h3>Category mapping and item aspects</h3>
+                <p>Map your PrestaShop categories to eBay categories and fill the item aspects
+                   eBay requires for each one — required and recommended fields, allowed values
+                   included — from PrestaShop features, attributes or fixed defaults.</p>
+            </div>
+            <div class="card">
+                <h3>Catalogue matching and barcodes</h3>
+                <p>Match your products against the eBay catalogue so listings inherit the right
+                   product identity, and audit your catalogue for the EAN, UPC and MPN values
+                   eBay requires before a listing can go live.</p>
+            </div>
+            <div class="card">
+                <h3>Variation listings</h3>
+                <p>PrestaShop combinations become eBay multi-variation listings, with per-variant
+                   prices, stock and images grouped under a single item.</p>
+            </div>
+            <div class="card">
+                <h3>Price &amp; stock synchronisation</h3>
+                <p>Per-category, per-manufacturer and per-supplier markup rules, quantity buffers
+                   and safety switches. Offers and inventory are pushed on a schedule so your eBay
+                   listings follow your shop.</p>
+            </div>
+            <div class="card">
+                <h3>Business policies</h3>
+                <p>Your eBay payment, returns and shipping policies are fetched from your seller
+                   account and assigned per listing or per category, so every publication uses the
+                   policy you intended.</p>
+            </div>
+            <div class="card">
+                <h3>Order import &amp; fulfilment</h3>
+                <p>eBay orders become PrestaShop orders with your carriers, statuses and invoices.
+                   Shipment confirmations and tracking numbers flow back to eBay, with your
+                   PrestaShop carriers mapped to eBay's shipping services.</p>
+            </div>
+            <div class="card">
+                <h3>Repricing</h3>
+                <p>Apply your own pricing rules against the competition — match, undercut, or hold
+                   a margin floor — with suggested prices you approve before they are sent.</p>
+            </div>
+            <div class="card">
+                <h3>Returns, fees &amp; performance</h3>
+                <p>Return requests are imported and can be actioned from PrestaShop. eBay fees are
+                   recorded per order so you see the true margin of every sale, and your seller
+                   performance metrics are surfaced in the back office.</p>
+            </div>
+            <div class="card">
+                <h3>Promotions &amp; listing design</h3>
+                <p>Synchronise eBay promotions, and render listing descriptions from your own
+                   HTML template so every item is presented in your shop's style.</p>
+            </div>
+            <div class="card">
+                <h3>Compliance built in</h3>
+                <p>EU product-safety (GPSR) contact details and country of origin per manufacturer
+                   or product, and a marketplace account-deletion endpoint that acknowledges eBay's
+                   notifications as the programme requires.</p>
+            </div>
+            <div class="card">
+                <h3>Multiple eBay sites</h3>
+                <p>Sell on more than one eBay site from one shop — the United States, United
+                   Kingdom, Germany, France, Italy, Spain, the Netherlands, Belgium, Ireland,
+                   Austria, Switzerland, Poland, Canada, Australia, Hong Kong, Singapore,
+                   Malaysia, the Philippines and India.</p>
+            </div>
+            <div class="card">
+                <h3>Automation</h3>
+                <p>Every recurring job — order import, stock sync, repricing, fee collection —
+                   is available as a scheduled task, so day-to-day operation needs no clicks
+                   at all.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="how-it-works">
+    <div class="wrap">
+        <h2>How it works</h2>
+        <p class="section-intro">
+            eBay Marketplace Pro is installed like any PrestaShop module and connects to eBay
+            through its official developer programme.
+        </p>
+        <ol class="steps">
+            <li><strong>Install the module</strong> in your PrestaShop back office (PrestaShop 1.6 – 8 supported).</li>
+            <li><strong>Connect your eBay account</strong> with one click. You are sent to eBay's
+                own consent page to approve the connection — no credentials to copy, and you can
+                revoke the authorisation from your eBay account at any time.</li>
+            <li><strong>Map your categories</strong> to eBay categories and item aspects, assign
+                your business policies, then publish.</li>
+            <li><strong>Let the scheduled tasks run.</strong> Orders arrive in PrestaShop, stock and
+                prices stay current, and fees collect themselves.</li>
+        </ol>
+        <p class="section-intro" style="margin-top: 18px;">
+            <strong>Where your data lives:</strong> in your own shop's database, on hosting you
+            control. Our connection service only completes the secure authorisation handshake —
+            it stores no product, order or buyer data. Details in our
+            <a href="privacy.html">privacy policy</a>.
+        </p>
+    </div>
+</section>
+
+<section id="pricing">
+    <div class="wrap">
+        <h2>Pricing</h2>
+        <p class="section-intro">
+            One licence per PrestaShop installation, paid once. We take no commission on your
+            eBay sales and charge no per-order or per-listing fees.
+        </p>
+        <!-- TODO: replace "Price on request" with the real figure, in the same shape as the
+             Amazon page:
+             <td class="price">&euro; 209.99 <span style="font-weight:400; color: #888;">one-time</span></td> -->
+        <table class="pricing">
+            <tr>
+                <th>Licence</th>
+                <th>What is included</th>
+                <th>Price</th>
+            </tr>
+            <tr>
+                <td><strong>eBay Marketplace Pro</strong></td>
+                <td>Full module for one PrestaShop installation, every feature listed above,
+                    plus 12 months of updates and e-mail support.</td>
+                <td class="price"><a href="mailto:support@intellipresta.com">Price on request</a></td>
+            </tr>
+        </table>
+    </div>
+</section>
+
+<section id="faq">
+    <div class="wrap">
+        <h2>Frequently asked questions</h2>
+        <dl class="faq">
+            <dt>Which PrestaShop versions are supported?</dt>
+            <dd>PrestaShop 1.6 through 8.</dd>
+
+            <dt>Which eBay sites can I sell on?</dt>
+            <dd>The eBay sites listed above, each with its own listing language, currency and
+                category tree.</dd>
+
+            <dt>Do I need technical knowledge to set it up?</dt>
+            <dd>Installation is the standard PrestaShop module upload. Connecting your eBay
+                account is a single click plus an approval on eBay's own website. Scheduled tasks
+                need one-time cron entries, for which the module shows ready-to-copy commands.</dd>
+
+            <dt>Does IntelliPresta see my sales or customer data?</dt>
+            <dd>No. The module runs entirely inside your PrestaShop installation and talks to
+                eBay's API directly from your server. Our connection service handles only the
+                authorisation handshake and stores nothing. See the
+                <a href="privacy.html">privacy policy</a> for the full picture.</dd>
+
+            <dt>What happens if I stop using the module?</dt>
+            <dd>Revoke the connection from your eBay account (or with the module's Disconnect
+                button) and uninstall. Your eBay listings are unaffected; the data the module
+                stored in your own database is removed on uninstall.</dd>
+
+            <dt>How do I get help?</dt>
+            <dd>E-mail <a href="mailto:support@intellipresta.com">support@intellipresta.com</a>.
+                Support is included for the duration of your licence.</dd>
+        </dl>
+    </div>
+</section>
+
+<section id="contact">
+    <div class="wrap">
+        <h2>Contact</h2>
+        <p class="section-intro">
+            IntelliPresta<br>
+            E-mail: <a href="mailto:support@intellipresta.com">support@intellipresta.com</a><br>
+            We answer within one business day.
+        </p>
+    </div>
+</section>
+
+<footer>
+    <div class="wrap">
+        <a href="./">All marketplace modules</a>
+        <a href="amazon.html">Amazon Marketplace Pro</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="mailto:support@intellipresta.com">Contact</a>
+        <div style="margin-top: 10px;">
+            © IntelliPresta. eBay Marketplace Pro is developed and maintained by IntelliPresta and
+            is not endorsed by or affiliated with eBay or PrestaShop. eBay is a trademark of
+            eBay Inc. PrestaShop is a trademark of PrestaShop SA.
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
