@@ -64,6 +64,26 @@ endpoints live outside it and are untouched by this deployment:
    The eBay card on `index.html` still claims "12 months of updates and support" — confirm
    whether eBay follows the same model before publishing that.
    Confirm whether the figures are incl. or excl. VAT and say so on the page.
+
+   **The price is not two free variables.** PrestaShop Addons requires the Business care
+   price to be **40% of the core price**. The advertised total is the sum of the two:
+
+   | | | |
+   |---|---|---|
+   | Core | € 149.99 | |
+   | Business care | € 60.00 | = 40% of core |
+   | **Advertised** | **€ 209.99** | what the merchant pays in year one |
+
+   So a price change is not a free edit. Moving the core to € 179.99 forces Business care
+   to € 72.00 and the advertised total to € 251.99. Recompute all three together, and
+   update the pricing table and FAQ on `marketplaces/amazon.html`, the module card on
+   `index.html`, and the pricing description on the Appstore listing, which a reviewer
+   compares against the page.
+
+   Do **not** publish the marketplace's commission split. It is a reseller arrangement,
+   irrelevant to what the buyer pays or receives, and there is no disclosure obligation.
+   Note that "we take no commission on your marketplace sales" elsewhere on the page
+   refers to the merchant's own Amazon sales and is unrelated.
 2. **Add your other (non-marketplace) modules** to `index.html` — there is a marked comment
    block showing where, and an "In development" placeholder block below it to replace or
    delete. Keep descriptions factual; superlatives ("best", "#1") are grounds for rejection.
