@@ -66,11 +66,15 @@ php secret-tool.php check           # confirms every secret decrypts
 line argument is visible in shell history and in the process list to every
 other user on a shared host.
 
-Put the key in **one** place, never both, and never in `config.php`:
+Put the key in **one** place, never both, and never in `config.php`. Both keep
+it on the same server as the ciphertext — on shared hosting nothing can do
+otherwise. The point is that a leak of `config.php` alone is not enough.
 
-1. `SetEnv IPRESTA_MASTER_KEY <base64>` in the vhost or an `.htaccess` above
-   the web root — preferred, the key never touches disk.
-2. A file outside the web root at mode 0600, named by `IPRESTA_KEY_FILE`.
+1. **Recommended on shared hosting:** a file outside the web root at mode
+   0600, named by `IPRESTA_KEY_FILE`.
+2. A real environment variable, if the host provides one — a panel setting or
+   vhost directive you cannot edit over FTP. Not `SetEnv` in an `.htaccess`
+   inside the web root: that writes the key beside the file it protects.
 
 Keep a copy in a password manager. Losing the key is recoverable: rotate the
 client secret in the Solution Provider Portal and re-encrypt the new one.

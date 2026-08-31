@@ -38,15 +38,19 @@ define('IPRESTA_REDIRECT_URI', 'https://intellipresta.com/spapi/callback.php');
  *
  * The master key must NOT live in this file - a key stored beside its own
  * ciphertext protects nothing. Choose exactly one of these:
+ * Both options still keep the key on this server - on shared hosting nothing
+ * can do otherwise. The point is to separate the key from the ciphertext, so
+ * that a leak of this file alone is not enough.
  *
- * 1. Environment variable (preferred - the key never touches the disk).
- *    In the vhost, or in an .htaccess ABOVE the web root:
- *        SetEnv IPRESTA_MASTER_KEY <base64 key from: php secret-tool.php genkey>
- *    Many hosting panels also expose environment variables in their UI.
- *
- * 2. Key file outside the web root. Uncomment and point at it:
+ * 1. RECOMMENDED on shared hosting - key file outside the web root:
  *        define('IPRESTA_KEY_FILE', '/home/USER/.ipresta-key');
  *    Create it with mode 0600, owned by the web user, never inside public_html.
+ *
+ * 2. A real environment variable, if the host provides one - a control panel
+ *    setting or a vhost directive you cannot edit over FTP:
+ *        IPRESTA_MASTER_KEY=<base64 key from: php secret-tool.php genkey>
+ *    Do NOT use SetEnv in an .htaccess inside the web root. That writes the
+ *    key into a file beside the ciphertext, which is worse than option 1.
  *
  * Verify afterwards with:
  *        php secret-tool.php check

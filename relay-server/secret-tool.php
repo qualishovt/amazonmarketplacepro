@@ -32,15 +32,18 @@ switch ($command) {
         }
         $encoded = base64_encode($key);
         echo "Master key (base64):\n\n    " . $encoded . "\n\n";
-        echo "Store it ONE of these two ways, never both, and never in config.php:\n\n";
-        echo "  1. Environment variable (preferred - the key never touches disk):\n";
-        echo "       SetEnv IPRESTA_MASTER_KEY " . $encoded . "\n";
-        echo "     in the vhost or .htaccess ABOVE the web root, or via the\n";
-        echo "     hosting panel's environment variable settings.\n\n";
-        echo "  2. Key file outside the web root:\n";
+        echo "Store it ONE of these two ways, never both, and never in config.php.\n";
+        echo "Both keep the key on this server - the point is to keep it out of the\n";
+        echo "file that holds the ciphertext, and out of the web root.\n\n";
+        echo "  1. RECOMMENDED on shared hosting - key file outside the web root:\n";
         echo "       umask 077 && printf '%s' '" . $encoded . "' > ~/.ipresta-key\n";
         echo "       chmod 600 ~/.ipresta-key\n";
         echo "     then in config.php:  define('IPRESTA_KEY_FILE', '/home/USER/.ipresta-key');\n\n";
+        echo "  2. A real environment variable, if the host provides one - a panel\n";
+        echo "     setting or a vhost directive that you cannot edit over FTP.\n";
+        echo "       IPRESTA_MASTER_KEY=" . $encoded . "\n";
+        echo "     Do NOT use 'SetEnv' in an .htaccess inside the web root: that writes\n";
+        echo "     the key into a file next to the ciphertext, which is worse than 1.\n\n";
         echo "Keep a copy in your password manager. Losing it means re-encrypting\n";
         echo "the secret from the value in the Solution Provider Portal.\n";
         break;

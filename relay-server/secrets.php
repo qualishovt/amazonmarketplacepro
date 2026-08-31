@@ -35,8 +35,15 @@ define('IPRESTA_SECRET_PREFIX', 'enc:v1:');
  * The 32-byte master key, or null when none is configured.
  *
  * Looked up in order: the IPRESTA_MASTER_KEY environment variable (base64),
- * then the file named by IPRESTA_KEY_FILE. Environment first, because on hosts
- * that support it the key never touches the disk at all.
+ * then the file named by IPRESTA_KEY_FILE.
+ *
+ * Neither option keeps the key off this server - on shared hosting nothing
+ * can. What both achieve is separating the key from the ciphertext, so a leak
+ * of config.php alone is not enough. A real environment variable (a panel
+ * setting or vhost directive) is marginally better than a key file because it
+ * is not editable over FTP; an "SetEnv" line in an .htaccess inside the web
+ * root is worse than a key file, because it puts the key beside the very file
+ * it protects.
  *
  * @return string|null 32 raw bytes
  */
