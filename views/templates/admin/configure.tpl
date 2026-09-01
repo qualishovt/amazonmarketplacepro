@@ -807,7 +807,7 @@
                     <strong>{$pii_due_count|intval}</strong> {l s='order(s) waiting to be cleared;' mod='amazonmarketplacepro'}
                     <strong>{$pii_purged_count|intval}</strong> {l s='already cleared.' mod='amazonmarketplacepro'}
                     {if $pii_due_count > 0}
-                        <button type="submit" name="mkpro_purge_pii_now" value="1" class="btn btn-default btn-xs">{l s='Clear them now' mod='amazonmarketplacepro'}</button>
+                        <button type="submit" name="submitMkproSettings" value="purge_pii" class="btn btn-default btn-xs">{l s='Clear them now' mod='amazonmarketplacepro'}</button>
                     {/if}
                 </p>
             </div>

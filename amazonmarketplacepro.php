@@ -410,7 +410,7 @@ class AmazonMarketplacePro extends Module
             $confirmMsg = $this->displayConfirmation($this->l('Settings saved.'));
 
             // Runs after the save so it uses the window just entered.
-            if (Tools::getValue('mkpro_purge_pii_now')) {
+            if (Tools::getValue('submitMkproSettings') === 'purge_pii') {
                 require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
                 $purger = new AmazonPiiPurger();
                 $done = $purger->purge();
