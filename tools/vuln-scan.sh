@@ -29,6 +29,18 @@ if [ "${1:-}" = "--full" ]; then
   SCRIPT="zap-full-scan.py"
 fi
 
+# Throttling. The host is shared, and the provider confirmed on 1 September
+# 2026 that they cannot exempt our address from CSF, ModSecurity or
+# Imunify360: an aggressive scan trips the rate limiter and locks us out of
+# our own site, with nothing to do but wait or raise a ticket.
+#
+# One thread per host with a deliberate pause between requests. The scan
+# takes considerably longer, but the surface is a handful of URLs, so that
+# costs patience rather than coverage.
+THROTTLE="-config scanner.threadPerHost=1 -config scanner.delayInMs=400"
+THROTTLE="$THROTTLE -config spider.thread=1"
+THROTTLE="$THROTTLE -config connection.timeoutInSecs=45"
+
 # The targets. The relay is the system that handles Amazon credentials; the
 # site shares the host and so shares its exposure.
 TARGETS=(
@@ -58,6 +70,7 @@ for target in "${TARGETS[@]}"; do
   MSYS_NO_PATHCONV=1 docker run --rm -v "$OUT:/zap/wrk/:rw" -t zaproxy/zap-stable \
     "$SCRIPT" -t "$target" \
     -J "$name.json" -r "$name.html" -I \
+    -z "$THROTTLE" \
     > "$OUT/$name.log" 2>&1
   code=$?
 
