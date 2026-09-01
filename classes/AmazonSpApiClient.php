@@ -104,7 +104,51 @@ class AmazonSpApiClient
     {
         // Connection state is stored globally: the admin (any shop context)
         // and the front/cron controllers must all see the same token.
-        return (string) Configuration::getGlobalValue(self::refreshTokenKey($sandbox));
+        $token = (string) Configuration::getGlobalValue(self::refreshTokenKey($sandbox));
+
+        if ($token !== '') {
+            return $token;
+        }
+
+        if ($sandbox === null) {
+            $sandbox = self::isSandboxEnv();
+        }
+
+        // Sandbox with no sandbox token: fall back to the production one.
+        //
+        // The sandbox HOST and the app client that minted the token are
+        // independent. Amazon documents sandbox calls as "identical to making
+        // production calls, except you direct calls to the sandbox endpoints",
+        // so a production token is expected to work there - and a Sandbox-type
+        // app cannot complete the OAuth consent flow at all, which would
+        // otherwise leave the sandbox permanently unreachable.
+        if ($sandbox) {
+            return (string) Configuration::getGlobalValue('AMZPRO_REFRESH_TOKEN');
+        }
+
+        return '';
+    }
+
+    /**
+     * Which app client minted the refresh token now in use.
+     *
+     * Not the same question as which endpoint we are calling: with the
+     * fallback above, a production token can be used against the sandbox
+     * host. The relay needs the credential set that matches the TOKEN,
+     * because refresh tokens are app-scoped - presenting one to the other
+     * app's secret is rejected as invalid_grant.
+     *
+     * @return bool True when the sandbox app's credentials should be used
+     */
+    public static function tokenIsSandbox()
+    {
+        if (!self::isSandboxEnv()) {
+            return false;
+        }
+
+        // Sandbox environment, but only sandbox-app credentials if a token
+        // minted by that app actually exists.
+        return (string) Configuration::getGlobalValue('AMZPRO_REFRESH_TOKEN_SANDBOX') !== '';
     }
 
     /**
@@ -270,6 +314,14 @@ class AmazonSpApiClient
     private $lastError = null;
 
     /**
+     * Which app client's credentials the relay should use, when the caller
+     * knows better than the stored configuration. Null = ask configuration.
+     *
+     * @var bool|null
+     */
+    private $credentialSetIsSandbox = null;
+
+    /**
      * @param string $clientId     LWA client id
      * @param string $clientSecret LWA client secret
      * @param string $refreshToken LWA refresh token
@@ -291,6 +343,18 @@ class AmazonSpApiClient
             }
         }
         $this->caBundle = $caBundle;
+    }
+
+    /**
+     * Force which app client's credentials the relay uses for the token
+     * exchange, independently of the endpoint being called.
+     *
+     * @param bool $isSandbox True for the sandbox app's credentials
+     * @return void
+     */
+    public function setCredentialSet($isSandbox)
+    {
+        $this->credentialSetIsSandbox = (bool) $isSandbox;
     }
 
     /**
@@ -373,9 +437,19 @@ class AmazonSpApiClient
             return false;
         }
 
-        // The relay holds one credential pair per app client; the endpoint we
-        // were built with says which of the two minted this refresh token.
-        $sandbox = (strpos($this->endpoint, '//sandbox.') !== false);
+        // The relay holds one credential pair per app client, and the token
+        // decides which - NOT the endpoint. A production token used against
+        // the sandbox host still has to be exchanged with the production
+        // secret, because refresh tokens are app-scoped and the other app's
+        // secret is rejected as invalid_grant.
+        //
+        // setCredentialSet() overrides this for callers that build the client
+        // directly; otherwise ask the configuration.
+        if ($this->credentialSetIsSandbox !== null) {
+            $sandbox = $this->credentialSetIsSandbox;
+        } else {
+            $sandbox = self::tokenIsSandbox();
+        }
 
         $res = $this->httpRaw(
             'POST',
