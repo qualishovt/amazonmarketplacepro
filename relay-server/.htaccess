@@ -9,13 +9,14 @@
 #   https://intellipresta.com/spapi/config.php
 #   https://intellipresta.com/spapi/secrets.php
 #   https://intellipresta.com/spapi/secret-tool.php
+#   https://intellipresta.com/spapi/log-archive.php
 
 # No directory listing.
 Options -Indexes
 
-# Configuration, crypto helpers and the CLI tool are never served.
-# secret-tool.php also refuses to run outside CLI, so this is defence in depth.
-<FilesMatch "^(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php)$">
+# Configuration, crypto helpers and the CLI tools are never served.
+# Both tools also refuse to run outside CLI, so this is defence in depth.
+<FilesMatch "^(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php|log-archive\.php)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
