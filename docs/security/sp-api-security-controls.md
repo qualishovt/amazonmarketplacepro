@@ -99,9 +99,27 @@ retrievable over HTTP.
 operator (see 7). Deployment is via cPanel File Manager over HTTPS,
 authenticated by password and two-factor authentication.
 
-**Pending:** password authentication for SSH, and plain FTP, are enabled at the
-hosting provider's server level and are not disableable at account level. Their
-disablement has been requested from the provider.
+**Constraint of the hosting tier, with compensating controls.** SSH password
+authentication and plain FTP remain available. Both are server-wide settings on
+shared hosting; the provider confirmed in writing on 1 September 2026 that
+neither can be restricted for an individual account without affecting every
+other account on the machine. Disablement was requested and declined on that
+basis, and the response is retained.
+
+Compensating controls in place:
+
+- Connections are made exclusively over SSH with key authentication, and over
+  FTPS where a file transfer client is used at all — deployment is normally via
+  cPanel File Manager over HTTPS
+- The one additional FTP account has been removed; only the cPanel default
+  remains, which cannot be deleted
+- All account passwords are long, random, unique, generated and stored in a
+  password manager, and are not reused anywhere
+- Exactly one SSH key is authorised, for the sole operator
+- One person has access; there are no shared accounts and no third-party access
+
+The residual risk is credential guessing against a password that is random and
+unique, on an account that holds no Amazon Information.
 
 ## 3. Encryption at Rest 2.4
 
@@ -285,7 +303,11 @@ is a small enough surface that a fix can be live within the hour.
 
 | Item | Status |
 |---|---|
-| SSH password authentication | Enabled at provider level; disablement requested |
-| Plain FTP | Enabled at provider level; disablement requested |
-| Additional FTP account | Being removed; the cPanel default cannot be deleted |
+| SSH password authentication | Server-wide on this hosting tier; provider confirmed 1 Sep 2026 it cannot be disabled per account. Compensating controls in §2 |
+| Plain FTP | As above — same confirmation, same compensating controls |
+| Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
 | Third-party security assessment | Not commissioned |
+
+Both hosting constraints were raised with the provider rather than assumed, and
+their written response is retained. If the account moves to a VPS or dedicated
+tier, both become enforceable and this document should be revised.
