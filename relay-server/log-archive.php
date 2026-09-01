@@ -92,6 +92,48 @@ function isRelayLine($line, $relayPaths)
 }
 
 /**
+ * Is this request asking for something that must never be served?
+ *
+ * A plain substring list is what this started as, and it missed a real probe:
+ * a scanner asked for /spapi/.ipresta-key - the actual name of the key file -
+ * and the pattern only knew about ".key", not "-key". The deny rules refused
+ * it correctly, but the review that exists to surface such probes stayed
+ * silent. These rules are deliberately broader than the deny list: a false
+ * positive costs a glance, a false negative costs the thing this is for.
+ *
+ * @param string $path Request path, query string already stripped
+ * @return bool
+ */
+function isProtectedTarget($path)
+{
+    $name = strtolower(basename($path));
+
+    // Anything dot-prefixed: .env, .git, .htaccess, .ipresta-key.
+    if ($name !== '' && $name[0] === '.') {
+        return true;
+    }
+
+    // The files the deny rules name explicitly.
+    $exact = array(
+        'config.php', 'config.sample.php', 'secrets.php',
+        'secret-tool.php', 'log-archive.php',
+    );
+    if (in_array($name, $exact, true)) {
+        return true;
+    }
+
+    // Key material by extension, wherever it ends up.
+    if (preg_match('/\.(key|pem|env|p12|pfx|crt)$/', $name)) {
+        return true;
+    }
+
+    // Anything that merely looks like a credential. Catches ipresta.key,
+    // .ipresta-key, backup-secrets.php, id_rsa, wp-config.php and the rest
+    // of what scanners routinely walk through.
+    return (bool) preg_match('/(key|secret|passwd|password|credential|id_rsa|\benv\b)/', $name);
+}
+
+/**
  * Parse an Apache combined log line.
  *
  * @return array|null
@@ -229,7 +271,7 @@ switch ($command) {
             $byIp[$p['ip']] = isset($byIp[$p['ip']]) ? $byIp[$p['ip']] + 1 : 1;
 
             // Anything probing the files that must never be served.
-            if (preg_match('/(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php|\.key|\.env)/i', $p['path'])) {
+            if (isProtectedTarget($endpoint)) {
                 $suspicious[] = $p;
             }
         }
@@ -256,17 +298,39 @@ switch ($command) {
             }
         }
 
-        if ($suspicious) {
-            echo "\nATTENTION - requests for protected files (" . count($suspicious) . "):\n";
-            foreach (array_slice($suspicious, 0, 20) as $p) {
-                printf("  %s  %s %s -> %d\n", $p['ip'], $p['method'], $p['path'], $p['status']);
+        $served = array();
+        foreach ($suspicious as $p) {
+            // 403 refused, 404 not there at all - both are correct outcomes.
+            // Anything else means the file was handed over, in whole or part.
+            if ($p['status'] !== 403 && $p['status'] !== 404) {
+                $served[] = $p;
             }
-            echo "\n  These must all be 403. Any 200 here is an incident - see incident-response.md.\n";
+        }
+
+        if ($suspicious) {
+            echo "\nRequests for protected files (" . count($suspicious) . "):\n";
+            foreach (array_slice($suspicious, 0, 30) as $p) {
+                printf("  %-16s %s %s -> %d%s\n", $p['ip'], $p['method'], $p['path'],
+                    $p['status'], ($p['status'] === 403 || $p['status'] === 404) ? '' : '   <<< SERVED');
+            }
+            if ($served) {
+                echo "\n  INCIDENT: " . count($served) . " protected file(s) were served rather\n";
+                echo "  than refused. Start incident-response.md at containment now.\n";
+            } else {
+                echo "\n  All refused (403) or absent (404). This is the expected result:\n";
+                echo "  scanners probe for these constantly. Nothing to act on.\n";
+            }
         } else {
+            $served = array();
             echo "\nNo requests for protected files.\n";
         }
 
         echo "\nReviewed on " . date('Y-m-d') . ". Record anything acted on in the repository.\n";
+
+        // Non-zero so this can also run unattended as a guard.
+        if ($served) {
+            exit(2);
+        }
         break;
 
     case 'status':
