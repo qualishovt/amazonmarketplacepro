@@ -11,8 +11,10 @@ untrue is worse than a gap honestly declared.
 
 Last verified: 1 September 2026.
 
-Companion documents: `incident-response.md` (what happens when something goes
-wrong) and `schedule.md` (the due date behind every cadence claimed here).
+Companion documents: `data-handling.md` (what data exists, who controls it and
+how long it stays), `change-management.md` (how a change reaches a merchant),
+`incident-response.md` (what happens when something goes wrong) and
+`schedule.md` (the due date behind every cadence claimed here).
 
 ---
 
@@ -351,6 +353,8 @@ is a small enough surface that a fix can be live within the hour.
 | SSH password authentication | Server-wide on this hosting tier; provider confirmed 1 Sep 2026 it cannot be disabled per account. Compensating controls in §2 |
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
+| 30-day PII retention limit | **Not implemented.** The module does not purge buyer name, e-mail and shipping address 30 days after delivery. See `data-handling.md` |
+| Vulnerability scanning cadence and penetration testing | No 30-day external scan cycle and no annual penetration test |
 | Platform firewall / IDS-IPS / anti-malware | Provider-operated. Written confirmation of what runs has been requested; not yet retained |
 | Daily log-archive cron | Written and tested; not yet installed on the server. See `schedule.md` |
 | Third-party security assessment | Not commissioned. Amazon's own Data Security Assessment is free and conducted by an Amazon agent; that is the intended route |
