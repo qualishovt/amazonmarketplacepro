@@ -18,13 +18,7 @@ header('Content-Type: text/html; charset=utf-8');
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Connect Marketplaces Pro to Amazon</title>
-    <style>
-        body { font-family: sans-serif; max-width: 640px; margin: 80px auto; color: #333; padding: 0 16px; }
-        .card { padding: 24px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
-        h1 { font-size: 22px; margin-top: 0; }
-        ol { line-height: 1.7; }
-        .brand { color: #0b7285; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
 <div class="card">
