@@ -91,7 +91,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.3.0';
+        $this->version = '1.4.0';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -213,6 +213,14 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_CUSTOMER_GROUP', '0');
         Configuration::updateValue('AMZPRO_SKIP_NO_STOCK', '0');
 
+        // Buyer data retention. On by default at Amazon's own limit: the
+        // compliant setting is the one a merchant should have to opt out of,
+        // not the one they have to discover. The PrestaShop-side pass stays
+        // off, because it rewrites addresses that invoices are rendered from.
+        Configuration::updateValue('AMZPRO_PII_PURGE', '1');
+        Configuration::updateValue('AMZPRO_PII_RETENTION_DAYS', '30');
+        Configuration::updateValue('AMZPRO_PII_PURGE_PS', '0');
+
         // "Connect with Amazon" (IntelliPresta relay) settings
         Configuration::updateValue('AMZPRO_AUTH_MODE', 'connect');
         // Left empty on purpose: the app ids are baked into AmazonSpApiClient
@@ -265,6 +273,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_IMPORT_FBA_ORDERS', 'AMZPRO_FBA_ORDER_STATE', 'AMZPRO_ORDER_STATE_SHIPPED',
             'AMZPRO_PRIORITIZE_ASIN', 'AMZPRO_FAKE_EMAIL', 'AMZPRO_CUSTOMER_GROUP',
             'AMZPRO_SKIP_NO_STOCK', 'AMZPRO_TITLE_FORMAT', 'AMZPRO_ORDER_MATCH',
+            'AMZPRO_PII_PURGE', 'AMZPRO_PII_RETENTION_DAYS', 'AMZPRO_PII_PURGE_PS',
             'AMZPRO_ROUNDING', 'AMZPRO_SEND_SALE_PRICE', 'AMZPRO_SEND_LIST_PRICE',
             'AMZPRO_PREORDER', 'AMZPRO_CONDITION_MAP',
             'AMZPRO_CARRIER_MAP_IN', 'AMZPRO_STATUS_RULES', 'AMZPRO_INVOICE_EMAIL',
@@ -399,6 +408,22 @@ class AmazonMarketplacePro extends Module
         if (Tools::isSubmit('submitMkproSettings')) {
             $this->saveSettings();
             $confirmMsg = $this->displayConfirmation($this->l('Settings saved.'));
+
+            // Runs after the save so it uses the window just entered.
+            if (Tools::getValue('mkpro_purge_pii_now')) {
+                require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
+                $purger = new AmazonPiiPurger();
+                $done = $purger->purge();
+                if ($done === false) {
+                    $confirmMsg .= $this->displayError($purger->getLastError());
+                } else {
+                    $confirmMsg .= $this->displayConfirmation(sprintf(
+                        $this->l('Buyer data cleared from %1$d order(s). %2$d still waiting.'),
+                        (int) $done['orders'],
+                        (int) $done['remaining']
+                    ));
+                }
+            }
         }
         if (Tools::getValue('mkpro_connected')) {
             $confirmMsg .= $this->displayConfirmation($this->l('Your shop is now connected to Amazon. You can start syncing.'));
@@ -458,6 +483,15 @@ class AmazonMarketplacePro extends Module
         $reservations = AmazonRemoteCart::listActive(200);
         $shippingTemplates = AmazonListingSettings::getShippingTemplates();
         $customerGroups = Group::getGroups($this->context->language->id);
+
+        // ── Buyer data retention ──
+        require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
+        $piiPurger = new AmazonPiiPurger();
+        $piiDueCount = $piiPurger->dueCount();
+        $piiPurgedCount = (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+             WHERE `pii_purged_at` IS NOT NULL'
+        );
 
         // ── Listing profiles ──
         require_once dirname(__FILE__) . '/classes/AmazonProfile.php';
@@ -596,6 +630,11 @@ class AmazonMarketplacePro extends Module
             'mkpro_fake_email'           => Configuration::get('AMZPRO_FAKE_EMAIL'),
             'mkpro_customer_group'       => (int) Configuration::get('AMZPRO_CUSTOMER_GROUP'),
             'mkpro_skip_no_stock'        => Configuration::get('AMZPRO_SKIP_NO_STOCK'),
+            'mkpro_pii_purge'            => AmazonPiiPurger::isEnabled(),
+            'mkpro_pii_retention_days'   => AmazonPiiPurger::retentionDays(),
+            'mkpro_pii_purge_ps'         => Configuration::get('AMZPRO_PII_PURGE_PS'),
+            'pii_due_count'              => $piiDueCount,
+            'pii_purged_count'           => $piiPurgedCount,
             'mkpro_order_match'          => Configuration::get('AMZPRO_ORDER_MATCH'),
             'mkpro_rounding'             => Configuration::get('AMZPRO_ROUNDING'),
             'mkpro_send_images'          => Configuration::get('AMZPRO_SEND_IMAGES'),
@@ -723,6 +762,7 @@ class AmazonMarketplacePro extends Module
             'cron_multi_sync_url'      => $cronBase . '&action=multi_sync_products',
             'cron_request_reviews_url' => $cronBase . '&action=request_reviews',
             'cron_process_feeds_url'   => $cronBase . '&action=process_feeds',
+            'cron_purge_pii_url'       => $cronBase . '&action=purge_pii',
             'cron_upload_invoices_url' => $cronBase . '&action=upload_invoices',
             'cron_remote_cart_url'     => $cronBase . '&action=remote_cart',
             'cron_fetch_messages_url'  => $cronBase . '&action=fetch_messages',
@@ -797,6 +837,9 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_FAKE_EMAIL'              => 'mkpro_fake_email',
             'AMZPRO_CUSTOMER_GROUP'          => 'mkpro_customer_group',
             'AMZPRO_SKIP_NO_STOCK'           => 'mkpro_skip_no_stock',
+            'AMZPRO_PII_PURGE'               => 'mkpro_pii_purge',
+            'AMZPRO_PII_RETENTION_DAYS'      => 'mkpro_pii_retention_days',
+            'AMZPRO_PII_PURGE_PS'            => 'mkpro_pii_purge_ps',
             'AMZPRO_ORDER_MATCH'             => 'mkpro_order_match',
             'AMZPRO_ROUNDING'                => 'mkpro_rounding',
             'AMZPRO_SEND_IMAGES'             => 'mkpro_send_images',

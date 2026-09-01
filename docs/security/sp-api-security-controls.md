@@ -353,7 +353,6 @@ is a small enough surface that a fix can be live within the hour.
 | SSH password authentication | Server-wide on this hosting tier; provider confirmed 1 Sep 2026 it cannot be disabled per account. Compensating controls in §2 |
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
-| 30-day PII retention limit | **Not implemented.** The module does not purge buyer name, e-mail and shipping address 30 days after delivery. See `data-handling.md` |
 | Vulnerability scanning cadence and penetration testing | No 30-day external scan cycle and no annual penetration test |
 | Platform firewall / IDS-IPS / anti-malware | Provider-operated. Written confirmation of what runs has been requested; not yet retained |
 | Daily log-archive cron | Written and tested; not yet installed on the server. See `schedule.md` |

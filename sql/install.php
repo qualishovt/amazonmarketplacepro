@@ -42,13 +42,15 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_or
     `import_status` VARCHAR(32) NOT NULL DEFAULT \'imported\',
     `review_requested` TINYINT(1) NOT NULL DEFAULT 0,
     `vcs_uploaded` TINYINT(1) NOT NULL DEFAULT 0,
+    `pii_purged_at` DATETIME NULL DEFAULT NULL,
     `date_add` DATETIME NOT NULL,
     `date_upd` DATETIME NOT NULL,
     PRIMARY KEY (`id_amazonmarketplacepro_order`),
     UNIQUE KEY `amazon_order_id` (`amazon_order_id`),
     KEY `import_status` (`import_status`),
     KEY `id_order` (`id_order`),
-    KEY `fulfillment_channel` (`fulfillment_channel`)
+    KEY `fulfillment_channel` (`fulfillment_channel`),
+    KEY `pii_purged_at` (`pii_purged_at`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` (

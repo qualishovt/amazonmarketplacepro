@@ -792,6 +792,48 @@
                 <p class="help-block">{l s='Amazon relay addresses expire after a while; a synthetic address avoids bounced shop e-mails. Buyer messaging via Amazon still works.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
+
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Delete buyer data after' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <div class="input-group" style="max-width:220px;">
+                    <input type="number" min="1" max="365" name="mkpro_pii_retention_days" value="{$mkpro_pii_retention_days|escape:'htmlall':'UTF-8'}" class="form-control"{if !$mkpro_pii_purge} disabled="disabled"{/if} />
+                    <span class="input-group-addon">{l s='days' mod='amazonmarketplacepro'}</span>
+                </div>
+                <p class="help-block">
+                    {l s='Amazon\'s Data Protection Policy requires buyer data to be deleted within 30 days of delivery. Once an order is finished and older than this, the module clears the buyer name, e-mail, street, city, region, postcode, phone and the stored Amazon payload from its own order table. Order totals, tax, fees and the destination country stay, so your reporting and VAT records are unaffected.' mod='amazonmarketplacepro'}
+                </p>
+                <p class="help-block">
+                    <strong>{$pii_due_count|intval}</strong> {l s='order(s) waiting to be cleared;' mod='amazonmarketplacepro'}
+                    <strong>{$pii_purged_count|intval}</strong> {l s='already cleared.' mod='amazonmarketplacepro'}
+                    {if $pii_due_count > 0}
+                        <button type="submit" name="mkpro_purge_pii_now" value="1" class="btn btn-default btn-xs">{l s='Clear them now' mod='amazonmarketplacepro'}</button>
+                    {/if}
+                </p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Buyer data deletion' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_pii_purge" class="form-control">
+                    <option value="1"{if $mkpro_pii_purge} selected="selected"{/if}>{l s='On (required for Amazon compliance)' mod='amazonmarketplacepro'}</option>
+                    <option value="0"{if !$mkpro_pii_purge} selected="selected"{/if}>{l s='Off' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Turning this off means keeping Amazon buyer data longer than Amazon permits. Only do so if you have a legal obligation that requires it, and can show what it is.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Also anonymise the PrestaShop customer and address' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_pii_purge_ps" class="form-control">
+                    <option value="0"{if !$mkpro_pii_purge_ps} selected="selected"{/if}>{l s='No (recommended)' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_pii_purge_ps} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">
+                    {l s='Off by default on purpose. PrestaShop renders invoices from the stored address, so anonymising it changes documents you may be legally required to keep intact — and an invoice you must keep is exactly the exception Amazon\'s policy allows. Only turn this on after taking your own advice. When on, a customer is anonymised only if every order they have is an Amazon order that has already been cleared; city, postcode and country are kept so the VAT treatment stays justifiable.' mod='amazonmarketplacepro'}
+                </p>
+            </div>
+        </div>
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Customer group for Amazon buyers' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
@@ -2337,6 +2379,11 @@
                     <td><strong>{l s='VCS Invoice Upload' mod='amazonmarketplacepro'}</strong></td>
                     <td><code style="font-size:11px; word-break:break-all;">{$cron_upload_invoices_url|escape:'htmlall':'UTF-8'}</code></td>
                     <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Delete aged buyer data' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_purge_pii_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Daily (optional — order import does it too)' mod='amazonmarketplacepro'}</td>
                 </tr>
                 <tr>
                     <td><strong>{l s='eBay: Import Orders' mod='amazonmarketplacepro'}</strong></td>

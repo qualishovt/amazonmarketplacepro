@@ -111,6 +111,8 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
             case 'upload_invoices':
                 $result = $this->actionUploadInvoices();
                 break;
+            case 'purge_pii':
+                $result = $this->actionPurgePii();
                 break;
         }
 
@@ -149,6 +151,12 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
             'Already staged' => $summary['already'],
             'Items unmatched' => $summary['items_unmatched'],
         ));
+
+        // Retention is a policy requirement, not a convenience, so it is
+        // not left to the merchant scheduling a second cron entry: every
+        // import also clears what has aged out. A merchant who never adds
+        // the purge_pii job is still compliant as long as orders import.
+        $summary['pii_purged'] = $this->purgeAgedPii();
 
         return array('success' => true, 'action' => 'import_orders', 'summary' => $summary);
     }
@@ -680,6 +688,51 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
                 'released_items' => $expired['items'],
             ),
         );
+    }
+
+    /**
+     * Delete buyer personal data from orders past the retention window.
+     *
+     * Amazon's Data Protection Policy makes this a requirement rather than
+     * a convenience, so it runs even when the merchant has not scheduled it:
+     * see the same call in the order import.
+     */
+    private function actionPurgePii()
+    {
+        require_once dirname(__FILE__) . '/../../classes/AmazonPiiPurger.php';
+
+        if (!AmazonPiiPurger::isEnabled()) {
+            return array('success' => true, 'action' => 'purge_pii', 'summary' => array('disabled' => true));
+        }
+
+        $purger = new AmazonPiiPurger();
+        $summary = $purger->purge();
+        if ($summary === false) {
+            return array('success' => false, 'error' => $purger->getLastError());
+        }
+
+        return array('success' => true, 'action' => 'purge_pii', 'summary' => $summary);
+    }
+
+    /**
+     * Clear aged-out buyer data. Never fails the caller: a retention
+     * problem should be visible in the module log, not turn a successful
+     * order import into a failed cron run.
+     *
+     * @return int Orders cleared
+     */
+    private function purgeAgedPii()
+    {
+        require_once dirname(__FILE__) . '/../../classes/AmazonPiiPurger.php';
+
+        if (!AmazonPiiPurger::isEnabled()) {
+            return 0;
+        }
+
+        $purger = new AmazonPiiPurger();
+        $done = $purger->purge();
+
+        return ($done === false) ? 0 : (int) $done['orders'];
     }
 
     /** Read buyer replies from the configured mailbox into Customer Service. */

@@ -75,14 +75,38 @@ Relay access logs are retained 12 months and pruned automatically.
 database. The merchant is the controller: it is their shop, their hosting and
 their legal obligation, and PrestaShop's own GDPR tooling operates on it.
 
-> **Declared gap.** The Data Protection Policy requires that Personally
-> Identifiable Information be retained no longer than **30 days after order
-> delivery**, except where retention is legally required — for tax records, for
-> example. The module does **not** currently purge or anonymise buyer name,
-> buyer e-mail and shipping address after that period; imported orders persist
-> until the merchant removes them. This is a real gap against the policy, it is
-> stated here rather than glossed, and closing it is the next substantive piece
-> of work. It is recorded in Open items in `sp-api-security-controls.md`.
+**The module's imported copy is deleted automatically.** The Data Protection
+Policy caps retention of buyer personal data at 30 days after delivery, except
+where a law obliges the merchant to keep it. `AmazonPiiPurger` clears the buyer
+name, e-mail, street, city, region, postcode, phone and the stored raw Amazon
+payload from the module's order table once an order is in a finished state and
+older than the retention window. The window defaults to 30 days and is
+configurable between 1 and 365.
+
+It runs after every order import as well as from its own cron entry, so a
+merchant who never schedules the extra job is still compliant as long as orders
+are importing. Each cleared row is stamped with `pii_purged_at`, which is the
+evidence that the control actually ran.
+
+What survives is what carries no identifying value and what the merchant needs
+to keep: Amazon order id, dates, status, totals, tax, fees, marketplace and
+destination country. The country stays because it determines the VAT treatment
+the merchant must be able to justify afterwards.
+
+**The anchor date is the purchase date, not delivery.** Amazon does not return a
+delivery date on the order record. Purchase is necessarily on or before
+dispatch, and so before delivery, which makes the effective window at least as
+strict as the policy requires and never looser. Only finished orders are
+touched, so nothing is stripped from an order still being fulfilled.
+
+**PrestaShop's own customer and address records are a separate question, and the
+module leaves them alone by default.** A PrestaShop invoice is rendered from the
+stored address, so anonymising it alters documents the merchant may be legally
+obliged to keep - and that obligation is precisely the exception the policy
+allows. A merchant who has taken their own advice can switch it on, and even
+then a customer is anonymised only when every order they have is an Amazon order
+already cleared: someone who also buys directly from the shop is never touched,
+because that relationship is not Amazon's data.
 
 ## Sharing
 
