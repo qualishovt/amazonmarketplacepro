@@ -48,6 +48,18 @@ class AmazonSpApiClient
     /** IntelliPresta app defaults for the "Connect with Amazon" flow. */
     const DEFAULT_LWA_APP_ID = 'amzn1.sp.solution.fe7f779a-ff2e-4518-8d1a-fc48c44bdb69';
     const DEFAULT_LWA_APP_ID_SANDBOX = 'amzn1.sp.solution.54283948-5e29-42ce-bfe0-1ef477384b87';
+
+    /**
+     * Is the production app published in the Amazon Appstore?
+     *
+     * A draft app can only be authorized with version=beta on the Seller
+     * Central consent URL; a published one must not send it. That is a fact
+     * about our app, not about any merchant's shop, so it ships in the code
+     * and flips in the release that follows publication - exactly like the
+     * app ids above. Leaving it as a per-shop setting would strand every
+     * install on the wrong value the day the app goes live.
+     */
+    const PRODUCTION_APP_PUBLISHED = false;
     const DEFAULT_RELAY_URL = 'https://intellipresta.com/spapi';
 
     /**
@@ -56,6 +68,35 @@ class AmazonSpApiClient
     public static function isSandboxEnv()
     {
         return self::environment() === 'sandbox';
+    }
+
+    /**
+     * Should the consent URL carry version=beta?
+     *
+     * The sandbox app is never published, so sandbox always sends it. For
+     * production the shipped constant decides, and AMZPRO_OAUTH_BETA is
+     * honoured only in developer mode - a merchant has no way to know
+     * whether the app is published, and no business overriding it.
+     *
+     * @return bool
+     */
+    public static function oauthBeta()
+    {
+        if (self::isSandboxEnv()) {
+            return true;
+        }
+
+        if (Configuration::get('AMZPRO_DEV_MODE')) {
+            $override = Configuration::getGlobalValue('AMZPRO_OAUTH_BETA');
+            if ($override === false || $override === null || $override === '') {
+                $override = Configuration::get('AMZPRO_OAUTH_BETA');
+            }
+            if ($override !== false && $override !== null && $override !== '') {
+                return (bool) $override;
+            }
+        }
+
+        return !self::PRODUCTION_APP_PUBLISHED;
     }
 
     /**

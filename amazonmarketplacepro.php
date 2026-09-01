@@ -229,7 +229,8 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_LWA_APP_ID', '');
         Configuration::updateValue('AMZPRO_LWA_APP_ID_SANDBOX', '');
         Configuration::updateValue('AMZPRO_RELAY_URL', 'https://intellipresta.com/spapi');
-        Configuration::updateValue('AMZPRO_OAUTH_BETA', '1');
+        // Deliberately not seeded: AmazonSpApiClient::PRODUCTION_APP_PUBLISHED
+        // decides this, and a stored value would only shadow it.
         Configuration::updateValue('AMZPRO_OAUTH_NONCE', '');
         Configuration::updateValue('AMZPRO_OAUTH_RETURN_URL', '');
         Configuration::updateValue('AMZPRO_SELLING_PARTNER_ID', '');
@@ -540,7 +541,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_auth_mode'       => Configuration::get('AMZPRO_AUTH_MODE'),
             'mkpro_lwa_app_id'      => AmazonSpApiClient::lwaAppId(),
             'mkpro_relay_url'       => Configuration::get('AMZPRO_RELAY_URL'),
-            'mkpro_oauth_beta'      => Configuration::get('AMZPRO_OAUTH_BETA'),
+            'mkpro_oauth_beta'      => AmazonSpApiClient::oauthBeta(),
             'mkpro_connected'       => (AmazonSpApiClient::storedRefreshToken() != ''),
             // Manual mode is "connected" as soon as a token is stored for the
             // active environment — the OAuth Connect flow is never used there.
@@ -1039,9 +1040,10 @@ class AmazonMarketplacePro extends Module
             'redirect_uri' => $relayUrl . '/callback.php',
         );
         // Draft (unpublished) apps can only be authorized with version=beta.
-        // The sandbox app is never published, so sandbox always sends it;
-        // the stored setting only governs the production app.
-        if (AmazonSpApiClient::isSandboxEnv() || Configuration::get('AMZPRO_OAUTH_BETA')) {
+        // Decided by the shipped constant rather than a per-shop setting, so
+        // publishing the app is a release rather than a support request to
+        // every merchant. See AmazonSpApiClient::oauthBeta().
+        if (AmazonSpApiClient::oauthBeta()) {
             $params['version'] = 'beta';
         }
 
