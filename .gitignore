@@ -1,2 +1,5 @@
 relay-server/config.php
 .idea/
+
+# Build artefacts
+*.zip
