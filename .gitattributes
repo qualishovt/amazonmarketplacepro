@@ -1,8 +1,31 @@
-# Files excluded from the module ZIP built with:
-#   git archive --format=zip --prefix=marketplacespro/ -o marketplacespro.zip HEAD
-relay-server/    export-ignore
-.claude/         export-ignore
-.idea/           export-ignore
-.gitignore       export-ignore
-.gitattributes   export-ignore
-Readme.md        export-ignore
+# Files excluded from the module ZIP. Build with:
+#   php tools/build-release.php
+#
+# which runs, in effect:
+#   git archive --format=zip --prefix=amazonmarketplacepro/ -o amazonmarketplacepro.zip HEAD
+#
+# The prefix must match the module's directory name, or PrestaShop refuses
+# the upload: it looks for a folder named after the module inside the ZIP.
+
+# The OAuth relay is hosted by IntelliPresta, not shipped to merchants.
+relay-server/       export-ignore
+
+# Compliance and development material. Useful in the repository, noise in a
+# merchant's modules directory - and the Addons validator flags stray files.
+docs/               export-ignore
+tools/              export-ignore
+website/            export-ignore
+
+# Developer diagnostic that bootstraps PrestaShop. It refuses to run outside
+# CLI, but it has no business being on a merchant's server at all.
+live-verify.php     export-ignore
+
+# Working artwork; logo.png is the one the module uses.
+logo-rounded.png    export-ignore
+
+# Repository plumbing.
+.claude/            export-ignore
+.idea/              export-ignore
+.gitignore          export-ignore
+.gitattributes      export-ignore
+Readme.md           export-ignore
