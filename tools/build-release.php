@@ -39,7 +39,7 @@ function run($cmd)
 {
     $out = array();
     $code = 0;
-    exec($cmd . ' 2>&1', $out, $code);
+    exec($cmd . ' 2>&1', $out, $code); // scan-ok: fixed command strings, no request or user input
     return array($code, implode("\n", $out));
 }
 

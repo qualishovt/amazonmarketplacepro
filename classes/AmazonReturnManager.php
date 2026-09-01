@@ -1,17 +1,16 @@
 <?php
 /**
- * 2007-2026 PrestaShop
+ * Amazon Marketplace Pro
  *
- * NOTICE OF LICENSE
+ * NOTICE OF LICENCE
  *
- * This source file is subject to the Academic Free License (AFL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/afl-3.0.php
+ * This software is commercial and licensed, not sold. The licence is
+ * bundled with this package in the file LICENSE.txt. Redistribution,
+ * resale and publication of the source are prohibited.
  *
  *  @author    IntelliPresta
- *  @copyright 2007-2026 PrestaShop SA
- *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  @copyright 2026 IntelliPresta
+ *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
 /**

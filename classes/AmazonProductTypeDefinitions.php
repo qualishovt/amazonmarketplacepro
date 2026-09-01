@@ -1,10 +1,10 @@
 <?php
 /**
- * 2007-2026 PrestaShop
+ * Amazon Marketplace Pro
  *
  *  @author    IntelliPresta
- *  @copyright 2007-2026 PrestaShop SA
- *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  @copyright 2026 IntelliPresta
+ *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  *
  * Amazon Product Type Definitions (SP-API definitions/2020-09-01).
  *

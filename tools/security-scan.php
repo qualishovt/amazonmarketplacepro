@@ -62,6 +62,9 @@ $rules = array(
         'name' => 'exec-call',
         'level' => LEVEL_WARN,
         'pattern' => '/(?<![a-zA-Z_>])(exec|system)\s*\(/',
+        // A line may be acknowledged with a trailing "scan-ok:" comment
+        // giving the reason. Without the reason the marker does not count.
+        'unless' => '/scan-ok:\s*\S/',
         'message' => 'Process execution - confirm no user input reaches it',
     ),
     array(

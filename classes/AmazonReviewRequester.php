@@ -11,8 +11,8 @@
  * PHP 5.6+ compatible (no scalar type hints, no ?? operator, no enums).
  *
  *  @author    IntelliPresta
- *  @copyright 2007-2026 PrestaShop SA
- *  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ *  @copyright 2026 IntelliPresta
+ *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
 if (!defined('_PS_VERSION_')) {
