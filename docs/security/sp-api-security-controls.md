@@ -105,11 +105,13 @@ operator (see 7). Deployment is via cPanel File Manager over HTTPS,
 authenticated by password and two-factor authentication.
 
 **Constraint of the hosting tier, with compensating controls.** SSH password
-authentication and plain FTP remain available. Both are server-wide settings on
-shared hosting; the provider confirmed in writing on 1 September 2026 that
-neither can be restricted for an individual account without affecting every
-other account on the machine. Disablement was requested and declined on that
-basis, and the response is retained.
+authentication and plain FTP remain available. Both are server-wide daemon
+settings on shared hosting; the provider confirmed in writing on 1 September
+2026, by support ticket, that neither can be toggled per account because the
+underlying services are shared across every tenant on the node, and that
+per-instance daemon customisation would require an unmanaged or dedicated
+environment. Disablement was requested and declined on that basis, and the
+reply is retained.
 
 Compensating controls in place:
 
@@ -126,13 +128,25 @@ Compensating controls in place:
 The residual risk is credential guessing against a password that is random and
 unique, on an account that holds no Amazon Information.
 
-**Platform-layer controls — pending written confirmation.** Network firewalling,
-intrusion detection and prevention, and anti-malware scanning at the host level
-are operated by the hosting provider, not by us: on a shared tier there is no
-other place they could sit. Their specifics have been requested in writing so
-that this section can state what is actually running rather than what shared
-hosting usually includes. Until that reply is retained, this document does not
-claim them. See Open items.
+**Platform-layer controls.** Firewalling, intrusion detection and anti-malware
+at host level are operated by the hosting provider; on a shared tier there is
+no other place they could sit. Confirmed in writing by the provider on
+1 September 2026, by support ticket, and retained:
+
+| Control | What runs |
+|---|---|
+| Network firewall | CSF with IP filtering, restricting inbound traffic by default and blocking unauthorised port access |
+| Web application firewall | ModSecurity, inspecting HTTP requests |
+| Intrusion detection and prevention | Imunify360 — multi-layered IDS/IPS, proactive defence, automated brute-force protection |
+| Anti-malware | Imunify360 real-time scanning of files on upload, creation and modification; ClamAV on demand via cPanel |
+| Tenant isolation | CloudLinux OS with CageFS — a private virtualised filesystem per account, so no tenant can see another's files, processes or binaries. Resources isolated per tenant via LVE |
+
+One precision, since the questionnaire asks about *network segmentation*: what
+the provider operates is tenant isolation, not a separate network segment for
+this account. On shared hosting those are not the same thing, and the honest
+description is the one above. It is adequate here because the account exposes
+no database and no file server to segment away from — the relay is four PHP
+files and static pages.
 
 ## 3. Encryption at Rest 2.4
 
@@ -354,7 +368,6 @@ is a small enough surface that a fix can be live within the hour.
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
 | Vulnerability scanning cadence and penetration testing | No 30-day external scan cycle and no annual penetration test |
-| Platform firewall / IDS-IPS / anti-malware | Provider-operated. Written confirmation of what runs has been requested; not yet retained |
 | Daily log-archive cron | Written and tested; not yet installed on the server. See `schedule.md` |
 | Third-party security assessment | Not commissioned. Amazon's own Data Security Assessment is free and conducted by an Amazon agent; that is the intended route |
 
