@@ -95,6 +95,11 @@ switch ($command) {
         break;
 
     case 'check':
+        // --quiet says nothing when everything is well, so this can run from
+        // cron without training the operator to ignore a weekly mail. Trouble
+        // always goes to stderr, which cron mails in either mode.
+        $quiet = in_array('--quiet', $argv, true) || in_array('-q', $argv, true);
+
         if (!is_readable($iprestaConfig)) {
             fwrite(STDERR, "config.php not found next to this script.\n");
             exit(1);
@@ -104,32 +109,52 @@ switch ($command) {
             'IPRESTA_LWA_CLIENT_SECRET',
             'IPRESTA_LWA_SANDBOX_CLIENT_SECRET',
         );
-        $plain = 0;
-        echo "Master key: " . (ipresta_master_key() === null ? "NOT CONFIGURED" : "present") . "\n\n";
+        $problems = 0;
+        $report = 'Master key: ' . (ipresta_master_key() === null ? 'NOT CONFIGURED' : 'present') . "\n\n";
+
         foreach ($names as $name) {
             if (!defined($name)) {
-                printf("  %-38s not defined\n", $name);
+                $report .= sprintf("  %-38s not defined\n", $name);
                 continue;
             }
             $value = (string) constant($name);
-            if (ipresta_secret_is_encrypted($value)) {
-                try {
-                    ipresta_decrypt_secret($value);
-                    printf("  %-38s encrypted, decrypts OK\n", $name);
-                } catch (Exception $e) {
-                    printf("  %-38s encrypted, FAILS: %s\n", $name, $e->getMessage());
-                }
-            } else {
-                printf("  %-38s PLAIN TEXT\n", $name);
-                $plain++;
+            if (!ipresta_secret_is_encrypted($value)) {
+                $report .= sprintf("  %-38s PLAIN TEXT\n", $name);
+                $problems++;
+                continue;
+            }
+            try {
+                ipresta_decrypt_secret($value);
+                $report .= sprintf("  %-38s encrypted, decrypts OK\n", $name);
+            } catch (Exception $e) {
+                // Encrypted but unreadable is a failure, not a pass. Before
+                // --quiet this case still exited 0, which would have made a
+                // cron guard silently useless exactly when it mattered.
+                $report .= sprintf("  %-38s encrypted, FAILS: %s\n", $name, $e->getMessage());
+                $problems++;
             }
         }
-        echo "\n" . ($plain === 0
-            ? "All configured secrets are encrypted at rest.\n"
-            : $plain . " secret(s) still stored in plain text.\n");
-        exit($plain === 0 ? 0 : 1);
+
+        if ($problems === 0) {
+            $report .= "\nAll configured secrets are encrypted at rest.\n";
+            if (!$quiet) {
+                echo $report;
+            }
+            exit(0);
+        }
+
+        $report .= "\n" . $problems . " problem(s) found on " . php_uname('n') . ".\n";
+        fwrite(STDERR, $report);
+        exit(1);
 
     default:
-        fwrite(STDERR, "Usage: php secret-tool.php genkey|encrypt|check\n");
+        fwrite(STDERR, "Usage: php secret-tool.php genkey|encrypt|check [--quiet]\n\n");
+        fwrite(STDERR, "  genkey          generate a master key\n");
+        fwrite(STDERR, "  encrypt         read a secret from stdin, print the encrypted blob\n");
+        fwrite(STDERR, "  check           report whether every configured secret is encrypted\n");
+        fwrite(STDERR, "  check --quiet   same, but silent unless something is wrong.\n");
+        fwrite(STDERR, "                  Suitable for cron: exits non-zero and writes to\n");
+        fwrite(STDERR, "                  stderr only on failure, so mail arrives only when\n");
+        fwrite(STDERR, "                  it means something.\n");
         exit(1);
 }
