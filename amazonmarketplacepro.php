@@ -869,7 +869,8 @@ class AmazonMarketplacePro extends Module
             unset(
                 $fields['AMZPRO_ENVIRONMENT'],
                 $fields['AMZPRO_USE_MOCK'],
-                $fields['AMZPRO_OAUTH_BETA']
+                $fields['AMZPRO_OAUTH_BETA'],
+                $fields['AMZPRO_AUTH_MODE']
             );
         }
 

@@ -151,6 +151,7 @@
         </div>
         {/if}
 
+        {if $mkpro_dev_mode}
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Authentication mode' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
@@ -160,6 +161,7 @@
                 </select>
             </div>
         </div>
+        {/if}
         {if $mkpro_dev_mode}
         <div class="form-group" id="mkpro-beta-group"{if $mkpro_environment == 'sandbox'} style="display:none;"{/if}>
             <label class="control-label col-lg-3">{l s='Beta authorization (draft app)' mod='amazonmarketplacepro'}</label>
@@ -176,7 +178,12 @@
         {/if}
     </div>
 
-    {* ── Amazon SP-API Credentials (manual mode) ── *}
+    {* ── Amazon SP-API Credentials (manual mode) ──
+       Hidden from merchants: with Connect they never need these, and a
+       field for a secret invites someone to paste one. Still shown to an
+       install already on manual mode, which would otherwise lose access to
+       its own working configuration. *}
+    {if $mkpro_dev_mode || $mkpro_auth_mode == 'manual'}
     <div class="panel">
         <div class="panel-heading"><i class="icon-key"></i> {l s='Manual SP-API Credentials (advanced — not needed with Connect)' mod='amazonmarketplacepro'}</div>
         <div class="alert alert-warning">
@@ -229,6 +236,7 @@
             </div>
         </div>
     </div>
+    {/if}
 
     {* ── Marketplace (environment now lives with the connection controls) ── *}
     <div class="panel">
