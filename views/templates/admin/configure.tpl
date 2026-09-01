@@ -31,28 +31,13 @@
 <div class="col-lg-2 col-md-3">
     <div id="mkpro-sidebar">
         <ul class="nav nav-pills nav-stacked" id="mkpro-tabs">
-            <li class="active"><a href="#tab-settings" data-toggle="tab"><i class="icon-cogs"></i> {l s='Settings' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-pending" data-toggle="tab"><i class="icon-pause"></i> {l s='Pending Orders' mod='amazonmarketplacepro'}{if $pending_orders} <span class="badge">{$pending_orders|count}</span>{/if}</a></li>
-            <li><a href="#tab-products" data-toggle="tab"><i class="icon-th-list"></i> {l s='Products' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-profiles" data-toggle="tab"><i class="icon-magic"></i> {l s='Profiles' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-markup" data-toggle="tab"><i class="icon-sliders"></i> {l s='Markup & Rules' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-prodrules" data-toggle="tab"><i class="icon-check-square-o"></i> {l s='Product Rules' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-queue" data-toggle="tab"><i class="icon-list-ol"></i> {l s='Queue' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-orphans" data-toggle="tab"><i class="icon-unlink"></i> {l s='Orphans' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-tools" data-toggle="tab"><i class="icon-wrench"></i> {l s='Tools' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-returns" data-toggle="tab"><i class="icon-undo"></i> {l s='Returns' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-fba" data-toggle="tab"><i class="icon-truck"></i> {l s='FBA' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-repricing" data-toggle="tab"><i class="icon-usd"></i> {l s='Repricing' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-fees" data-toggle="tab"><i class="icon-money"></i> {l s='Fees' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-reports" data-toggle="tab"><i class="icon-bar-chart"></i> {l s='Reports' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-promotions" data-toggle="tab"><i class="icon-tag"></i> {l s='Promotions' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-multimp" data-toggle="tab"><i class="icon-globe"></i> {l s='Multi-Account' mod='amazonmarketplacepro'}</a></li>
-        </ul>
-        <div class="mkpro-nav-header">{l s='General' mod='amazonmarketplacepro'}</div>
-        <ul class="nav nav-pills nav-stacked">
-            <li><a href="#tab-cron" data-toggle="tab"><i class="icon-clock-o"></i> {l s='Automation' mod='amazonmarketplacepro'}</a></li>
-            <li><a href="#tab-logs" data-toggle="tab"><i class="icon-file-text-o"></i> {l s='Logs' mod='amazonmarketplacepro'}</a></li>
+            <li class="active"><a href="#grp-settings" data-toggle="tab"><i class="icon-cogs"></i> {l s='Settings' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-catalog" data-toggle="tab"><i class="icon-th-list"></i> {l s='Catalog' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-fulfilment" data-toggle="tab"><i class="icon-truck"></i> {l s='Fulfilment' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-money" data-toggle="tab"><i class="icon-money"></i> {l s='Money' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-insights" data-toggle="tab"><i class="icon-bar-chart"></i> {l s='Insights' mod='amazonmarketplacepro'}</a></li>
+            <li><a href="#grp-system" data-toggle="tab"><i class="icon-wrench"></i> {l s='System' mod='amazonmarketplacepro'}</a></li>
         </ul>
     </div>
 </div>
@@ -60,7 +45,9 @@
 <div class="tab-content" id="mkpro-tab-content">
 
 {* ═══════════════════════ SETTINGS TAB ═══════════════════════ *}
-<div class="tab-pane active" id="tab-settings">
+
+{* ════════════════════ SETUP ════════════════════ *}
+<div class="tab-pane active" id="grp-settings">
 
     <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
 
@@ -1146,67 +1133,306 @@
     </form>
 </div>
 
-{* ═══════════════════════ ORDERS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-orders">
+{* ════════════════════ SYSTEM ════════════════════ *}
+<div class="tab-pane" id="grp-system">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-cron" data-toggle="tab"><i class="icon-clock-o"></i> {l s='Automation' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-tools" data-toggle="tab"><i class="icon-wrench"></i> {l s='Tools' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-logs" data-toggle="tab"><i class="icon-file-text-o"></i> {l s='Logs' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+{* ═══════════════════════ CRON TAB ═══════════════════════ *}
+<div class="tab-pane active" id="tab-cron">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-cloud-download"></i> {l s='Import Amazon Orders' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Fetch orders from Amazon and stage them. Now captures shipping costs, tax, buyer address (via RDT), and FBA channel.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="import-amazon-orders" class="btn btn-primary">
-            <i class="icon-download"></i> {l s='Fetch & Stage Amazon Orders' mod='amazonmarketplacepro'}
-        </button>
-        <button type="button" id="create-ps-orders" class="btn btn-success" style="margin-left:10px;">
-            <i class="icon-check"></i> {l s='Create PrestaShop Orders' mod='amazonmarketplacepro'}
-        </button>
-        <p class="help-block" style="margin-top:8px;">
-            {l s='Orders now include: shipping costs, tax, real buyer address, and FBA/MFN channel detection.' mod='amazonmarketplacepro'}
-        </p>
-        <div id="amazon-orders-summary" style="display:none; margin-top:15px;"></div>
-        <div id="amazon-orders-result" style="display:none; margin-top:10px;"></div>
-    </div>
+        <div class="panel-heading"><i class="icon-clock-o"></i> {l s='Cron URLs for Automation' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Add these URLs to your server\'s crontab (or use a webcron service) to automate Amazon sync.' mod='amazonmarketplacepro'}</p>
 
-    {* ── Buyer Messaging ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-envelope"></i> {l s='Buyer Messaging' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Send an Amazon-approved, order-related message to the buyer of an imported order. Amazon limits which message types are allowed per order; buyer replies arrive in Seller Central.' mod='amazonmarketplacepro'}</p>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-lg-4">
-                <input type="text" id="msg-order-id" class="form-control" placeholder="{l s='Amazon Order ID (e.g. 123-1234567-1234567)' mod='amazonmarketplacepro'}" />
-            </div>
-            <div class="col-lg-3">
-                <button type="button" id="msg-load-actions" class="btn btn-default">
-                    <i class="icon-refresh"></i> {l s='Load allowed message types' mod='amazonmarketplacepro'}
-                </button>
-            </div>
+        <table class="table">
+            <thead>
+                <tr><th>{l s='Action' mod='amazonmarketplacepro'}</th><th>{l s='URL' mod='amazonmarketplacepro'}</th><th>{l s='Schedule' mod='amazonmarketplacepro'}</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>{l s='Import Orders' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Sync Stock' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Full Product Sync' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_products_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Import Returns' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Process Returns' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_returns_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='FBA Inventory Sync' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_fba_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Repricing Cycle' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Fetch Fees' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_fees_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Poll Reports' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_poll_reports_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Sync Promotions' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_promotions_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Request Reviews' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_request_reviews_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Bulk Feed Cycle (large catalogs)' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_feeds_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Buyer replies (IMAP inbox)' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_messages_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Remote Cart (settle stock holds)' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_remote_cart_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='VCS Invoice Upload' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_upload_invoices_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Delete aged buyer data' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_purge_pii_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Daily (optional — order import does it too)' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Import Orders' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Sync Stock' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Publish Offers' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_publish_offers_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Import Returns' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every hour' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Import Fees' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_fees_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Daily' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Repricing' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Catalog Matching' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_match_catalog_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Weekly' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Publish on all sites' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_publish_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='eBay: Import orders from all sites' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Multi-MP Order Import' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+                </tr>
+                <tr>
+                    <td><strong>{l s='Multi-MP Product Sync' mod='amazonmarketplacepro'}</strong></td>
+                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_sync_url|escape:'htmlall':'UTF-8'}</code></td>
+                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <strong>{l s='Example crontab entry' mod='amazonmarketplacepro'}:</strong><br/>
+            <code>*/15 * * * * curl -s "{$cron_import_orders_url|escape:'htmlall':'UTF-8'}" > /dev/null 2>&1</code>
         </div>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-lg-4">
-                <select id="msg-action" class="form-control" disabled="disabled">
-                    <option value="">{l s='-- Load message types first --' mod='amazonmarketplacepro'}</option>
-                </select>
-            </div>
-        </div>
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-lg-7">
-                <textarea id="msg-text" class="form-control" rows="3" placeholder="{l s='Message text' mod='amazonmarketplacepro'}"></textarea>
-            </div>
-        </div>
-        <button type="button" id="msg-send" class="btn btn-primary" disabled="disabled">
-            <i class="icon-envelope"></i> {l s='Send message to buyer' mod='amazonmarketplacepro'}
-        </button>
-        <button type="button" id="msg-request-review" class="btn btn-default" style="margin-left:10px;">
-            <i class="icon-star"></i> {l s='Request a review' mod='amazonmarketplacepro'}
-        </button>
-        <p class="help-block" style="margin-top:8px;">
-            {l s='"Request a review" sends Amazon\'s standard, Amazon-templated review solicitation (allowed once per order, 5-30 days after delivery). Enable automatic review requests in Settings and schedule the request_reviews cron for hands-free operation.' mod='amazonmarketplacepro'}
+
+        <p>
+            <strong>{l s='Your cron token' mod='amazonmarketplacepro'}:</strong>
+            <code>{$mkpro_cron_token|escape:'htmlall':'UTF-8'}</code>
         </p>
-        <div id="msg-result" style="display:none; margin-top:10px;"></div>
     </div>
 
 </div>
 
+{* ═══════════════════════ TOOLS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-tools">
+
+    {* ── Catalogue audit ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-stethoscope"></i> {l s='Catalogue Check' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Amazon matches everything on the reference and the barcode. Products missing either, or sharing a reference with another product, cannot be listed or matched to incoming orders.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="audit-run" class="btn btn-primary"><i class="icon-search"></i> {l s='Check my catalogue' mod='amazonmarketplacepro'}</button>
+        <div id="audit-result" style="display:none; margin-top:12px;"></div>
+    </div>
+
+    {* ── Reference / barcode CSV ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-table"></i> {l s='Reference & Barcode Editor (CSV)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Export every product and combination, fix the references and barcodes in a spreadsheet, then upload the file back. Only reference, EAN, UPC and supplier reference are written; the key and name columns are read-only.' mod='amazonmarketplacepro'}</p>
+        <div class="alert alert-warning">
+            <i class="icon-warning"></i>
+            {l s='This edits your PrestaShop catalogue directly and cannot be undone — back up your database first. Nothing is sent to Amazon. Do it before you publish, or you will create duplicate SKUs on Amazon.' mod='amazonmarketplacepro'}
+        </div>
+        <p>
+            <a href="{$export_references_url|escape:'htmlall':'UTF-8'}" class="btn btn-default">
+                <i class="icon-download"></i> {l s='Export CSV' mod='amazonmarketplacepro'}
+            </a>
+        </p>
+        <div class="form-inline" style="margin-top:10px;">
+            <input type="file" id="reference-file" accept=".csv,text/csv" class="form-control" />
+            <button type="button" id="reference-import" class="btn btn-warning">
+                <i class="icon-upload"></i> {l s='Import CSV' mod='amazonmarketplacepro'}
+            </button>
+        </div>
+        <p class="help-block">{l s='Semicolon-separated, UTF-8. Barcodes are exported with a leading apostrophe so spreadsheets keep them as text; it is removed on import.' mod='amazonmarketplacepro'}</p>
+        <div id="reference-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
+    {* ── Listing deletion ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-trash"></i> {l s='Delete Listings from Amazon' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Removes offers from Amazon for products you no longer sell — deleted, disabled, or switched off for Amazon on the product page. Review the list first: deletion removes the offer and its history on Amazon, which is not reversible from here.' mod='amazonmarketplacepro'}</p>
+        <p class="help-block">{l s='If you only want to stop selling temporarily, publishing quantity 0 (Listing Defaults) keeps the listing and its reviews alive.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="deletions-list" class="btn btn-primary"><i class="icon-search"></i> {l s='Find listings to delete' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="deletions-send" class="btn btn-danger" style="margin-left:10px;" disabled="disabled">
+            <i class="icon-trash"></i> {l s='Delete selected from Amazon' mod='amazonmarketplacepro'}
+        </button>
+        <div id="deletions-result" style="display:none; margin-top:10px;"></div>
+        <table class="table" id="deletions-table" style="display:none; margin-top:10px;">
+            <thead><tr>
+                <th style="width:30px;"><input type="checkbox" id="deletions-all" /></th>
+                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                <th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Why' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    {* ── Feed payloads ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-file-code-o"></i> {l s='Submitted Feed Payloads' mod='amazonmarketplacepro'}</div>
+        <p>{l s='The exact JSON sent to Amazon for each bulk feed is kept here. Amazon support (and ours) will ask for it whenever a listing is rejected for a reason the report does not explain.' mod='amazonmarketplacepro'}</p>
+        <div id="feed-payload-hint" class="alert alert-info">
+            {l s='Submit a bulk feed from the Products tab, then come back — each feed will appear with a download link. Feeds sent before this version have no stored payload.' mod='amazonmarketplacepro'}
+        </div>
+        <div class="form-inline">
+            <input type="text" id="feed-payload-id" class="form-control" placeholder="{l s='Feed ID' mod='amazonmarketplacepro'}" style="width:260px;" />
+            <a href="#" id="feed-payload-download" class="btn btn-default"><i class="icon-download"></i> {l s='Download this feed\'s JSON' mod='amazonmarketplacepro'}</a>
+        </div>
+    </div>
+</div>
+
+{* ═══════════════════════ LOGS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-logs">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-file-text-o"></i> {l s='Activity Log' mod='amazonmarketplacepro'} ({l s='last 50 entries' mod='amazonmarketplacepro'})</div>
+        {if $log_entries && count($log_entries) > 0}
+            <table class="table">
+                <thead>
+                    <tr><th>{l s='Date' mod='amazonmarketplacepro'}</th><th>{l s='Level' mod='amazonmarketplacepro'}</th><th>{l s='Source' mod='amazonmarketplacepro'}</th><th>{l s='Message' mod='amazonmarketplacepro'}</th></tr>
+                </thead>
+                <tbody>
+                    {foreach from=$log_entries item=entry}
+                        <tr class="{if $entry.level == 'error'}danger{elseif $entry.level == 'warning'}warning{/if}">
+                            <td style="white-space:nowrap;">{$entry.date_add|escape:'htmlall':'UTF-8'}</td>
+                            <td><span class="badge {if $entry.level == 'error'}badge-danger{elseif $entry.level == 'warning'}badge-warning{else}badge-info{/if}">{$entry.level|escape:'htmlall':'UTF-8'}</span></td>
+                            <td>{$entry.source|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$entry.message|escape:'htmlall':'UTF-8'}</td>
+                        </tr>
+                    {/foreach}
+                </tbody>
+            </table>
+        {else}
+            <div class="alert alert-info">{l s='No log entries yet.' mod='amazonmarketplacepro'}</div>
+        {/if}
+    </div>
+
+</div>
+    </div>{* /section tab-content *}
+</div>
+
+{* ════════════════════ CATALOG ════════════════════ *}
+<div class="tab-pane" id="grp-catalog">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-products" data-toggle="tab"><i class="icon-th-list"></i> {l s='Products' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-profiles" data-toggle="tab"><i class="icon-magic"></i> {l s='Profiles' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-markup" data-toggle="tab"><i class="icon-sliders"></i> {l s='Markup & Rules' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-prodrules" data-toggle="tab"><i class="icon-check-square-o"></i> {l s='Product Rules' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-queue" data-toggle="tab"><i class="icon-list-ol"></i> {l s='Queue' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-orphans" data-toggle="tab"><i class="icon-unlink"></i> {l s='Orphans' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
 {* ═══════════════════════ PRODUCTS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-products">
+<div class="tab-pane active" id="tab-products">
 
     <div class="panel">
         <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop &harr; Amazon)' mod='amazonmarketplacepro'}</div>
@@ -1345,482 +1571,6 @@
         <div id="amazon-list-result" style="display:none; margin-top:10px;"></div>
     </div>
 
-</div>
-
-{* ═══════════════════════ RETURNS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-returns">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-undo"></i> {l s='Amazon Returns & Cancellations' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Import returns and cancellations from Amazon. Process them to create PS credit slips or cancel PS orders.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="import-returns" class="btn btn-primary">
-            <i class="icon-download"></i> {l s='Import Returns from Amazon' mod='amazonmarketplacepro'}
-        </button>
-        <button type="button" id="process-returns" class="btn btn-success" style="margin-left:10px;">
-            <i class="icon-check"></i> {l s='Process Pending Returns' mod='amazonmarketplacepro'}
-        </button>
-        <div id="returns-summary" style="display:none; margin-top:15px;"></div>
-        <div id="returns-result" style="display:none; margin-top:10px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='Return History' mod='amazonmarketplacepro'}</div>
-        {if $returns && count($returns) > 0}
-            <table class="table" id="returns-table">
-                <thead>
-                    <tr>
-                        <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Type' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Title' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Qty' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Refund' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='PS Order' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Credit Slip' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Status' mod='amazonmarketplacepro'}</th>
-                        <th>{l s='Date' mod='amazonmarketplacepro'}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {foreach from=$returns item=ret}
-                        <tr class="{if $ret.return_status == 'imported'}warning{elseif $ret.return_status == 'refunded'}success{/if}">
-                            <td>{$ret.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
-                            <td>
-                                {if $ret.status == 'Canceled'}
-                                    <span class="badge badge-danger">{l s='Cancelled' mod='amazonmarketplacepro'}</span>
-                                {elseif $ret.status == 'Returned'}
-                                    <span class="badge badge-warning">{l s='Returned' mod='amazonmarketplacepro'}</span>
-                                {else}
-                                    <span class="badge badge-default">{$ret.status|escape:'htmlall':'UTF-8'}</span>
-                                {/if}
-                            </td>
-                            <td>{$ret.seller_sku|escape:'htmlall':'UTF-8'}</td>
-                            <td>{$ret.title|truncate:40:'...':true|escape:'htmlall':'UTF-8'}</td>
-                            <td>{$ret.quantity|escape:'htmlall':'UTF-8'}</td>
-                            <td>{$ret.refund_amount|escape:'htmlall':'UTF-8'} {$ret.currency|escape:'htmlall':'UTF-8'}</td>
-                            <td>
-                                {if $ret.id_order > 0}
-                                    <span class="badge badge-info">#{$ret.id_order|escape:'htmlall':'UTF-8'}</span>
-                                {else}
-                                    <span class="badge badge-default">-</span>
-                                {/if}
-                            </td>
-                            <td>
-                                {if $ret.id_order_slip > 0}
-                                    <span class="badge badge-success">#{$ret.id_order_slip|escape:'htmlall':'UTF-8'}</span>
-                                {else}
-                                    <span class="badge badge-default">-</span>
-                                {/if}
-                            </td>
-                            <td>
-                                {if $ret.return_status == 'imported'}
-                                    <span class="badge badge-warning">{l s='Pending' mod='amazonmarketplacepro'}</span>
-                                {elseif $ret.return_status == 'processed'}
-                                    <span class="badge badge-info">{l s='Processed' mod='amazonmarketplacepro'}</span>
-                                {elseif $ret.return_status == 'refunded'}
-                                    <span class="badge badge-success">{l s='Refunded' mod='amazonmarketplacepro'}</span>
-                                {else}
-                                    <span class="badge badge-default">{$ret.return_status|escape:'htmlall':'UTF-8'}</span>
-                                {/if}
-                            </td>
-                            <td style="white-space:nowrap;">{$ret.date_add|escape:'htmlall':'UTF-8'}</td>
-                        </tr>
-                    {/foreach}
-                </tbody>
-            </table>
-        {else}
-            <div class="alert alert-info">{l s='No returns imported yet.' mod='amazonmarketplacepro'}</div>
-        {/if}
-    </div>
-
-</div>
-
-{* ═══════════════════════ FBA TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-fba">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-truck"></i> {l s='FBA Inventory' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Sync Fulfillment by Amazon (FBA) inventory levels. FBA stock can optionally sync to PrestaShop quantities.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="btn-sync-fba" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Sync FBA Inventory' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="btn-fba-stock-ps" class="btn btn-default"><i class="icon-download"></i> {l s='Update PS Stock from FBA' mod='amazonmarketplacepro'}</button>
-        <div id="fba-result" style="margin-top:15px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='FBA Inventory Levels' mod='amazonmarketplacepro'}</div>
-        <div class="table-responsive">
-            <table class="table" id="fba-table">
-                <thead><tr>
-                    <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='FN SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Fulfillable' mod='amazonmarketplacepro'}</th><th>{l s='Reserved' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Inbound' mod='amazonmarketplacepro'}</th><th>{l s='Unfulfillable' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Total' mod='amazonmarketplacepro'}</th><th>{l s='Last Synced' mod='amazonmarketplacepro'}</th>
-                </tr></thead>
-                <tbody>
-                {if $fba_inventory}
-                    {foreach from=$fba_inventory item=inv}
-                    <tr>
-                        <td><code>{$inv.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
-                        <td>{$inv.asin|escape:'htmlall':'UTF-8'}</td>
-                        <td><small>{$inv.fn_sku|escape:'htmlall':'UTF-8'}</small></td>
-                        <td>{$inv.product_name|truncate:40|escape:'htmlall':'UTF-8'}</td>
-                        <td><strong>{$inv.fulfillable_qty|escape:'htmlall':'UTF-8'}</strong></td>
-                        <td>{$inv.reserved_qty|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$inv.inbound_shipped_qty|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$inv.unfulfillable_qty|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$inv.total_qty|escape:'htmlall':'UTF-8'}</td>
-                        <td><small>{$inv.last_synced|escape:'htmlall':'UTF-8'}</small></td>
-                    </tr>
-                    {/foreach}
-                {else}
-                    <tr><td colspan="10" class="text-center text-muted">{l s='No FBA inventory data yet. Click "Sync FBA Inventory" to fetch.' mod='amazonmarketplacepro'}</td></tr>
-                {/if}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-paper-plane"></i> {l s='Multi-Channel Fulfillment (MCF)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Send a PrestaShop order to Amazon for fulfillment from FBA inventory.' mod='amazonmarketplacepro'}</p>
-        <div class="form-inline">
-            <input type="number" id="mcf-order-id" class="form-control" placeholder="{l s='PS Order ID' mod='amazonmarketplacepro'}" style="width:150px" />
-            <button type="button" id="btn-create-mcf" class="btn btn-warning"><i class="icon-truck"></i> {l s='Create MCF Order' mod='amazonmarketplacepro'}</button>
-        </div>
-        <div id="mcf-result" style="margin-top:10px;"></div>
-    </div>
-</div>
-
-{* ═══════════════════════ REPRICING TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-repricing">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-usd"></i> {l s='Competitive Pricing & Repricing' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Fetch Buy Box and lowest prices from Amazon, then apply pricing rules to stay competitive.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="btn-fetch-pricing" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Fetch Competitive Pricing' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="btn-apply-rules" class="btn btn-default"><i class="icon-cog"></i> {l s='Apply Pricing Rules' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="btn-push-prices" class="btn btn-success"><i class="icon-arrow-up"></i> {l s='Push Suggested Prices' mod='amazonmarketplacepro'}</button>
-        <div id="pricing-result" style="margin-top:15px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-plus"></i> {l s='Pricing Rules' mod='amazonmarketplacepro'}</div>
-        <div class="form-inline" style="margin-bottom:15px;">
-            <input type="text" id="rule-name" class="form-control" placeholder="{l s='Rule Name' mod='amazonmarketplacepro'}" />
-            <select id="rule-type" class="form-control">
-                <option value="match_lowest">{l s='Match Lowest' mod='amazonmarketplacepro'}</option>
-                <option value="beat_lowest">{l s='Beat Lowest' mod='amazonmarketplacepro'}</option>
-                <option value="match_buybox">{l s='Match Buy Box' mod='amazonmarketplacepro'}</option>
-                <option value="beat_buybox">{l s='Beat Buy Box' mod='amazonmarketplacepro'}</option>
-                <option value="fixed_margin">{l s='Fixed Margin' mod='amazonmarketplacepro'}</option>
-            </select>
-            <input type="number" step="0.01" id="price-adjustment" class="form-control" placeholder="{l s='Adjustment' mod='amazonmarketplacepro'}" style="width:100px" />
-            <select id="adjustment-type" class="form-control">
-                <option value="percentage">%</option>
-                <option value="fixed">{l s='Fixed' mod='amazonmarketplacepro'}</option>
-            </select>
-            <input type="number" step="0.01" id="min-price" class="form-control" placeholder="{l s='Min Price' mod='amazonmarketplacepro'}" style="width:100px" />
-            <input type="number" step="0.01" id="max-price" class="form-control" placeholder="{l s='Max Price' mod='amazonmarketplacepro'}" style="width:100px" />
-            <button type="button" id="btn-save-rule" class="btn btn-primary"><i class="icon-save"></i> {l s='Save Rule' mod='amazonmarketplacepro'}</button>
-        </div>
-        <table class="table" id="rules-table">
-            <thead><tr><th>{l s='Name' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Adjustment' mod='amazonmarketplacepro'}</th><th>{l s='Min/Max' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
-            <tbody>
-            {if $pricing_rules}
-                {foreach from=$pricing_rules item=rule}
-                <tr>
-                    <td>{$rule.name|escape:'htmlall':'UTF-8'}</td>
-                    <td><span class="label label-info">{$rule.rule_type|escape:'htmlall':'UTF-8'}</span></td>
-                    <td>{$rule.price_adjustment|escape:'htmlall':'UTF-8'} {if $rule.adjustment_type == 'percentage'}%{else}{l s='fixed' mod='amazonmarketplacepro'}{/if}</td>
-                    <td>{$rule.min_price|escape:'htmlall':'UTF-8'} / {$rule.max_price|escape:'htmlall':'UTF-8'}</td>
-                    <td>{if $rule.active}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td><button type="button" class="btn btn-xs btn-danger btn-delete-rule" data-id="{$rule.id_amazonmarketplacepro_pricing_rule|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
-                </tr>
-                {/foreach}
-            {else}
-                <tr><td colspan="6" class="text-muted text-center">{l s='No pricing rules configured.' mod='amazonmarketplacepro'}</td></tr>
-            {/if}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-trophy"></i> {l s='Buy Box Status' mod='amazonmarketplacepro'}</div>
-        <div class="table-responsive">
-            <table class="table" id="buybox-table">
-                <thead><tr>
-                    <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Our Price' mod='amazonmarketplacepro'}</th><th>{l s='Buy Box' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Lowest' mod='amazonmarketplacepro'}</th><th>{l s='Winner?' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Offers' mod='amazonmarketplacepro'}</th><th>{l s='Suggested' mod='amazonmarketplacepro'}</th>
-                    <th>{l s='Last Repriced' mod='amazonmarketplacepro'}</th>
-                </tr></thead>
-                <tbody>
-                {if $competitive_prices}
-                    {foreach from=$competitive_prices item=cp}
-                    <tr>
-                        <td><code>{$cp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
-                        <td>{$cp.ps_name|truncate:30|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.our_price|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.buybox_landed|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.lowest_landed|escape:'htmlall':'UTF-8'}</td>
-                        <td>{if $cp.is_buybox_winner}<span class="label label-success">{l s='YES' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='NO' mod='amazonmarketplacepro'}</span>{/if}</td>
-                        <td>{$cp.number_of_offers|escape:'htmlall':'UTF-8'}</td>
-                        <td>{if $cp.suggested_price > 0}<strong>{$cp.suggested_price|escape:'htmlall':'UTF-8'}</strong>{else}-{/if}</td>
-                        <td><small>{$cp.last_repriced|escape:'htmlall':'UTF-8'}</small></td>
-                    </tr>
-                    {/foreach}
-                {else}
-                    <tr><td colspan="9" class="text-muted text-center">{l s='No competitive pricing data yet. Click "Fetch Competitive Pricing".' mod='amazonmarketplacepro'}</td></tr>
-                {/if}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-{* ═══════════════════════ FEES TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-fees">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-money"></i> {l s='Amazon Fees & Commissions' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Track Amazon fees (referral fees, FBA fees, commissions) per order via the Finances API.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="btn-fetch-fees" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Fetch Order Fees' mod='amazonmarketplacepro'}</button>
-        <div id="fees-result" style="margin-top:15px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='Fee Summary by Type' mod='amazonmarketplacepro'}</div>
-        <table class="table" id="fees-table">
-            <thead><tr><th>{l s='Fee Type' mod='amazonmarketplacepro'}</th><th>{l s='Total Amount' mod='amazonmarketplacepro'}</th><th>{l s='Count' mod='amazonmarketplacepro'}</th><th>{l s='Currency' mod='amazonmarketplacepro'}</th></tr></thead>
-            <tbody>
-            {if $fee_summary}
-                {foreach from=$fee_summary item=fee}
-                <tr>
-                    <td>{$fee.fee_type|escape:'htmlall':'UTF-8'}</td>
-                    <td><strong>{$fee.total_amount|string_format:"%.2f"|escape:'htmlall':'UTF-8'}</strong></td>
-                    <td>{$fee.count|escape:'htmlall':'UTF-8'}</td>
-                    <td>{$fee.currency|escape:'htmlall':'UTF-8'}</td>
-                </tr>
-                {/foreach}
-            {else}
-                <tr><td colspan="4" class="text-muted text-center">{l s='No fee data yet. Click "Fetch Order Fees" to pull from Amazon Finances API.' mod='amazonmarketplacepro'}</td></tr>
-            {/if}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{* ═══════════════════════ REPORTS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-reports">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-bar-chart"></i> {l s='Amazon Reports' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Request and download Amazon reports: merchant listings, settlement, FBA inventory.' mod='amazonmarketplacepro'}</p>
-        <div class="btn-group">
-            <button type="button" id="btn-report-listings" class="btn btn-primary" data-type="GET_MERCHANT_LISTINGS_ALL_DATA"><i class="icon-th-list"></i> {l s='Merchant Listings' mod='amazonmarketplacepro'}</button>
-            <button type="button" id="btn-report-settlement" class="btn btn-default" data-type="GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE"><i class="icon-money"></i> {l s='Settlement Report' mod='amazonmarketplacepro'}</button>
-            <button type="button" id="btn-report-fba-inv" class="btn btn-default" data-type="GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA"><i class="icon-truck"></i> {l s='FBA Inventory Report' mod='amazonmarketplacepro'}</button>
-        </div>
-        <button type="button" id="btn-poll-reports" class="btn btn-warning" style="margin-left:10px;"><i class="icon-refresh"></i> {l s='Poll Pending Reports' mod='amazonmarketplacepro'}</button>
-        <div id="reports-result" style="margin-top:15px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='Report History' mod='amazonmarketplacepro'}</div>
-        <table class="table" id="reports-table">
-            <thead><tr><th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th></tr></thead>
-            <tbody>
-            {if $reports}
-                {foreach from=$reports item=rpt}
-                <tr>
-                    <td><small><code>{$rpt.report_id|truncate:20|escape:'htmlall':'UTF-8'}</code></small></td>
-                    <td><span class="label label-info">{$rpt.report_type|escape:'htmlall':'UTF-8'}</span></td>
-                    <td>{if $rpt.status == 'DONE'}<span class="label label-success">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{elseif $rpt.status == 'FATAL'}<span class="label label-danger">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{else}<span class="label label-warning">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{/if}</td>
-                    <td>{$rpt.row_count|escape:'htmlall':'UTF-8'}</td>
-                    <td><small>{$rpt.date_add|escape:'htmlall':'UTF-8'}</small></td>
-                </tr>
-                {/foreach}
-            {else}
-                <tr><td colspan="5" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
-            {/if}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{* ═══════════════════════ PROMOTIONS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-promotions">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-tag"></i> {l s='Promotions & Coupons Sync' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Import Amazon order promotions and export PS cart rules for tracking.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="btn-import-promos" class="btn btn-primary"><i class="icon-download"></i> {l s='Import from Orders' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="btn-export-promos" class="btn btn-default"><i class="icon-upload"></i> {l s='Export PS Cart Rules' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="btn-create-cart-rules" class="btn btn-success"><i class="icon-plus"></i> {l s='Create PS Cart Rules' mod='amazonmarketplacepro'}</button>
-        <div id="promos-result" style="margin-top:15px;"></div>
-    </div>
-
-    {if $promotion_stats}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-signal"></i> {l s='Promotion Stats' mod='amazonmarketplacepro'}</div>
-        <div class="row">
-            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.total|escape:'htmlall':'UTF-8'}</strong><br>{l s='Total' mod='amazonmarketplacepro'}</div></div>
-            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.from_amazon|escape:'htmlall':'UTF-8'}</strong><br>{l s='From Amazon' mod='amazonmarketplacepro'}</div></div>
-            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.from_ps|escape:'htmlall':'UTF-8'}</strong><br>{l s='From PS' mod='amazonmarketplacepro'}</div></div>
-            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.with_cart_rule|escape:'htmlall':'UTF-8'}</strong><br>{l s='With Cart Rule' mod='amazonmarketplacepro'}</div></div>
-        </div>
-    </div>
-    {/if}
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='Promotion History' mod='amazonmarketplacepro'}</div>
-        <table class="table">
-            <thead><tr><th>{l s='Promo ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Discount' mod='amazonmarketplacepro'}</th><th>{l s='Direction' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Date' mod='amazonmarketplacepro'}</th></tr></thead>
-            <tbody>
-            {if $promotions}
-                {foreach from=$promotions item=promo}
-                <tr>
-                    <td><small><code>{$promo.amazon_promotion_id|truncate:25|escape:'htmlall':'UTF-8'}</code></small></td>
-                    <td>{$promo.promotion_type|escape:'htmlall':'UTF-8'}</td>
-                    <td>{$promo.seller_sku|escape:'htmlall':'UTF-8'}</td>
-                    <td>{$promo.discount_value|string_format:"%.2f"|escape:'htmlall':'UTF-8'} {if $promo.discount_type == 'percentage'}%{/if}</td>
-                    <td>{if $promo.sync_direction == 'amazon_to_ps'}<span class="label label-primary">AMZ&rarr;PS</span>{else}<span class="label label-info">PS&rarr;AMZ</span>{/if}</td>
-                    <td><span class="label label-default">{$promo.status|escape:'htmlall':'UTF-8'}</span></td>
-                    <td><small>{$promo.date_add|escape:'htmlall':'UTF-8'}</small></td>
-                </tr>
-                {/foreach}
-            {else}
-                <tr><td colspan="7" class="text-muted text-center">{l s='No promotions synced yet.' mod='amazonmarketplacepro'}</td></tr>
-            {/if}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{* ═══════════════════════ MULTI-MARKETPLACE TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-multimp">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-globe"></i> {l s='Multi-Marketplace Configuration' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Configure multiple Amazon marketplaces. Each can use its own or the primary credentials. Enable per-marketplace order/product/stock sync.' mod='amazonmarketplacepro'}</p>
-        <div class="form-inline" style="margin-bottom:15px;">
-            <select id="mp-marketplace-id" class="form-control">
-                <option value="">{l s='-- Select Marketplace --' mod='amazonmarketplacepro'}</option>
-                {foreach from=$marketplaces key=mp_id item=mp_label}
-                    <option value="{$mp_id|escape:'htmlall':'UTF-8'}">{$mp_label|escape:'htmlall':'UTF-8'}</option>
-                {/foreach}
-            </select>
-            <input type="text" id="mp-seller-id" class="form-control" placeholder="{l s='Seller ID (optional)' mod='amazonmarketplacepro'}" />
-            <label><input type="checkbox" id="mp-sync-orders" checked /> {l s='Orders' mod='amazonmarketplacepro'}</label>
-            <label><input type="checkbox" id="mp-sync-products" checked /> {l s='Products' mod='amazonmarketplacepro'}</label>
-            <label><input type="checkbox" id="mp-sync-stock" checked /> {l s='Stock' mod='amazonmarketplacepro'}</label>
-            <button type="button" id="btn-save-mp" class="btn btn-primary"><i class="icon-save"></i> {l s='Add Marketplace' mod='amazonmarketplacepro'}</button>
-        </div>
-        <div id="multimp-result" style="margin-top:10px;"></div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-list"></i> {l s='Active Marketplaces' mod='amazonmarketplacepro'}</div>
-        <table class="table" id="mp-table">
-            <thead><tr><th>{l s='Marketplace' mod='amazonmarketplacepro'}</th><th>{l s='Seller ID' mod='amazonmarketplacepro'}</th><th>{l s='Orders' mod='amazonmarketplacepro'}</th><th>{l s='Products' mod='amazonmarketplacepro'}</th><th>{l s='Stock' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
-            <tbody>
-            {if $marketplace_configs}
-                {foreach from=$marketplace_configs item=mp}
-                <tr>
-                    <td><strong>{$mp.marketplace_name|escape:'htmlall':'UTF-8'}</strong><br><small class="text-muted">{$mp.marketplace_id|escape:'htmlall':'UTF-8'}</small></td>
-                    <td>{$mp.seller_id|escape:'htmlall':'UTF-8'}</td>
-                    <td>{if $mp.sync_orders}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.sync_products}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.sync_stock}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.active}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td><button type="button" class="btn btn-xs btn-danger btn-delete-mp" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
-                </tr>
-                {/foreach}
-            {else}
-                <tr><td colspan="7" class="text-muted text-center">{l s='No additional marketplaces configured. The primary marketplace from Settings tab is always active.' mod='amazonmarketplacepro'}</td></tr>
-            {/if}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-{* ═══════════════════════ PENDING ORDERS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-pending">
-
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-pause"></i> {l s='Pending Orders (insufficient stock)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Amazon orders that could not become PrestaShop orders because a product lacks stock. Restock the product and re-run "Create PrestaShop Orders", force-create the order regardless, or remove it.' mod='amazonmarketplacepro'}</p>
-        {if !$mkpro_skip_no_stock}
-            <div class="alert alert-info">{l s='Stock-checking is currently off. Enable "Orders without enough stock → Park in Pending Orders" in Settings > Order Import Settings.' mod='amazonmarketplacepro'}</div>
-        {/if}
-        <div id="pending-result" style="display:none; margin-bottom:10px;"></div>
-        <table class="table" id="pending-table">
-            <thead><tr>
-                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Order date' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Items' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Total' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Parked since' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Actions' mod='amazonmarketplacepro'}</th>
-            </tr></thead>
-            <tbody>
-                {if $pending_orders}
-                    {foreach from=$pending_orders item=po}
-                    <tr data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}">
-                        <td>{$po.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$po.purchase_date|escape:'htmlall':'UTF-8'}</td>
-                        <td><small>{$po.item_list|escape:'htmlall':'UTF-8'}</small></td>
-                        <td>{$po.order_total|escape:'htmlall':'UTF-8'} {$po.currency|escape:'htmlall':'UTF-8'}</td>
-                        <td><small>{$po.date_upd|escape:'htmlall':'UTF-8'}</small></td>
-                        <td>
-                            <button type="button" class="btn btn-xs btn-success pending-create" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-check"></i> {l s='Create anyway' mod='amazonmarketplacepro'}</button>
-                            <button type="button" class="btn btn-xs btn-danger pending-delete" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button>
-                        </td>
-                    </tr>
-                    {/foreach}
-                {else}
-                    <tr><td colspan="6" class="text-center text-muted">{l s='No pending orders.' mod='amazonmarketplacepro'}</td></tr>
-                {/if}
-            </tbody>
-        </table>
-    </div>
-
-    {* ── Remote Cart reservations ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-lock"></i> {l s='Reserved Stock (Remote Cart)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Units held for Amazon checkouts that are not payable yet. They have already been taken out of PrestaShop stock, so no other channel can sell them. Each hold is either handed over when the order becomes payable, or returned once it expires.' mod='amazonmarketplacepro'}</p>
-        {if !$mkpro_remote_cart}
-            <div class="alert alert-info">{l s='Remote Cart is off. Enable it in Settings > Order Import Settings to start reserving stock, and schedule the remote_cart cron (Automation tab).' mod='amazonmarketplacepro'}</div>
-        {/if}
-        <table class="table">
-            <thead><tr>
-                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
-                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Qty held' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Amazon status' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Held since' mod='amazonmarketplacepro'}</th>
-            </tr></thead>
-            <tbody>
-                {if $reservations}
-                    {foreach from=$reservations item=res}
-                    <tr>
-                        <td>{$res.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
-                        <td><code>{$res.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
-                        <td>{$res.product_name|escape:'htmlall':'UTF-8'}</td>
-                        <td><span class="badge badge-warning">{$res.quantity|escape:'htmlall':'UTF-8'}</span></td>
-                        <td><span class="badge badge-default">{if $res.order_status}{$res.order_status|escape:'htmlall':'UTF-8'}{else}In Cart{/if}</span></td>
-                        <td><small>{$res.date_add|escape:'htmlall':'UTF-8'}</small></td>
-                    </tr>
-                    {/foreach}
-                {else}
-                    <tr><td colspan="6" class="text-center text-muted">{l s='No stock is currently reserved.' mod='amazonmarketplacepro'}</td></tr>
-                {/if}
-            </tbody>
-        </table>
-    </div>
 </div>
 
 {* ═══════════════════════ PROFILES TAB ═══════════════════════ *}
@@ -2247,276 +1997,591 @@
         </table>
     </div>
 </div>
-
-{* ═══════════════════════ TOOLS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-tools">
-
-    {* ── Catalogue audit ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-stethoscope"></i> {l s='Catalogue Check' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Amazon matches everything on the reference and the barcode. Products missing either, or sharing a reference with another product, cannot be listed or matched to incoming orders.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="audit-run" class="btn btn-primary"><i class="icon-search"></i> {l s='Check my catalogue' mod='amazonmarketplacepro'}</button>
-        <div id="audit-result" style="display:none; margin-top:12px;"></div>
-    </div>
-
-    {* ── Reference / barcode CSV ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-table"></i> {l s='Reference & Barcode Editor (CSV)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Export every product and combination, fix the references and barcodes in a spreadsheet, then upload the file back. Only reference, EAN, UPC and supplier reference are written; the key and name columns are read-only.' mod='amazonmarketplacepro'}</p>
-        <div class="alert alert-warning">
-            <i class="icon-warning"></i>
-            {l s='This edits your PrestaShop catalogue directly and cannot be undone — back up your database first. Nothing is sent to Amazon. Do it before you publish, or you will create duplicate SKUs on Amazon.' mod='amazonmarketplacepro'}
-        </div>
-        <p>
-            <a href="{$export_references_url|escape:'htmlall':'UTF-8'}" class="btn btn-default">
-                <i class="icon-download"></i> {l s='Export CSV' mod='amazonmarketplacepro'}
-            </a>
-        </p>
-        <div class="form-inline" style="margin-top:10px;">
-            <input type="file" id="reference-file" accept=".csv,text/csv" class="form-control" />
-            <button type="button" id="reference-import" class="btn btn-warning">
-                <i class="icon-upload"></i> {l s='Import CSV' mod='amazonmarketplacepro'}
-            </button>
-        </div>
-        <p class="help-block">{l s='Semicolon-separated, UTF-8. Barcodes are exported with a leading apostrophe so spreadsheets keep them as text; it is removed on import.' mod='amazonmarketplacepro'}</p>
-        <div id="reference-result" style="display:none; margin-top:10px;"></div>
-    </div>
-
-    {* ── Listing deletion ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-trash"></i> {l s='Delete Listings from Amazon' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Removes offers from Amazon for products you no longer sell — deleted, disabled, or switched off for Amazon on the product page. Review the list first: deletion removes the offer and its history on Amazon, which is not reversible from here.' mod='amazonmarketplacepro'}</p>
-        <p class="help-block">{l s='If you only want to stop selling temporarily, publishing quantity 0 (Listing Defaults) keeps the listing and its reviews alive.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="deletions-list" class="btn btn-primary"><i class="icon-search"></i> {l s='Find listings to delete' mod='amazonmarketplacepro'}</button>
-        <button type="button" id="deletions-send" class="btn btn-danger" style="margin-left:10px;" disabled="disabled">
-            <i class="icon-trash"></i> {l s='Delete selected from Amazon' mod='amazonmarketplacepro'}
-        </button>
-        <div id="deletions-result" style="display:none; margin-top:10px;"></div>
-        <table class="table" id="deletions-table" style="display:none; margin-top:10px;">
-            <thead><tr>
-                <th style="width:30px;"><input type="checkbox" id="deletions-all" /></th>
-                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
-                <th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
-                <th>{l s='Why' mod='amazonmarketplacepro'}</th>
-            </tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    {* ── Feed payloads ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-file-code-o"></i> {l s='Submitted Feed Payloads' mod='amazonmarketplacepro'}</div>
-        <p>{l s='The exact JSON sent to Amazon for each bulk feed is kept here. Amazon support (and ours) will ask for it whenever a listing is rejected for a reason the report does not explain.' mod='amazonmarketplacepro'}</p>
-        <div id="feed-payload-hint" class="alert alert-info">
-            {l s='Submit a bulk feed from the Products tab, then come back — each feed will appear with a download link. Feeds sent before this version have no stored payload.' mod='amazonmarketplacepro'}
-        </div>
-        <div class="form-inline">
-            <input type="text" id="feed-payload-id" class="form-control" placeholder="{l s='Feed ID' mod='amazonmarketplacepro'}" style="width:260px;" />
-            <a href="#" id="feed-payload-download" class="btn btn-default"><i class="icon-download"></i> {l s='Download this feed\'s JSON' mod='amazonmarketplacepro'}</a>
-        </div>
-    </div>
+    </div>{* /section tab-content *}
 </div>
 
-{* ═══════════════════════ CRON TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-cron">
+{* ════════════════════ ORDERS ════════════════════ *}
+<div class="tab-pane" id="grp-orders">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-pending" data-toggle="tab"><i class="icon-pause"></i> {l s='Pending Orders' mod='amazonmarketplacepro'}{if $pending_orders} <span class="badge">{$pending_orders|count}</span>{/if}</a></li>
+        <li><a href="#tab-returns" data-toggle="tab"><i class="icon-undo"></i> {l s='Returns' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+{* ═══════════════════════ ORDERS TAB ═══════════════════════ *}
+<div class="tab-pane active" id="tab-orders">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-clock-o"></i> {l s='Cron URLs for Automation' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Add these URLs to your server\'s crontab (or use a webcron service) to automate Amazon sync.' mod='amazonmarketplacepro'}</p>
+        <div class="panel-heading"><i class="icon-cloud-download"></i> {l s='Import Amazon Orders' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Fetch orders from Amazon and stage them. Now captures shipping costs, tax, buyer address (via RDT), and FBA channel.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="import-amazon-orders" class="btn btn-primary">
+            <i class="icon-download"></i> {l s='Fetch & Stage Amazon Orders' mod='amazonmarketplacepro'}
+        </button>
+        <button type="button" id="create-ps-orders" class="btn btn-success" style="margin-left:10px;">
+            <i class="icon-check"></i> {l s='Create PrestaShop Orders' mod='amazonmarketplacepro'}
+        </button>
+        <p class="help-block" style="margin-top:8px;">
+            {l s='Orders now include: shipping costs, tax, real buyer address, and FBA/MFN channel detection.' mod='amazonmarketplacepro'}
+        </p>
+        <div id="amazon-orders-summary" style="display:none; margin-top:15px;"></div>
+        <div id="amazon-orders-result" style="display:none; margin-top:10px;"></div>
+    </div>
 
-        <table class="table">
-            <thead>
-                <tr><th>{l s='Action' mod='amazonmarketplacepro'}</th><th>{l s='URL' mod='amazonmarketplacepro'}</th><th>{l s='Schedule' mod='amazonmarketplacepro'}</th></tr>
-            </thead>
+    {* ── Buyer Messaging ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-envelope"></i> {l s='Buyer Messaging' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Send an Amazon-approved, order-related message to the buyer of an imported order. Amazon limits which message types are allowed per order; buyer replies arrive in Seller Central.' mod='amazonmarketplacepro'}</p>
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-lg-4">
+                <input type="text" id="msg-order-id" class="form-control" placeholder="{l s='Amazon Order ID (e.g. 123-1234567-1234567)' mod='amazonmarketplacepro'}" />
+            </div>
+            <div class="col-lg-3">
+                <button type="button" id="msg-load-actions" class="btn btn-default">
+                    <i class="icon-refresh"></i> {l s='Load allowed message types' mod='amazonmarketplacepro'}
+                </button>
+            </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-lg-4">
+                <select id="msg-action" class="form-control" disabled="disabled">
+                    <option value="">{l s='-- Load message types first --' mod='amazonmarketplacepro'}</option>
+                </select>
+            </div>
+        </div>
+        <div class="row" style="margin-bottom:10px;">
+            <div class="col-lg-7">
+                <textarea id="msg-text" class="form-control" rows="3" placeholder="{l s='Message text' mod='amazonmarketplacepro'}"></textarea>
+            </div>
+        </div>
+        <button type="button" id="msg-send" class="btn btn-primary" disabled="disabled">
+            <i class="icon-envelope"></i> {l s='Send message to buyer' mod='amazonmarketplacepro'}
+        </button>
+        <button type="button" id="msg-request-review" class="btn btn-default" style="margin-left:10px;">
+            <i class="icon-star"></i> {l s='Request a review' mod='amazonmarketplacepro'}
+        </button>
+        <p class="help-block" style="margin-top:8px;">
+            {l s='"Request a review" sends Amazon\'s standard, Amazon-templated review solicitation (allowed once per order, 5-30 days after delivery). Enable automatic review requests in Settings and schedule the request_reviews cron for hands-free operation.' mod='amazonmarketplacepro'}
+        </p>
+        <div id="msg-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
+</div>
+
+{* ═══════════════════════ PENDING ORDERS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-pending">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-pause"></i> {l s='Pending Orders (insufficient stock)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Amazon orders that could not become PrestaShop orders because a product lacks stock. Restock the product and re-run "Create PrestaShop Orders", force-create the order regardless, or remove it.' mod='amazonmarketplacepro'}</p>
+        {if !$mkpro_skip_no_stock}
+            <div class="alert alert-info">{l s='Stock-checking is currently off. Enable "Orders without enough stock → Park in Pending Orders" in Settings > Order Import Settings.' mod='amazonmarketplacepro'}</div>
+        {/if}
+        <div id="pending-result" style="display:none; margin-bottom:10px;"></div>
+        <table class="table" id="pending-table">
+            <thead><tr>
+                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Order date' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Items' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Total' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Parked since' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Actions' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
             <tbody>
-                <tr>
-                    <td><strong>{l s='Import Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Sync Stock' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Full Product Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_products_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Import Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Process Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='FBA Inventory Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_fba_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Repricing Cycle' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Fetch Fees' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_fees_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Poll Reports' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_poll_reports_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Sync Promotions' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_promotions_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Request Reviews' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_request_reviews_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Bulk Feed Cycle (large catalogs)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_feeds_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Buyer replies (IMAP inbox)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_messages_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Remote Cart (settle stock holds)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_remote_cart_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='VCS Invoice Upload' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_upload_invoices_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Delete aged buyer data' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_purge_pii_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Daily (optional — order import does it too)' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Sync Stock' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Publish Offers' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_publish_offers_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Fees' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_fees_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Repricing' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Catalog Matching' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_match_catalog_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Weekly' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Publish on all sites' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_publish_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import orders from all sites' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Multi-MP Order Import' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Multi-MP Product Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_sync_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
+                {if $pending_orders}
+                    {foreach from=$pending_orders item=po}
+                    <tr data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}">
+                        <td>{$po.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$po.purchase_date|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$po.item_list|escape:'htmlall':'UTF-8'}</small></td>
+                        <td>{$po.order_total|escape:'htmlall':'UTF-8'} {$po.currency|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$po.date_upd|escape:'htmlall':'UTF-8'}</small></td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-success pending-create" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-check"></i> {l s='Create anyway' mod='amazonmarketplacepro'}</button>
+                            <button type="button" class="btn btn-xs btn-danger pending-delete" data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button>
+                        </td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="6" class="text-center text-muted">{l s='No pending orders.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
             </tbody>
         </table>
-
-        <div class="alert alert-info">
-            <strong>{l s='Example crontab entry' mod='amazonmarketplacepro'}:</strong><br/>
-            <code>*/15 * * * * curl -s "{$cron_import_orders_url|escape:'htmlall':'UTF-8'}" > /dev/null 2>&1</code>
-        </div>
-
-        <p>
-            <strong>{l s='Your cron token' mod='amazonmarketplacepro'}:</strong>
-            <code>{$mkpro_cron_token|escape:'htmlall':'UTF-8'}</code>
-        </p>
     </div>
 
+    {* ── Remote Cart reservations ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-lock"></i> {l s='Reserved Stock (Remote Cart)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Units held for Amazon checkouts that are not payable yet. They have already been taken out of PrestaShop stock, so no other channel can sell them. Each hold is either handed over when the order becomes payable, or returned once it expires.' mod='amazonmarketplacepro'}</p>
+        {if !$mkpro_remote_cart}
+            <div class="alert alert-info">{l s='Remote Cart is off. Enable it in Settings > Order Import Settings to start reserving stock, and schedule the remote_cart cron (Automation tab).' mod='amazonmarketplacepro'}</div>
+        {/if}
+        <table class="table">
+            <thead><tr>
+                <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
+                <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Qty held' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Amazon status' mod='amazonmarketplacepro'}</th>
+                <th>{l s='Held since' mod='amazonmarketplacepro'}</th>
+            </tr></thead>
+            <tbody>
+                {if $reservations}
+                    {foreach from=$reservations item=res}
+                    <tr>
+                        <td>{$res.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
+                        <td><code>{$res.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$res.product_name|escape:'htmlall':'UTF-8'}</td>
+                        <td><span class="badge badge-warning">{$res.quantity|escape:'htmlall':'UTF-8'}</span></td>
+                        <td><span class="badge badge-default">{if $res.order_status}{$res.order_status|escape:'htmlall':'UTF-8'}{else}In Cart{/if}</span></td>
+                        <td><small>{$res.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="6" class="text-center text-muted">{l s='No stock is currently reserved.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-{* ═══════════════════════ LOGS TAB ═══════════════════════ *}
-<div class="tab-pane" id="tab-logs">
+{* ═══════════════════════ RETURNS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-returns">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-file-text-o"></i> {l s='Activity Log' mod='amazonmarketplacepro'} ({l s='last 50 entries' mod='amazonmarketplacepro'})</div>
-        {if $log_entries && count($log_entries) > 0}
-            <table class="table">
+        <div class="panel-heading"><i class="icon-undo"></i> {l s='Amazon Returns & Cancellations' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Import returns and cancellations from Amazon. Process them to create PS credit slips or cancel PS orders.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="import-returns" class="btn btn-primary">
+            <i class="icon-download"></i> {l s='Import Returns from Amazon' mod='amazonmarketplacepro'}
+        </button>
+        <button type="button" id="process-returns" class="btn btn-success" style="margin-left:10px;">
+            <i class="icon-check"></i> {l s='Process Pending Returns' mod='amazonmarketplacepro'}
+        </button>
+        <div id="returns-summary" style="display:none; margin-top:15px;"></div>
+        <div id="returns-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Return History' mod='amazonmarketplacepro'}</div>
+        {if $returns && count($returns) > 0}
+            <table class="table" id="returns-table">
                 <thead>
-                    <tr><th>{l s='Date' mod='amazonmarketplacepro'}</th><th>{l s='Level' mod='amazonmarketplacepro'}</th><th>{l s='Source' mod='amazonmarketplacepro'}</th><th>{l s='Message' mod='amazonmarketplacepro'}</th></tr>
+                    <tr>
+                        <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Type' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Title' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Qty' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Refund' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='PS Order' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Credit Slip' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Status' mod='amazonmarketplacepro'}</th>
+                        <th>{l s='Date' mod='amazonmarketplacepro'}</th>
+                    </tr>
                 </thead>
                 <tbody>
-                    {foreach from=$log_entries item=entry}
-                        <tr class="{if $entry.level == 'error'}danger{elseif $entry.level == 'warning'}warning{/if}">
-                            <td style="white-space:nowrap;">{$entry.date_add|escape:'htmlall':'UTF-8'}</td>
-                            <td><span class="badge {if $entry.level == 'error'}badge-danger{elseif $entry.level == 'warning'}badge-warning{else}badge-info{/if}">{$entry.level|escape:'htmlall':'UTF-8'}</span></td>
-                            <td>{$entry.source|escape:'htmlall':'UTF-8'}</td>
-                            <td>{$entry.message|escape:'htmlall':'UTF-8'}</td>
+                    {foreach from=$returns item=ret}
+                        <tr class="{if $ret.return_status == 'imported'}warning{elseif $ret.return_status == 'refunded'}success{/if}">
+                            <td>{$ret.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
+                            <td>
+                                {if $ret.status == 'Canceled'}
+                                    <span class="badge badge-danger">{l s='Cancelled' mod='amazonmarketplacepro'}</span>
+                                {elseif $ret.status == 'Returned'}
+                                    <span class="badge badge-warning">{l s='Returned' mod='amazonmarketplacepro'}</span>
+                                {else}
+                                    <span class="badge badge-default">{$ret.status|escape:'htmlall':'UTF-8'}</span>
+                                {/if}
+                            </td>
+                            <td>{$ret.seller_sku|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$ret.title|truncate:40:'...':true|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$ret.quantity|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$ret.refund_amount|escape:'htmlall':'UTF-8'} {$ret.currency|escape:'htmlall':'UTF-8'}</td>
+                            <td>
+                                {if $ret.id_order > 0}
+                                    <span class="badge badge-info">#{$ret.id_order|escape:'htmlall':'UTF-8'}</span>
+                                {else}
+                                    <span class="badge badge-default">-</span>
+                                {/if}
+                            </td>
+                            <td>
+                                {if $ret.id_order_slip > 0}
+                                    <span class="badge badge-success">#{$ret.id_order_slip|escape:'htmlall':'UTF-8'}</span>
+                                {else}
+                                    <span class="badge badge-default">-</span>
+                                {/if}
+                            </td>
+                            <td>
+                                {if $ret.return_status == 'imported'}
+                                    <span class="badge badge-warning">{l s='Pending' mod='amazonmarketplacepro'}</span>
+                                {elseif $ret.return_status == 'processed'}
+                                    <span class="badge badge-info">{l s='Processed' mod='amazonmarketplacepro'}</span>
+                                {elseif $ret.return_status == 'refunded'}
+                                    <span class="badge badge-success">{l s='Refunded' mod='amazonmarketplacepro'}</span>
+                                {else}
+                                    <span class="badge badge-default">{$ret.return_status|escape:'htmlall':'UTF-8'}</span>
+                                {/if}
+                            </td>
+                            <td style="white-space:nowrap;">{$ret.date_add|escape:'htmlall':'UTF-8'}</td>
                         </tr>
                     {/foreach}
                 </tbody>
             </table>
         {else}
-            <div class="alert alert-info">{l s='No log entries yet.' mod='amazonmarketplacepro'}</div>
+            <div class="alert alert-info">{l s='No returns imported yet.' mod='amazonmarketplacepro'}</div>
         {/if}
     </div>
 
+</div>
+    </div>{* /section tab-content *}
+</div>
+
+{* ════════════════════ FULFILMENT ════════════════════ *}
+<div class="tab-pane" id="grp-fulfilment">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-fba" data-toggle="tab"><i class="icon-truck"></i> {l s='FBA' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-multimp" data-toggle="tab"><i class="icon-globe"></i> {l s='Multi-Account' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+{* ═══════════════════════ FBA TAB ═══════════════════════ *}
+<div class="tab-pane active" id="tab-fba">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-truck"></i> {l s='FBA Inventory' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Sync Fulfillment by Amazon (FBA) inventory levels. FBA stock can optionally sync to PrestaShop quantities.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="btn-sync-fba" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Sync FBA Inventory' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="btn-fba-stock-ps" class="btn btn-default"><i class="icon-download"></i> {l s='Update PS Stock from FBA' mod='amazonmarketplacepro'}</button>
+        <div id="fba-result" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='FBA Inventory Levels' mod='amazonmarketplacepro'}</div>
+        <div class="table-responsive">
+            <table class="table" id="fba-table">
+                <thead><tr>
+                    <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='FN SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Fulfillable' mod='amazonmarketplacepro'}</th><th>{l s='Reserved' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Inbound' mod='amazonmarketplacepro'}</th><th>{l s='Unfulfillable' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Total' mod='amazonmarketplacepro'}</th><th>{l s='Last Synced' mod='amazonmarketplacepro'}</th>
+                </tr></thead>
+                <tbody>
+                {if $fba_inventory}
+                    {foreach from=$fba_inventory item=inv}
+                    <tr>
+                        <td><code>{$inv.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$inv.asin|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$inv.fn_sku|escape:'htmlall':'UTF-8'}</small></td>
+                        <td>{$inv.product_name|truncate:40|escape:'htmlall':'UTF-8'}</td>
+                        <td><strong>{$inv.fulfillable_qty|escape:'htmlall':'UTF-8'}</strong></td>
+                        <td>{$inv.reserved_qty|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$inv.inbound_shipped_qty|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$inv.unfulfillable_qty|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$inv.total_qty|escape:'htmlall':'UTF-8'}</td>
+                        <td><small>{$inv.last_synced|escape:'htmlall':'UTF-8'}</small></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="10" class="text-center text-muted">{l s='No FBA inventory data yet. Click "Sync FBA Inventory" to fetch.' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-paper-plane"></i> {l s='Multi-Channel Fulfillment (MCF)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Send a PrestaShop order to Amazon for fulfillment from FBA inventory.' mod='amazonmarketplacepro'}</p>
+        <div class="form-inline">
+            <input type="number" id="mcf-order-id" class="form-control" placeholder="{l s='PS Order ID' mod='amazonmarketplacepro'}" style="width:150px" />
+            <button type="button" id="btn-create-mcf" class="btn btn-warning"><i class="icon-truck"></i> {l s='Create MCF Order' mod='amazonmarketplacepro'}</button>
+        </div>
+        <div id="mcf-result" style="margin-top:10px;"></div>
+    </div>
+</div>
+
+{* ═══════════════════════ MULTI-MARKETPLACE TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-multimp">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-globe"></i> {l s='Multi-Marketplace Configuration' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Configure multiple Amazon marketplaces. Each can use its own or the primary credentials. Enable per-marketplace order/product/stock sync.' mod='amazonmarketplacepro'}</p>
+        <div class="form-inline" style="margin-bottom:15px;">
+            <select id="mp-marketplace-id" class="form-control">
+                <option value="">{l s='-- Select Marketplace --' mod='amazonmarketplacepro'}</option>
+                {foreach from=$marketplaces key=mp_id item=mp_label}
+                    <option value="{$mp_id|escape:'htmlall':'UTF-8'}">{$mp_label|escape:'htmlall':'UTF-8'}</option>
+                {/foreach}
+            </select>
+            <input type="text" id="mp-seller-id" class="form-control" placeholder="{l s='Seller ID (optional)' mod='amazonmarketplacepro'}" />
+            <label><input type="checkbox" id="mp-sync-orders" checked /> {l s='Orders' mod='amazonmarketplacepro'}</label>
+            <label><input type="checkbox" id="mp-sync-products" checked /> {l s='Products' mod='amazonmarketplacepro'}</label>
+            <label><input type="checkbox" id="mp-sync-stock" checked /> {l s='Stock' mod='amazonmarketplacepro'}</label>
+            <button type="button" id="btn-save-mp" class="btn btn-primary"><i class="icon-save"></i> {l s='Add Marketplace' mod='amazonmarketplacepro'}</button>
+        </div>
+        <div id="multimp-result" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Active Marketplaces' mod='amazonmarketplacepro'}</div>
+        <table class="table" id="mp-table">
+            <thead><tr><th>{l s='Marketplace' mod='amazonmarketplacepro'}</th><th>{l s='Seller ID' mod='amazonmarketplacepro'}</th><th>{l s='Orders' mod='amazonmarketplacepro'}</th><th>{l s='Products' mod='amazonmarketplacepro'}</th><th>{l s='Stock' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
+            <tbody>
+            {if $marketplace_configs}
+                {foreach from=$marketplace_configs item=mp}
+                <tr>
+                    <td><strong>{$mp.marketplace_name|escape:'htmlall':'UTF-8'}</strong><br><small class="text-muted">{$mp.marketplace_id|escape:'htmlall':'UTF-8'}</small></td>
+                    <td>{$mp.seller_id|escape:'htmlall':'UTF-8'}</td>
+                    <td>{if $mp.sync_orders}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td>{if $mp.sync_products}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td>{if $mp.sync_stock}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td>{if $mp.active}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td><button type="button" class="btn btn-xs btn-danger btn-delete-mp" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
+                </tr>
+                {/foreach}
+            {else}
+                <tr><td colspan="7" class="text-muted text-center">{l s='No additional marketplaces configured. The primary marketplace from Settings tab is always active.' mod='amazonmarketplacepro'}</td></tr>
+            {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+    </div>{* /section tab-content *}
+</div>
+
+{* ════════════════════ MONEY ════════════════════ *}
+<div class="tab-pane" id="grp-money">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-repricing" data-toggle="tab"><i class="icon-usd"></i> {l s='Repricing' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-fees" data-toggle="tab"><i class="icon-money"></i> {l s='Fees' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#tab-promotions" data-toggle="tab"><i class="icon-tag"></i> {l s='Promotions' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+{* ═══════════════════════ REPRICING TAB ═══════════════════════ *}
+<div class="tab-pane active" id="tab-repricing">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-usd"></i> {l s='Competitive Pricing & Repricing' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Fetch Buy Box and lowest prices from Amazon, then apply pricing rules to stay competitive.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="btn-fetch-pricing" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Fetch Competitive Pricing' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="btn-apply-rules" class="btn btn-default"><i class="icon-cog"></i> {l s='Apply Pricing Rules' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="btn-push-prices" class="btn btn-success"><i class="icon-arrow-up"></i> {l s='Push Suggested Prices' mod='amazonmarketplacepro'}</button>
+        <div id="pricing-result" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-plus"></i> {l s='Pricing Rules' mod='amazonmarketplacepro'}</div>
+        <div class="form-inline" style="margin-bottom:15px;">
+            <input type="text" id="rule-name" class="form-control" placeholder="{l s='Rule Name' mod='amazonmarketplacepro'}" />
+            <select id="rule-type" class="form-control">
+                <option value="match_lowest">{l s='Match Lowest' mod='amazonmarketplacepro'}</option>
+                <option value="beat_lowest">{l s='Beat Lowest' mod='amazonmarketplacepro'}</option>
+                <option value="match_buybox">{l s='Match Buy Box' mod='amazonmarketplacepro'}</option>
+                <option value="beat_buybox">{l s='Beat Buy Box' mod='amazonmarketplacepro'}</option>
+                <option value="fixed_margin">{l s='Fixed Margin' mod='amazonmarketplacepro'}</option>
+            </select>
+            <input type="number" step="0.01" id="price-adjustment" class="form-control" placeholder="{l s='Adjustment' mod='amazonmarketplacepro'}" style="width:100px" />
+            <select id="adjustment-type" class="form-control">
+                <option value="percentage">%</option>
+                <option value="fixed">{l s='Fixed' mod='amazonmarketplacepro'}</option>
+            </select>
+            <input type="number" step="0.01" id="min-price" class="form-control" placeholder="{l s='Min Price' mod='amazonmarketplacepro'}" style="width:100px" />
+            <input type="number" step="0.01" id="max-price" class="form-control" placeholder="{l s='Max Price' mod='amazonmarketplacepro'}" style="width:100px" />
+            <button type="button" id="btn-save-rule" class="btn btn-primary"><i class="icon-save"></i> {l s='Save Rule' mod='amazonmarketplacepro'}</button>
+        </div>
+        <table class="table" id="rules-table">
+            <thead><tr><th>{l s='Name' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Adjustment' mod='amazonmarketplacepro'}</th><th>{l s='Min/Max' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
+            <tbody>
+            {if $pricing_rules}
+                {foreach from=$pricing_rules item=rule}
+                <tr>
+                    <td>{$rule.name|escape:'htmlall':'UTF-8'}</td>
+                    <td><span class="label label-info">{$rule.rule_type|escape:'htmlall':'UTF-8'}</span></td>
+                    <td>{$rule.price_adjustment|escape:'htmlall':'UTF-8'} {if $rule.adjustment_type == 'percentage'}%{else}{l s='fixed' mod='amazonmarketplacepro'}{/if}</td>
+                    <td>{$rule.min_price|escape:'htmlall':'UTF-8'} / {$rule.max_price|escape:'htmlall':'UTF-8'}</td>
+                    <td>{if $rule.active}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td><button type="button" class="btn btn-xs btn-danger btn-delete-rule" data-id="{$rule.id_amazonmarketplacepro_pricing_rule|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
+                </tr>
+                {/foreach}
+            {else}
+                <tr><td colspan="6" class="text-muted text-center">{l s='No pricing rules configured.' mod='amazonmarketplacepro'}</td></tr>
+            {/if}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-trophy"></i> {l s='Buy Box Status' mod='amazonmarketplacepro'}</div>
+        <div class="table-responsive">
+            <table class="table" id="buybox-table">
+                <thead><tr>
+                    <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Our Price' mod='amazonmarketplacepro'}</th><th>{l s='Buy Box' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Lowest' mod='amazonmarketplacepro'}</th><th>{l s='Winner?' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Offers' mod='amazonmarketplacepro'}</th><th>{l s='Suggested' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Last Repriced' mod='amazonmarketplacepro'}</th>
+                </tr></thead>
+                <tbody>
+                {if $competitive_prices}
+                    {foreach from=$competitive_prices item=cp}
+                    <tr>
+                        <td><code>{$cp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
+                        <td>{$cp.ps_name|truncate:30|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$cp.our_price|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$cp.buybox_landed|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$cp.lowest_landed|escape:'htmlall':'UTF-8'}</td>
+                        <td>{if $cp.is_buybox_winner}<span class="label label-success">{l s='YES' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='NO' mod='amazonmarketplacepro'}</span>{/if}</td>
+                        <td>{$cp.number_of_offers|escape:'htmlall':'UTF-8'}</td>
+                        <td>{if $cp.suggested_price > 0}<strong>{$cp.suggested_price|escape:'htmlall':'UTF-8'}</strong>{else}-{/if}</td>
+                        <td><small>{$cp.last_repriced|escape:'htmlall':'UTF-8'}</small></td>
+                    </tr>
+                    {/foreach}
+                {else}
+                    <tr><td colspan="9" class="text-muted text-center">{l s='No competitive pricing data yet. Click "Fetch Competitive Pricing".' mod='amazonmarketplacepro'}</td></tr>
+                {/if}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{* ═══════════════════════ FEES TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-fees">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-money"></i> {l s='Amazon Fees & Commissions' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Track Amazon fees (referral fees, FBA fees, commissions) per order via the Finances API.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="btn-fetch-fees" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Fetch Order Fees' mod='amazonmarketplacepro'}</button>
+        <div id="fees-result" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Fee Summary by Type' mod='amazonmarketplacepro'}</div>
+        <table class="table" id="fees-table">
+            <thead><tr><th>{l s='Fee Type' mod='amazonmarketplacepro'}</th><th>{l s='Total Amount' mod='amazonmarketplacepro'}</th><th>{l s='Count' mod='amazonmarketplacepro'}</th><th>{l s='Currency' mod='amazonmarketplacepro'}</th></tr></thead>
+            <tbody>
+            {if $fee_summary}
+                {foreach from=$fee_summary item=fee}
+                <tr>
+                    <td>{$fee.fee_type|escape:'htmlall':'UTF-8'}</td>
+                    <td><strong>{$fee.total_amount|string_format:"%.2f"|escape:'htmlall':'UTF-8'}</strong></td>
+                    <td>{$fee.count|escape:'htmlall':'UTF-8'}</td>
+                    <td>{$fee.currency|escape:'htmlall':'UTF-8'}</td>
+                </tr>
+                {/foreach}
+            {else}
+                <tr><td colspan="4" class="text-muted text-center">{l s='No fee data yet. Click "Fetch Order Fees" to pull from Amazon Finances API.' mod='amazonmarketplacepro'}</td></tr>
+            {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{* ═══════════════════════ PROMOTIONS TAB ═══════════════════════ *}
+<div class="tab-pane" id="tab-promotions">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-tag"></i> {l s='Promotions & Coupons Sync' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Import Amazon order promotions and export PS cart rules for tracking.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="btn-import-promos" class="btn btn-primary"><i class="icon-download"></i> {l s='Import from Orders' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="btn-export-promos" class="btn btn-default"><i class="icon-upload"></i> {l s='Export PS Cart Rules' mod='amazonmarketplacepro'}</button>
+        <button type="button" id="btn-create-cart-rules" class="btn btn-success"><i class="icon-plus"></i> {l s='Create PS Cart Rules' mod='amazonmarketplacepro'}</button>
+        <div id="promos-result" style="margin-top:15px;"></div>
+    </div>
+
+    {if $promotion_stats}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-signal"></i> {l s='Promotion Stats' mod='amazonmarketplacepro'}</div>
+        <div class="row">
+            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.total|escape:'htmlall':'UTF-8'}</strong><br>{l s='Total' mod='amazonmarketplacepro'}</div></div>
+            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.from_amazon|escape:'htmlall':'UTF-8'}</strong><br>{l s='From Amazon' mod='amazonmarketplacepro'}</div></div>
+            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.from_ps|escape:'htmlall':'UTF-8'}</strong><br>{l s='From PS' mod='amazonmarketplacepro'}</div></div>
+            <div class="col-md-3"><div class="well text-center"><strong>{$promotion_stats.with_cart_rule|escape:'htmlall':'UTF-8'}</strong><br>{l s='With Cart Rule' mod='amazonmarketplacepro'}</div></div>
+        </div>
+    </div>
+    {/if}
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Promotion History' mod='amazonmarketplacepro'}</div>
+        <table class="table">
+            <thead><tr><th>{l s='Promo ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Discount' mod='amazonmarketplacepro'}</th><th>{l s='Direction' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Date' mod='amazonmarketplacepro'}</th></tr></thead>
+            <tbody>
+            {if $promotions}
+                {foreach from=$promotions item=promo}
+                <tr>
+                    <td><small><code>{$promo.amazon_promotion_id|truncate:25|escape:'htmlall':'UTF-8'}</code></small></td>
+                    <td>{$promo.promotion_type|escape:'htmlall':'UTF-8'}</td>
+                    <td>{$promo.seller_sku|escape:'htmlall':'UTF-8'}</td>
+                    <td>{$promo.discount_value|string_format:"%.2f"|escape:'htmlall':'UTF-8'} {if $promo.discount_type == 'percentage'}%{/if}</td>
+                    <td>{if $promo.sync_direction == 'amazon_to_ps'}<span class="label label-primary">AMZ&rarr;PS</span>{else}<span class="label label-info">PS&rarr;AMZ</span>{/if}</td>
+                    <td><span class="label label-default">{$promo.status|escape:'htmlall':'UTF-8'}</span></td>
+                    <td><small>{$promo.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                </tr>
+                {/foreach}
+            {else}
+                <tr><td colspan="7" class="text-muted text-center">{l s='No promotions synced yet.' mod='amazonmarketplacepro'}</td></tr>
+            {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+    </div>{* /section tab-content *}
+</div>
+
+{* ════════════════════ INSIGHTS ════════════════════ *}
+<div class="tab-pane" id="grp-insights">
+
+    <ul class="nav nav-tabs mkpro-section-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#tab-reports" data-toggle="tab"><i class="icon-bar-chart"></i> {l s='Reports' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+{* ═══════════════════════ REPORTS TAB ═══════════════════════ *}
+<div class="tab-pane active" id="tab-reports">
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-bar-chart"></i> {l s='Amazon Reports' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Request and download Amazon reports: merchant listings, settlement, FBA inventory.' mod='amazonmarketplacepro'}</p>
+        <div class="btn-group">
+            <button type="button" id="btn-report-listings" class="btn btn-primary" data-type="GET_MERCHANT_LISTINGS_ALL_DATA"><i class="icon-th-list"></i> {l s='Merchant Listings' mod='amazonmarketplacepro'}</button>
+            <button type="button" id="btn-report-settlement" class="btn btn-default" data-type="GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE"><i class="icon-money"></i> {l s='Settlement Report' mod='amazonmarketplacepro'}</button>
+            <button type="button" id="btn-report-fba-inv" class="btn btn-default" data-type="GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA"><i class="icon-truck"></i> {l s='FBA Inventory Report' mod='amazonmarketplacepro'}</button>
+        </div>
+        <button type="button" id="btn-poll-reports" class="btn btn-warning" style="margin-left:10px;"><i class="icon-refresh"></i> {l s='Poll Pending Reports' mod='amazonmarketplacepro'}</button>
+        <div id="reports-result" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Report History' mod='amazonmarketplacepro'}</div>
+        <table class="table" id="reports-table">
+            <thead><tr><th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th></tr></thead>
+            <tbody>
+            {if $reports}
+                {foreach from=$reports item=rpt}
+                <tr>
+                    <td><small><code>{$rpt.report_id|truncate:20|escape:'htmlall':'UTF-8'}</code></small></td>
+                    <td><span class="label label-info">{$rpt.report_type|escape:'htmlall':'UTF-8'}</span></td>
+                    <td>{if $rpt.status == 'DONE'}<span class="label label-success">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{elseif $rpt.status == 'FATAL'}<span class="label label-danger">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{else}<span class="label label-warning">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{/if}</td>
+                    <td>{$rpt.row_count|escape:'htmlall':'UTF-8'}</td>
+                    <td><small>{$rpt.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                </tr>
+                {/foreach}
+            {else}
+                <tr><td colspan="5" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
+            {/if}
+            </tbody>
+        </table>
+    </div>
+</div>
+    </div>{* /section tab-content *}
 </div>
 
 </div>{* end tab-content *}
