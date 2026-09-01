@@ -13,8 +13,9 @@ Last verified: 1 September 2026.
 
 Companion documents: `data-handling.md` (what data exists, who controls it and
 how long it stays), `change-management.md` (how a change reaches a merchant),
-`incident-response.md` (what happens when something goes wrong) and
-`schedule.md` (the due date behind every cadence claimed here).
+`incident-response.md` (what happens when something goes wrong),
+`vulnerability-management.md` (scanning, testing and the findings register)
+and `schedule.md` (the due date behind every cadence claimed here).
 
 ---
 
@@ -314,17 +315,31 @@ first such review; it is now performed on any change to hosting or tooling.
 > *How does your organization track remediation progress of findings identified
 > from vulnerability scans and penetration tests?*
 
-Findings are recorded as issues in the source repository, prioritised by
-exploitability against the in-scope systems, and closed by a commit that
-references the issue — so the fix and its rationale stay attached to the
-finding. Security-relevant changes are described in the commit message rather
-than summarised as "fix", to keep the audit trail readable later.
+**Scanning.** OWASP ZAP runs against the relay and the public site every 30
+days (`tools/vuln-scan.sh`), and a full active scan plus a manual checklist
+runs annually. Reports are committed to `docs/security/scans/<date>/`, so a
+scan can be shown afterwards rather than merely asserted. A static analysis
+of the module source gates every release. The open findings register is in
+`vulnerability-management.md`.
 
-**Stated plainly:** no third-party penetration test has been commissioned, and
-no automated vulnerability scanner runs against the relay. The attack surface
-is three endpoints with no database and no user input beyond an OAuth code and
-a refresh token. We will commission an assessment if the scope of stored data
-ever changes.
+**Deadlines.** Critical findings are remediated within 7 days and high within
+30, as the Data Protection Policy requires; medium within 90 days and low by
+the next release, which are limits we set ourselves. A finding accepted
+rather than fixed is recorded with its reason, so an accepted risk stays
+visible instead of quietly becoming a habit.
+
+**Tracking.** Findings are recorded as issues in the source repository,
+prioritised by exploitability against the in-scope systems, and closed by a
+commit that references the issue — so the fix and its rationale stay
+attached to the finding. Security-relevant changes are described in the
+commit message rather than summarised as "fix".
+
+**Stated plainly:** the annual penetration test is conducted internally,
+using OWASP ZAP's active scan and the manual checklist in
+`vulnerability-management.md`. It is not an independent assessment and is
+not offered as one. The attack surface is three endpoints with no database
+and no user input beyond an OAuth code and a refresh token. We will
+commission an independent test if the scope of stored data ever changes.
 
 Recent examples of the process working, all on 1 September 2026: three
 stale SSH keys found and removed; a defect found where the integrity check
@@ -367,7 +382,7 @@ is a small enough surface that a fix can be live within the hour.
 | SSH password authentication | Server-wide on this hosting tier; provider confirmed 1 Sep 2026 it cannot be disabled per account. Compensating controls in §2 |
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
-| Vulnerability scanning cadence and penetration testing | No 30-day external scan cycle and no annual penetration test |
+| Third-party penetration test | The annual test is conducted internally with OWASP ZAP and a manual checklist; an independent assessment has not been commissioned |
 | Third-party security assessment | Not commissioned. Amazon's own Data Security Assessment is free and conducted by an Amazon agent; that is the intended route |
 
 Both hosting constraints were raised with the provider rather than assumed, and

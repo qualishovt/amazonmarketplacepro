@@ -37,8 +37,38 @@ Options -Indexes
     </IfModule>
 </FilesMatch>
 
-# If PHP is ever mis-served as plain text, this keeps the source from being
-# handed out verbatim. It does not replace the rules above.
+# Response headers.
+#
+# Every one of these closes a finding from the ZAP baseline scan of
+# 1 September 2026 - see docs/security/vulnerability-management.md. The relay
+# serves JSON and one small HTML page, so the policies can be far stricter
+# than a normal site would tolerate.
 <IfModule mod_headers.c>
+    # If PHP is ever mis-served as plain text, this keeps the source from
+    # being handed out verbatim. It does not replace the deny rules above.
     Header always set X-Content-Type-Options "nosniff"
+
+    # The relay has no third-party assets and must never be framed.
+    Header always set Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'none'"
+    Header always set X-Frame-Options "DENY"
+
+    # Cross-origin isolation. Nothing here is meant to be embedded or shared.
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+
+    # No browser feature is needed by any relay endpoint.
+    Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()"
+
+    # An OAuth code must not travel to another origin in a referrer.
+    Header always set Referrer-Policy "no-referrer"
+
+    # The PHP version is not the host's to advertise on our behalf.
+    Header always unset X-Powered-By
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+</IfModule>
+
+# Same, for hosts that route this through PHP rather than mod_headers.
+<IfModule mod_php.c>
+    php_flag expose_php off
 </IfModule>

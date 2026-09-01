@@ -32,13 +32,25 @@ in `schedule.md`.
 | Does your organization use fine-grained access controls to restrict access to Personally Identifiable Information? | Yes |
 | Does your organization use audit logs to detect security incidents with at least bi-weekly reviews and minimum 12-month retention? | Yes |
 | Are application changes evaluated in a dedicated test environment before pushing to production? | Yes |
-| Does your organization conduct vulnerability scans every 30 days, annual penetration tests, and remediate critical findings within required timeframes? | **NO - declared gap** |
+| Does your organization conduct vulnerability scans every 30 days, annual penetration tests, and remediate critical findings within required timeframes? | **Was NO - this is the answer Amazon declined the submission on. Being remediated; see below** |
 | Does your organization scan application code for vulnerabilities prior to each release? | Yes |
 | Does your organization have a formal change management process which defines responsibilities for testing, verifying, and approving changes? | Yes |
 
-The one No is deliberate and is recorded as an open item: there is no 30-day
-external scanning cycle and no annual penetration test. Amazon's own guidance
-treats a declared gap better than an unsupported claim.
+**Amazon declined the submission of 1 September 2026 on exactly this question,
+and on nothing else.** Every other answer passed.
+
+The reasoning behind answering No - that a declared gap reads better than an
+unsupported claim - was wrong in effect. A declared gap on this control is
+disqualifying on its own.
+
+The answer is being made true rather than changed: OWASP ZAP now scans the
+relay and the site on a 30-day cycle with reports committed as evidence, the
+remediation deadlines are set at 7 days critical and 30 days high, and the
+first scan of 1 September 2026 is triaged in `vulnerability-management.md`.
+The annual penetration test is conducted internally and is described that way.
+
+A new case must be submitted once the practice is running - Amazon states
+that the declined case must not be reopened.
 
 ## Free-text answers
 

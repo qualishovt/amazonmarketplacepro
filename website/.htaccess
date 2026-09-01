@@ -1,0 +1,38 @@
+# intellipresta.com — response headers.
+#
+# Closes the findings raised by the OWASP ZAP baseline scan of 1 September
+# 2026 against the public site: no Content-Security-Policy, no
+# anti-clickjacking header, no Permissions-Policy, no cross-origin policies,
+# and the PHP version advertised in X-Powered-By.
+#
+# The policy deliberately allows the Crisp chat widget. A policy that closed
+# the finding by breaking live support would be a worse outcome than the
+# finding; the allowances below are exactly Crisp's documented origins and
+# nothing wider.
+#
+# See docs/security/vulnerability-management.md in the module repository.
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://client.crisp.chat; style-src 'self' 'unsafe-inline' https://client.crisp.chat; font-src 'self' https://client.crisp.chat; img-src 'self' data: https://client.crisp.chat https://image.crisp.chat; connect-src 'self' https://client.crisp.chat wss://client.relay.crisp.chat; media-src https://client.crisp.chat; frame-src https://client.crisp.chat"
+
+    Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()"
+
+    # Cross-Origin-Embedder-Policy is deliberately NOT set to require-corp:
+    # it would block the Crisp widget. The other two are safe here.
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+
+    Header always unset X-Powered-By
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag expose_php off
+</IfModule>
+
+# No directory listings anywhere on the site.
+Options -Indexes

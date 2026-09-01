@@ -55,6 +55,8 @@ After installing the archive job, confirm it the next day with
 |---|---|---|---|---|
 | Review relay access logs | Fortnightly | `php log-archive.php review` | 1 Sep 2026 | on first merchant |
 | Static security scan | Before each release | `php tools/security-scan.php` | 1 Sep 2026 | each release |
+| Vulnerability scan | Every 30 days | `tools/vuln-scan.sh` | 1 Sep 2026 | 1 Oct 2026 |
+| Penetration test | Annually | `tools/vuln-scan.sh --full` + manual checklist | — | see below |
 | Review incident response plan | Every 6 months | `incident-response.md` | 1 Sep 2026 | 1 Mar 2027 |
 | Rotate passwords on in-scope accounts | Annually | Password manager | 1 Sep 2026 | 1 Sep 2027 |
 | Rotate LWA client secret | Annually | `secret-tool.php encrypt` | 1 Sep 2026 | 1 Sep 2027 |
@@ -75,6 +77,12 @@ incident and starts `incident-response.md` at containment.
 
 **Security scan.** `tools/security-scan.php` exits non-zero on any ERROR, so it
 gates a release rather than producing a report someone has to remember to read.
+
+**Vulnerability scan.** `tools/vuln-scan.sh` runs OWASP ZAP against the relay
+and the site, writes its reports into `docs/security/scans/<date>/`, and they
+are committed. Findings are triaged against the deadlines in
+`vulnerability-management.md`: 7 days critical, 30 days high. The report is the
+evidence the scan happened - an uncommitted one proves nothing later.
 
 **Attestation review.** Re-read `attestations.md` against reality. An answer
 whose practice has lapsed is no longer true, and either the practice or the
