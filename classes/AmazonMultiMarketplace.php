@@ -236,7 +236,7 @@ class AmazonMultiMarketplace
      */
     public function resolveEndpoint($marketplaceId)
     {
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
 
         if ($env !== 'production') {
             return AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
@@ -318,7 +318,7 @@ class AmazonMultiMarketplace
 
         require_once dirname(__FILE__) . '/AmazonOrderImporter.php';
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
 
         foreach ($configs as $config) {
             $mpId = $config['marketplace_id'];
@@ -379,7 +379,7 @@ class AmazonMultiMarketplace
             $sellerId = $this->getSellerIdForMarketplace($mpId);
             $sync = new AmazonProductSync($client, $mpId, $sellerId);
 
-            $env = Configuration::get('AMZPRO_ENVIRONMENT');
+            $env = AmazonSpApiClient::environment();
             $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
             $sync->setMock($useMock);
 
@@ -426,7 +426,7 @@ class AmazonMultiMarketplace
             $sellerId = $this->getSellerIdForMarketplace($mpId);
             $sync = new AmazonProductSync($client, $mpId, $sellerId);
 
-            $env = Configuration::get('AMZPRO_ENVIRONMENT');
+            $env = AmazonSpApiClient::environment();
             $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
             $sync->setMock($useMock);
 

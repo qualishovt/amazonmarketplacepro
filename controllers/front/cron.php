@@ -133,7 +133,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
         $importer = new AmazonOrderImporter($client, $this->getMarketplaceId());
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $createdAfter = ($env === 'production')
             ? AmazonOrderImporter::configuredCreatedAfter()
             : 'TEST_CASE_200';
@@ -169,7 +169,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
         $sync->setMock($useMock);
 
@@ -206,7 +206,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
         $sync->setMock($useMock);
 
@@ -257,7 +257,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
         $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $sellerId);
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $createdAfter = ($env === 'production')
             ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-30 days'))
             : 'TEST_CASE_200';
@@ -486,7 +486,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
         $requester = new AmazonReviewRequester($client, $this->getMarketplaceId());
 
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $requester->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         return array(
@@ -512,7 +512,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
 
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
@@ -561,7 +561,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
             $this->getMarketplaceId(),
             Configuration::get('AMZPRO_SELLER_ID')
         );
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $uploader->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         return array(
@@ -583,7 +583,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $clientId = Configuration::get('AMZPRO_CLIENT_ID');
         $clientSecret = Configuration::get('AMZPRO_CLIENT_SECRET');
         $refreshToken = AmazonSpApiClient::storedRefreshToken();
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
 
         $relayMode = (Configuration::get('AMZPRO_AUTH_MODE') !== 'manual');
 
@@ -630,7 +630,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
     private function getMarketplaceId()
     {
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         if ($env === 'production') {
             $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
             return $mp ? $mp : 'A1PA6795UKMFR9';

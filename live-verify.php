@@ -48,7 +48,7 @@ function line($status, $label, $detail = '')
 echo "\n=== Amazon Marketplace Pro — live verification (read-only) ===\n\n";
 
 /* ── 1. Connection state ── */
-$environment = Configuration::get('AMZPRO_ENVIRONMENT');
+$environment = AmazonSpApiClient::environment();
 $marketplaceId = Configuration::get('AMZPRO_MARKETPLACE_ID');
 $sellerId = trim((string) Configuration::get('AMZPRO_SELLER_ID'));
 $token = AmazonSpApiClient::storedRefreshToken();

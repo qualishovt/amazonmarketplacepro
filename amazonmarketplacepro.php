@@ -121,7 +121,7 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_SELLER_ID', '');
         Configuration::updateValue('AMZPRO_MARKETPLACE_ID', 'A1PA6795UKMFR9');
         // Customer installs run live; sandbox/mock are developer-mode tools.
-        Configuration::updateValue('AMZPRO_ENVIRONMENT', 'production');
+        Configuration::updateGlobalValue('AMZPRO_ENVIRONMENT', 'production');
         Configuration::updateValue('AMZPRO_USE_MOCK', '0');
         Configuration::updateValue('AMZPRO_DEFAULT_CARRIER', (string) Configuration::get('PS_CARRIER_DEFAULT'));
         Configuration::updateValue('AMZPRO_DEFAULT_ORDER_STATE', (string) Configuration::get('PS_OS_PAYMENT'));
@@ -479,7 +479,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken(),
             'mkpro_seller_id'       => Configuration::get('AMZPRO_SELLER_ID'),
             'mkpro_marketplace_id'  => Configuration::get('AMZPRO_MARKETPLACE_ID'),
-            'mkpro_environment'     => Configuration::get('AMZPRO_ENVIRONMENT'),
+            'mkpro_environment'     => AmazonSpApiClient::environment(),
             'mkpro_use_mock'        => Configuration::get('AMZPRO_USE_MOCK'),
             'mkpro_default_carrier' => Configuration::get('AMZPRO_DEFAULT_CARRIER'),
             'mkpro_default_order_state' => Configuration::get('AMZPRO_DEFAULT_ORDER_STATE'),
@@ -853,7 +853,11 @@ class AmazonMarketplacePro extends Module
             // Connection state is global — same rows the oauth controller
             // and the connection status checks use, whatever the shop context.
             if ($configKey === AmazonSpApiClient::refreshTokenKey()
-                || $configKey === 'AMZPRO_SELLER_ID') {
+                || $configKey === 'AMZPRO_SELLER_ID'
+                // The environment decides which token slot and which app
+                // client are in play, so it has to be readable from every
+                // context for the same reason the tokens are.
+                || $configKey === 'AMZPRO_ENVIRONMENT') {
                 Configuration::updateGlobalValue($configKey, $value);
             } else {
                 Configuration::updateValue($configKey, $value);
@@ -1004,7 +1008,7 @@ class AmazonMarketplacePro extends Module
 
     protected function isProduction()
     {
-        return Configuration::get('AMZPRO_ENVIRONMENT') === 'production';
+        return AmazonSpApiClient::environment() === 'production';
     }
 
     protected function useMock()

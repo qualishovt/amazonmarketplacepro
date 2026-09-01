@@ -55,7 +55,34 @@ class AmazonSpApiClient
      */
     public static function isSandboxEnv()
     {
-        return Configuration::get('AMZPRO_ENVIRONMENT') === 'sandbox';
+        return self::environment() === 'sandbox';
+    }
+
+    /**
+     * The active environment, read from global scope.
+     *
+     * Read globally for the same reason the refresh tokens and the OAuth
+     * nonce are: this value decides WHICH token slot and WHICH app client are
+     * in play, so it has to give the same answer in every context - the admin
+     * in an all-shops context, the front controller in a shop context, and
+     * cron with no shop context at all. Configuration::get() is shop-scoped,
+     * so a shop-level row silently shadows the global one and the module
+     * connects in one environment while believing it is in the other.
+     *
+     * The fallback to the shop-scoped value keeps installations working that
+     * were saved before this became global.
+     *
+     * @return string 'production' or 'sandbox'
+     */
+    public static function environment()
+    {
+        $env = (string) Configuration::getGlobalValue('AMZPRO_ENVIRONMENT');
+
+        if ($env === '') {
+            $env = (string) Configuration::get('AMZPRO_ENVIRONMENT');
+        }
+
+        return ($env === 'sandbox') ? 'sandbox' : 'production';
     }
 
     /**

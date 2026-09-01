@@ -30,6 +30,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
+
 class AmazonReturnManager
 {
     /** @var AmazonSpApiClient */
@@ -545,7 +547,7 @@ class AmazonReturnManager
             . '</AmazonEnvelope>';
 
         $feeds = new AmazonFeedManager($this->client, $this->marketplaceId, $sellerId);
-        $env = Configuration::get('AMZPRO_ENVIRONMENT');
+        $env = AmazonSpApiClient::environment();
         $feeds->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         $feedId = $feeds->submitFeed(
