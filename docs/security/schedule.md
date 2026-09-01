@@ -76,6 +76,11 @@ incident and starts `incident-response.md` at containment.
 **Security scan.** `tools/security-scan.php` exits non-zero on any ERROR, so it
 gates a release rather than producing a report someone has to remember to read.
 
+**Attestation review.** Re-read `attestations.md` against reality. An answer
+whose practice has lapsed is no longer true, and either the practice or the
+answer has to change - telling Amazon something that stopped being true is
+worse than having declared the gap in the first place.
+
 **Incident response plan review.** Not a re-read. It checks that the contacts
 still work, that each containment step still matches how the systems are
 actually administered, and that the scope statement is still true. Recorded in
