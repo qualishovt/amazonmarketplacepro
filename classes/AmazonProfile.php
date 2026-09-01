@@ -19,6 +19,11 @@
  * Many categories may share a profile; a category has at most one, so a
  * product's profile is unambiguous.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonProfile
 {
     /** PrestaShop fields offerable as an attribute source. */

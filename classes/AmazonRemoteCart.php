@@ -21,6 +21,11 @@
  *   - it never confirms   -> the reservation expires after a grace period and
  *     the stock is returned.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonRemoteCart
 {
     const STATUS_RESERVED = 'reserved';

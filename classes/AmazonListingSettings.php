@@ -14,6 +14,11 @@
  * Markups and delays cascade: category -> manufacturer -> supplier ->
  * module default. Each source can be switched off in the settings.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonListingSettings
 {
     const ENTITY_CATEGORY = 'category';

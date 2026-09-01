@@ -15,6 +15,11 @@
  *
  * Nothing here talks to Amazon — it only edits PrestaShop.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonReferenceTool
 {
     const SEPARATOR = ';';

@@ -17,6 +17,11 @@
  * The cache is keyed by (product type, marketplace) because both the
  * attribute set and the allowed values differ per marketplace.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonProductTypeDefinitions
 {
     /** Refetch a cached schema after this many days. */

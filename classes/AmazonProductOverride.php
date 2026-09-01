@@ -13,6 +13,11 @@
  * profile, the category/manufacturer/supplier rules and the global settings.
  * Empty means "inherit", which is why numeric opt-outs use -1 rather than 0.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonProductOverride
 {
     /** Columns the propagation tool can copy onto other products. */

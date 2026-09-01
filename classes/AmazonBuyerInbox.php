@@ -18,6 +18,11 @@
  * Requires the PHP IMAP extension. Without it the feature reports itself
  * unavailable rather than failing at run time.
  */
+
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
 class AmazonBuyerInbox
 {
     /** Amazon order ids look like 123-1234567-1234567. */
