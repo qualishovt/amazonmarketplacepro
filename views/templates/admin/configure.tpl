@@ -64,6 +64,22 @@
 
     <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
 
+    {* Sub-tabs. One form still wraps every pane, so Save writes all of
+       them at once regardless of which is on screen - hidden inputs are
+       still submitted. Splitting the form per tab would mean a merchant
+       could lose edits by switching tab before saving. *}
+    <ul class="nav nav-tabs" id="mkpro-settings-tabs" style="margin-bottom:15px;">
+        <li class="active"><a href="#set-connection" data-toggle="tab"><i class="icon-plug"></i> {l s='Connection' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#set-listings" data-toggle="tab"><i class="icon-tags"></i> {l s='Listings' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#set-sync" data-toggle="tab"><i class="icon-exchange"></i> {l s='Sync' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#set-shipping" data-toggle="tab"><i class="icon-truck"></i> {l s='Shipping' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#set-orders" data-toggle="tab"><i class="icon-shopping-cart"></i> {l s='Orders' mod='amazonmarketplacepro'}</a></li>
+        <li><a href="#set-messaging" data-toggle="tab"><i class="icon-inbox"></i> {l s='Messaging' mod='amazonmarketplacepro'}</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+    <div class="tab-pane active" id="set-connection">
     {* ── Amazon Connection ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-amazon"></i> {l s='Amazon Connection' mod='amazonmarketplacepro'}</div>
@@ -177,11 +193,6 @@
         </div>
         {/if}
     </div>
-
-    {* ── Amazon SP-API Credentials (manual mode) ──
-       Hidden from merchants: with Connect they never need these, and a
-       field for a secret invites someone to paste one. Still shown to an
-       install already on manual mode, which would otherwise lose access to
        its own working configuration. *}
     {if $mkpro_dev_mode || $mkpro_auth_mode == 'manual'}
     <div class="panel">
@@ -237,7 +248,6 @@
         </div>
     </div>
     {/if}
-
     {* ── Marketplace (environment now lives with the connection controls) ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-globe"></i> {l s='Marketplace' mod='amazonmarketplacepro'}</div>
@@ -263,7 +273,18 @@
         </div>
         {/if}
     </div>
+    {* ── Connection Test ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-plug"></i> {l s='Connection Test' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Test your Amazon SP-API credentials. Save settings first if you just changed them.' mod='amazonmarketplacepro'}</p>
+        <button type="button" id="test-amazon-connection" class="btn btn-primary">
+            <i class="icon-refresh"></i> {l s='Test Amazon Connection' mod='amazonmarketplacepro'}
+        </button>
+        <pre id="amazon-connection-result" style="display:none; margin-top:15px; padding:12px; white-space:pre-wrap; word-break:break-word;"></pre>
+    </div>
+    </div>
 
+    <div class="tab-pane" id="set-listings">
     {* ── Listing Defaults ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-tags"></i> {l s='Listing Defaults' mod='amazonmarketplacepro'}</div>
@@ -342,7 +363,6 @@
             </div>
         </div>
     </div>
-
     {* ── SKU & Export Filters ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-filter"></i> {l s='SKU & Export Filters' mod='amazonmarketplacepro'}</div>
@@ -410,7 +430,9 @@
             </div>
         </div>
     </div>
+    </div>
 
+    <div class="tab-pane" id="set-sync">
     {* ── Sync Options ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-exchange"></i> {l s='Sync Options' mod='amazonmarketplacepro'}</div>
@@ -606,7 +628,43 @@
             </div>
         </div>
     </div>
+    {* ── Real-time Hooks ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-bolt"></i> {l s='Real-time Sync (Hooks)' mod='amazonmarketplacepro'}</div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Auto-push stock/price on product save' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_sync_stock_hook" class="form-control">
+                    <option value="0"{if !$mkpro_sync_stock_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_sync_stock_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Automatically push updated price and stock to Amazon when a product is saved.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Auto-confirm shipment on status change' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_sync_order_hook" class="form-control">
+                    <option value="0"{if !$mkpro_sync_order_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_sync_order_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Send shipment confirmation with tracking to Amazon when order is marked Shipped.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Auto-cancel on Amazon when PS order cancelled' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_sync_cancel_hook" class="form-control">
+                    <option value="0"{if !$mkpro_sync_cancel_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
+                    <option value="1"{if $mkpro_sync_cancel_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Notify Amazon when an Amazon-imported order is cancelled in PrestaShop.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+    </div>
+    </div>
 
+    <div class="tab-pane" id="set-shipping">
     {* ── Shipping Templates by range ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-truck"></i> {l s='Shipping Templates by Price/Weight Range' mod='amazonmarketplacepro'}</div>
@@ -664,7 +722,6 @@
         </div>
         <div id="shiptpl-result" style="display:none; margin-top:10px;"></div>
     </div>
-
     {* ── Carrier Mapping ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-truck"></i> {l s='Carrier Mapping (shipment confirmations)' mod='amazonmarketplacepro'}</div>
@@ -688,7 +745,9 @@
             </tbody>
         </table>
     </div>
+    </div>
 
+    <div class="tab-pane" id="set-orders">
     {* ── Order Import Settings ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-shopping-cart"></i> {l s='Order Import Settings' mod='amazonmarketplacepro'}</div>
@@ -907,7 +966,6 @@
             </div>
         </div>
     </div>
-
     {* ── Incoming carrier mapping & status routing ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-random"></i> {l s='Imported Order Routing' mod='amazonmarketplacepro'}</div>
@@ -997,7 +1055,9 @@
             </div>
         </div>
     </div>
+    </div>
 
+    <div class="tab-pane" id="set-messaging">
     {* ── Inbound buyer messages ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-inbox"></i> {l s='Buyer Replies (inbound)' mod='amazonmarketplacepro'}</div>
@@ -1067,51 +1127,9 @@
             </div>
         </div>
     </div>
-
-    {* ── Real-time Hooks ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-bolt"></i> {l s='Real-time Sync (Hooks)' mod='amazonmarketplacepro'}</div>
-        <div class="form-group">
-            <label class="control-label col-lg-3">{l s='Auto-push stock/price on product save' mod='amazonmarketplacepro'}</label>
-            <div class="col-lg-6">
-                <select name="mkpro_sync_stock_hook" class="form-control">
-                    <option value="0"{if !$mkpro_sync_stock_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
-                    <option value="1"{if $mkpro_sync_stock_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
-                </select>
-                <p class="help-block">{l s='Automatically push updated price and stock to Amazon when a product is saved.' mod='amazonmarketplacepro'}</p>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-lg-3">{l s='Auto-confirm shipment on status change' mod='amazonmarketplacepro'}</label>
-            <div class="col-lg-6">
-                <select name="mkpro_sync_order_hook" class="form-control">
-                    <option value="0"{if !$mkpro_sync_order_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
-                    <option value="1"{if $mkpro_sync_order_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
-                </select>
-                <p class="help-block">{l s='Send shipment confirmation with tracking to Amazon when order is marked Shipped.' mod='amazonmarketplacepro'}</p>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-lg-3">{l s='Auto-cancel on Amazon when PS order cancelled' mod='amazonmarketplacepro'}</label>
-            <div class="col-lg-6">
-                <select name="mkpro_sync_cancel_hook" class="form-control">
-                    <option value="0"{if !$mkpro_sync_cancel_hook} selected="selected"{/if}>{l s='Disabled' mod='amazonmarketplacepro'}</option>
-                    <option value="1"{if $mkpro_sync_cancel_hook} selected="selected"{/if}>{l s='Enabled (production only)' mod='amazonmarketplacepro'}</option>
-                </select>
-                <p class="help-block">{l s='Notify Amazon when an Amazon-imported order is cancelled in PrestaShop.' mod='amazonmarketplacepro'}</p>
-            </div>
-        </div>
     </div>
 
-    {* ── Connection Test ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-plug"></i> {l s='Connection Test' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Test your Amazon SP-API credentials. Save settings first if you just changed them.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="test-amazon-connection" class="btn btn-primary">
-            <i class="icon-refresh"></i> {l s='Test Amazon Connection' mod='amazonmarketplacepro'}
-        </button>
-        <pre id="amazon-connection-result" style="display:none; margin-top:15px; padding:12px; white-space:pre-wrap; word-break:break-word;"></pre>
-    </div>
+    </div>{* /tab-content *}
 
     <div class="panel">
         <div class="panel-footer">
@@ -4392,6 +4410,30 @@
             if (!id) { alert('Enter a feed id — you will find it on the Products tab after submitting a bulk feed.'); return; }
             window.location.href = '{$download_feed_url|escape:'javascript':'UTF-8'}&feed_id=' + encodeURIComponent(id);
         });
+    })();
+
+    /* ──────── Remember the active Settings sub-tab ────────
+       The URL hash is already taken by the main tabs, and saving reloads
+       the page - without this a merchant editing Orders settings would be
+       thrown back to Connection every time they pressed Save. ──────── */
+    (function () {
+        var KEY = 'mkproSettingsTab';
+        var links = document.querySelectorAll('#mkpro-settings-tabs a[data-toggle="tab"]');
+        if (!links.length) return;
+
+        try {
+            var saved = window.localStorage.getItem(KEY);
+            if (saved) {
+                var restore = document.querySelector('#mkpro-settings-tabs a[href="' + saved + '"]');
+                if (restore) restore.click();
+            }
+        } catch (e) { /* private mode, or storage disabled - just start on the first tab */ }
+
+        for (var i = 0; i < links.length; i++) {
+            links[i].addEventListener('click', function () {
+                try { window.localStorage.setItem(KEY, this.getAttribute('href')); } catch (e) {}
+            });
+        }
     })();
 
     /* ──────── Remember active tab ──────── */
