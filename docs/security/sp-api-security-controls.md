@@ -124,6 +124,14 @@ Compensating controls in place:
 The residual risk is credential guessing against a password that is random and
 unique, on an account that holds no Amazon Information.
 
+**Platform-layer controls — pending written confirmation.** Network firewalling,
+intrusion detection and prevention, and anti-malware scanning at the host level
+are operated by the hosting provider, not by us: on a shared tier there is no
+other place they could sit. Their specifics have been requested in writing so
+that this section can state what is actually running rather than what shared
+hosting usually includes. Until that reply is retained, this document does not
+claim them. See Open items.
+
 ## 3. Encryption at Rest 2.4
 
 > *Describe how your organization stores Amazon information at Rest including:
@@ -343,7 +351,9 @@ is a small enough surface that a fix can be live within the hour.
 | SSH password authentication | Server-wide on this hosting tier; provider confirmed 1 Sep 2026 it cannot be disabled per account. Compensating controls in §2 |
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
-| Third-party security assessment | Not commissioned |
+| Platform firewall / IDS-IPS / anti-malware | Provider-operated. Written confirmation of what runs has been requested; not yet retained |
+| Daily log-archive cron | Written and tested; not yet installed on the server. See `schedule.md` |
+| Third-party security assessment | Not commissioned. Amazon's own Data Security Assessment is free and conducted by an Amazon agent; that is the intended route |
 
 Both hosting constraints were raised with the provider rather than assumed, and
 their written response is retained. If the account moves to a VPS or dedicated
