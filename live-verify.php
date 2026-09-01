@@ -20,6 +20,12 @@
  * Delete this file before shipping the module.
  */
 
+if (PHP_SAPI !== 'cli') {
+    header('HTTP/1.1 403 Forbidden');
+    exit("Forbidden
+");
+}
+
 $root = dirname(dirname(dirname(__FILE__)));
 require_once $root . '/config/config.inc.php';
 

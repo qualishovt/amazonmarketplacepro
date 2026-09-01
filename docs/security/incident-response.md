@@ -7,7 +7,8 @@ Scope: the IntelliPresta OAuth relay at `intellipresta.com/spapi/` and
 Owner: sole operator. There is no on-call rotation and this plan does not
 pretend otherwise.
 
-Last reviewed: 1 September 2026.
+Last reviewed: 1 September 2026. Next review due: 1 March 2027 — tracked with
+the other recurring tasks in `schedule.md`.
 
 ---
 
@@ -32,9 +33,14 @@ own PrestaShop database and is never transmitted to IntelliPresta.
 
 - Weekly automated integrity check emails on failure if the master key becomes
   unreadable or any stored credential is no longer encrypted
+- Fortnightly review of archived relay access logs:
+  `php log-archive.php review`. It flags every request for `config.php`,
+  `secrets.php`, `secret-tool.php`, `*.key` and `*.env`. Those must all be
+  403; a 200 is an incident and starts this plan at step 1
+- `php tools/security-scan.php` before each release, and weekly as a guard
 - Amazon notifications about the developer account or unusual API activity
 - Hosting provider notifications
-- Web server access and error logs, reviewed when investigating
+- Web server access and error logs, retained 12 months (`log-archive.php`)
 - Reports from merchants
 
 ## Response
@@ -90,9 +96,12 @@ in `sp-api-security-controls.md` is wrong and must be corrected.
 
 ### 3. Notify
 
-- **Amazon**, within the period required by the Data Protection Policy, via the
-  Solution Provider Portal case log. Report on the basis of what is known;
-  do not wait for a complete picture
+- **Amazon, within 24 hours of detection**, by email to security@amazon.com,
+  and in the Solution Provider Portal case log. This is the deadline the Data
+  Protection Policy sets, and it runs from detection, not from understanding.
+  Report on the basis of what is known at the time; a first notification that
+  says "we detected X at 04:12 UTC, scope not yet established" is on time and
+  a complete one sent on day three is not
 - **Affected merchants**, if their tokens could have been used, with what
   happened and what they should do — reauthorise, and check their own shop
 - **The hosting provider**, if the compromise appears to be at their layer
@@ -126,12 +135,21 @@ never corrected by contact with a real incident is decoration.
 
 | | |
 |---|---|
+| Amazon security | security@amazon.com — the 24-hour notification goes here |
 | Amazon Solution Provider Portal | Case log — the channel of record |
 | Hosting provider | A2 Hosting support |
 | Merchant contact | support@intellipresta.com |
 
 ## Review
 
-Reviewed annually, and after any incident. Any change to what the relay stores
-invalidates the scope statement and requires this plan to be rewritten rather
-than amended.
+Reviewed **at least every six months**, and after any incident. The review is
+not a re-read: it checks that the contacts still work, that each containment
+step still matches how the systems are actually administered, and that the
+scope statement is still true.
+
+Any change to what the relay stores invalidates the scope statement and
+requires this plan to be rewritten rather than amended.
+
+| Reviewed | By | Outcome |
+|---|---|---|
+| 1 September 2026 | Operator | Plan established; notification deadline and review cadence set |

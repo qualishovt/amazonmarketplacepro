@@ -162,6 +162,19 @@ function needsPsGuard($rel)
     return substr($rel, -4) === '.php' && basename($rel) !== 'index.php';
 }
 
+/**
+ * Either guard closes the same hole: the file must not answer over HTTP.
+ * A CLI-only script cannot carry the _PS_VERSION_ guard, because nothing has
+ * defined it yet at the point the check has to run.
+ *
+ * @return bool
+ */
+function hasDirectAccessGuard($src)
+{
+    return strpos($src, '_PS_VERSION_') !== false
+        || preg_match('/PHP_SAPI\s*!==?\s*[\'"]cli[\'"]/', $src);
+}
+
 function walk($dir, $skipDirs, &$files)
 {
     foreach (scandir($dir) as $entry) {
@@ -233,13 +246,13 @@ foreach ($files as $path) {
         }
     }
 
-    if (!$isTpl && needsPsGuard($rel) && strpos($src, '_PS_VERSION_') === false) {
+    if (!$isTpl && needsPsGuard($rel) && !hasDirectAccessGuard($src)) {
         $findings[] = array(
             'level' => LEVEL_WARN,
             'rule' => 'missing-ps-guard',
             'file' => $rel,
             'line' => 1,
-            'message' => 'No _PS_VERSION_ guard - file can be requested directly over HTTP',
+            'message' => 'No direct-access guard (_PS_VERSION_ or CLI) - file can be requested over HTTP',
             'code' => '',
         );
     }
