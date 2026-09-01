@@ -20,19 +20,25 @@ means something.
 | Task | Cadence | Command | Installed |
 |---|---|---|---|
 | Verify secrets remain encrypted | Weekly | `secret-tool.php check --quiet` | Yes |
-| Archive relay access logs | Daily | `log-archive.php archive` | **Pending** |
+| Archive relay access logs | Daily 03:17 | `log-archive.php archive` | Yes |
 
 First archive run on 1 September 2026 recovered 4,334 relay requests already
 present in the host's live logs, so the 12-month window starts with history
 behind it rather than from zero.
 
-Cron does not expand `~` or `$HOME`, so both lines need the absolute path to
-the relay directory. Add via cPanel → Cron Jobs, substituting the real user and
-path:
+Cron does not expand `~` or `$HOME`, and does not necessarily set `HOME`
+either. The archive job needs it for both the log location and the archive
+location, so it is set in the command itself. Add via cPanel → Cron Jobs,
+substituting the real user:
 
 ```
-17 3 * * *  /usr/local/bin/php /home/USER/public_html/spapi/log-archive.php archive >/dev/null
+17 3 * * *  HOME=/home/USER /usr/local/bin/php /home/USER/public_html/spapi/log-archive.php archive >/dev/null
 ```
+
+Test a cron command under a stripped environment before trusting it:
+`env -i HOME=/home/USER /usr/local/bin/php .../log-archive.php archive`.
+That is stricter than cron actually is, so passing it is conclusive. Doing
+this caught a real failure: without `HOME` the job refused to run at all.
 
 `check --quiet` prints nothing and exits 0 when every configured secret is
 encrypted and decryptable; on any failure it prints and exits non-zero, which

@@ -368,7 +368,6 @@ is a small enough surface that a fix can be live within the hour.
 | Plain FTP | As above — same confirmation, same compensating controls |
 | Additional FTP account | Removed. The cPanel default remains and cannot be deleted |
 | Vulnerability scanning cadence and penetration testing | No 30-day external scan cycle and no annual penetration test |
-| Daily log-archive cron | Written and tested; not yet installed on the server. See `schedule.md` |
 | Third-party security assessment | Not commissioned. Amazon's own Data Security Assessment is free and conducted by an Amazon agent; that is the intended route |
 
 Both hosting constraints were raised with the provider rather than assumed, and
