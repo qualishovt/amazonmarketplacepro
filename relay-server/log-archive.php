@@ -29,11 +29,52 @@ if (PHP_SAPI !== 'cli') {
 
 define('RETENTION_MONTHS', 12);
 
-/** Where our archives live. Outside the web root. */
+/**
+ * Where our archives live. Outside the web root - and this refuses to run
+ * rather than settle for anywhere else.
+ *
+ * The first version fell back to dirname(dirname(__FILE__)) when HOME was
+ * unset, which on a cPanel account resolves to public_html: it would have
+ * written a year of access logs into a web-served directory. Cron does not
+ * always set HOME, so that fallback was reachable. Refusing is the only
+ * sensible behaviour when the safe location cannot be determined - a missed
+ * archive run is visible at the next review, whereas logs quietly published
+ * to the web are not.
+ */
 $archiveDir = getenv('IPRESTA_LOG_DIR');
 if (!$archiveDir) {
     $home = getenv('HOME');
-    $archiveDir = ($home ? $home : dirname(dirname(__FILE__))) . '/spapi-logs';
+    if (!$home) {
+        fwrite(STDERR, "HOME is not set, so the archive location cannot be determined.\n");
+        fwrite(STDERR, "Refusing to guess: the obvious guess is inside the web root.\n");
+        fwrite(STDERR, "Set IPRESTA_LOG_DIR to a directory outside public_html.\n");
+        exit(1);
+    }
+    $archiveDir = $home . '/spapi-logs';
+}
+
+/**
+ * Never write the archive anywhere a web server might serve it.
+ *
+ * Checked against the resolved path, so a symlinked or relative
+ * IPRESTA_LOG_DIR cannot slip past it either.
+ */
+$resolvedArchive = realpath($archiveDir);
+if ($resolvedArchive === false) {
+    $resolvedArchive = realpath(dirname($archiveDir));
+    if ($resolvedArchive !== false) {
+        $resolvedArchive .= '/' . basename($archiveDir);
+    }
+}
+$checkPath = strtr($resolvedArchive === false ? $archiveDir : $resolvedArchive,
+    DIRECTORY_SEPARATOR, '/');
+foreach (array('/public_html/', '/www/', '/htdocs/', '/public/') as $webRoot) {
+    if (strpos($checkPath . '/', $webRoot) !== false) {
+        fwrite(STDERR, "Refusing to use $archiveDir: it is inside a web-served directory.\n");
+        fwrite(STDERR, "Archived access logs must not be reachable over HTTP.\n");
+        fwrite(STDERR, "Set IPRESTA_LOG_DIR to a directory outside the web root.\n");
+        exit(1);
+    }
 }
 
 /** Paths that identify a request as ours. */
