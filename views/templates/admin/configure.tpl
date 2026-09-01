@@ -193,6 +193,10 @@
         </div>
         {/if}
     </div>
+    {* ── Amazon SP-API Credentials (manual mode) ──
+       Hidden from merchants: with Connect they never need these, and a
+       field for a secret invites someone to paste one. Still shown to an
+       install already on manual mode, which would otherwise lose access to
        its own working configuration. *}
     {if $mkpro_dev_mode || $mkpro_auth_mode == 'manual'}
     <div class="panel">

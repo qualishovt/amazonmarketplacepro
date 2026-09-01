@@ -153,6 +153,61 @@ $tplRules = array(
     ),
 );
 
+/**
+ * Walk a template's Smarty comment delimiters.
+ *
+ * An unmatched *} is not a syntax error - Smarty prints it, and whatever
+ * comment text precedes it, straight into the merchant's browser. That is
+ * how a developer note about credential handling ended up rendered on the
+ * settings page: an edit split a multi-line comment and left the closing
+ * delimiter orphaned. Compiling the template does not catch it, because
+ * there is nothing invalid about the output.
+ *
+ * @return array Findings as [line, message]
+ */
+function smartyCommentProblems($src)
+{
+    $out = array();
+    $len = strlen($src);
+    $i = 0;
+    $line = 1;
+    $in = false;
+    $openLine = 0;
+
+    while ($i < $len) {
+        if ($src[$i] === "
+") {
+            $line++;
+            $i++;
+            continue;
+        }
+        $two = substr($src, $i, 2);
+        if (!$in && $two === '{*') {
+            $in = true;
+            $openLine = $line;
+            $i += 2;
+            continue;
+        }
+        if ($in && $two === '*}') {
+            $in = false;
+            $i += 2;
+            continue;
+        }
+        if (!$in && $two === '*}') {
+            $out[] = array($line, 'Orphaned *} - Smarty will print it, and the comment text before it, to the page');
+            $i += 2;
+            continue;
+        }
+        $i++;
+    }
+
+    if ($in) {
+        $out[] = array($openLine, 'Unclosed {* - everything after it is swallowed');
+    }
+
+    return $out;
+}
+
 /** Files that must carry the PrestaShop direct-access guard. */
 function needsPsGuard($rel)
 {
@@ -242,6 +297,19 @@ foreach ($files as $path) {
                 'line' => $i + 1,
                 'message' => $rule['message'],
                 'code' => trim(substr($line, 0, 110)),
+            );
+        }
+    }
+
+    if ($isTpl) {
+        foreach (smartyCommentProblems($src) as $p) {
+            $findings[] = array(
+                'level' => LEVEL_ERROR,
+                'rule' => 'smarty-comment',
+                'file' => $rel,
+                'line' => $p[0],
+                'message' => $p[1],
+                'code' => '',
             );
         }
     }
