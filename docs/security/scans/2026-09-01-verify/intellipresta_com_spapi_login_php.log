@@ -1,5 +1,5 @@
 Using the Automation Framework
-Total of 14 URLs
+Total of 15 URLs
 PASS: Vulnerable JS Library (Powered by Retire.js) [10003]
 PASS: In Page Banner Information Leak [10009]
 PASS: Cookie No HttpOnly Flag [10010]
@@ -61,10 +61,8 @@ PASS: Charset Mismatch [90011]
 PASS: Application Error Disclosure [90022]
 PASS: WSDL File Detection [90030]
 PASS: Loosely Scoped Cookie [90033]
-WARN-NEW: Re-examine Cache-control Directives [10015] x 5 
+WARN-NEW: Re-examine Cache-control Directives [10015] x 3 
 	https://intellipresta.com/ (200 OK)
-	https://intellipresta.com/marketplaces/ (200 OK)
-	https://intellipresta.com/marketplaces/ebay.html (200 OK)
 	https://intellipresta.com/marketplaces/privacy.html (200 OK)
 	https://intellipresta.com/spapi/login.php (200 OK)
 WARN-NEW: Information Disclosure - Suspicious Comments [10027] x 1 
@@ -81,8 +79,8 @@ WARN-NEW: CSP: style-src unsafe-inline [10055] x 5
 	https://intellipresta.com/ (200 OK)
 	https://intellipresta.com/ebay/deletion.php, (404 Not Found)
 	https://intellipresta.com/marketplaces/privacy.html (200 OK)
+	https://intellipresta.com/robots.txt (404 Not Found)
 	https://intellipresta.com/sitemap.xml (404 Not Found)
-	https://intellipresta.com/spapi/login.php (200 OK)
 WARN-NEW: Cross-Origin-Embedder-Policy Header Missing or Invalid [90004] x 5 
 	https://intellipresta.com/ (200 OK)
 	https://intellipresta.com/marketplaces/ (200 OK)

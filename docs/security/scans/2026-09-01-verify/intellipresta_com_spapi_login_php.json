@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Tue, 1 Sept 2026 16:11:12",
-	"created": "2026-09-01T16:11:12.358823165Z",
+	"@generated": "Tue, 1 Sept 2026 16:25:06",
+	"created": "2026-09-01T16:25:06.654995367Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -18,7 +18,7 @@
 			"site": "https://intellipresta.com",
 			"key": "insight.code.2xx",
 			"description": "Percentage of responses with status code 2xx",
-			"statistic": "61"
+			"statistic": "64"
 		},
 		{
 			"level": "Info",
@@ -34,7 +34,15 @@
 			"site": "https://intellipresta.com",
 			"key": "insight.code.4xx",
 			"description": "Percentage of responses with status code 4xx",
-			"statistic": "30"
+			"statistic": "28"
+		},
+		{
+			"level": "Info",
+			"reason": "Informational",
+			"site": "https://intellipresta.com",
+			"key": "insight.endpoint.ctype.text/css",
+			"description": "Percentage of endpoints with content type text/css",
+			"statistic": "8"
 		},
 		{
 			"level": "Info",
@@ -42,7 +50,7 @@
 			"site": "https://intellipresta.com",
 			"key": "insight.endpoint.ctype.text/html",
 			"description": "Percentage of endpoints with content type text/html",
-			"statistic": "100"
+			"statistic": "91"
 		},
 		{
 			"level": "Info",
@@ -58,7 +66,7 @@
 			"site": "https://intellipresta.com",
 			"key": "insight.endpoint.total",
 			"description": "Count of total endpoints",
-			"statistic": "11"
+			"statistic": "12"
 		},
 		{
 			"level": "Info",
@@ -66,7 +74,7 @@
 			"site": "https://intellipresta.com",
 			"key": "insight.response.slow",
 			"description": "Percentage of slow responses",
-			"statistic": "61"
+			"statistic": "57"
 		}
 	],
 	"site":[ 
@@ -87,7 +95,7 @@
 					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
 					"instances":[ 
 						{
-							"id": "5",
+							"id": "6",
 							"uri": "https://intellipresta.com/",
 							"nodeName": "https:\/\/intellipresta.com\/",
 							"method": "GET",
@@ -97,7 +105,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "19",
+							"id": "18",
 							"uri": "https://intellipresta.com/ebay/deletion.php,",
 							"nodeName": "https:\/\/intellipresta.com\/ebay\/deletion.php,",
 							"method": "GET",
@@ -107,7 +115,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "6",
+							"id": "8",
 							"uri": "https://intellipresta.com/marketplaces/privacy.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/privacy.html",
 							"method": "GET",
@@ -117,9 +125,9 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "8",
-							"uri": "https://intellipresta.com/sitemap.xml",
-							"nodeName": "https:\/\/intellipresta.com\/sitemap.xml",
+							"id": "5",
+							"uri": "https://intellipresta.com/robots.txt",
+							"nodeName": "https:\/\/intellipresta.com\/robots.txt",
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
@@ -127,13 +135,13 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "9",
-							"uri": "https://intellipresta.com/spapi/login.php",
-							"nodeName": "https:\/\/intellipresta.com\/spapi\/login.php",
+							"id": "4",
+							"uri": "https://intellipresta.com/sitemap.xml",
+							"nodeName": "https:\/\/intellipresta.com\/sitemap.xml",
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
-							"evidence": "default-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'none'",
+							"evidence": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://client.crisp.chat; style-src 'self' 'unsafe-inline' https://client.crisp.chat; font-src 'self' https://client.crisp.chat; img-src 'self' data: https://client.crisp.chat https://image.crisp.chat; connect-src 'self' https://client.crisp.chat wss://client.relay.crisp.chat; media-src https://client.crisp.chat; frame-src https://client.crisp.chat",
 							"otherinfo": "style-src includes unsafe-inline."
 						}
 					],
@@ -144,7 +152,7 @@
 					"reference": "<p>https://www.w3.org/TR/CSP/</p><p>https://caniuse.com/#search=content+security+policy</p><p>https://content-security-policy.com/</p><p>https://github.com/HtmlUnit/htmlunit-csp</p><p>https://web.dev/articles/csp#resource-options</p>",
 					"cweid": "693",
 					"wascid": "15",
-					"sourceid": "10"
+					"sourceid": "4"
 				},
 				{
 					"pluginid": "10044",
@@ -157,7 +165,7 @@
 					"desc": "<p>The server has responded with a redirect that seems to provide a large response. This may indicate that although the server sent a redirect it also responded with body content (which may include sensitive details, PII, etc.).</p>",
 					"instances":[ 
 						{
-							"id": "0",
+							"id": "11",
 							"uri": "https://intellipresta.com/spapi",
 							"nodeName": "https:\/\/intellipresta.com\/spapi",
 							"method": "GET",
@@ -174,7 +182,7 @@
 					"reference": "",
 					"cweid": "201",
 					"wascid": "13",
-					"sourceid": "18"
+					"sourceid": "20"
 				},
 				{
 					"pluginid": "90004",
@@ -187,7 +195,7 @@
 					"desc": "<p>Cross-Origin-Embedder-Policy header is a response header that prevents a document from loading any cross-origin resources that don't explicitly grant the document permission (using CORP or CORS).</p>",
 					"instances":[ 
 						{
-							"id": "16",
+							"id": "17",
 							"uri": "https://intellipresta.com/",
 							"nodeName": "https:\/\/intellipresta.com\/",
 							"method": "GET",
@@ -207,7 +215,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "39",
+							"id": "37",
 							"uri": "https://intellipresta.com/marketplaces/amazon.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/amazon.html",
 							"method": "GET",
@@ -217,7 +225,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "38",
+							"id": "36",
 							"uri": "https://intellipresta.com/marketplaces/ebay.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/ebay.html",
 							"method": "GET",
@@ -227,7 +235,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "17",
+							"id": "21",
 							"uri": "https://intellipresta.com/marketplaces/privacy.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/privacy.html",
 							"method": "GET",
@@ -257,7 +265,7 @@
 					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
 					"instances":[ 
 						{
-							"id": "36",
+							"id": "32",
 							"uri": "https://intellipresta.com/marketplaces/ebay.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/ebay.html",
 							"method": "GET",
@@ -274,7 +282,7 @@
 					"reference": "",
 					"cweid": "615",
 					"wascid": "13",
-					"sourceid": "28"
+					"sourceid": "29"
 				},
 				{
 					"pluginid": "10049",
@@ -287,7 +295,7 @@
 					"desc": "<p>The response contents are not storable by caching components such as proxy servers. If the response does not contain sensitive, personal or user-specific information, it may benefit from being stored and cached, to improve performance.</p>",
 					"instances":[ 
 						{
-							"id": "22",
+							"id": "20",
 							"uri": "https://intellipresta.com/ebay/deletion.php,",
 							"nodeName": "https:\/\/intellipresta.com\/ebay\/deletion.php,",
 							"method": "GET",
@@ -297,7 +305,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "24",
+							"id": "10",
 							"uri": "https://intellipresta.com/robots.txt",
 							"nodeName": "https:\/\/intellipresta.com\/robots.txt",
 							"method": "GET",
@@ -307,7 +315,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "14",
+							"id": "13",
 							"uri": "https://intellipresta.com/sitemap.xml",
 							"nodeName": "https:\/\/intellipresta.com\/sitemap.xml",
 							"method": "GET",
@@ -317,7 +325,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "26",
+							"id": "25",
 							"uri": "https://intellipresta.com/spapi/",
 							"nodeName": "https:\/\/intellipresta.com\/spapi\/",
 							"method": "GET",
@@ -334,7 +342,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "23"
+					"sourceid": "24"
 				},
 				{
 					"pluginid": "10015",
@@ -357,27 +365,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "28",
-							"uri": "https://intellipresta.com/marketplaces/",
-							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/",
-							"method": "GET",
-							"param": "cache-control",
-							"attack": "",
-							"evidence": "max-age=3600, must-revalidate",
-							"otherinfo": ""
-						},
-						{
-							"id": "30",
-							"uri": "https://intellipresta.com/marketplaces/ebay.html",
-							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/ebay.html",
-							"method": "GET",
-							"param": "cache-control",
-							"attack": "",
-							"evidence": "max-age=3600, must-revalidate",
-							"otherinfo": ""
-						},
-						{
-							"id": "4",
+							"id": "3",
 							"uri": "https://intellipresta.com/marketplaces/privacy.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/privacy.html",
 							"method": "GET",
@@ -387,7 +375,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "1",
+							"id": "12",
 							"uri": "https://intellipresta.com/spapi/login.php",
 							"nodeName": "https:\/\/intellipresta.com\/spapi\/login.php",
 							"method": "GET",
@@ -397,7 +385,7 @@
 							"otherinfo": ""
 						}
 					],
-					"count": "5",
+					"count": "3",
 					"systemic": true,
 					"solution": "<p>For secure content, ensure the cache-control HTTP header is set with \"no-cache, no-store, must-revalidate\". If an asset should be cached consider setting the directives \"public, max-age, immutable\".</p>",
 					"otherinfo": "",
@@ -417,7 +405,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "13",
+							"id": "14",
 							"uri": "https://intellipresta.com/",
 							"nodeName": "https:\/\/intellipresta.com\/",
 							"method": "GET",
@@ -427,17 +415,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "34",
-							"uri": "https://intellipresta.com/marketplaces/",
-							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "max-age=3600",
-							"otherinfo": ""
-						},
-						{
-							"id": "10",
+							"id": "16",
 							"uri": "https://intellipresta.com/marketplaces/privacy.html",
 							"nodeName": "https:\/\/intellipresta.com\/marketplaces\/privacy.html",
 							"method": "GET",
@@ -447,7 +425,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "11",
+							"id": "22",
 							"uri": "https://intellipresta.com/spapi",
 							"nodeName": "https:\/\/intellipresta.com\/spapi",
 							"method": "GET",
@@ -457,7 +435,17 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "12",
+							"id": "26",
+							"uri": "https://intellipresta.com/spapi/login.css",
+							"nodeName": "https:\/\/intellipresta.com\/spapi\/login.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "max-age=604800",
+							"otherinfo": ""
+						},
+						{
+							"id": "9",
 							"uri": "https://intellipresta.com/spapi/login.php",
 							"nodeName": "https:\/\/intellipresta.com\/spapi\/login.php",
 							"method": "GET",
@@ -474,7 +462,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "4"
+					"sourceid": "10"
 				}
 			]
 		}

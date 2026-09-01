@@ -3,6 +3,7 @@ env:
   - excludePaths: []
     name: baseline
     urls:
+    - https://intellipresta.com/spapi/login.php
     - https://intellipresta.com/
   parameters:
     failOnError: true
@@ -27,14 +28,14 @@ jobs:
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: intellipresta_com_.html
+    reportFile: intellipresta_com_spapi_login_php.html
     reportTitle: ZAP Scanning Report
     template: traditional-html
   type: report
 - parameters:
     reportDescription: ''
     reportDir: /zap/wrk/
-    reportFile: intellipresta_com_.json
+    reportFile: intellipresta_com_spapi_login_php.json
     reportTitle: ZAP Scanning Report
     template: traditional-json
   type: report
