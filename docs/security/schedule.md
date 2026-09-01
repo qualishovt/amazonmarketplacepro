@@ -22,6 +22,10 @@ means something.
 | Verify secrets remain encrypted | Weekly | `secret-tool.php check --quiet` | Yes |
 | Archive relay access logs | Daily | `log-archive.php archive` | **Pending** |
 
+First archive run on 1 September 2026 recovered 4,334 relay requests already
+present in the host's live logs, so the 12-month window starts with history
+behind it rather than from zero.
+
 Cron does not expand `~` or `$HOME`, so both lines need the absolute path to
 the relay directory. Add via cPanel → Cron Jobs, substituting the real user and
 path:
@@ -43,7 +47,7 @@ After installing the archive job, confirm it the next day with
 
 | Task | Cadence | Command / reference | Last done | Next due |
 |---|---|---|---|---|
-| Review relay access logs | Fortnightly | `php log-archive.php review` | — | on first merchant |
+| Review relay access logs | Fortnightly | `php log-archive.php review` | 1 Sep 2026 | on first merchant |
 | Static security scan | Before each release | `php tools/security-scan.php` | 1 Sep 2026 | each release |
 | Review incident response plan | Every 6 months | `incident-response.md` | 1 Sep 2026 | 1 Mar 2027 |
 | Rotate passwords on in-scope accounts | Annually | Password manager | 1 Sep 2026 | 1 Sep 2027 |
@@ -80,3 +84,9 @@ Anything found by any of these is recorded in the repository — an issue, or a
 commit message that says what was found and what changed. That includes reviews
 that found nothing worth acting on, because "we looked and it was clean" is
 itself the evidence the cadence was kept.
+
+### Review log
+
+| Date | Review | Result |
+|---|---|---|
+| 1 Sep 2026 | Relay access logs, first run, 30-day window | 4,334 requests. 4,308 were eBay's own account-deletion notifications from its published IP ranges, answered 200 — legitimate. One host walked the full list of sensitive filenames: 4 refused 403, 3 absent 404, nothing served. **The review itself was defective**: it listed six of the seven probes, omitting the GET for `.ipresta-key` because the pattern matched `.key` and the filename contains `-key`. Fixed in `b139b03`; the matcher now works from named rules and the report grades 403/404 as correct rather than asserting all must be 403. |
