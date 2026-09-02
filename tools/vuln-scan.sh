@@ -34,6 +34,13 @@ fi
 # Imunify360: an aggressive scan trips the rate limiter and locks us out of
 # our own site, with nothing to do but wait or raise a ticket.
 #
+# Throttling did not save the active scan. It was blocked after ~14 minutes
+# at one thread and 400ms, and the provider later named the trigger:
+# CAPTCHA_DOS_ALERT after 101 CAPTCHA requests. The scan was not stopped by
+# volume as such - it was stopped by the spider answering an interstitial
+# challenge over and over, which the firewall reads as an attack on the
+# challenge. Slowing down further would not have helped.
+#
 # One thread per host with a deliberate pause between requests. The scan
 # takes considerably longer, but the surface is a handful of URLs, so that
 # costs patience rather than coverage.
@@ -47,6 +54,41 @@ TARGETS=(
   "https://intellipresta.com/spapi/login.php"
   "https://intellipresta.com/"
 )
+
+# The annual active scan does NOT run against production, and this is not a
+# preference. A2 Hosting refused the request in writing on 2 September 2026
+# (ticket ULQ-581-06565, level 2): on a shared tier they will not permit it,
+# because the traffic reaches other tenants' server and their firewall will
+# block the source address again. We accept that. Running it anyway would be
+# an unauthorised scan of a host that has declined.
+#
+# So --full points at the local staging replica instead: same application
+# code, dummy credentials, no shared tenancy. It answers identically to
+# production across every endpoint, which is what makes the substitution
+# honest rather than convenient. Bring it up with the XAMPP Apache on :81;
+# host.docker.internal is how the container reaches it.
+#
+# If the relay ever moves to a VPS or dedicated host, point this back at
+# production and delete the guard below - the constraint is the shared tier,
+# not the scan.
+STAGING_TARGETS=(
+  "http://host.docker.internal:81/spapi-staging/login.php"
+)
+
+if [ "$MODE" = "full" ]; then
+  TARGETS=("${STAGING_TARGETS[@]}")
+
+  for t in "${TARGETS[@]}"; do
+    case "$t" in
+      *intellipresta.com*)
+        echo "refusing: an active scan of intellipresta.com is not authorised." >&2
+        echo "The host declined it in ticket ULQ-581-06565. See" >&2
+        echo "docs/security/vulnerability-management.md, 'The host's final answer'." >&2
+        exit 2
+        ;;
+    esac
+  done
+fi
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "docker is required: the scanner runs as a container." >&2
