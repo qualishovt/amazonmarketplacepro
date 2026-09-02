@@ -79,14 +79,21 @@ Options -Indexes
 # complete with headers, which is a way to read a cookie that script cannot.
 # Found by the penetration test of 1 September 2026.
 #
-# The rule below stops TRACK. It does NOT stop TRACE on Apache, which
-# handles that method in core before mod_rewrite runs - verified, not
-# assumed: TRACK returns 405 and TRACE still returned 200 after this was
-# added. Refusing TRACE needs TraceEnable Off in the server configuration,
-# which .htaccess may not set and which only the host can apply.
+# The answer depends on the server, and both halves were verified rather
+# than assumed:
 #
-# The rule is kept because TRACK is worth refusing on its own, and because
-# a server that later permits the override will then honour it.
+#   Apache  - the rule stops TRACK but NOT TRACE, because Apache handles
+#             that method in core before mod_rewrite runs. TRACK returned
+#             405 and TRACE still returned 200 after this was added.
+#             Refusing it there needs TraceEnable Off in the server
+#             configuration, which .htaccess may not set.
+#   LiteSpeed - the rule stops both. Production answered TRACE 200 before
+#             this file was uploaded on 2 September 2026 and 405 after.
+#
+# Production runs LiteSpeed, so TRACE is refused there outright. It was
+# not exploitable beforehand either - LiteSpeed returned the page rather
+# than echoing the request - but a method that is not implemented should
+# answer 405, not 200.
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
