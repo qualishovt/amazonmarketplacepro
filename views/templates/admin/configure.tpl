@@ -1435,7 +1435,7 @@
 <div class="tab-pane active" id="tab-products">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop &harr; Amazon)' mod='amazonmarketplacepro'}</div>
+        <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop ↔ Amazon)' mod='amazonmarketplacepro'}</div>
         <p>{l s='Reconcile products by SKU. Now syncs full data: description, bullet points, brand, images, EAN, and categories.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:15px;">
             <button type="button" id="sync-products-ps" class="btn btn-primary">
@@ -1509,7 +1509,7 @@
 
     {* ── Category Mapping ── *}
     <div class="panel">
-        <div class="panel-heading"><i class="icon-sitemap"></i> {l s='Category Mapping (PS Category &rarr; Amazon Product Type)' mod='amazonmarketplacepro'}</div>
+        <div class="panel-heading"><i class="icon-sitemap"></i> {l s='Category Mapping (PS Category → Amazon Product Type)' mod='amazonmarketplacepro'}</div>
         <p>{l s='Map PrestaShop categories to Amazon product types. Products with a mapped category will push full listing data (title, description, bullets, brand, images) instead of offer-only.' mod='amazonmarketplacepro'}</p>
 
         <div class="row" style="margin-bottom:15px;">
