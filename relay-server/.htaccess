@@ -72,3 +72,23 @@ Options -Indexes
 <IfModule mod_php.c>
     php_flag expose_php off
 </IfModule>
+
+# TRACK is refused, and TRACE would be if this could refuse it.
+#
+# Leaving these on permits Cross-Site Tracing: the request is echoed back
+# complete with headers, which is a way to read a cookie that script cannot.
+# Found by the penetration test of 1 September 2026.
+#
+# The rule below stops TRACK. It does NOT stop TRACE on Apache, which
+# handles that method in core before mod_rewrite runs - verified, not
+# assumed: TRACK returns 405 and TRACE still returned 200 after this was
+# added. Refusing TRACE needs TraceEnable Off in the server configuration,
+# which .htaccess may not set and which only the host can apply.
+#
+# The rule is kept because TRACK is worth refusing on its own, and because
+# a server that later permits the override will then honour it.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)
+    RewriteRule .* - [R=405,L]
+</IfModule>
