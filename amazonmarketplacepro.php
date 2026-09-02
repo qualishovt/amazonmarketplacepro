@@ -100,7 +100,16 @@ class AmazonMarketplacePro extends Module
         $this->displayName = $this->l('Amazon Marketplace Pro');
         $this->description = $this->l('Full Amazon integration: sync products, import orders, update stock & prices, push shipments, handle returns — all automated.');
         $this->confirmUninstall = $this->l('Are you sure? All Amazon sync data will be removed.');
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '9.0');
+        // The upper bound is the running version, so the module never refuses
+        // to install on a PrestaShop newer than the one this was written
+        // against. A literal ceiling gets this wrong in a way that is easy to
+        // miss: since PrestaShop 8, Module::__construct only pads a max whose
+        // first number is below 8, so 9.0 stays 9.0, and checkCompliancy then
+        // asks version_compare('9.0.0', '9.0', '>') - which is true. The
+        // module was blocked from installing on the very version it named.
+        // Padding would not save us either, because this property is assigned
+        // after parent::__construct() and so is compared exactly as written.
+        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
     }
 
     /* ───────────────────── Install / Uninstall ───────────────────── */
