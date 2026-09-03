@@ -15,7 +15,8 @@
 
     header { border-bottom: 1px solid #e3e7e9; }
     .topbar { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; flex-wrap: wrap; gap: 12px; }
-    .wordmark { font-size: 22px; font-weight: 700; color: var(--brand-dark); text-decoration: none; }
+    .wordmark { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; color: var(--brand-dark); text-decoration: none; }
+    .wordmark img { height: 44px; width: 44px; }
     .wordmark span { color: var(--brand); }
     nav a { margin-left: 22px; text-decoration: none; color: var(--muted); font-size: 15px; }
     nav a:hover { color: var(--brand-dark); }
@@ -57,7 +58,7 @@
 
 <header>
     <div class="wrap topbar">
-        <a class="wordmark" href="/">Intelli<span>Presta</span></a>
+        <a class="wordmark" href="/"><img src="/brand/intellipresta-300.png" alt="IntelliPresta logo">Intelli<span>Presta</span></a>
         <nav>
             <a href="./">All modules</a>
             <a href="#features">Features</a>
@@ -292,7 +293,7 @@
 <footer>
     <div class="wrap">
         <a href="./">All marketplace modules</a>
-        <a href="amazon.html">Amazon Marketplace Pro</a>
+        <a href="pro.html">Marketplace Pro for PrestaShop</a>
         <a href="privacy.html">Privacy policy</a>
         <a href="mailto:support@intellipresta.com">Contact</a>
         <div style="margin-top: 10px;">

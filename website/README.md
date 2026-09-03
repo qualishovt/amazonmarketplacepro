@@ -19,6 +19,16 @@ website:
 A reviewer opening the site saw a login form and nothing about the app. That redirect has
 since been removed — the root, the hub and the policy all return 200 with the right pages.
 
+## Why the Amazon app is not called "Amazon Marketplace Pro" on the website
+
+Amazon declined the Appstore listing on 3 September 2026 (case 21813956421) on two
+points: the app name carried the Amazon trademark, and the listing logo matched
+nothing on the website - because the website showed no logo at all. The PrestaShop
+module keeps its name inside the shop and on PrestaShop Addons; the Appstore listing
+and this website use **Marketplace Pro for PrestaShop**, and the listing logo is the
+same IntelliPresta file every page header shows. The two must keep matching: a reviewer
+compares them.
+
 ## Structure
 
 One product per marketplace: the modules are **Amazon Marketplace Pro** and **eBay
@@ -29,7 +39,8 @@ each module has its own page underneath it.
 |---|---|---|
 | `index.html` | `public_html/index.html` | `https://intellipresta.com/` — company page, lists every IntelliPresta module |
 | `marketplaces/index.html` | `public_html/marketplaces/index.html` | `https://intellipresta.com/marketplaces/` — hub for the two marketplace modules |
-| `marketplaces/amazon.html` | `public_html/marketplaces/amazon.html` | `https://intellipresta.com/marketplaces/amazon.html` — **Amazon app page** |
+| `marketplaces/pro.html` | `public_html/marketplaces/pro.html` | `https://intellipresta.com/marketplaces/pro.html` — **Amazon app page**, "Marketplace Pro for PrestaShop" |
+| `brand/intellipresta-300.png`, `-220.png` | `public_html/brand/` | `https://intellipresta.com/brand/…` — the logo every page header shows, and the two files the Appstore listing must use |
 | `marketplaces/ebay.html` | `public_html/marketplaces/ebay.html` | `https://intellipresta.com/marketplaces/ebay.html` — **eBay app page** |
 | `marketplaces/privacy.html` | `public_html/marketplaces/privacy.html` | `https://intellipresta.com/marketplaces/privacy.html` — one policy covering both modules |
 
@@ -37,7 +48,7 @@ each module has its own page underneath it.
 
 | Register with | URL |
 |---|---|
-| Amazon — app website on the Solution Provider Profile | `https://intellipresta.com/marketplaces/amazon.html` |
+| Amazon — app website on the Solution Provider Profile | `https://intellipresta.com/marketplaces/pro.html` |
 | Amazon — privacy policy | `https://intellipresta.com/marketplaces/privacy.html` |
 | eBay — application / marketing URL | `https://intellipresta.com/marketplaces/ebay.html` |
 | eBay — privacy policy | `https://intellipresta.com/marketplaces/privacy.html` |
@@ -76,7 +87,7 @@ endpoints live outside it and are untouched by this deployment:
 
    So a price change is not a free edit. Moving the core to € 179.99 forces Business care
    to € 72.00 and the advertised total to € 251.99. Recompute all three together, and
-   update the pricing table and FAQ on `marketplaces/amazon.html`, the module card on
+   update the pricing table and FAQ on `marketplaces/pro.html`, the module card on
    `index.html`, and the pricing description on the Appstore listing, which a reviewer
    compares against the page.
 
@@ -99,7 +110,8 @@ endpoints live outside it and are untouched by this deployment:
    session:
    - `https://intellipresta.com/` → company page, no login
    - `https://intellipresta.com/marketplaces/` → hub listing both modules
-   - `https://intellipresta.com/marketplaces/amazon.html` → Amazon page with pricing
+   - `https://intellipresta.com/marketplaces/pro.html` → Amazon app page with pricing
+   - `https://intellipresta.com/marketplaces/amazon.html` → 301 to the above
    - `https://intellipresta.com/marketplaces/ebay.html` → eBay page with pricing
    - `https://intellipresta.com/marketplaces/privacy.html` → the full policy
 3. Valid HTTPS certificate on all of them.

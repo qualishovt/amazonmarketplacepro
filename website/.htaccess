@@ -37,6 +37,13 @@
 # No directory listings anywhere on the site.
 Options -Indexes
 
+# The Amazon app page was renamed on 3 September 2026. Amazon will not list
+# an app whose name or URL carries its trademark, so "Amazon Marketplace Pro"
+# at /marketplaces/amazon.html became "Marketplace Pro for PrestaShop" at
+# /marketplaces/pro.html. The old address is in an Amazon case and in
+# search engines, so it forwards rather than 404s.
+Redirect 301 /marketplaces/amazon.html /marketplaces/pro.html
+
 # TRACK is refused, and TRACE would be if this could refuse it.
 #
 # Leaving these on permits Cross-Site Tracing: the request is echoed back
