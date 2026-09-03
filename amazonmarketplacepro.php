@@ -251,21 +251,20 @@ class AmazonMarketplacePro extends Module
             && $this->registerHook('actionProductUpdate')
             && $this->registerHook('actionUpdateQuantity')
             && $this->registerHook('actionOrderStatusUpdate')
-            && $this->registerHook('displayAdminProductsExtra')
-            && $this->registerHook('displayHeader');
+            && $this->registerHook('displayAdminProductsExtra');
 
         if ($installed) {
             // The schedule exists from the first minute, so Automation is
             // never an empty screen. Every task is seeded switched off.
             require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
             AmazonScheduler::seedDefaults();
 
-            // Automatic by default. A new merchant should not have to
-            // arrange anything on the server to get automation: traffic
-            // drives the schedule until they choose otherwise. Existing
-            // installs are left alone by the upgrade, since they may
-            // already have crontab entries.
-            Configuration::updateValue('AMZPRO_CRON_AUTO', 1);
+            // The merchant's own cron is the default. It is the only mode
+            // with nothing between the shop and its schedule, so it is what
+            // we recommend; the relay is there for hosting that has no
+            // crontab to put a line in.
+            Configuration::updateValue('AMZPRO_CRON_MODE', 'cron');
         }
 
         return $installed;
@@ -330,9 +329,12 @@ class AmazonMarketplacePro extends Module
             || Tools::isSubmit('mkproScheduleToggle')
             || Tools::isSubmit('mkproScheduleDelete')
             || Tools::isSubmit('mkproScheduleRunNow')
-            || Tools::isSubmit('mkproScheduleAuto')
+            || Tools::isSubmit('mkproScheduleMode')
+            || Tools::isSubmit('mkproRelayRegister')
+            || Tools::isSubmit('mkproRelayUnregister')
         ) {
             require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
         }
 
         if (Tools::isSubmit('mkproScheduleSave')) {
@@ -366,9 +368,24 @@ class AmazonMarketplacePro extends Module
                 : $this->l('Task failed: ') . (isset($result['error']) ? $result['error'] : '');
         }
 
-        if (Tools::isSubmit('mkproScheduleAuto')) {
-            Configuration::updateValue('AMZPRO_CRON_AUTO', (int) Tools::getValue('auto') ? 1 : 0);
-            $this->scheduleNotice = $this->l('Automation mode updated.');
+        if (Tools::isSubmit('mkproScheduleMode')) {
+            $this->scheduleNotice = $this->setScheduleMode(Tools::getValue('mode'));
+        }
+
+        if (Tools::isSubmit('mkproRelayRegister')) {
+            $r = AmazonRelaySchedule::register();
+            $this->scheduleNotice = !empty($r['success'])
+                ? $this->l('This shop is registered with the IntelliPresta scheduler.')
+                : $this->l('Could not register: ') . (isset($r['error']) ? $r['error'] : '');
+            if (!empty($r['success'])) {
+                Configuration::updateValue('AMZPRO_CRON_MODE', 'relay');
+            }
+        }
+
+        if (Tools::isSubmit('mkproRelayUnregister')) {
+            AmazonRelaySchedule::unregister();
+            Configuration::updateValue('AMZPRO_CRON_MODE', 'cron');
+            $this->scheduleNotice = $this->l('Removed from the IntelliPresta scheduler. Your own cron now drives the schedule.');
         }
 
 
@@ -578,6 +595,7 @@ class AmazonMarketplacePro extends Module
         );
 
         require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
         $this->context->smarty->assign(array(
             'module_dir'  => $this->_path,
             'confirm_msg' => $confirmMsg,
@@ -846,7 +864,8 @@ class AmazonMarketplacePro extends Module
             'cron_run_due_url'   => $cronBase . '&action=run_due',
             'schedule_tasks'     => AmazonScheduler::all(),
             'schedule_catalogue' => AmazonScheduler::catalogue(),
-            'schedule_auto'      => (bool) Configuration::get('AMZPRO_CRON_AUTO'),
+            'schedule_mode'      => AmazonRelaySchedule::mode(),
+            'schedule_relay'     => AmazonRelaySchedule::status(),
             'schedule_notice'    => $this->scheduleNotice,
             'cron_fetch_messages_url'  => $cronBase . '&action=fetch_messages',
 
@@ -1070,6 +1089,35 @@ class AmazonMarketplacePro extends Module
             Configuration::updateValue('AMZPRO_CRON_TOKEN', $newToken);
         }
 
+    }
+
+    /**
+     * Switch between the merchant's own cron and our scheduler.
+     *
+     * Choosing the relay in the dropdown does not register the shop. That is a
+     * separate, deliberate button, because registering sends this shop's cron
+     * token to a second party and should never happen as a side effect of
+     * changing a select box.
+     *
+     * Choosing cron does deregister, because leaving our scheduler calling a
+     * shop that has stopped expecting it serves nobody.
+     */
+    private function setScheduleMode($mode)
+    {
+        $mode = ($mode === 'relay') ? 'relay' : 'cron';
+        Configuration::updateValue('AMZPRO_CRON_MODE', $mode);
+
+        if ($mode === 'cron' && Configuration::get('AMZPRO_RELAY_REGISTERED')) {
+            AmazonRelaySchedule::unregister();
+
+            return $this->l('Your own cron now drives the schedule, and this shop has been removed from the IntelliPresta scheduler.');
+        }
+
+        if ($mode === 'relay' && !Configuration::get('AMZPRO_RELAY_REGISTERED')) {
+            return $this->l('Saved. Now press "Register this shop" to start the scheduler.');
+        }
+
+        return $this->l('Automation mode updated.');
     }
 
     /* ─────────────────── "Connect with Amazon" OAuth ─────────────────── */
@@ -2695,21 +2743,6 @@ class AmazonMarketplacePro extends Module
     }
 
     /* ─────────────────── Hooks ─────────────────── */
-
-    /**
-     * Front office page view: give the schedule a chance to run.
-     *
-     * This is what lets a shop with no crontab still automate. Nothing slow
-     * happens here - armTrafficTrigger() only decides whether to register a
-     * shutdown function, so the visitor is never kept waiting on Amazon.
-     */
-    public function hookDisplayHeader($params)
-    {
-        require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
-        AmazonScheduler::armTrafficTrigger();
-
-        return '';
-    }
 
     /*
      * There is deliberately no displayBackOfficeHeader hook.

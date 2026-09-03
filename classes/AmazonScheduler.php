@@ -22,13 +22,15 @@
  * most shared hosting - simply could not follow it. The schedule now lives in
  * a table the merchant can edit, and there are two ways it runs:
  *
- *   Cron        one URL, called as often as the host allows. Reliable, and
- *               still the recommendation for a busy shop.
- *   From traffic  no setup at all. A page view checks whether anything is due
- *               and, if so, runs it AFTER the visitor's page has been sent.
+ *   Merchant cron   one URL in their own crontab, called as often as their
+ *                   host allows. The default, because nothing between the
+ *                   shop and its schedule can then fail.
+ *   IntelliPresta   the shop registers with our relay, which calls that same
+ *                   URL on a fixed five minute cycle. For merchants whose
+ *                   hosting has no crontab, or who would rather not use it.
  *
- * Both funnel into runDue(), so a shop can switch between them, or use both,
- * without the schedule behaving differently.
+ * Both call the same run_due endpoint, so the schedule behaves identically
+ * whichever is chosen, and switching is a setting rather than a migration.
  *
  * On timekeeping: every time written here comes from PHP, never from MySQL
  * NOW(). The two clocks drift apart on shared hosting, and a schedule that
@@ -47,9 +49,6 @@ class AmazonScheduler
     /** A run in progress is considered dead after this long, so a fatal
      *  error during a task cannot wedge the schedule permanently. */
     const LOCK_TIMEOUT = 900;
-
-    /** Traffic-triggered runs are not attempted more often than this. */
-    const TRAFFIC_THROTTLE = 60;
 
     /** How long a single runDue() pass may spend before stopping and leaving
      *  the rest for the next pass. Keeps one slow task from starving others. */
@@ -344,61 +343,6 @@ class AmazonScheduler
         self::recordRun($task, $result, $ms);
 
         return $result;
-    }
-
-    /* ─────────────────── Running without a crontab ─────────────────── */
-
-    /**
-     * Arm the traffic trigger. Called from a page view, and does almost nothing.
-     *
-     * The work is deferred to shutdown rather than done here, which is the whole
-     * point: by then the visitor already has their page, so nobody waits on
-     * Amazon. Doing it inline would mean flushing halfway through rendering and
-     * sending a broken page.
-     *
-     * The two checks are ordered by cost. The throttle reads a configuration
-     * value PrestaShop has already cached; the due() query then runs at most
-     * once a minute, which matters when this sits on every front office request.
-     */
-    public static function armTrafficTrigger()
-    {
-        if (!Configuration::get('AMZPRO_CRON_AUTO')) {
-            return false;
-        }
-
-        $last = (int) Configuration::getGlobalValue('AMZPRO_CRON_AUTO_LAST');
-        if ($last && (time() - $last) < self::TRAFFIC_THROTTLE) {
-            return false;
-        }
-        Configuration::updateGlobalValue('AMZPRO_CRON_AUTO_LAST', time());
-
-        if (!self::due()) {
-            return false;
-        }
-
-        register_shutdown_function(array(__CLASS__, 'runFromTraffic'));
-
-        return true;
-    }
-
-    /**
-     * Runs once the response has gone out. Given a short budget on purpose:
-     * this is still a visitor's request holding a PHP worker, not a batch
-     * window, so it takes a bite and leaves the rest for the next trigger.
-     */
-    public static function runFromTraffic()
-    {
-        @ignore_user_abort(true);
-        if (function_exists('session_write_close')) {
-            @session_write_close();
-        }
-        if (function_exists('fastcgi_finish_request')) {
-            @fastcgi_finish_request();
-        }
-
-        $scheduler = new self();
-
-        return $scheduler->runDue(60);
     }
 
     /* ─────────────────────────── Plumbing ─────────────────────────── */

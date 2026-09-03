@@ -60,6 +60,18 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
         $action = Tools::getValue('action');
 
+        // The relay proving a registration. Answered before anything else
+        // runs, because its whole purpose is to confirm the token without
+        // causing a side effect.
+        if ($action === 'verify') {
+            $this->jsonResponse(array(
+                'success' => true,
+                'nonce' => (string) Tools::getValue('nonce'),
+                'shop' => Configuration::get('PS_SHOP_NAME'),
+            ));
+            return;
+        }
+
         // The whole schedule in one call. This is the only line a merchant
         // needs in crontab, and running it more often than any task's interval
         // costs nothing: tasks that are not due are skipped.

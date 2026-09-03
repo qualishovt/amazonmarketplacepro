@@ -1236,30 +1236,71 @@
             <div class="alert alert-info">{$schedule_notice|escape:'htmlall':'UTF-8'}</div>
         {/if}
 
+        <p>
+            {l s='Something has to call the shop on a timer, because a shop only runs code when a request arrives. Choose who does the calling.' mod='amazonmarketplacepro'}
+        </p>
+
         <form method="post" class="form-horizontal">
             <div class="form-group">
                 <label class="control-label col-lg-3">{l s='Run the schedule' mod='amazonmarketplacepro'}</label>
                 <div class="col-lg-9">
-                    <select name="auto" class="form-control fixed-width-xxl">
-                        <option value="1"{if $schedule_auto} selected="selected"{/if}>{l s='Automatically, using shop traffic (no setup)' mod='amazonmarketplacepro'}</option>
-                        <option value="0"{if !$schedule_auto} selected="selected"{/if}>{l s='From my server cron only' mod='amazonmarketplacepro'}</option>
+                    <select name="mode" class="form-control fixed-width-xxl">
+                        <option value="cron"{if $schedule_mode != 'relay'} selected="selected"{/if}>{l s='My own server cron (recommended)' mod='amazonmarketplacepro'}</option>
+                        <option value="relay"{if $schedule_mode == 'relay'} selected="selected"{/if}>{l s='The IntelliPresta scheduler' mod='amazonmarketplacepro'}</option>
                     </select>
-                    <p class="help-block">
-                        {l s='Automatic mode needs nothing installed. When a visitor loads a page the module checks whether anything is due and, if so, runs it after that page has already been sent, so nobody waits. On a quiet shop tasks run only as often as somebody visits, which is why a busy shop is better served by real cron.' mod='amazonmarketplacepro'}
-                    </p>
-                    <button type="submit" name="mkproScheduleAuto" class="btn btn-default">
+                    <button type="submit" name="mkproScheduleMode" class="btn btn-default" style="margin-left:8px;">
                         <i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}
                     </button>
                 </div>
             </div>
         </form>
 
-        <div class="alert alert-info" style="margin-top:14px;">
-            <strong>{l s='Using your own cron? One line is all it needs now.' mod='amazonmarketplacepro'}</strong><br/>
-            <code style="font-size:11px; word-break:break-all;">*/5 * * * * curl -s "{$cron_run_due_url|escape:'htmlall':'UTF-8'}" &gt; /dev/null 2&gt;&amp;1</code><br/>
-            <span class="help-block" style="margin-bottom:0;">
-                {l s='Call it as often as your host allows. Each call runs only what the table below says is due, so a five minute cron does not mean a five minute sync.' mod='amazonmarketplacepro'}
-            </span>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="alert {if $schedule_mode != 'relay'}alert-success{else}alert-info{/if}">
+                    <strong>{l s='My own server cron' mod='amazonmarketplacepro'}</strong><br/>
+                    {l s='Add this one line to your hosting control panel or crontab. Nothing sits between your shop and its schedule, which is why this is the recommendation.' mod='amazonmarketplacepro'}
+                    <br/><br/>
+                    <code style="font-size:11px; word-break:break-all;">*/5 * * * * curl -s "{$cron_run_due_url|escape:'htmlall':'UTF-8'}" &gt; /dev/null 2&gt;&amp;1</code>
+                    <br/><br/>
+                    <span class="help-block" style="margin-bottom:0;">
+                        {l s='Each call runs only what the table below says is due, so a five minute cron does not mean a five minute sync.' mod='amazonmarketplacepro'}
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="alert {if $schedule_mode == 'relay'}alert-success{else}alert-info{/if}">
+                    <strong>{l s='The IntelliPresta scheduler' mod='amazonmarketplacepro'}</strong><br/>
+                    {l s='For hosting with no crontab. Our server calls your shop every five minutes so your intervals are kept exactly, with nothing for you to set up.' mod='amazonmarketplacepro'}
+                    <br/><br/>
+                    <span class="help-block">
+                        {l s='Two things to know before choosing it. Your shop address and its cron token are stored on our server, because that token is what lets the call start a run. And if our server is unreachable, your schedule pauses until it returns.' mod='amazonmarketplacepro'}
+                    </span>
+
+                    {if $schedule_relay.registered}
+                        <p>
+                            <span class="badge" style="background:#51954B;">{l s='Registered' mod='amazonmarketplacepro'}</span>
+                            {if $schedule_relay.since}<small class="text-muted">{l s='since' mod='amazonmarketplacepro'} {$schedule_relay.since|escape:'htmlall':'UTF-8'}</small>{/if}
+                        </p>
+                        <form method="post">
+                            <button type="submit" name="mkproRelayUnregister" class="btn btn-default btn-sm">
+                                <i class="icon-times"></i> {l s='Stop using the scheduler' mod='amazonmarketplacepro'}
+                            </button>
+                        </form>
+                    {else}
+                        {if $schedule_relay.last_error}
+                            <div class="alert alert-warning" style="margin-bottom:8px;">
+                                {$schedule_relay.last_error|escape:'htmlall':'UTF-8'}
+                            </div>
+                        {/if}
+                        <form method="post">
+                            <button type="submit" name="mkproRelayRegister" class="btn btn-primary btn-sm">
+                                <i class="icon-cloud-upload"></i> {l s='Register this shop' mod='amazonmarketplacepro'}
+                            </button>
+                        </form>
+                    {/if}
+                </div>
+            </div>
         </div>
     </div>
 

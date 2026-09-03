@@ -55,11 +55,11 @@ function upgrade_module_1_5_0($module)
         return false;
     }
 
-    if (Configuration::get('AMZPRO_CRON_AUTO') === false) {
-        // Off on upgrade. A shop that already has crontab entries does not
-        // need traffic-triggered runs as well, and doubling them up would be
-        // a surprise rather than a feature.
-        Configuration::updateValue('AMZPRO_CRON_AUTO', '0');
+    if (Configuration::get('AMZPRO_CRON_MODE') === false) {
+        // Upgrading shops keep running from their own cron. They already
+        // have crontab entries pointing at this module, so registering them
+        // with our scheduler would double every run.
+        Configuration::updateValue('AMZPRO_CRON_MODE', 'cron');
     }
 
     require_once dirname(__FILE__) . '/../classes/AmazonScheduler.php';
@@ -69,6 +69,5 @@ function upgrade_module_1_5_0($module)
         AmazonScheduler::seedDefaults((int) $idShop);
     }
 
-    return $module->registerHook('actionFrontControllerAfterInit')
-        || true;   // the hook is a convenience; its absence must not fail the upgrade
+    return true;
 }

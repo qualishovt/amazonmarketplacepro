@@ -16,7 +16,7 @@ Options -Indexes
 
 # Configuration, crypto helpers and the CLI tools are never served.
 # Both tools also refuse to run outside CLI, so this is defence in depth.
-<FilesMatch "^(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php|log-archive\.php)$">
+<FilesMatch "^(config\.php|config\.sample\.php|secrets\.php|secret-tool\.php|log-archive\.php|schedule-run\.php|schedule-store\.php)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
