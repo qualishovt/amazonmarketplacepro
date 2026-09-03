@@ -4587,17 +4587,51 @@
         }
     })();
 
-    /* ──────── Remember active tab ──────── */
+    /* ──────── Remember active tab ────────
+       The section is kept in the URL so a reload comes back to it.
+
+       It must not be written with window.location.hash. Each pane's id
+       is the same string the hash carries, so assigning it asks the
+       browser to bring that element into view and the page jumps down a
+       little on every click. history.replaceState records the same URL
+       without navigating to it, and leaves the Back button pointing at
+       the page you arrived from rather than at the tab you just left. */
     (function () {
         var hash = window.location.hash;
         if (hash) {
-            var tab = document.querySelector('#mkpro-tabs a[href="'+hash+'"]');
-            if (tab) tab.click();
+            var restoreTab = function () {
+                var tab = document.querySelector('#mkpro-tabs a[href="'+hash+'"]');
+                if (!tab) {
+                    return;
+                }
+                tab.click();
+                /* Deferred by a further task. The browser jump to the id and
+                   the back office own load handlers both settle around this
+                   point, and a reset issued inline is undone by them. */
+                window.setTimeout(function () { window.scrollTo(0, 0); }, 0);
+            };
+            /* Deferred until load, for two reasons that both have to hold.
+               The click depends on the tab plugin, which is not necessarily
+               parsed when this inline script runs - on PrestaShop 9 it was
+               not, so the anchor fell through to its default behaviour and
+               the browser scrolled to the pane without opening it. And the
+               browser's own jump to the matching id happens somewhere in
+               here too, so resetting the scroll any earlier is undone. */
+            if (document.readyState === 'complete') {
+                restoreTab();
+            } else {
+                window.addEventListener('load', restoreTab);
+            }
         }
         var tabs = document.querySelectorAll('#mkpro-tabs a[data-toggle="tab"]');
         for (var i=0; i<tabs.length; i++) {
             tabs[i].addEventListener('click', function (e) {
-                window.location.hash = this.getAttribute('href');
+                var target = this.getAttribute('href');
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', target);
+                } else {
+                    window.location.hash = target;
+                }
             });
         }
     })();
