@@ -86,11 +86,14 @@ class AmazonMarketplacePro extends Module
         'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
     );
 
+    /** @var string feedback from the schedule screen, shown on the next render */
+    protected $scheduleNotice = '';
+
     public function __construct()
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.4.0';
+        $this->version = '1.5.0';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -243,12 +246,22 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_OAUTH_RETURN_URL', '');
         Configuration::updateValue('AMZPRO_SELLING_PARTNER_ID', '');
 
-        return parent::install()
+        $installed = parent::install()
             && $this->registerHook('actionProductSave')
             && $this->registerHook('actionProductUpdate')
             && $this->registerHook('actionUpdateQuantity')
             && $this->registerHook('actionOrderStatusUpdate')
-            && $this->registerHook('displayAdminProductsExtra');
+            && $this->registerHook('displayAdminProductsExtra')
+            && $this->registerHook('displayHeader');
+
+        if ($installed) {
+            // The schedule exists from the first minute, so Automation is
+            // never an empty screen. Every task is seeded switched off.
+            require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+            AmazonScheduler::seedDefaults();
+        }
+
+        return $installed;
     }
 
     public function uninstall()
@@ -304,6 +317,52 @@ class AmazonMarketplacePro extends Module
     public function getContent()
     {
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+
+        // ----------- Schedule -----------
+        if (Tools::isSubmit('mkproScheduleSave')
+            || Tools::isSubmit('mkproScheduleToggle')
+            || Tools::isSubmit('mkproScheduleDelete')
+            || Tools::isSubmit('mkproScheduleRunNow')
+            || Tools::isSubmit('mkproScheduleAuto')
+        ) {
+            require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        }
+
+        if (Tools::isSubmit('mkproScheduleSave')) {
+            $saved = AmazonScheduler::save(array(
+                'id_task' => (int) Tools::getValue('id_task'),
+                'task_key' => Tools::getValue('task_key'),
+                'interval_minutes' => (int) Tools::getValue('interval_minutes'),
+                'active' => (int) Tools::getValue('active'),
+            ));
+            $this->scheduleNotice = $saved
+                ? $this->l('Task saved.')
+                : $this->l('That task could not be saved: unknown task type.');
+        }
+
+        if (Tools::isSubmit('mkproScheduleToggle')) {
+            $state = AmazonScheduler::toggle((int) Tools::getValue('id_task'));
+            $this->scheduleNotice = ($state === 1)
+                ? $this->l('Task switched on.')
+                : $this->l('Task switched off.');
+        }
+
+        if (Tools::isSubmit('mkproScheduleDelete')) {
+            AmazonScheduler::delete((int) Tools::getValue('id_task'));
+            $this->scheduleNotice = $this->l('Task removed.');
+        }
+
+        if (Tools::isSubmit('mkproScheduleRunNow')) {
+            $result = AmazonScheduler::runNow((int) Tools::getValue('id_task'));
+            $this->scheduleNotice = !empty($result['success'])
+                ? $this->l('Task ran.')
+                : $this->l('Task failed: ') . (isset($result['error']) ? $result['error'] : '');
+        }
+
+        if (Tools::isSubmit('mkproScheduleAuto')) {
+            Configuration::updateValue('AMZPRO_CRON_AUTO', (int) Tools::getValue('auto') ? 1 : 0);
+            $this->scheduleNotice = $this->l('Automation mode updated.');
+        }
 
 
         // ── "Connect with Amazon" OAuth flow ──
@@ -511,6 +570,7 @@ class AmazonMarketplacePro extends Module
              ORDER BY agl.`name` ASC'
         );
 
+        require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
         $this->context->smarty->assign(array(
             'module_dir'  => $this->_path,
             'confirm_msg' => $confirmMsg,
@@ -773,6 +833,14 @@ class AmazonMarketplacePro extends Module
             'cron_purge_pii_url'       => $cronBase . '&action=purge_pii',
             'cron_upload_invoices_url' => $cronBase . '&action=upload_invoices',
             'cron_remote_cart_url'     => $cronBase . '&action=remote_cart',
+
+            // The schedule. One URL replaces the nineteen above; the old ones
+            // stay assigned so an install that already uses them keeps working.
+            'cron_run_due_url'   => $cronBase . '&action=run_due',
+            'schedule_tasks'     => AmazonScheduler::all(),
+            'schedule_catalogue' => AmazonScheduler::catalogue(),
+            'schedule_auto'      => (bool) Configuration::get('AMZPRO_CRON_AUTO'),
+            'schedule_notice'    => $this->scheduleNotice,
             'cron_fetch_messages_url'  => $cronBase . '&action=fetch_messages',
 
             // Log entries
@@ -994,6 +1062,7 @@ class AmazonMarketplacePro extends Module
             $newToken = Tools::substr(md5(uniqid((string) rand(), true)), 0, 24);
             Configuration::updateValue('AMZPRO_CRON_TOKEN', $newToken);
         }
+
     }
 
     /* ─────────────────── "Connect with Amazon" OAuth ─────────────────── */
@@ -2619,6 +2688,21 @@ class AmazonMarketplacePro extends Module
     }
 
     /* ─────────────────── Hooks ─────────────────── */
+
+    /**
+     * Front office page view: give the schedule a chance to run.
+     *
+     * This is what lets a shop with no crontab still automate. Nothing slow
+     * happens here - armTrafficTrigger() only decides whether to register a
+     * shutdown function, so the visitor is never kept waiting on Amazon.
+     */
+    public function hookDisplayHeader($params)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        AmazonScheduler::armTrafficTrigger();
+
+        return '';
+    }
 
     /*
      * There is deliberately no displayBackOfficeHeader hook.

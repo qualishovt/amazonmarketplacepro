@@ -2,7 +2,7 @@
 <module>
 	<name>amazonmarketplacepro</name>
 	<displayName><![CDATA[Amazon Marketplace Pro]]></displayName>
-	<version><![CDATA[1.4.0]]></version>
+	<version><![CDATA[1.5.0]]></version>
 	<description><![CDATA[Full Amazon integration: sync products, import orders, update stock &amp; prices, push shipments, handle returns &mdash; all automated.]]></description>
 	<author><![CDATA[IntelliPresta]]></author>
 	<tab><![CDATA[market_place]]></tab>

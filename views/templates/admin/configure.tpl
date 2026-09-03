@@ -1230,168 +1230,148 @@
 <div class="tab-pane active" id="tab-cron">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-clock-o"></i> {l s='Cron URLs for Automation' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Add these URLs to your server\'s crontab (or use a webcron service) to automate Amazon sync.' mod='amazonmarketplacepro'}</p>
+        <div class="panel-heading"><i class="icon-clock-o"></i> {l s='How automation runs' mod='amazonmarketplacepro'}</div>
+
+        {if $schedule_notice}
+            <div class="alert alert-info">{$schedule_notice|escape:'htmlall':'UTF-8'}</div>
+        {/if}
+
+        <form method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="control-label col-lg-3">{l s='Run the schedule' mod='amazonmarketplacepro'}</label>
+                <div class="col-lg-9">
+                    <select name="auto" class="form-control fixed-width-xxl">
+                        <option value="1"{if $schedule_auto} selected="selected"{/if}>{l s='Automatically, using shop traffic (no setup)' mod='amazonmarketplacepro'}</option>
+                        <option value="0"{if !$schedule_auto} selected="selected"{/if}>{l s='From my server cron only' mod='amazonmarketplacepro'}</option>
+                    </select>
+                    <p class="help-block">
+                        {l s='Automatic mode needs nothing installed. When a visitor loads a page the module checks whether anything is due and, if so, runs it after that page has already been sent, so nobody waits. On a quiet shop tasks run only as often as somebody visits, which is why a busy shop is better served by real cron.' mod='amazonmarketplacepro'}
+                    </p>
+                    <button type="submit" name="mkproScheduleAuto" class="btn btn-default">
+                        <i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="alert alert-info" style="margin-top:14px;">
+            <strong>{l s='Using your own cron? One line is all it needs now.' mod='amazonmarketplacepro'}</strong><br/>
+            <code style="font-size:11px; word-break:break-all;">*/5 * * * * curl -s "{$cron_run_due_url|escape:'htmlall':'UTF-8'}" &gt; /dev/null 2&gt;&amp;1</code><br/>
+            <span class="help-block" style="margin-bottom:0;">
+                {l s='Call it as often as your host allows. Each call runs only what the table below says is due, so a five minute cron does not mean a five minute sync.' mod='amazonmarketplacepro'}
+            </span>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Scheduled tasks' mod='amazonmarketplacepro'}</div>
 
         <table class="table">
             <thead>
-                <tr><th>{l s='Action' mod='amazonmarketplacepro'}</th><th>{l s='URL' mod='amazonmarketplacepro'}</th><th>{l s='Schedule' mod='amazonmarketplacepro'}</th></tr>
+                <tr>
+                    <th>{l s='Task' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Every' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Last run' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Result' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Next run' mod='amazonmarketplacepro'}</th>
+                    <th style="width:230px;">{l s='Actions' mod='amazonmarketplacepro'}</th>
+                </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><strong>{l s='Import Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
+            {foreach from=$schedule_tasks item=t}
+                <tr{if !$t.active} class="text-muted"{/if}>
+                    <td>
+                        <strong>
+                            {if isset($schedule_catalogue[$t.task_key])}
+                                {$schedule_catalogue[$t.task_key][0]|escape:'htmlall':'UTF-8'}
+                            {else}
+                                {$t.task_key|escape:'htmlall':'UTF-8'}
+                            {/if}
+                        </strong>
+                        <br/><small class="text-muted">{$t.task_key|escape:'htmlall':'UTF-8'}</small>
+                    </td>
+                    <td>
+                        <form method="post" class="form-inline">
+                            <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
+                            <input type="hidden" name="task_key" value="{$t.task_key|escape:'htmlall':'UTF-8'}" />
+                            <input type="hidden" name="active" value="{$t.active|intval}" />
+                            <input type="number" min="1" name="interval_minutes" value="{$t.interval_minutes|intval}" class="form-control" style="width:80px; display:inline-block;" />
+                            <span class="text-muted">{l s='min' mod='amazonmarketplacepro'}</span>
+                            <button type="submit" name="mkproScheduleSave" class="btn btn-default btn-sm" title="{l s='Save interval' mod='amazonmarketplacepro'}">
+                                <i class="icon-save"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        {if $t.last_run_at}
+                            {$t.last_run_at|escape:'htmlall':'UTF-8'}
+                            {if $t.last_duration_ms}<br/><small class="text-muted">{$t.last_duration_ms|intval} ms</small>{/if}
+                        {else}
+                            <span class="text-muted">{l s='never' mod='amazonmarketplacepro'}</span>
+                        {/if}
+                    </td>
+                    <td>
+                        {if $t.last_status == 'success'}
+                            <span class="badge" style="background:#51954B;">{l s='OK' mod='amazonmarketplacepro'}</span>
+                        {elseif $t.last_status == 'error'}
+                            <span class="badge" style="background:#E05252;">{l s='Failed' mod='amazonmarketplacepro'}</span>
+                        {else}
+                            <span class="text-muted">&mdash;</span>
+                        {/if}
+                        {if $t.last_message}
+                            <br/><small class="text-muted" style="word-break:break-all;">{$t.last_message|truncate:90:'…'|escape:'htmlall':'UTF-8'}</small>
+                        {/if}
+                        {if $t.fail_count}
+                            <br/><small class="text-muted">{l s='failures:' mod='amazonmarketplacepro'} {$t.fail_count|intval}</small>
+                        {/if}
+                    </td>
+                    <td>
+                        {if $t.active}{$t.next_run_at|escape:'htmlall':'UTF-8'}
+                        {else}<span class="text-muted">{l s='off' mod='amazonmarketplacepro'}</span>{/if}
+                    </td>
+                    <td>
+                        <form method="post" style="display:inline;">
+                            <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
+                            <button type="submit" name="mkproScheduleToggle" class="btn btn-sm {if $t.active}btn-success{else}btn-default{/if}">
+                                {if $t.active}<i class="icon-check"></i> {l s='On' mod='amazonmarketplacepro'}
+                                {else}<i class="icon-times"></i> {l s='Off' mod='amazonmarketplacepro'}{/if}
+                            </button>
+                        </form>
+                        <form method="post" style="display:inline;">
+                            <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
+                            <button type="submit" name="mkproScheduleRunNow" class="btn btn-default btn-sm" title="{l s='Run this task now' mod='amazonmarketplacepro'}">
+                                <i class="icon-play"></i> {l s='Run now' mod='amazonmarketplacepro'}
+                            </button>
+                        </form>
+                        <form method="post" style="display:inline;" onsubmit="return confirm('{l s='Remove this task from the schedule?' mod='amazonmarketplacepro' js=1}');">
+                            <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
+                            <button type="submit" name="mkproScheduleDelete" class="btn btn-default btn-sm" title="{l s='Remove' mod='amazonmarketplacepro'}">
+                                <i class="icon-trash"></i>
+                            </button>
+                        </form>
+                    </td>
                 </tr>
-                <tr>
-                    <td><strong>{l s='Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Sync Stock' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Full Product Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_products_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Import Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Process Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='FBA Inventory Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_fba_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Repricing Cycle' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Fetch Fees' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_fees_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Poll Reports' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_poll_reports_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Sync Promotions' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_sync_promotions_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Request Reviews' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_request_reviews_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Bulk Feed Cycle (large catalogs)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_process_feeds_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Buyer replies (IMAP inbox)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_fetch_messages_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Remote Cart (settle stock holds)' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_remote_cart_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='VCS Invoice Upload' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_upload_invoices_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 1 hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Delete aged buyer data' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_purge_pii_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Daily (optional — order import does it too)' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Sync Stock' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_sync_stock_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 30 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Create PS Orders' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_create_orders_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Publish Offers' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_publish_offers_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Returns' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_returns_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every hour' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import Fees' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_import_fees_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Daily' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Repricing' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_reprice_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Catalog Matching' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_match_catalog_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Weekly' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Publish on all sites' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_publish_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 6 hours' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='eBay: Import orders from all sites' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_ebay_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Multi-MP Order Import' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_import_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Every 15 min' mod='amazonmarketplacepro'}</td>
-                </tr>
-                <tr>
-                    <td><strong>{l s='Multi-MP Product Sync' mod='amazonmarketplacepro'}</strong></td>
-                    <td><code style="font-size:11px; word-break:break-all;">{$cron_multi_sync_url|escape:'htmlall':'UTF-8'}</code></td>
-                    <td>{l s='Once daily' mod='amazonmarketplacepro'}</td>
-                </tr>
+            {foreachelse}
+                <tr><td colspan="6" class="text-muted">{l s='No tasks scheduled yet. Add one below.' mod='amazonmarketplacepro'}</td></tr>
+            {/foreach}
             </tbody>
         </table>
 
-        <div class="alert alert-info">
-            <strong>{l s='Example crontab entry' mod='amazonmarketplacepro'}:</strong><br/>
-            <code>*/15 * * * * curl -s "{$cron_import_orders_url|escape:'htmlall':'UTF-8'}" > /dev/null 2>&1</code>
-        </div>
+        <form method="post" class="form-inline" style="margin-top:10px;">
+            <select name="task_key" class="form-control">
+                {foreach from=$schedule_catalogue key=k item=meta}
+                    <option value="{$k|escape:'htmlall':'UTF-8'}">{$meta[0]|escape:'htmlall':'UTF-8'} &mdash; {$meta[2]|escape:'htmlall':'UTF-8'}</option>
+                {/foreach}
+            </select>
+            <input type="number" min="1" name="interval_minutes" value="60" class="form-control" style="width:90px;" />
+            <span class="text-muted">{l s='minutes' mod='amazonmarketplacepro'}</span>
+            <label class="checkbox-inline"><input type="checkbox" name="active" value="1" checked="checked" /> {l s='on' mod='amazonmarketplacepro'}</label>
+            <button type="submit" name="mkproScheduleSave" class="btn btn-primary">
+                <i class="icon-plus"></i> {l s='Add task' mod='amazonmarketplacepro'}
+            </button>
+        </form>
 
-        <p>
+        <p style="margin-top:14px;">
             <strong>{l s='Your cron token' mod='amazonmarketplacepro'}:</strong>
             <code>{$mkpro_cron_token|escape:'htmlall':'UTF-8'}</code>
         </p>

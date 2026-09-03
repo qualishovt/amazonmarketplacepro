@@ -436,6 +436,26 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_lo
     KEY `date_add` (`date_add`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amzpro_scheduled_task` (
+    `id_task` INT(11) NOT NULL AUTO_INCREMENT,
+    `id_shop` INT(11) NOT NULL DEFAULT 1,
+    `task_key` VARCHAR(64) NOT NULL,
+    `interval_minutes` INT(11) NOT NULL DEFAULT 60,
+    `active` TINYINT(1) NOT NULL DEFAULT 0,
+    `last_run_at` DATETIME NULL,
+    `next_run_at` DATETIME NULL,
+    `last_status` VARCHAR(16) NULL,
+    `last_message` VARCHAR(500) NULL,
+    `last_duration_ms` INT(11) NOT NULL DEFAULT 0,
+    `run_count` INT(11) NOT NULL DEFAULT 0,
+    `fail_count` INT(11) NOT NULL DEFAULT 0,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_task`),
+    KEY `due` (`id_shop`, `active`, `next_run_at`),
+    KEY `task_key` (`task_key`)
+) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+
 foreach ($sql as $query) {
     if (Db::getInstance()->execute($query) == false) {
         return false;
