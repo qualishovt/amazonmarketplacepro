@@ -1244,13 +1244,16 @@
             <div class="form-group">
                 <label class="control-label col-lg-3">{l s='Run the schedule' mod='amazonmarketplacepro'}</label>
                 <div class="col-lg-9">
-                    <select name="mode" class="form-control fixed-width-xxl">
-                        <option value="cron"{if $schedule_mode != 'relay'} selected="selected"{/if}>{l s='My own server cron (recommended)' mod='amazonmarketplacepro'}</option>
-                        <option value="relay"{if $schedule_mode == 'relay'} selected="selected"{/if}>{l s='The IntelliPresta scheduler' mod='amazonmarketplacepro'}</option>
-                    </select>
-                    <button type="submit" name="mkproScheduleMode" class="btn btn-default" style="margin-left:8px;">
-                        <i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}
-                    </button>
+                    {* form-control is display:block, so without this row the button drops under the select *}
+                    <div style="display:flex;align-items:center;">
+                        <select name="mode" class="form-control fixed-width-xxl">
+                            <option value="cron"{if $schedule_mode != 'relay'} selected="selected"{/if}>{l s='My own server cron (recommended)' mod='amazonmarketplacepro'}</option>
+                            <option value="relay"{if $schedule_mode == 'relay'} selected="selected"{/if}>{l s='The IntelliPresta scheduler' mod='amazonmarketplacepro'}</option>
+                        </select>
+                        <button type="submit" name="mkproScheduleMode" class="btn btn-default" style="margin-left:8px;white-space:nowrap;">
+                            <i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
