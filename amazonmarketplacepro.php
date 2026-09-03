@@ -259,6 +259,13 @@ class AmazonMarketplacePro extends Module
             // never an empty screen. Every task is seeded switched off.
             require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
             AmazonScheduler::seedDefaults();
+
+            // Automatic by default. A new merchant should not have to
+            // arrange anything on the server to get automation: traffic
+            // drives the schedule until they choose otherwise. Existing
+            // installs are left alone by the upgrade, since they may
+            // already have crontab entries.
+            Configuration::updateValue('AMZPRO_CRON_AUTO', 1);
         }
 
         return $installed;
