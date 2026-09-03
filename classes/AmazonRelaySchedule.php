@@ -92,17 +92,16 @@ class AmazonRelaySchedule
     {
         $token = Configuration::get('AMZPRO_CRON_TOKEN');
         if (!$token) {
-            return array('success' => false, 'error' => 'This shop has no cron token yet.');
+            return self::refuse('This shop has no cron token yet. Save the settings once and try again.');
         }
 
         $url = self::cronUrl();
         if (Tools::substr($url, 0, 8) !== 'https://') {
             // The token would otherwise cross the network in clear text on
             // every call, several hundred times a day.
-            return array(
-                'success' => false,
-                'error' => 'The scheduler needs the shop to be reachable over HTTPS. '
-                    . 'This shop\'s address is ' . $url,
+            return self::refuse(
+                'The scheduler needs the shop to be reachable over HTTPS, and this shop\'s address is '
+                . $url . '. Enable SSL in Shop Parameters > General, then register again.'
             );
         }
 
@@ -127,6 +126,18 @@ class AmazonRelaySchedule
         Configuration::updateValue('AMZPRO_RELAY_ERROR', '');
 
         return $reply;
+    }
+
+    /**
+     * A refusal that never reached the relay. Recorded the same way as one
+     * that did, so the reason stays on the screen next to the button rather
+     * than only in a notice the merchant may not be looking at.
+     */
+    private static function refuse($why)
+    {
+        Configuration::updateValue('AMZPRO_RELAY_ERROR', $why);
+
+        return array('success' => false, 'error' => $why);
     }
 
     /** Ask the relay to stop, and forget the registration locally either way. */

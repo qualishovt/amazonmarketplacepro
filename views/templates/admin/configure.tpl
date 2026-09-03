@@ -4658,6 +4658,28 @@
                 }
             });
         }
+
+        /* A form submit has to come back to the section it was sent from.
+           The section lives in the fragment, and a fragment is never sent
+           to the server, so a POST that reloads the page lands on the
+           first section and whatever message the handler produced sits in
+           a pane the merchant is no longer looking at - "I clicked it and
+           nothing happened". Carrying the fragment on the form action
+           keeps it through the round trip; browsers apply it to the
+           response, redirects included. */
+        var forms = document.querySelectorAll('#mkpro-tab-content form');
+        for (var f=0; f<forms.length; f++) {
+            forms[f].addEventListener('submit', function () {
+                var hash = window.location.hash;
+                if (!hash) {
+                    return;
+                }
+                var action = this.getAttribute('action') || (window.location.pathname + window.location.search);
+                if (action.indexOf('#') === -1) {
+                    this.setAttribute('action', action + hash);
+                }
+            });
+        }
     })();
 })();
 </script>
