@@ -29,6 +29,12 @@ and this website use **Marketplace Pro for PrestaShop**, and the listing logo is
 same IntelliPresta file every page header shows. The two must keep matching: a reviewer
 compares them.
 
+The listing was resubmitted on 3 September 2026 with that name, the product URL
+`https://intellipresta.com/marketplaces/marketplace-pro.html`, the support URL
+pointing at its FAQ, and the `brand/` logos. The listing text avoids `"`, `'`, `&`,
+`<` and `>` entirely: the portal refuses to publish a description containing any
+of them, and an apostrophe in "hosting's" was caught on the first attempt.
+
 ## Structure
 
 One product per marketplace: the modules are **Amazon Marketplace Pro** and **eBay
