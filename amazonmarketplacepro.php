@@ -244,7 +244,6 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_SELLING_PARTNER_ID', '');
 
         return parent::install()
-            && $this->registerHook('displayBackOfficeHeader')
             && $this->registerHook('actionProductSave')
             && $this->registerHook('actionProductUpdate')
             && $this->registerHook('actionUpdateQuantity')
@@ -2621,13 +2620,23 @@ class AmazonMarketplacePro extends Module
 
     /* ─────────────────── Hooks ─────────────────── */
 
-    public function hookDisplayBackOfficeHeader()
-    {
-        if (Tools::getValue('configure') == $this->name) {
-            $this->context->controller->addJS($this->_path . 'views/js/back.js');
-            $this->context->controller->addCSS($this->_path . 'views/css/back.css');
-        }
-    }
+    /*
+     * There is deliberately no displayBackOfficeHeader hook.
+     *
+     * It used to add views/css/back.css and views/js/back.js, neither of
+     * which has ever existed, and it could not have loaded them anyway: it
+     * gated on Tools::getValue('configure'), which only exists on 1.6. From
+     * 1.7 the module name is a path segment - .../action/configure/<module> -
+     * so the condition was false on every back office after 1.6.
+     *
+     * The configuration page keeps its CSS in configure.tpl instead, which is
+     * not merely convenient. That stylesheet has to win against the host
+     * theme, and a template that ships its own styles cannot be defeated by a
+     * hook that never fires, a stale Media cache, or a version that routes
+     * differently. If assets are ever moved to files, the loading has to be
+     * verified on 1.6 AND 1.7+, because those two disagree about how this
+     * page is even addressed.
+     */
 
     /**
      * When a product is saved in PrestaShop, push updated price/stock to Amazon.
