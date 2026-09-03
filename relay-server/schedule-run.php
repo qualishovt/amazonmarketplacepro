@@ -25,7 +25,7 @@
 
 // The crontab line, kept out of the comment above for the reason given there:
 //
-//   */5 * * * * cd /home/inteylip/spapi && HOME=/home/inteylip php schedule-run.php >> schedule.log 2>&1
+//   */5 * * * * cd /home/inteylip/public_html/spapi && HOME=/home/inteylip /usr/local/bin/php schedule-run.php >> /home/inteylip/schedule.log 2>&1
 
 if (PHP_SAPI !== 'cli') {
     header('HTTP/1.1 403 Forbidden');

@@ -21,6 +21,7 @@ means something.
 |---|---|---|---|
 | Verify secrets remain encrypted | Weekly | `secret-tool.php check --quiet` | Yes |
 | Archive relay access logs | Daily 03:17 | `log-archive.php archive` | Yes |
+| Call registered shops' schedules | Every 5 min | `schedule-run.php` | Yes |
 
 First archive run on 1 September 2026 recovered 4,334 relay requests already
 present in the host's live logs, so the 12-month window starts with history
@@ -33,6 +34,7 @@ substituting the real user:
 
 ```
 17 3 * * *  HOME=/home/USER /usr/local/bin/php /home/USER/public_html/spapi/log-archive.php archive >/dev/null
+*/5 * * * * cd /home/USER/public_html/spapi && HOME=/home/USER /usr/local/bin/php schedule-run.php >> /home/USER/schedule.log 2>&1
 ```
 
 Test a cron command under a stripped environment before trusting it:

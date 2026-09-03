@@ -65,7 +65,10 @@ milliseconds.
    two being fetched over HTTP.
 2. Add one cron job in cPanel, every five minutes:
 
-   `cd ~/public_html/spapi && HOME=$HOME php schedule-run.php >> ~/schedule.log 2>&1`
+   `cd ~/public_html/spapi && HOME=$HOME /usr/local/bin/php schedule-run.php >> ~/schedule.log 2>&1`
+
+   Installed on intellipresta.com on 3 September 2026 with the paths written
+   out in full (`/home/inteylip/...`), the same way the log-archive entry is.
 
    `HOME` matters. Without it the registry location cannot be determined and
    the script refuses to run rather than guess - the same rule `log-archive.php`
