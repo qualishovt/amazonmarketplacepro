@@ -1339,7 +1339,7 @@
                             <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
                             <input type="hidden" name="task_key" value="{$t.task_key|escape:'htmlall':'UTF-8'}" />
                             <input type="hidden" name="active" value="{$t.active|intval}" />
-                            <input type="number" min="1" name="interval_minutes" value="{$t.interval_minutes|intval}" class="form-control" style="width:80px; display:inline-block;" />
+                            <input type="number" min="1" name="interval_minutes" value="{$t.interval_minutes|intval}" class="form-control" style="width:100px; display:inline-block;" />
                             <span class="text-muted">{l s='min' mod='amazonmarketplacepro'}</span>
                             <button type="submit" name="mkproScheduleSave" class="btn btn-default btn-sm" title="{l s='Save interval' mod='amazonmarketplacepro'}">
                                 <i class="icon-save"></i>
@@ -1407,7 +1407,7 @@
                     <option value="{$k|escape:'htmlall':'UTF-8'}">{$meta[0]|escape:'htmlall':'UTF-8'} &mdash; {$meta[2]|escape:'htmlall':'UTF-8'}</option>
                 {/foreach}
             </select>
-            <input type="number" min="1" name="interval_minutes" value="60" class="form-control" style="width:90px;" />
+            <input type="number" min="1" name="interval_minutes" value="60" class="form-control" style="width:100px;" />
             <span class="text-muted">{l s='minutes' mod='amazonmarketplacepro'}</span>
             <label class="checkbox-inline"><input type="checkbox" name="active" value="1" checked="checked" /> {l s='on' mod='amazonmarketplacepro'}</label>
             <button type="submit" name="mkproScheduleSave" class="btn btn-primary">
