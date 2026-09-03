@@ -25,6 +25,59 @@
     #mkpro-sidebar li.mkpro-group > a .mkpro-caret { float: right; transition: transform .15s; }
     #mkpro-sidebar li.mkpro-group.open > a .mkpro-caret { transform: rotate(90deg); }
     #mkpro-sidebar li.mkpro-group.mkpro-current > a { font-weight: bold; }
+    /* ── mkpro-nav-crossversion ─────────────────────────────────────────
+       The module has to look right on three different back offices, and
+       none of them agree about navigation:
+
+         PrestaShop 1.6      Bootstrap 3
+         PrestaShop 1.7 - 9  Bootstrap 4
+         Basic Edition       repaints the whole admin monochrome
+
+       So the module draws its own navigation instead of inheriting
+       whichever look happens to be loaded. Two details make this work,
+       and both are easy to break by accident:
+
+       1. The active class lands in a different place per framework.
+          Bootstrap 3 keeps it on the <li>; Bootstrap 4 moves it onto the
+          <a> the first time a tab is clicked. Every rule below therefore
+          matches BOTH "li.active > a" and "li > a.active", so the
+          highlight survives either behaviour.
+
+       2. PrestaShop 9's theme.css underlines every link inside
+          #content.bootstrap, exempting a short list of classes. That
+          selector carries an id, so out-specifying it from a module is
+          not worth the arms race - text-decoration is forced instead,
+          and only on our own navigation.
+
+       Selectors are scoped to #mkpro-sidebar and ul.nav-tabs.mkpro-section-tabs
+       because the Module Manager renders .nav-tabs of its own on the
+       same page, and those must be left alone. */
+
+    #mkpro-sidebar a,
+    ul.nav-tabs.mkpro-section-tabs a { text-decoration: none !important; }
+
+    /* Bootstrap 4 puts the active class on the anchor. */
+    #mkpro-sidebar li > a.active,
+    #mkpro-sidebar li > a.active:hover,
+    #mkpro-sidebar li > a.active:focus { background: #25b2a8; color: #fff; }
+
+    ul.nav-tabs.mkpro-section-tabs { display: block; margin: 0 0 15px; padding: 0;
+        list-style: none; border-bottom: 1px solid #d6d4d4; }
+    ul.nav-tabs.mkpro-section-tabs > li { display: inline-block; float: none;
+        margin: 0 2px -1px 0; }
+    ul.nav-tabs.mkpro-section-tabs > li > a { display: inline-block; padding: 8px 15px;
+        line-height: 1.4; color: #6c868e; background: transparent;
+        border: 1px solid transparent; border-radius: 3px 3px 0 0; }
+    ul.nav-tabs.mkpro-section-tabs > li > a:hover { color: #363a41; background: #f6f6f6; }
+    ul.nav-tabs.mkpro-section-tabs > li.active > a,
+    ul.nav-tabs.mkpro-section-tabs > li.active > a:hover,
+    ul.nav-tabs.mkpro-section-tabs > li.active > a:focus,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active:hover,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active:focus {
+        color: #25b2a8; background: #fff; font-weight: 600;
+        border-color: #d6d4d4 #d6d4d4 #fff; }
+    ul.nav-tabs.mkpro-section-tabs > li > a .badge { margin-left: 5px; }
 </style>
 
 <div class="row">
@@ -55,7 +108,7 @@
        them at once regardless of which is on screen - hidden inputs are
        still submitted. Splitting the form per tab would mean a merchant
        could lose edits by switching tab before saving. *}
-    <ul class="nav nav-tabs" id="mkpro-settings-tabs" style="margin-bottom:15px;">
+    <ul class="nav nav-tabs mkpro-section-tabs" id="mkpro-settings-tabs" style="margin-bottom:15px;">
         <li class="active"><a href="#set-connection" data-toggle="tab"><i class="icon-plug"></i> {l s='Connection' mod='amazonmarketplacepro'}</a></li>
         <li><a href="#set-listings" data-toggle="tab"><i class="icon-tags"></i> {l s='Listings' mod='amazonmarketplacepro'}</a></li>
         <li><a href="#set-sync" data-toggle="tab"><i class="icon-exchange"></i> {l s='Sync' mod='amazonmarketplacepro'}</a></li>
