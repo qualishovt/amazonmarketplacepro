@@ -13,6 +13,9 @@ module ZIP uploaded to PrestaShop Addons.**
 |---|---|
 | `callback.php` | Amazon OAuth redirect URI. Exchanges the one-time code for the merchant's refresh token, then redirects back to the merchant's shop. |
 | `token.php` | Merchant shops POST their refresh token here (hourly) and get a short-lived access token back. |
+| `schedule.php` | Shops register here to be called on a timer. Registration is verified by calling the shop back with a nonce before anything is stored. |
+| `schedule-run.php` | CLI only. The relay's own cron entry point: calls every registered shop's `run_due`. Denied over HTTP. |
+| `schedule-store.php` | CLI/include only. The registry, kept outside the web root. Denied over HTTP. |
 
 ## Deploy (cPanel)
 
@@ -43,6 +46,65 @@ callback.php   ── refresh_token ──▶  merchant shop (stores it)
 merchant shop  ── POST refresh_token to token.php (hourly) ──▶ access token
 merchant shop  ── all SP-API data calls go directly to Amazon
 ```
+
+## The scheduler
+
+Most merchants put one line in their own crontab and that is the end of it.
+This exists for the ones who cannot: hosting with no cron, or a merchant who
+would rather not keep one. Their shop registers here, and we call it every five
+minutes so its own schedule runs on time.
+
+The relay does not decide what runs. It calls `run_due` and the shop consults
+its own table; if nothing is due, nothing happens and the call costs a few
+milliseconds.
+
+### Setting it up
+
+1. Upload `schedule.php`, `schedule-run.php` and `schedule-store.php` into
+   `public_html/spapi/`, and re-upload `.htaccess` - it is what stops the last
+   two being fetched over HTTP.
+2. Add one cron job in cPanel, every five minutes:
+
+   `cd ~/public_html/spapi && HOME=$HOME php schedule-run.php >> ~/schedule.log 2>&1`
+
+   `HOME` matters. Without it the registry location cannot be determined and
+   the script refuses to run rather than guess - the same rule `log-archive.php`
+   follows, for the same reason.
+3. Check it: `php schedule-run.php status` lists every registered shop, when it
+   was last called, and how many times in a row it has failed.
+
+### What is stored, and why it is treated carefully
+
+One JSON file, `~/ipresta-schedule/shops.json`, mode 0600, outside the web
+root. Per shop: the cron URL, the cron token, the shop name, and the last
+result.
+
+The token is the part that matters. It is enough to ask that shop to run its
+schedule, so the file is a credential store and is written like one - atomically,
+through a temp file and a rename, so a reader never sees it half-written.
+
+It holds no Amazon Information. The shop syncs itself and tells us only how
+many tasks it ran.
+
+### Why registration calls the shop back
+
+`schedule.php` will not store a registration on the strength of the request
+alone. It calls the URL with a nonce and requires the shop to echo it using the
+same token. That proves the address runs our module, the token is genuine, and
+whoever asked controls that shop.
+
+Without it, anyone could register any address and this would become a machine
+for issuing requests to hosts of their choosing, every five minutes, from our
+server. For the same reason it refuses anything but HTTPS, and refuses private,
+loopback and link-local addresses - including `169.254.169.254`, which is the
+first thing such a machine would be pointed at.
+
+### When a shop stops answering
+
+After six consecutive failures it drops to hourly instead of every five
+minutes, and returns to the normal cycle the moment it answers. Shops go
+offline, change domain and let certificates lapse; none of that should cost a
+request every five minutes for ever, or bury the log in one repeated error.
 
 ## Encryption at rest for the LWA client secret
 

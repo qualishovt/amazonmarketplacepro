@@ -23,8 +23,20 @@ answers to a security questionnaire wrong:
 
 The module is software the merchant installs and runs. IntelliPresta does not
 host it, cannot reach it, and receives no copy of what it processes. The relay
-exchanges an OAuth code for a token and returns it; it has no database, writes
-no files, and keeps no session.
+exchanges an OAuth code for a token and returns it; it has no database and
+keeps no session.
+
+One exception, added in module 1.5.0 and deliberately narrow. A merchant whose
+hosting has no crontab may ask our scheduler to call their shop on a timer.
+Doing so stores two things on the relay: the shop's cron URL and its cron
+token. That token can start a sync on that shop, so the registry is treated as
+a credential store - outside the web root, 0600, written atomically. It is
+opt-in, shown as a choice with its trade-offs on the screen where it is made,
+and removed when the merchant switches back.
+
+It holds no Amazon Information. The relay asks a shop to run its own schedule;
+the shop talks to Amazon itself, and no order, buyer or product data passes
+through us.
 
 Everything below therefore splits into what we hold (almost nothing) and what
 the software we publish causes the merchant to hold (their own customer data,

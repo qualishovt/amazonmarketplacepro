@@ -14,9 +14,20 @@ the other recurring tasks in `schedule.md`.
 
 ## What can actually go wrong
 
-The relay stores no Amazon Information — no database, no file writes, no
-sessions. So the realistic incidents are narrower than for a typical provider,
-and worth naming precisely rather than planning against a generic "breach".
+The relay stores no Amazon Information — no database, no sessions, and no
+order, buyer or product data of any kind. Since module 1.5.0 it does store one
+thing: for merchants who opted into our scheduler, their shop's cron URL and
+cron token. So the realistic incidents are narrower than for a typical
+provider, and worth naming precisely rather than planning against a generic
+"breach".
+
+The registry is worth naming as its own case. A cron token lets its holder ask
+that shop to run its schedule - it starts work the shop was going to do anyway
+and returns a count, and it cannot read anything out. The damage from a leaked
+registry is therefore nuisance rather than disclosure, but it is still someone
+else's credential: on suspicion, the response is to delete the registry, which
+stops the scheduler, and tell affected merchants to regenerate their token on
+the Automation screen.
 
 | Incident | Consequence |
 |---|---|

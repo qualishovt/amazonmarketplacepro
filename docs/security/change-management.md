@@ -24,7 +24,8 @@ are.
 install.** It is a full PrestaShop install with its own database, not a copy of
 production data: it holds test products and test orders, never a merchant's.
 
-The relay has no staging counterpart. It is four small files with no database,
+The relay has no staging counterpart. It is a handful of small files with no
+database,
 and its behaviour is verified directly against the live Amazon authorisation
 flow, which is the only thing that could meaningfully validate it. This is
 stated rather than glossed: it is the weakest part of this process.

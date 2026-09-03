@@ -70,7 +70,7 @@ that the declined case must not be reopened.
 
 ### Describe the network protection controls used by your organization to restrict public access to databases, file servers, and desktop/developer endpoints.
 
-> The relay has no database; merchant data stays in the merchant's own PrestaShop. An .htaccess denies HTTP access to config.php, secrets.php, secret-tool.php and any .key, .pem, .env or dotfile, and disables directory listing. Verified externally on 1 September 2026: each returns 403, while the live endpoints answer normally. The master key is a 0600 file outside the web root. Shell access is by SSH key only; deployment is over HTTPS. One operator, no shared accounts, no third-party access.
+> The relay has no database; merchant data stays in the merchant's own PrestaShop. The one thing it stores is a scheduler registry - shop cron URLs and cron tokens for merchants who opted in - held in a 0600 file outside the web root. An .htaccess denies HTTP access to config.php, secrets.php, secret-tool.php and any .key, .pem, .env or dotfile, and disables directory listing. Verified externally on 1 September 2026: each returns 403, while the live endpoints answer normally. The master key is a 0600 file outside the web root. Shell access is by SSH key only; deployment is over HTTPS. One operator, no shared accounts, no third-party access.
 
 ### Describe how your organization individually identifies employees with Amazon Information access. Explain how it restricts employee access to Amazon information on a need-to-know basis.
 
@@ -82,7 +82,7 @@ that the declined case must not be reopened.
 
 ### Provide your organization's privacy and data handling policies to describe how Amazon data is collected, processed, stored, used, shared and disposed.
 
-> https://intellipresta.com/privacy.html states what the software collects and why. Internally, a data handling policy classifies every data category, records each processing purpose, and sets retention and disposal. Its central point: IntelliPresta holds no Amazon Information. The module runs inside the merchant's own PrestaShop, where the merchant is the controller, and the relay only exchanges an OAuth code for a token and keeps nothing. No Amazon Information is shared with any third party.
+> https://intellipresta.com/privacy.html states what the software collects and why. Internally, a data handling policy classifies every data category, records each processing purpose, and sets retention and disposal. Its central point: IntelliPresta holds no Amazon Information. The module runs inside the merchant's own PrestaShop, where the merchant is the controller, and the relay exchanges an OAuth code for a token and keeps no Amazon Information. The one thing it does keep, for merchants who opt into our scheduler, is that shop's cron URL and cron token, so it can ask the shop to run its own schedule on time; that is a credential for the shop, not Amazon data, and it is deleted when the merchant opts out. No Amazon Information is shared with any third party.
 
 ### Describe how your organization stores Amazon information at Rest including: (a) encryption methods (AES-128, RSA-2048, etc.), and (b) key management systems.
 

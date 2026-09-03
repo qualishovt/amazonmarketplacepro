@@ -33,12 +33,18 @@ merchant's own database. Each merchant is the data controller for their own
 shop. IntelliPresta is not a processor of Amazon Information in normal
 operation.
 
-**What IntelliPresta operates.** One component: a stateless OAuth relay at
-`intellipresta.com/spapi/`, which completes the LWA authorisation handshake and
-exchanges refresh tokens for short-lived access tokens. Verified by inspection
-to contain no database, no `file_put_contents` or `fopen`, no sessions and no
-cookies. Values exist in memory for the duration of a request and are
-transmitted only over TLS.
+**What IntelliPresta operates.** An OAuth relay at `intellipresta.com/spapi/`,
+which completes the LWA authorisation handshake and exchanges refresh tokens
+for short-lived access tokens, and alongside it an optional scheduler. The
+OAuth path holds nothing: no database, no sessions, no cookies, and values
+exist in memory for one request before being returned over TLS.
+
+The scheduler does hold something, and it is stated here rather than left to be
+discovered. Merchants whose hosting has no crontab can register their shop; we
+then store that shop's cron URL and cron token in a JSON file outside the web
+root, mode 0600, and call the shop every five minutes so its own schedule runs
+on time. No Amazon Information is involved - the shop performs its own sync and
+tells us only how many tasks it ran.
 
 **In-scope systems** are therefore: the relay, and the developer endpoints and
 accounts that administer it. Nothing else.
@@ -146,8 +152,8 @@ One precision, since the questionnaire asks about *network segmentation*: what
 the provider operates is tenant isolation, not a separate network segment for
 this account. On shared hosting those are not the same thing, and the honest
 description is the one above. It is adequate here because the account exposes
-no database and no file server to segment away from — the relay is four PHP
-files and static pages.
+no database and no file server to segment away from — the relay is a handful
+of PHP files, static pages, and one registry file that is not web-reachable.
 
 ## 3. Encryption at Rest 2.4
 
@@ -337,9 +343,12 @@ commit message rather than summarised as "fix".
 **Stated plainly:** the annual penetration test is conducted internally,
 using OWASP ZAP's active scan and the manual checklist in
 `vulnerability-management.md`. It is not an independent assessment and is
-not offered as one. The attack surface is three endpoints with no database
-and no user input beyond an OAuth code and a refresh token. We will
-commission an independent test if the scope of stored data ever changes.
+not offered as one. The attack surface is a small number of endpoints with no
+database, and user input limited to an OAuth code, a refresh token, and a
+scheduler registration. That registration is the one place where input decides
+what the server will connect to, so it is guarded accordingly: HTTPS only,
+private and loopback and link-local addresses refused, and the shop made to
+echo a nonce with its own token before anything is stored.
 
 Recent examples of the process working, all on 1 September 2026: three
 stale SSH keys found and removed; a defect found where the integrity check
