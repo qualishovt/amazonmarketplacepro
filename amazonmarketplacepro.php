@@ -1865,12 +1865,19 @@ class AmazonMarketplacePro extends Module
             'hint'       => null,
         );
 
-        $clientId = Configuration::get('AMZPRO_CLIENT_ID');
-        if (!$clientId) {
-            // A merchant has nowhere to type credentials: they arrive through
-            // Connect to Amazon. Only developer mode has the manual panel.
-            $result['error'] = Configuration::get('AMZPRO_DEV_MODE')
-                ? 'Amazon credentials not configured. Enter them in the Manual SP-API Credentials panel, or use Connect to Amazon.'
+        require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+
+        // What counts as "configured" depends on the mode. In Connect mode
+        // the LWA client ID and secret live on the relay and the shop holds
+        // only the refresh token, so asking for a local client ID there
+        // refused every connected shop. Manual mode is the reverse.
+        $manual = Configuration::get('AMZPRO_AUTH_MODE') === 'manual';
+        $configured = $manual
+            ? (bool) Configuration::get('AMZPRO_CLIENT_ID')
+            : (AmazonSpApiClient::storedRefreshToken() != '');
+        if (!$configured) {
+            $result['error'] = $manual
+                ? 'Amazon credentials not configured. Enter them in the Manual SP-API Credentials panel, or switch to Connect with Amazon.'
                 : 'This shop is not connected to Amazon yet. Press Connect to Amazon above, approve the connection in Seller Central, then run this test again.';
             return $result;
         }
