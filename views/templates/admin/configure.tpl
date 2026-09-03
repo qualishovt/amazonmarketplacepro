@@ -349,7 +349,7 @@
     {* ── Connection Test ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-plug"></i> {l s='Connection Test' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Test your Amazon SP-API credentials. Save settings first if you just changed them.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='Checks the connection made with Connect to Amazon: requests an access token and reads recent orders. Run it after connecting, or whenever a sync reports an authorisation error.' mod='amazonmarketplacepro'}</p>
         <button type="button" id="test-amazon-connection" class="btn btn-primary">
             <i class="icon-refresh"></i> {l s='Test Amazon Connection' mod='amazonmarketplacepro'}
         </button>

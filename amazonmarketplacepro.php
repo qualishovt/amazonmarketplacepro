@@ -1867,7 +1867,11 @@ class AmazonMarketplacePro extends Module
 
         $clientId = Configuration::get('AMZPRO_CLIENT_ID');
         if (!$clientId) {
-            $result['error'] = 'Amazon credentials not configured. Go to the Settings tab and enter your SP-API credentials.';
+            // A merchant has nowhere to type credentials: they arrive through
+            // Connect to Amazon. Only developer mode has the manual panel.
+            $result['error'] = Configuration::get('AMZPRO_DEV_MODE')
+                ? 'Amazon credentials not configured. Enter them in the Manual SP-API Credentials panel, or use Connect to Amazon.'
+                : 'This shop is not connected to Amazon yet. Press Connect to Amazon above, approve the connection in Seller Central, then run this test again.';
             return $result;
         }
 
