@@ -34,24 +34,37 @@
          Basic Edition       repaints the whole admin monochrome
 
        So the module draws its own navigation instead of inheriting
-       whichever look happens to be loaded. Two details make this work,
-       and both are easy to break by accident:
+       whichever look happens to be loaded. Four things make this work, and
+       every one of them is easy to break by accident.
 
        1. The active class lands in a different place per framework.
-          Bootstrap 3 keeps it on the <li>; Bootstrap 4 moves it onto the
-          <a> the first time a tab is clicked. Every rule below therefore
-          matches BOTH "li.active > a" and "li > a.active", so the
-          highlight survives either behaviour.
+          Bootstrap 3 keeps it on the <li>, Bootstrap 4 can move it onto
+          the <a>. Every rule below matches BOTH "li.active > a" and
+          "li > a.active", so the highlight survives either behaviour.
 
        2. PrestaShop 9's theme.css underlines every link inside
           #content.bootstrap, exempting a short list of classes. That
-          selector carries an id, so out-specifying it from a module is
-          not worth the arms race - text-decoration is forced instead,
-          and only on our own navigation.
+          selector carries an id, so out-specifying it from a module is not
+          worth the arms race - text-decoration is forced instead, and only
+          on our own navigation.
+
+       3. Weight. theme.css has ".bootstrap .nav-tabs > li.active > a",
+          which is three classes; a rule with two loses to it silently. The
+          selectors therefore carry .nav-tabs as well as .mkpro-section-tabs.
+
+       4. Hover must not move anything. theme.css styles
+          ".bootstrap .nav-tabs > li > a:hover" - and a pseudo-class counts
+          as a class, so that hover selector outranks a base rule that has
+          one fewer. It sets "border-width: 0 0 3px", so on hover the side
+          borders collapsed and the tab jumped sideways. The fix is not to
+          out-specify one property but to state the whole geometry -
+          padding, margin, border widths, font-weight - identically for
+          idle, hover, focus and active, and let the colour rules below
+          change nothing but colour.
 
        Selectors are scoped to #mkpro-sidebar and ul.nav-tabs.mkpro-section-tabs
-       because the Module Manager renders .nav-tabs of its own on the
-       same page, and those must be left alone. */
+       because the Module Manager renders .nav-tabs of its own on the same
+       page, and those must be left alone. */
 
     #mkpro-sidebar a,
     ul.nav-tabs.mkpro-section-tabs a { text-decoration: none !important; }
@@ -63,20 +76,36 @@
 
     ul.nav-tabs.mkpro-section-tabs { display: block; margin: 0 0 15px; padding: 0;
         list-style: none; border-bottom: 1px solid #d6d4d4; }
-    ul.nav-tabs.mkpro-section-tabs > li { display: inline-block; float: none;
-        margin: 0 2px -1px 0; }
-    ul.nav-tabs.mkpro-section-tabs > li > a { display: inline-block; padding: 8px 15px;
-        line-height: 1.4; color: #6c868e; background: transparent;
-        border: 1px solid transparent; border-radius: 3px 3px 0 0; }
-    ul.nav-tabs.mkpro-section-tabs > li > a:hover { color: #363a41; background: #f6f6f6; }
+    ul.nav-tabs.mkpro-section-tabs > li { display: inline-block; float: none; margin: 0; }
+
+    /* Geometry, identical in every state - see note 4 above. Nothing here
+       may differ between the selectors, or the tabs will shift on hover. */
+    ul.nav-tabs.mkpro-section-tabs > li > a,
+    ul.nav-tabs.mkpro-section-tabs > li > a:hover,
+    ul.nav-tabs.mkpro-section-tabs > li > a:focus,
     ul.nav-tabs.mkpro-section-tabs > li.active > a,
     ul.nav-tabs.mkpro-section-tabs > li.active > a:hover,
     ul.nav-tabs.mkpro-section-tabs > li.active > a:focus,
     ul.nav-tabs.mkpro-section-tabs > li > a.active,
     ul.nav-tabs.mkpro-section-tabs > li > a.active:hover,
     ul.nav-tabs.mkpro-section-tabs > li > a.active:focus {
-        color: #25b2a8; background: #fff; font-weight: 600;
-        border-color: #d6d4d4 #d6d4d4 #fff; }
+        display: inline-block; padding: 10px 16px; margin: 0 2px -1px 0;
+        line-height: 1.4; font-weight: 400; background: transparent;
+        border: 0; border-bottom: 3px solid transparent; border-radius: 0;
+        box-shadow: none; outline: none; }
+
+    /* Colour, and nothing but colour. */
+    ul.nav-tabs.mkpro-section-tabs > li > a { color: #6c868e; }
+    ul.nav-tabs.mkpro-section-tabs > li > a:hover,
+    ul.nav-tabs.mkpro-section-tabs > li > a:focus {
+        color: #363a41; border-bottom-color: #d6d4d4; }
+    ul.nav-tabs.mkpro-section-tabs > li.active > a,
+    ul.nav-tabs.mkpro-section-tabs > li.active > a:hover,
+    ul.nav-tabs.mkpro-section-tabs > li.active > a:focus,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active:hover,
+    ul.nav-tabs.mkpro-section-tabs > li > a.active:focus {
+        color: #25b2a8; border-bottom-color: #25b2a8; }
     ul.nav-tabs.mkpro-section-tabs > li > a .badge { margin-left: 5px; }
 </style>
 
