@@ -1542,7 +1542,7 @@
 
     <div class="panel">
         <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop ↔ Amazon)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Reconcile products by SKU. Now syncs full data: description, bullet points, brand, images, EAN, and categories.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='Reconcile products by SKU, with full data: description, bullet points, brand, images, EAN and categories.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:15px;">
             <button type="button" id="sync-products-ps" class="btn btn-primary">
                 <i class="icon-cloud-upload"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
@@ -2122,7 +2122,7 @@
 
     <div class="panel">
         <div class="panel-heading"><i class="icon-cloud-download"></i> {l s='Import Amazon Orders' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Fetch orders from Amazon and stage them. Now captures shipping costs, tax, buyer address (via RDT), and FBA channel.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='Fetch orders from Amazon and stage them for review, with shipping costs, tax, the buyer address (via RDT) and the FBA or MFN channel.' mod='amazonmarketplacepro'}</p>
         <button type="button" id="import-amazon-orders" class="btn btn-primary">
             <i class="icon-download"></i> {l s='Fetch & Stage Amazon Orders' mod='amazonmarketplacepro'}
         </button>
@@ -2130,7 +2130,7 @@
             <i class="icon-check"></i> {l s='Create PrestaShop Orders' mod='amazonmarketplacepro'}
         </button>
         <p class="help-block" style="margin-top:8px;">
-            {l s='Orders now include: shipping costs, tax, real buyer address, and FBA/MFN channel detection.' mod='amazonmarketplacepro'}
+            {l s='Staged orders become PrestaShop orders with your own carriers, statuses and invoices.' mod='amazonmarketplacepro'}
         </p>
         <div id="amazon-orders-summary" style="display:none; margin-top:15px;"></div>
         <div id="amazon-orders-result" style="display:none; margin-top:10px;"></div>
