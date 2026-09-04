@@ -1541,17 +1541,17 @@
 <div class="tab-pane active" id="tab-products">
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop ↔ Amazon)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Reconcile products by SKU, with full data: description, bullet points, brand, images, EAN and categories.' mod='amazonmarketplacepro'}</p>
+        <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop and Amazon)' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Read both catalogues into a comparison table keyed by SKU, then send the differences. The comparison covers description, bullet points, brand, images, EAN and categories. Reading changes nothing on Amazon.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:15px;">
             <button type="button" id="sync-products-ps" class="btn btn-primary">
-                <i class="icon-cloud-upload"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
+                <i class="icon-refresh"></i> {l s='Read PrestaShop catalogue' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="sync-products-amazon" class="btn btn-default">
-                <i class="icon-cloud-download"></i> {l s='Sync Amazon to PS' mod='amazonmarketplacepro'}
+                <i class="icon-cloud-download"></i> {l s='Read Amazon listings' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="push-products" class="btn btn-warning">
-                <i class="icon-upload"></i> {l s='Push to Amazon' mod='amazonmarketplacepro'}
+                <i class="icon-upload"></i> {l s='Send pending changes, one by one' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="match-catalog" class="btn btn-default">
                 <i class="icon-magic"></i> {l s='Match ASINs by EAN' mod='amazonmarketplacepro'}
@@ -1579,7 +1579,7 @@
 
         <hr />
         <h4>{l s='Update existing products from Amazon' mod='amazonmarketplacepro'}</h4>
-        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run an "Sync Amazon to PS" first so the staged data is current.' mod='amazonmarketplacepro'}</p>
+        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run "Read Amazon listings" first so the comparison is current.' mod='amazonmarketplacepro'}</p>
         <div style="margin-bottom:8px;">
             <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
             <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
@@ -1597,10 +1597,10 @@
     {* ── Bulk Feeds ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-cloud-upload"></i> {l s='Bulk Push (Feeds API)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Send ALL pending listing changes to Amazon in one feed document instead of one call per SKU — the right tool for large catalogs. Amazon processes feeds asynchronously: submit, then check status until done.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='The same pending changes as above, sent as one feed document instead of one call per SKU — the right tool for large catalogues. Amazon processes feeds in the background: send, then check the status until it is done.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:10px;">
             <button type="button" id="feed-submit" class="btn btn-warning">
-                <i class="icon-cloud-upload"></i> {l s='Submit bulk feed' mod='amazonmarketplacepro'}
+                <i class="icon-cloud-upload"></i> {l s='Send pending changes as one feed' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="feed-poll" class="btn btn-default">
                 <i class="icon-refresh"></i> {l s='Check feed status' mod='amazonmarketplacepro'}
@@ -2073,7 +2073,7 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-unlink"></i> {l s='Orphaned Listings' mod='amazonmarketplacepro'}</div>
         <p class="help-block">
-            {l s='Amazon listings that no longer map to a sellable PrestaShop product — the product was deleted, deactivated, or its SKU changed. Run "Sync Amazon to PS" (Products tab) first so this list reflects your live inventory, then fix the products or delete the listings on Amazon.' mod='amazonmarketplacepro'}
+            {l s='Amazon listings that no longer map to a sellable PrestaShop product — the product was deleted, deactivated, or its SKU changed. Run "Read Amazon listings" (Products tab) first so this list reflects your live inventory, then fix the products or delete the listings on Amazon.' mod='amazonmarketplacepro'}
         </p>
         <button type="button" id="orphans-refresh" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Get orphaned products' mod='amazonmarketplacepro'}</button>
         <div id="orphans-result" style="display:none; margin-top:10px;"></div>
