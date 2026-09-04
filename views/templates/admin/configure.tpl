@@ -1540,64 +1540,109 @@
 {* ═══════════════════════ PRODUCTS TAB ═══════════════════════ *}
 <div class="tab-pane active" id="tab-products">
 
+    {* ── PrestaShop → Amazon ── *}
     <div class="panel">
-        <div class="panel-heading"><i class="icon-refresh"></i> {l s='Product Sync (PrestaShop and Amazon)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Read both catalogues into a comparison table keyed by SKU, then send the differences. The comparison covers description, bullet points, brand, images, EAN and categories. Reading changes nothing on Amazon.' mod='amazonmarketplacepro'}</p>
-        <div class="btn-group" style="margin-bottom:15px;">
-            <button type="button" id="sync-products-ps" class="btn btn-primary">
-                <i class="icon-refresh"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
-            </button>
-            <button type="button" id="sync-products-amazon" class="btn btn-default">
-                <i class="icon-cloud-download"></i> {l s='Sync Amazon to PS' mod='amazonmarketplacepro'}
-            </button>
-            <button type="button" id="send-pending" class="btn btn-warning">
-                <i class="icon-upload"></i> {l s='Push to Amazon' mod='amazonmarketplacepro'}
-            </button>
-            <button type="button" id="match-catalog" class="btn btn-default">
-                <i class="icon-magic"></i> {l s='Match ASINs by EAN' mod='amazonmarketplacepro'}
-            </button>
-        </div>
-        <div id="match-catalog-result" style="display:none; margin-bottom:10px;"></div>
+        <div class="panel-heading"><i class="icon-cloud-upload"></i> {l s='PrestaShop → Amazon' mod='amazonmarketplacepro'}</div>
+        <p>{l s='List your products on Amazon and keep price and stock current. The first step only reads and compares; nothing reaches Amazon until you push.' mod='amazonmarketplacepro'}</p>
 
-        <div class="row" style="margin-bottom:10px;">
-            <div class="col-lg-3">
-                <select id="import-catalog-category" class="form-control">
-                    <option value="0">{l s='-- Import into Home category --' mod='amazonmarketplacepro'}</option>
-                    {foreach from=$ps_categories item=cat}
-                        <option value="{$cat.id_category|escape:'htmlall':'UTF-8'}">{$cat.name|escape:'htmlall':'UTF-8'}</option>
-                    {/foreach}
-                </select>
-            </div>
-            <div class="col-lg-5">
-                <button type="button" id="import-catalog" class="btn btn-default">
-                    <i class="icon-download"></i> {l s='Create PS products from Amazon-only listings' mod='amazonmarketplacepro'}
+        <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
+            <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">1</span>
+            <div style="margin-left:12px;flex:1;">
+                <button type="button" id="sync-products-ps" class="btn btn-primary">
+                    <i class="icon-refresh"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
                 </button>
+                <p class="help-block" style="margin:6px 0 0;">{l s='Reads your PrestaShop catalogue and marks, per SKU, what differs from Amazon: description, bullet points, brand, images, EAN and categories. The comparison appears below.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
-        <p class="help-block">{l s='Products found on Amazon but missing in PrestaShop are created as INACTIVE products (title, description, brand, price, stock, images) for review. Prices are imported without a tax group — assign one before activating.' mod='amazonmarketplacepro'}</p>
-        <div id="import-catalog-result" style="display:none; margin-bottom:10px;"></div>
 
-        <hr />
-        <h4>{l s='Update existing products from Amazon' mod='amazonmarketplacepro'}</h4>
-        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run "Sync Amazon to PS" first so the comparison is current.' mod='amazonmarketplacepro'}</p>
-        <div style="margin-bottom:8px;">
-            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
-            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
-            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="quantity" /> {l s='Stock' mod='amazonmarketplacepro'}</label>
-            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="features" /> {l s='Bullet points as features' mod='amazonmarketplacepro'}</label>
-            <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="hide" /> {l s='Deactivate what Amazon no longer carries' mod='amazonmarketplacepro'}</label>
+        <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
+            <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">2</span>
+            <div style="margin-left:12px;flex:1;">
+                <button type="button" id="match-catalog" class="btn btn-default">
+                    <i class="icon-magic"></i> {l s='Match ASINs by EAN' mod='amazonmarketplacepro'}
+                </button>
+                <p class="help-block" style="margin:6px 0 0;">{l s='Optional. For products Amazon already sells, finds the existing page by EAN so you add an offer to it instead of creating a duplicate listing.' mod='amazonmarketplacepro'}</p>
+                <div id="match-catalog-result" style="display:none; margin-top:8px;"></div>
+            </div>
         </div>
-        <button type="button" id="amz-update-run" class="btn btn-warning">
-            <i class="icon-cloud-download"></i> {l s='Update from Amazon' mod='amazonmarketplacepro'}
-        </button>
-        <p class="help-block">{l s='This overwrites PrestaShop data and cannot be undone — back up first. Prices arrive tax-inclusive from Amazon and are converted using each product\'s tax rule.' mod='amazonmarketplacepro'}</p>
-        <div id="amz-update-result" style="display:none; margin-top:10px;"></div>
+
+        <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
+            <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">3</span>
+            <div style="margin-left:12px;flex:1;">
+                <button type="button" id="send-pending" class="btn btn-warning">
+                    <i class="icon-upload"></i> {l s='Push to Amazon' mod='amazonmarketplacepro'}
+                </button>
+                <p class="help-block" style="margin:6px 0 0;">{l s='Sends what the comparison marks as pending. Up to 25 SKUs go one by one and are answered at once; more go as a single feed, which you follow under Feed status.' mod='amazonmarketplacepro'}</p>
+                <div id="amazon-push-result" style="display:none; margin-top:8px;"></div>
+            </div>
+        </div>
+
+        <div id="amazon-products-summary-ps" style="display:none;"></div>
+        <div id="amazon-products-result-ps" style="display:none; margin-top:10px;"></div>
     </div>
 
+    {* ── Amazon → PrestaShop ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-cloud-download"></i> {l s='Amazon → PrestaShop' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Bring Amazon listings into PrestaShop. The first step only reads and compares; choose in the second what to write, after looking at the table.' mod='amazonmarketplacepro'}</p>
+
+        <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
+            <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">1</span>
+            <div style="margin-left:12px;flex:1;">
+                <button type="button" id="sync-products-amazon" class="btn btn-primary">
+                    <i class="icon-cloud-download"></i> {l s='Sync Amazon to PS' mod='amazonmarketplacepro'}
+                </button>
+                <p class="help-block" style="margin:6px 0 0;">{l s='Reads your Amazon listings and marks, per SKU, what PrestaShop lacks or holds differently. The comparison appears below. Nothing is written to PrestaShop yet.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+
+        <div id="amazon-products-summary-amazon" style="display:none;"></div>
+        <div id="amazon-products-result-amazon" style="display:none; margin-bottom:16px;"></div>
+
+        <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
+            <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">2</span>
+            <div style="margin-left:12px;flex:1;">
+                <p style="margin:5px 0 8px;"><strong>{l s='Then write one of two things:' mod='amazonmarketplacepro'}</strong></p>
+
+                <div class="row" style="margin-bottom:6px;">
+                    <div class="col-lg-3">
+                        <select id="import-catalog-category" class="form-control">
+                            <option value="0">{l s='-- Import into Home category --' mod='amazonmarketplacepro'}</option>
+                            {foreach from=$ps_categories item=cat}
+                                <option value="{$cat.id_category|escape:'htmlall':'UTF-8'}">{$cat.name|escape:'htmlall':'UTF-8'}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                    <div class="col-lg-9">
+                        <button type="button" id="import-catalog" class="btn btn-default">
+                            <i class="icon-download"></i> {l s='Create PS products from Amazon-only listings' mod='amazonmarketplacepro'}
+                        </button>
+                    </div>
+                </div>
+                <p class="help-block" style="margin:6px 0 0;">{l s='Products found on Amazon but missing in PrestaShop are created as INACTIVE products (title, description, brand, price, stock, images) in the chosen category, for review. Prices are imported without a tax group — assign one before activating.' mod='amazonmarketplacepro'}</p>
+                <div id="import-catalog-result" style="display:none; margin:8px 0;"></div>
+
+                <hr style="margin:14px 0;" />
+
+                <div style="margin-bottom:8px;">
+                    <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="quantity" /> {l s='Stock' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="features" /> {l s='Bullet points as features' mod='amazonmarketplacepro'}</label>
+                    <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="hide" /> {l s='Deactivate what Amazon no longer carries' mod='amazonmarketplacepro'}</label>
+                </div>
+                <button type="button" id="amz-update-run" class="btn btn-warning">
+                    <i class="icon-cloud-download"></i> {l s='Update from Amazon' mod='amazonmarketplacepro'}
+                </button>
+                <p class="help-block" style="margin:6px 0 0;">{l s='For products that exist in both catalogues, overwrites the ticked fields in PrestaShop with Amazon\'s values. Each is independent — tick only what you want overwritten. This cannot be undone, so back up first. Prices arrive tax-inclusive and are converted using each product\'s tax rule.' mod='amazonmarketplacepro'}</p>
+                <div id="amz-update-result" style="display:none; margin-top:8px;"></div>
+            </div>
+        </div>
+    </div>
     {* ── Bulk Feeds ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-cloud-upload"></i> {l s='Feed status' mod='amazonmarketplacepro'}</div>
-        <p>{l s='A send of more than 25 SKUs goes to Amazon as one feed document, which Amazon processes in the background rather than answering at once. Check here whether it has finished and what it rejected. Smaller sends are answered immediately in the panel above.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='A send of more than 25 SKUs goes to Amazon as one feed document, which Amazon processes in the background rather than answering at once. Check here whether it has finished and what it rejected. Smaller pushes are answered at once under the Push button.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:10px;">
             <button type="button" id="feed-poll" class="btn btn-default">
                 <i class="icon-refresh"></i> {l s='Check feed status' mod='amazonmarketplacepro'}
@@ -1605,9 +1650,6 @@
         </div>
         <div id="feed-result" style="display:none; margin-bottom:10px;"></div>
         <div id="feed-table"></div>
-        <div id="amazon-products-summary" style="display:none;"></div>
-        <div id="amazon-products-result" style="display:none; margin-top:10px;"></div>
-        <div id="amazon-push-result" style="display:none; margin-top:10px;"></div>
     </div>
 
     {* ── Category Mapping ── *}
@@ -3101,9 +3143,12 @@
     (function () {
         var btnPs = document.getElementById('sync-products-ps');
         var btnAz = document.getElementById('sync-products-amazon');
-        var sumBox = document.getElementById('amazon-products-summary');
-        var out = document.getElementById('amazon-products-result');
-        if (!out) return;
+        // Each direction shows its comparison inside its own panel.
+        var boxes = {
+            ps: { sum: document.getElementById('amazon-products-summary-ps'), out: document.getElementById('amazon-products-result-ps') },
+            amazon: { sum: document.getElementById('amazon-products-summary-amazon'), out: document.getElementById('amazon-products-result-amazon') }
+        };
+        if (!boxes.ps.out || !boxes.amazon.out) return;
 
         var urls = {
             ps: '{$ajax_sync_products_ps_url|escape:'javascript':'UTF-8'}',
@@ -3140,6 +3185,7 @@
         }
 
         function run(dir) {
+            var sumBox = boxes[dir].sum, out = boxes[dir].out;
             setBusy(true);
             sumBox.style.display = 'none';
             out.style.display = 'block';
