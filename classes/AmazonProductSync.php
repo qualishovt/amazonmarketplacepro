@@ -1405,7 +1405,7 @@ class AmazonProductSync
         }
 
         if (empty($rows)) {
-            $this->notices[] = 'Nothing to send. Run "Read PrestaShop catalogue" first, '
+            $this->notices[] = 'Nothing to push. Run "Sync PS to Amazon" first, '
                 . 'and make sure there are ps_only / conflict rows to send.'
                 . ($onlyWithAsin ? ' Note: "Export only products with ASIN" is enabled.' : '');
         }

@@ -1545,13 +1545,13 @@
         <p>{l s='Read both catalogues into a comparison table keyed by SKU, then send the differences. The comparison covers description, bullet points, brand, images, EAN and categories. Reading changes nothing on Amazon.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:15px;">
             <button type="button" id="sync-products-ps" class="btn btn-primary">
-                <i class="icon-refresh"></i> {l s='Read PrestaShop catalogue' mod='amazonmarketplacepro'}
+                <i class="icon-refresh"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="sync-products-amazon" class="btn btn-default">
-                <i class="icon-cloud-download"></i> {l s='Read Amazon listings' mod='amazonmarketplacepro'}
+                <i class="icon-cloud-download"></i> {l s='Sync Amazon to PS' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="send-pending" class="btn btn-warning">
-                <i class="icon-upload"></i> {l s='Send pending changes' mod='amazonmarketplacepro'}
+                <i class="icon-upload"></i> {l s='Push to Amazon' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="match-catalog" class="btn btn-default">
                 <i class="icon-magic"></i> {l s='Match ASINs by EAN' mod='amazonmarketplacepro'}
@@ -1579,7 +1579,7 @@
 
         <hr />
         <h4>{l s='Update existing products from Amazon' mod='amazonmarketplacepro'}</h4>
-        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run "Read Amazon listings" first so the comparison is current.' mod='amazonmarketplacepro'}</p>
+        <p class="help-block">{l s='For products that already exist in both catalogues, pull selected data back from Amazon. Each operation is independent — tick only what you actually want overwritten. Run "Sync Amazon to PS" first so the comparison is current.' mod='amazonmarketplacepro'}</p>
         <div style="margin-bottom:8px;">
             <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
             <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
@@ -2070,7 +2070,7 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-unlink"></i> {l s='Orphaned Listings' mod='amazonmarketplacepro'}</div>
         <p class="help-block">
-            {l s='Amazon listings that no longer map to a sellable PrestaShop product — the product was deleted, deactivated, or its SKU changed. Run "Read Amazon listings" (Products tab) first so this list reflects your live inventory, then fix the products or delete the listings on Amazon.' mod='amazonmarketplacepro'}
+            {l s='Amazon listings that no longer map to a sellable PrestaShop product — the product was deleted, deactivated, or its SKU changed. Run "Sync Amazon to PS" (Products tab) first so this list reflects your live inventory, then fix the products or delete the listings on Amazon.' mod='amazonmarketplacepro'}
         </p>
         <button type="button" id="orphans-refresh" class="btn btn-primary"><i class="icon-refresh"></i> {l s='Get orphaned products' mod='amazonmarketplacepro'}</button>
         <div id="orphans-result" style="display:none; margin-top:10px;"></div>

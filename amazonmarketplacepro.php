@@ -1538,7 +1538,7 @@ class AmazonMarketplacePro extends Module
             'success' => true,
             'orphans' => $orphans,
             'notice' => 'Orphans are computed from the last Amazon-side sync. '
-                . 'Run "Read Amazon listings" (Products tab) first for an up-to-date list.',
+                . 'Run "Sync Amazon to PS" (Products tab) first for an up-to-date list.',
         );
     }
 
@@ -2362,7 +2362,7 @@ class AmazonMarketplacePro extends Module
                 'success' => true,
                 'method' => 'none',
                 'pending' => 0,
-                'notices' => array('Nothing to send. Run "Read PrestaShop catalogue" first; it marks what differs from Amazon.'),
+                'notices' => array('Nothing to push. Run "Sync PS to Amazon" first; it marks what differs from Amazon.'),
             );
         }
 
