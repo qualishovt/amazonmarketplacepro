@@ -1536,7 +1536,7 @@ class AmazonMarketplacePro extends Module
             'success' => true,
             'orphans' => $orphans,
             'notice' => 'Orphans are computed from the last Amazon-side sync. '
-                . 'Run "Sync Amazon to PS" (Products tab) first for an up-to-date list.',
+                . 'Run "Read Amazon listings" (Products tab) first for an up-to-date list.',
         );
     }
 
