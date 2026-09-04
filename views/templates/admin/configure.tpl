@@ -1602,8 +1602,9 @@
         <div class="mkpro-step" style="display:flex;align-items:flex-start;margin-bottom:16px;">
             <span style="display:inline-block;flex:none;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:13px;background:#25b2a8;color:#fff;font-weight:700;margin-top:5px;">2</span>
             <div style="margin-left:12px;flex:1;">
-                <p style="margin:5px 0 8px;"><strong>{l s='Then write one of two things:' mod='amazonmarketplacepro'}</strong></p>
+                <p style="margin:5px 0 8px;"><strong>{l s='Pick what to do with the comparison. A creates what PrestaShop lacks; B changes what it already has.' mod='amazonmarketplacepro'}</strong></p>
 
+                <p style="margin:0 0 6px;"><strong>A.</strong> {l s='Create the products PrestaShop does not have' mod='amazonmarketplacepro'}</p>
                 <div class="row" style="margin-bottom:6px;">
                     <div class="col-lg-3">
                         <select id="import-catalog-category" class="form-control">
@@ -1624,6 +1625,7 @@
 
                 <hr style="margin:14px 0;" />
 
+                <p style="margin:0 0 6px;"><strong>B.</strong> {l s='Update the products PrestaShop already has' mod='amazonmarketplacepro'}</p>
                 <div style="margin-bottom:8px;">
                     <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="content" /> {l s='Title, description & brand' mod='amazonmarketplacepro'}</label>
                     <label class="checkbox-inline"><input type="checkbox" class="amz-update-op" value="price" /> {l s='Price' mod='amazonmarketplacepro'}</label>
