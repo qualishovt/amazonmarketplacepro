@@ -1327,6 +1327,23 @@ class AmazonProductSync
      *
      * @return array Summary + per-SKU results
      */
+    /**
+     * How many SKUs the next send would pick up. Same selection as
+     * pushToAmazon() and collectFeedMessages(), so the caller can choose
+     * between them by size without either path disagreeing about the set.
+     */
+    public function countPending()
+    {
+        $this->ensureTables();
+        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
+
+        return (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
+             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+            . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '')
+        );
+    }
+
     public function pushToAmazon($limit = 25)
     {
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
@@ -1388,7 +1405,7 @@ class AmazonProductSync
         }
 
         if (empty($rows)) {
-            $this->notices[] = 'Nothing to push. Run "Sync PrestaShop -> Amazon" first, '
+            $this->notices[] = 'Nothing to send. Run "Read PrestaShop catalogue" first, '
                 . 'and make sure there are ps_only / conflict rows to send.'
                 . ($onlyWithAsin ? ' Note: "Export only products with ASIN" is enabled.' : '');
         }

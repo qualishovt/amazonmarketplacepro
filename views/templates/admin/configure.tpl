@@ -1550,8 +1550,8 @@
             <button type="button" id="sync-products-amazon" class="btn btn-default">
                 <i class="icon-cloud-download"></i> {l s='Read Amazon listings' mod='amazonmarketplacepro'}
             </button>
-            <button type="button" id="push-products" class="btn btn-warning">
-                <i class="icon-upload"></i> {l s='Send pending changes, one by one' mod='amazonmarketplacepro'}
+            <button type="button" id="send-pending" class="btn btn-warning">
+                <i class="icon-upload"></i> {l s='Send pending changes' mod='amazonmarketplacepro'}
             </button>
             <button type="button" id="match-catalog" class="btn btn-default">
                 <i class="icon-magic"></i> {l s='Match ASINs by EAN' mod='amazonmarketplacepro'}
@@ -1596,12 +1596,9 @@
 
     {* ── Bulk Feeds ── *}
     <div class="panel">
-        <div class="panel-heading"><i class="icon-cloud-upload"></i> {l s='Bulk Push (Feeds API)' mod='amazonmarketplacepro'}</div>
-        <p>{l s='The same pending changes as above, sent as one feed document instead of one call per SKU — the right tool for large catalogues. Amazon processes feeds in the background: send, then check the status until it is done.' mod='amazonmarketplacepro'}</p>
+        <div class="panel-heading"><i class="icon-cloud-upload"></i> {l s='Feed status' mod='amazonmarketplacepro'}</div>
+        <p>{l s='A send of more than 25 SKUs goes to Amazon as one feed document, which Amazon processes in the background rather than answering at once. Check here whether it has finished and what it rejected. Smaller sends are answered immediately in the panel above.' mod='amazonmarketplacepro'}</p>
         <div class="btn-group" style="margin-bottom:10px;">
-            <button type="button" id="feed-submit" class="btn btn-warning">
-                <i class="icon-cloud-upload"></i> {l s='Send pending changes as one feed' mod='amazonmarketplacepro'}
-            </button>
             <button type="button" id="feed-poll" class="btn btn-default">
                 <i class="icon-refresh"></i> {l s='Check feed status' mod='amazonmarketplacepro'}
             </button>
@@ -3058,11 +3055,10 @@
 
     /* ──────── BULK FEEDS ──────── */
     (function () {
-        var btnSubmit = document.getElementById('feed-submit');
         var btnPoll = document.getElementById('feed-poll');
         var out = document.getElementById('feed-result');
         var tableWrap = document.getElementById('feed-table');
-        if (!btnSubmit || !btnPoll) return;
+        if (!btnPoll) return;
 
         function renderFeeds(feeds) {
             if (!feeds || !feeds.length) { tableWrap.innerHTML = ''; return; }
@@ -3079,30 +3075,12 @@
             }
             tableWrap.innerHTML = h + '</tbody></table>';
         }
+        window.mkproRenderFeeds = renderFeeds;
 
         function show(cls, msg) {
             out.style.display = 'block';
             out.innerHTML = '<div class="alert alert-'+cls+'">'+msg+'</div>';
         }
-
-        btnSubmit.addEventListener('click', function () {
-            btnSubmit.disabled = true;
-            show('info', 'Building and submitting the feed...');
-            ajaxPost('{$ajax_submit_feed_url|escape:'javascript':'UTF-8'}', function (data) {
-                btnSubmit.disabled = false;
-                if (!data) { show('danger', 'Unexpected response'); return; }
-                if (data.error) {
-                    var msg = esc(data.error);
-                    if (data.skipped && data.skipped.length) msg += ' &middot; '+esc(data.skipped.length)+' SKU(s) skipped';
-                    show('danger', msg); return;
-                }
-                var msg = 'Feed '+esc(data.feed_id)+' submitted with '+esc(data.messages)+' message(s).';
-                if (data.skipped && data.skipped.length) msg += ' '+esc(data.skipped.length)+' SKU(s) skipped (no category mapping).';
-                if (data.notice) msg += ' '+esc(data.notice);
-                show('success', msg);
-                renderFeeds(data.feeds);
-            });
-        });
 
         btnPoll.addEventListener('click', function () {
             btnPoll.disabled = true;
@@ -3189,22 +3167,36 @@
         if (btnAz) btnAz.addEventListener('click', function(){ run('amazon'); });
     })();
 
-    /* ──────── PUSH TO AMAZON ──────── */
+    /* ──────── SEND PENDING CHANGES ────────
+       One button. The server decides between SKU-by-SKU calls and a feed
+       by how many SKUs are pending, and says which it chose. */
     (function () {
-        var btn = document.getElementById('push-products');
+        var btn = document.getElementById('send-pending');
         var out = document.getElementById('amazon-push-result');
         if (!btn || !out) return;
 
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Submitting products to Amazon...</div>';
+            out.innerHTML = '<div class="alert alert-info">Sending pending changes to Amazon...</div>';
 
-            ajaxPost('{$ajax_push_products_url|escape:'javascript':'UTF-8'}', function (data) {
+            ajaxPost('{$ajax_send_pending_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
                 var html = '';
-                if (data.summary) {
+
+                if (data.method === 'feed') {
+                    if (data.error) {
+                        html += '<div class="alert alert-danger">'+esc(data.error)
+                              + (data.skipped && data.skipped.length ? ' &middot; '+esc(data.skipped.length)+' SKU(s) skipped' : '')+'</div>';
+                    } else {
+                        html += '<div class="alert alert-success">'+esc(data.pending)+' SKUs pending, so they went as one feed. Feed '+esc(data.feed_id)
+                              + ' submitted with '+esc(data.messages)+' message(s). Amazon processes it in the background: use Check feed status below.'
+                              + (data.skipped && data.skipped.length ? ' '+esc(data.skipped.length)+' SKU(s) skipped (no category mapping).' : '')
+                              + (data.notice ? ' '+esc(data.notice) : '')+'</div>';
+                        if (window.mkproRenderFeeds) window.mkproRenderFeeds(data.feeds);
+                    }
+                } else if (data.summary) {
                     var s = data.summary;
                     html += '<div class="alert alert-success">'+esc(s.candidates)+' candidates &middot; '+esc(s.pushed)+' accepted &middot; '+esc(s.failed)+' failed</div>';
                 }
@@ -3217,7 +3209,7 @@
                     }
                     html += '</tbody></table>';
                 }
-                out.innerHTML = html || '<div class="alert alert-info">No products eligible to push.</div>';
+                out.innerHTML = html || '<div class="alert alert-info">Nothing to send.</div>';
             });
         });
     })();

@@ -434,6 +434,7 @@ class AmazonMarketplacePro extends Module
             'ajaxSyncProductsAmazon' => 'runProductSync',
             'ajaxListAmazonProducts' => 'runListAmazonProducts',
             'ajaxPushProducts'       => 'runPushProducts',
+            'ajaxSendPending'        => 'runSendPending',
             'ajaxImportReturns'      => 'runImportReturns',
             'ajaxProcessReturns'     => 'runProcessReturns',
             'ajaxSaveCategoryMap'    => 'runSaveCategoryMap',
@@ -791,6 +792,7 @@ class AmazonMarketplacePro extends Module
             'ajax_sync_products_amazon_url' => $baseUrl . '&ajaxSyncProductsAmazon=1',
             'ajax_list_amazon_products_url' => $baseUrl . '&ajaxListAmazonProducts=1',
             'ajax_push_products_url'        => $baseUrl . '&ajaxPushProducts=1',
+            'ajax_send_pending_url'         => $baseUrl . '&ajaxSendPending=1',
             'ajax_import_returns_url'       => $baseUrl . '&ajaxImportReturns=1',
             'ajax_process_returns_url'      => $baseUrl . '&ajaxProcessReturns=1',
             'ajax_save_category_map_url'    => $baseUrl . '&ajaxSaveCategoryMap=1',
@@ -2332,6 +2334,48 @@ class AmazonMarketplacePro extends Module
             'summary' => $summary,
             'notices' => $sync->getNotices(),
         );
+    }
+
+    /** Above this many pending SKUs a send goes as one feed document. */
+    const SEND_AS_FEED_ABOVE = 25;
+
+    /**
+     * The one Send button. Small batches go SKU by SKU through the Listings
+     * API, which answers at once; anything larger goes as a feed, which
+     * Amazon processes in the background. The merchant used to choose
+     * between two buttons, and the only right answer was the size of the
+     * batch, which the module knows and the merchant had to guess.
+     */
+    protected function runSendPending()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
+
+        $sync = new AmazonProductSync(
+            $this->buildAmazonClient(),
+            $this->getMarketplaceId(),
+            Configuration::get('AMZPRO_SELLER_ID')
+        );
+        $pending = $sync->countPending();
+
+        if ($pending === 0) {
+            return array(
+                'success' => true,
+                'method' => 'none',
+                'pending' => 0,
+                'notices' => array('Nothing to send. Run "Read PrestaShop catalogue" first; it marks what differs from Amazon.'),
+            );
+        }
+
+        if ($pending > self::SEND_AS_FEED_ABOVE) {
+            $result = $this->runSubmitFeed();
+            $result['method'] = 'feed';
+        } else {
+            $result = $this->runPushProducts();
+            $result['method'] = 'listings';
+        }
+        $result['pending'] = $pending;
+
+        return $result;
     }
 
     /* ─────────────────── Feature: Returns/Refunds ─────────────────── */
