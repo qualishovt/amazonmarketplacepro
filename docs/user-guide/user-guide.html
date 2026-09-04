@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amazon Marketplace Pro — User Guide</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  :root { --brand: #25b2a8; --dark: #1d5c56; --ink: #23282d; --muted: #667077; --line: #dfe4e6; --soft: #f3f8f8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--dark); font-weight: 700; line-height: 1.25; page-break-after: avoid; }
+  h1 { font-size: 22pt; margin: 0 0 6pt; padding-bottom: 6pt; border-bottom: 3px solid var(--brand); page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 15pt; margin: 20pt 0 6pt; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; }
+  h4 { font-size: 10.5pt; margin: 10pt 0 2pt; color: var(--ink); }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 20pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #f1f3f4; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: #f1f3f4; padding: 8pt 10pt; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin: 4pt 0 10pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 12pt; font-size: 9.5pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 5pt 7pt; vertical-align: top; text-align: left; }
+  th { background: var(--soft); color: var(--dark); font-weight: 700; }
+  td.k { white-space: nowrap; font-weight: 600; width: 32%; }
+  .note { border-left: 4px solid var(--brand); background: var(--soft); padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .warn { border-left: 4px solid #d9822b; background: #fff7ee; padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .note b, .warn b { color: var(--dark); }
+  figure { margin: 10pt 0 14pt; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 3pt; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps li { counter-increment: s; position: relative; padding-left: 30pt; margin-bottom: 6pt; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 1pt; width: 20pt; height: 20pt; border-radius: 10pt; background: var(--brand); color: #fff; font-weight: 700; text-align: center; line-height: 20pt; font-size: 9.5pt; }
+  .btn { display: inline-block; border: 1px solid #b9c2c6; border-radius: 3px; padding: 0 5px; font-size: 9.5pt; background: #fafbfb; white-space: nowrap; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .kicker { color: var(--brand); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10pt; }
+  .cover h1 { font-size: 34pt; border: 0; margin: 6pt 0 10pt; page-break-before: auto; }
+  .cover .sub { font-size: 14pt; color: var(--muted); margin-bottom: 30pt; }
+  .cover .meta { font-size: 10pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10pt; }
+  .cover img.logo { width: 90px; margin-bottom: 20pt; }
+  .toc ol { list-style: none; padding-left: 0; column-count: 2; column-gap: 24pt; }
+  .toc li { margin-bottom: 4pt; break-inside: avoid; }
+  .toc li.l2 { padding-left: 16pt; color: var(--muted); font-size: 9.5pt; }
+  .toc .n { display: inline-block; width: 22pt; color: var(--brand); font-weight: 700; }
+  .cols { column-count: 2; column-gap: 20pt; }
+  .small { font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────── COVER ───────────────────────── -->
+<div class="cover">
+  <img class="logo" src="img/logo.png" alt="">
+  <div class="kicker">PrestaShop module · version 1.5.0</div>
+  <h1>Amazon Marketplace Pro</h1>
+  <div class="sub">User guide: what the module does, how each screen works, and how to run it unattended.</div>
+  <div class="meta">
+    IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
+    For PrestaShop 1.6 through 9 · Document date: 4 September 2026
+  </div>
+</div>
+
+<!-- ───────────────────────── TOC ───────────────────────── -->
+<h1>Contents</h1>
+<div class="toc">
+<ol>
+  <li><span class="n">1</span>What the module does</li>
+  <li class="l2">1.1 Where your data lives</li>
+  <li class="l2">1.2 Requirements</li>
+  <li><span class="n">2</span>Getting started in five steps</li>
+  <li><span class="n">3</span>How the screen is organised</li>
+  <li><span class="n">4</span>Settings</li>
+  <li class="l2">4.1 Connection</li>
+  <li class="l2">4.2 Listings</li>
+  <li class="l2">4.3 Sync</li>
+  <li class="l2">4.4 Shipping</li>
+  <li class="l2">4.5 Orders</li>
+  <li class="l2">4.6 Messaging</li>
+  <li><span class="n">5</span>Catalog</li>
+  <li class="l2">5.1 Products: PrestaShop → Amazon</li>
+  <li class="l2">5.2 Products: Amazon → PrestaShop</li>
+  <li class="l2">5.3 Feed status and Category Mapping</li>
+  <li class="l2">5.4 Listing Profiles</li>
+  <li class="l2">5.5 Markup &amp; Rules</li>
+  <li class="l2">5.6 Product Rules, Queue, Orphans</li>
+  <li><span class="n">6</span>The Amazon tab on a product</li>
+  <li><span class="n">7</span>Orders</li>
+  <li class="l2">7.1 Importing orders</li>
+  <li class="l2">7.2 Pending orders and reserved stock</li>
+  <li class="l2">7.3 Returns and cancellations</li>
+  <li class="l2">7.4 Buyer messaging</li>
+  <li><span class="n">8</span>Fulfilment</li>
+  <li><span class="n">9</span>Money</li>
+  <li><span class="n">10</span>Insights</li>
+  <li><span class="n">11</span>System</li>
+  <li class="l2">11.1 Automation</li>
+  <li class="l2">11.2 The scheduled tasks</li>
+  <li class="l2">11.3 Tools</li>
+  <li class="l2">11.4 Logs</li>
+  <li><span class="n">12</span>Buyer data and compliance</li>
+  <li><span class="n">13</span>Troubleshooting</li>
+  <li><span class="n">14</span>Glossary</li>
+</ol>
+</div>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<h1>1. What the module does</h1>
+<p>Amazon Marketplace Pro connects a PrestaShop store to Amazon through Amazon's official Selling Partner API, so that you can run your Amazon business from the back office you already use. It covers the whole selling cycle:</p>
+<ul>
+  <li><b>Listing.</b> Your PrestaShop products become Amazon listings. The module downloads Amazon's attribute requirements for each product type and turns them into a form (a <i>profile</i>), so listings are built with the right shape. PrestaShop combinations become Amazon variations.</li>
+  <li><b>Price and stock.</b> Prices with markups, rounding, sale windows and business (B2B) tiers; quantities with a safety buffer. Only what changed is sent, so large catalogues stay within Amazon's limits.</li>
+  <li><b>Orders.</b> Amazon orders become PrestaShop orders with your carriers, statuses, invoices and taxes. Shipment confirmations and tracking go back to Amazon automatically. Orders you ship and orders Amazon ships (FBA) are told apart.</li>
+  <li><b>Overselling protection.</b> Stock for Amazon checkouts that are not paid yet can be reserved in PrestaShop and released if the purchase never completes.</li>
+  <li><b>Money.</b> Competitive prices and the Buy Box are tracked and can drive repricing rules; fees are recorded per order; settlement and inventory reports are collected.</li>
+  <li><b>Compliance.</b> GPSR responsible-person details and country of origin, VAT-aware order import, VAT invoice upload, and automatic deletion of buyer data after the retention period Amazon requires.</li>
+  <li><b>Automation.</b> Every recurring job is a scheduled task with its own interval, run either by your hosting's cron or by the IntelliPresta scheduler.</li>
+</ul>
+
+<h2>1.1 Where your data lives</h2>
+<p>The module runs entirely inside your PrestaShop installation and calls Amazon directly from your server. Product, order and buyer data is stored only in your own database.</p>
+<p>IntelliPresta operates one small service at <code>intellipresta.com</code>. It does two things and nothing else:</p>
+<ul>
+  <li>It completes the "Connect to Amazon" handshake and hands the resulting token to your shop. It keeps no product, order or buyer data.</li>
+  <li>If you choose the IntelliPresta scheduler (section 11.1), it stores your shop's cron address and cron token so it can call your shop every five minutes. That is opt-in and removed when you switch back to your own cron.</li>
+</ul>
+
+<h2>1.2 Requirements</h2>
+<table>
+  <tr><td class="k">PrestaShop</td><td>1.6 through 9. The interface adapts to the 1.6, 1.7–9 and "Basic Edition" back-office designs.</td></tr>
+  <tr><td class="k">Amazon account</td><td>A Professional selling plan, active, on any of the 23 supported marketplaces (Europe, North America, Brazil, the Middle East, Africa, Japan, Australia, Singapore, India).</td></tr>
+  <tr><td class="k">Hosting</td><td>PHP with cURL. A crontab is recommended; if your hosting has none, the IntelliPresta scheduler covers it. The optional buyer-reply feature needs the PHP IMAP extension.</td></tr>
+  <tr><td class="k">Catalogue</td><td>Every product and combination needs a reference (SKU) and a barcode (EAN or UPC). The Catalogue Check tool (section 11.3) finds the ones that are missing.</td></tr>
+</table>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<h1>2. Getting started in five steps</h1>
+<ol class="steps">
+  <li><b>Install the module</b> from Modules &gt; Module Manager, then open Configure. All of the module's screens are on that one page, grouped in a sidebar.</li>
+  <li><b>Choose your marketplace</b> on Settings &gt; Connection, in the Marketplace panel, and press <span class="btn">Save Settings</span>. The marketplace decides the Amazon site, the currency and the listing language.</li>
+  <li><b>Connect.</b> Press <span class="btn">Connect to Amazon</span>. You are sent to Seller Central to approve the connection, then returned to the shop. There are no credentials to copy. You can revoke the authorisation from Seller Central at any time, or press <span class="btn">Disconnect</span> in the module.</li>
+  <li><b>Check the connection.</b> Press <span class="btn">Test Amazon Connection</span>. It requests an access token and reads your recent orders, printing each step. Section 13 explains the possible results.</li>
+  <li><b>Turn on automation.</b> On System &gt; Automation, either add the one cron line shown to your hosting control panel, or register with the IntelliPresta scheduler. Then switch on the tasks you need in the table below it. Section 11 covers this in detail.</li>
+</ol>
+<p>After that, the usual order of work is: check your catalogue references (11.3), create a listing profile for each product family (5.4), run the two-step sync on Catalog &gt; Products (5.1), and let the scheduled tasks keep everything current.</p>
+
+<figure>
+  <img src="img/01-settings-connection.png" alt="">
+  <figcaption>Settings &gt; Connection after connecting. The seller ID shown is a placeholder.</figcaption>
+</figure>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<h1>3. How the screen is organised</h1>
+<p>The Configure page has a sidebar with seven groups. Each group has sub-tabs across the top, and each sub-tab holds one or more panels. The module remembers which group you were on when you reload or save.</p>
+<table>
+  <tr><th style="width:18%">Group</th><th style="width:34%">Sub-tabs</th><th>Used for</th></tr>
+  <tr><td>Settings</td><td>Connection, Listings, Sync, Shipping, Orders, Messaging</td><td>Everything you configure once. One <span class="btn">Save Settings</span> button writes all six sub-tabs together.</td></tr>
+  <tr><td>Catalog</td><td>Products, Profiles, Markup &amp; Rules, Product Rules, Queue, Orphans</td><td>Getting products onto Amazon and keeping the two catalogues in step.</td></tr>
+  <tr><td>Orders</td><td>Orders, Pending Orders, Returns</td><td>Bringing Amazon orders in, handling stock shortages, returns and buyer messages.</td></tr>
+  <tr><td>Fulfilment</td><td>FBA, Multi-Account</td><td>Amazon-fulfilled stock, Multi-Channel Fulfilment, additional marketplaces.</td></tr>
+  <tr><td>Money</td><td>Repricing, Fees, Promotions</td><td>Competitive pricing, Amazon fees, promotions.</td></tr>
+  <tr><td>Insights</td><td>Reports</td><td>Requesting and downloading Amazon reports.</td></tr>
+  <tr><td>System</td><td>Automation, Tools, Logs</td><td>The schedule, catalogue tools, deletions, feed payloads, the activity log.</td></tr>
+</table>
+<div class="note"><b>Manual actions and scheduled tasks do the same things.</b> Most buttons in Catalog, Orders, Fulfilment and Money have a scheduled-task twin (section 11.2). Press the button to do it now and watch the result; switch the task on to have it happen on a timer.</div>
+
+<!-- ───────────────────────── 4 SETTINGS ───────────────────────── -->
+<h1>4. Settings</h1>
+<p>The Settings group is one form. Change anything on any of its six sub-tabs, then press <span class="btn">Save Settings</span> at the bottom.</p>
+
+<h2>4.1 Connection</h2>
+<h3>Amazon Connection</h3>
+<p>Shows whether the shop is connected and to which seller. <span class="btn">Connect to Amazon</span> starts the approval flow in Seller Central; <span class="btn">Disconnect</span> clears the stored authorisation. Select the marketplace before connecting, since the consent page depends on it.</p>
+<h3>Marketplace</h3>
+<p><b>Amazon Marketplace.</b> The Amazon site this shop sells on. Additional marketplaces are added under Fulfilment &gt; Multi-Account (section 8).</p>
+<h3>Connection Test</h3>
+<p><span class="btn">Test Amazon Connection</span> checks the connection made with Connect to Amazon: it requests an access token and reads recent orders, printing each step. Run it after connecting, or whenever a sync reports an authorisation error. See section 13 for what each outcome means.</p>
+
+<h2>4.2 Listings</h2>
+<figure>
+  <img src="img/02-settings-listings.png" alt="">
+  <figcaption>Settings &gt; Listings.</figcaption>
+</figure>
+<h3>Listing Defaults</h3>
+<table>
+  <tr><td class="k">Item condition</td><td>Condition sent with every listing: New, the four Used grades, or Refurbished. A product can override it on its Amazon tab (section 6).</td></tr>
+  <tr><td class="k">Stock buffer</td><td>Units kept back from Amazon. With buffer 2 and 10 in stock, Amazon sees 8. Prevents overselling when several channels share stock.</td></tr>
+  <tr><td class="k">Listing language</td><td>Language of titles, descriptions and bullet points. "Auto" matches the marketplace (Germany gets German, France gets French) and needs that language installed in the shop; otherwise the shop default is used.</td></tr>
+  <tr><td class="k">When out of stock</td><td>Publish quantity 0 (the listing stays, shown as unavailable) or delete the listing from Amazon.</td></tr>
+  <tr><td class="k">Shipping template name</td><td>Optional. The exact name of a Seller Central shipping template; every offer is assigned to it. Ranges by price or weight are set under Shipping (4.4).</td></tr>
+  <tr><td class="k">Amazon Business (B2B) price</td><td>Optional percentage off your normal price, sent as the business price for Amazon Business buyers. 0 disables it.</td></tr>
+  <tr><td class="k">B2B quantity discounts from group</td><td>A PrestaShop customer group whose specific prices with a minimum quantity above 1 become Amazon Business volume tiers, up to five.</td></tr>
+</table>
+<h3>SKU &amp; Export Filters</h3>
+<table>
+  <tr><td class="k">SKU source</td><td>Which PrestaShop field becomes the Amazon SKU: reference, EAN, or supplier reference. Products with an empty source field are not exported.</td></tr>
+  <tr><td class="k">SKU prefix</td><td>Added in front of the SKU with a dash: prefix AMZ makes AMZ-REF123.</td></tr>
+  <tr><td class="k">Price range, Quantity min.</td><td>Export only products whose final price falls in the range and whose stock is at least the minimum. 0 disables a bound.</td></tr>
+  <tr><td class="k">Use specific prices</td><td>Apply PrestaShop specific prices, optionally those of one customer group, before markup.</td></tr>
+  <tr><td class="k">Report e-mail</td><td>Scheduled runs send a short report here. Empty means no reports.</td></tr>
+</table>
+<div class="warn"><b>Changing the SKU source on a live catalogue creates new listings</b> under the new SKUs. Decide it before you publish.</div>
+
+<h2>4.3 Sync</h2>
+<figure>
+  <img src="img/03-settings-sync.png" alt="">
+  <figcaption>Settings &gt; Sync.</figcaption>
+</figure>
+<h3>Sync Options</h3>
+<table>
+  <tr><td class="k">Listings sync mode</td><td>Normal sends full listing data. "Price only" and "Quantity only" send small partial updates, much faster for large catalogues.</td></tr>
+  <tr><td class="k">Force all quantities to zero</td><td>Emergency switch for holidays or a stock freeze. Listings stay online and show unavailable.</td></tr>
+  <tr><td class="k">Send images</td><td>Amazon fetches every image URL you send, which slows large pushes. Many merchants send images on the first publish, then switch this off.</td></tr>
+  <tr><td class="k">Send full product data</td><td>Yes sends title, description, bullets, brand and images. No sends the offer only (price and stock), which never rewrites listing content. Use No once listings are established or when you sell on someone else's catalogue page.</td></tr>
+  <tr><td class="k">Send the entire catalogue</td><td>Ignores the delta window for a first publish or after a setting that affects every listing. Switch it back off afterwards.</td></tr>
+  <tr><td class="k">Export only products with ASIN</td><td>Restricts pushes to products already matched to an Amazon page.</td></tr>
+  <tr><td class="k">Limit export to N lines</td><td>Caps every push batch at 100 to 1500 lines.</td></tr>
+  <tr><td class="k">Treat EAN-13 field as</td><td>Choose UPC if you store 12-digit US barcodes in the EAN field.</td></tr>
+  <tr><td class="k">Export only products updated in the last</td><td>The delta window: 1 to 24 hours. Strongly recommended for large catalogues. Products touched by rule changes are included through the Queue (5.6).</td></tr>
+  <tr><td class="k">Delete queue entries after</td><td>Retention of sent queue entries: 1, 7 or 15 days.</td></tr>
+  <tr><td class="k">Price rounding</td><td>Nearest cent, "smart" up to .99, or whole numbers. Applied after markups to every exported price.</td></tr>
+  <tr><td class="k">Send sale prices</td><td>A specific price with a start and an end date becomes an Amazon sale with the same window, so promotions can be pushed in advance.</td></tr>
+  <tr><td class="k">Send list price</td><td>Sends the pre-discount price as the crossed-out list price when it is higher than the exported price.</td></tr>
+  <tr><td class="k">Preorder</td><td>Products with a future availability date are listed with that restock date.</td></tr>
+  <tr><td class="k">Condition mapping</td><td>Maps PrestaShop's three conditions onto Amazon's richer set.</td></tr>
+  <tr><td class="k">Listing title format</td><td>Product name as-is, or "Brand - Product name - Attributes" per Amazon's guideline. The brand is skipped when the name already starts with it.</td></tr>
+  <tr><td class="k">Condition notes</td><td>Free text sent with Used and Refurbished conditions.</td></tr>
+</table>
+<h3>Real-time Sync (Hooks)</h3>
+<p>Three switches make the module react to events in PrestaShop rather than waiting for the next scheduled run: push price and stock when a product is saved, confirm shipment with tracking when an order is marked Shipped, and cancel on Amazon when an Amazon order is cancelled in PrestaShop.</p>
+
+<h2>4.4 Shipping</h2>
+<p><b>Shipping Templates by Price/Weight Range.</b> Assign different Seller Central shipping templates depending on the product price or weight. Add ranges with a minimum (inclusive), a maximum (exclusive, 0 for open) and the template name. When disabled, or when no range matches, the single template from Listing Defaults is used.</p>
+<p><b>Carrier Mapping.</b> Which Amazon carrier code to report when confirming shipments for each PrestaShop carrier. Unmapped carriers are detected by name.</p>
+
+<h2>4.5 Orders</h2>
+<figure>
+  <img src="img/04-settings-orders.png" alt="">
+  <figcaption>Settings &gt; Orders.</figcaption>
+</figure>
+<h3>Order Import Settings</h3>
+<table>
+  <tr><td class="k">Taxes on imported orders</td><td>Use the tax amounts Amazon reports, or apply your PrestaShop tax rules treating Amazon prices as tax-inclusive. Choose the second if imported EU orders show 0% VAT.</td></tr>
+  <tr><td class="k">VCS invoice upload</td><td>Uploads each order's PrestaShop invoice PDF to Amazon. Only for sellers enrolled in Amazon's VAT Calculation Service. Runs through the <i>Upload invoices</i> task.</td></tr>
+  <tr><td class="k">Automatic review requests</td><td>Sends Amazon's standard review request once per delivered order, inside Amazon's allowed window, through the <i>Request reviews</i> task.</td></tr>
+  <tr><td class="k">Download orders in the last</td><td>Lookback window for manual and scheduled imports, in days or hours.</td></tr>
+  <tr><td class="k">Import FBA orders, FBA orders state, Shipped orders state</td><td>Whether to import Amazon-fulfilled orders and which PrestaShop status they and already-shipped orders receive.</td></tr>
+  <tr><td class="k">Match order lines by</td><td>Reference or per-product Override SKU (recommended), or PrestaShop IDs if your Amazon SKUs were built from product and combination ids.</td></tr>
+  <tr><td class="k">Prioritize ASIN when matching</td><td>Match by ASIN before SKU, using the mapping built by syncs and Match ASINs by EAN.</td></tr>
+  <tr><td class="k">Use an anonymized e-mail for customers</td><td>Amazon relay addresses expire; a synthetic address avoids bounced shop e-mails. Buyer messaging through Amazon still works.</td></tr>
+  <tr><td class="k">Buyer data deletion, Delete buyer data after</td><td>See section 12.</td></tr>
+  <tr><td class="k">Customer group for Amazon buyers</td><td>The group given to customers created by imports.</td></tr>
+  <tr><td class="k">Remote Cart, Release a hold after</td><td>Reserve stock for Amazon checkouts that are not payable yet; return it after the grace period if the order never becomes payable. See 7.2.</td></tr>
+  <tr><td class="k">Orders without enough stock</td><td>Create the PrestaShop order anyway, or park it in Pending Orders for review.</td></tr>
+  <tr><td class="k">Default Carrier, Default Order State</td><td>Used for imported orders when nothing more specific applies.</td></tr>
+</table>
+<h3>Imported Order Routing</h3>
+<p>Amazon states the delivery speed it promised the buyer; map each speed onto a PrestaShop carrier. <b>Advanced status rules</b> give particular orders their own status, for example Prime orders in a status the warehouse cannot miss, or FBA orders straight to Shipped. Rules are evaluated top to bottom and the first match wins. <b>Invoice by e-mail</b> sends the PrestaShop invoice PDF, plus an optional attachment such as your terms, when an order reaches a chosen status.</p>
+
+<h2>4.6 Messaging</h2>
+<p>Amazon has no API for reading what a buyer writes back; replies arrive by e-mail at your seller address. Point the module at that mailbox (IMAP host, port, user, password, folder, SSL) and it files every message quoting an Amazon order into PrestaShop's Customer Service, against the right order. Use a dedicated mailbox or an app password with read access only. <span class="btn">Fetch buyer replies now</span> reads unread messages; the <i>Fetch buyer messages</i> task does it on a timer.</p>
+
+<!-- ───────────────────────── 5 CATALOG ───────────────────────── -->
+<h1>5. Catalog</h1>
+<p>The Products sub-tab is where products move between the two catalogues. Both directions work the same way: first a sync reads and compares, showing a table keyed by SKU; then a second step writes. Nothing is changed until the second step.</p>
+<figure>
+  <img src="img/05-catalog-products.png" alt="">
+  <figcaption>Catalog &gt; Products.</figcaption>
+</figure>
+
+<h2>5.1 Products: PrestaShop → Amazon</h2>
+<ol class="steps">
+  <li><span class="btn">Sync PS to Amazon</span> reads your PrestaShop catalogue and marks, per SKU, what differs from Amazon: description, bullet points, brand, images, EAN and categories. The comparison table appears below the steps. Each row shows the PrestaShop side, the Amazon side and a direction badge: <i>PS only</i>, <i>Amazon only</i>, <i>conflict</i> or <i>in sync</i>.</li>
+  <li><span class="btn">Match ASINs by EAN</span>, optional. For products Amazon already sells, finds the existing page by barcode so you add an offer to it instead of creating a duplicate listing.</li>
+  <li><span class="btn">Push to Amazon</span> sends what the table marks as pending. Up to 25 SKUs go one by one and are answered at once, with a status and any issues per SKU. More than 25 go as a single feed document, which Amazon processes in the background; follow it under Feed status.</li>
+</ol>
+<div class="note"><b>What "pending" means.</b> A row is pending when it exists in PrestaShop and is either missing on Amazon (<i>PS only</i>) or differs from it (<i>conflict</i>). The Sync settings (4.3) decide how much of each pending row is sent: full data or offer only, images or not, and whether the delta window applies.</div>
+
+<h2>5.2 Products: Amazon → PrestaShop</h2>
+<ol class="steps">
+  <li><span class="btn">Sync Amazon to PS</span> reads your Amazon listings and marks, per SKU, what PrestaShop lacks or holds differently. The comparison appears below. Nothing is written yet.</li>
+  <li>Pick what to do with the comparison:
+    <ul>
+      <li><b>A. Create the products PrestaShop does not have.</b> Choose a category, then <span class="btn">Create PS products from Amazon-only listings</span>. They are created inactive, with title, description, brand, price, stock and images, for review. Prices arrive without a tax group; assign one before activating.</li>
+      <li><b>B. Update the products PrestaShop already has.</b> Tick the fields to overwrite (title, description and brand; price; stock; bullet points as features; deactivate what Amazon no longer carries) and press <span class="btn">Update from Amazon</span>. This cannot be undone, so back up first. Prices arrive tax-inclusive and are converted with each product's tax rule.</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>5.3 Feed status and Category Mapping</h2>
+<p><b>Feed status.</b> A push of more than 25 SKUs goes as one feed. <span class="btn">Check feed status</span> asks Amazon whether it finished and shows accepted, error and warning counts per feed. The exact JSON of every feed is kept and can be downloaded under System &gt; Tools.</p>
+<p><b>Category Mapping.</b> The older, simpler way to tell Amazon what type a product is: one Amazon product type and optional browse node per PrestaShop category, plus optional extra attributes as JSON. Products in a mapped category push full listing data; products in an unmapped category push offer-only. Listing Profiles (5.4) do the same job with Amazon's own attribute form and take precedence; Category Mapping remains as a fallback for categories without a profile.</p>
+<p><b>Amazon Product List.</b> A read-only view of what Amazon returns for your account.</p>
+
+<h2>5.4 Listing Profiles</h2>
+<figure>
+  <img src="img/06-catalog-profiles.png" alt="">
+  <figcaption>Catalog &gt; Profiles.</figcaption>
+</figure>
+<p>A profile pins one Amazon product type (SHIRT, FASHION_RING, and so on) and answers, once, every attribute that type requires. Amazon publishes those requirements as a schema; the module downloads it and builds a form, so you fill in real fields instead of writing JSON. Bind the profile to PrestaShop categories, and every product in them is listed with the right shape. Each category belongs to at most one profile.</p>
+<h3>Creating a profile</h3>
+<ol class="steps">
+  <li>Press <span class="btn">New profile</span> and give it a name, such as "Skirts - Women".</li>
+  <li>Search Amazon product types (for example "shirt"), pick one, and press <span class="btn">Load required fields</span>. The required attributes appear as a form; optional ones are listed below with a filter. Schemas are cached for 30 days per marketplace; <span class="btn">Refresh from Amazon</span> fetches a fresh copy.</li>
+  <li>Set the profile options: whether products have variations and on which attribute groups (Size, Color); recommended browse nodes, required for Canada, Europe and Japan; handling time; shipping template; GTIN exemption if Amazon granted one.</li>
+  <li>Tick the PrestaShop categories the profile covers, add any extra attributes as raw JSON if the form cannot express them, and press <span class="btn">Save profile</span>.</li>
+</ol>
+<div class="note"><b>Variations.</b> The base product reference is the parent SKU; each combination reference is a child SKU and needs its own barcode.</div>
+
+<h2>5.5 Markup &amp; Rules</h2>
+<figure>
+  <img src="img/07-catalog-markup.png" alt="">
+  <figcaption>Catalog &gt; Markup &amp; Rules.</figcaption>
+</figure>
+<p>Markups are fixed values ("5.99") or percentages ("10%") applied to the exported price. Rules cascade per product: category, then manufacturer, then supplier; the first source with a value wins, and the defaults apply when none matches. The same cascade sets the handling delay and the GPSR contact.</p>
+<p>The <b>Category Rules</b>, <b>Manufacturer Rules</b> and <b>Supplier Rules</b> tables hold, per entity, the price markup, shipping delay, GPSR e-mail or link, and a Sync yes/no switch. The manufacturer table also holds the country of origin. Saving queues the affected products so the next delta sync resends them.</p>
+
+<h2>5.6 Product Rules, Queue, Orphans</h2>
+<p><b>Product Rules</b> switch individual products out of the Amazon sync or give a product its own GPSR contact, which overrides the manufacturer and supplier contacts. The same and more is available on each product's Amazon tab (section 6).</p>
+<p><b>Queue</b> lists products modified in PrestaShop or touched by rule changes. With the delta window enabled, active entries are included in the next sync even if the product itself was not modified recently. Sent entries become inactive and are purged after the configured retention. The panel offers enable all, disable all, purge expired, and remove all.</p>
+<p><b>Orphans</b> lists Amazon listings that no longer map to a sellable PrestaShop product, because the product was deleted, deactivated, or its SKU changed. Run Sync Amazon to PS first so the list reflects your live inventory, then fix the products or delete the listings with the tool in 11.3.</p>
+
+<!-- ───────────────────────── 6 PRODUCT TAB ───────────────────────── -->
+<h1>6. The Amazon tab on a product</h1>
+<p>Every product page in PrestaShop gets an <b>Amazon Marketplace Pro</b> tab. Its settings apply to that product only and take precedence over the listing profile, the category, manufacturer and supplier rules, and the global settings. Leave a field empty to inherit.</p>
+<table>
+  <tr><td class="k">Sync this product to Amazon</td><td>Yes, or exclude it from every export.</td></tr>
+  <tr><td class="k">Send price / send quantity</td><td>Untick one to leave that value untouched on Amazon, for instance when you reprice on Amazon itself.</td></tr>
+  <tr><td class="k">Stock forcing</td><td>Send the real quantity, always in stock (999), or always out of stock (0).</td></tr>
+  <tr><td class="k">Override price</td><td>Sent instead of the shop price; markups and pricing rules are skipped.</td></tr>
+  <tr><td class="k">Override SKU</td><td>For a product that already exists in your Amazon inventory under a different seller SKU. Used for listing updates and order matching.</td></tr>
+  <tr><td class="k">ASIN</td><td>Attach the offer to a known Amazon page instead of letting Amazon match it by barcode.</td></tr>
+  <tr><td class="k">Fulfilled by Amazon</td><td>Whether you ship it (MFN) or Amazon ships it (AFN).</td></tr>
+  <tr><td class="k">Handling time, Shipping template, Browse node, Brand override</td><td>Per-product versions of the profile and global values.</td></tr>
+  <tr><td class="k">Condition, Condition note</td><td>Overrides the global default, with Amazon's full condition set.</td></tr>
+  <tr><td class="k">Key product features</td><td>One bullet point per line, up to five of 500 characters. Empty generates them from the short description.</td></tr>
+  <tr><td class="k">GPSR contact</td><td>E-mail or URL of the responsible person; overrides the manufacturer and supplier contact.</td></tr>
+  <tr><td class="k">Gift options, Transparency code</td><td>Offer gift wrap and message; the product's Transparency code if enrolled.</td></tr>
+  <tr><td class="k">Propagate these settings to</td><td>Apply the same values, on save, to all products in the same default category, of the same manufacturer, of the same supplier, or to every active product. Identity fields (SKU, ASIN, price, transparency code) are never propagated.</td></tr>
+</table>
+
+<!-- ───────────────────────── 7 ORDERS ───────────────────────── -->
+<h1>7. Orders</h1>
+<figure>
+  <img src="img/09-orders.png" alt="">
+  <figcaption>Orders &gt; Orders.</figcaption>
+</figure>
+
+<h2>7.1 Importing orders</h2>
+<p>Importing is two steps, like the catalogue, so you can look before anything is created.</p>
+<ol class="steps">
+  <li><span class="btn">Fetch &amp; Stage Amazon Orders</span> downloads orders inside the lookback window (4.5) and stages them, with shipping costs, tax, the buyer address, and whether Amazon or you fulfil them. The table shows each order's items matched to PrestaShop products, and flags Prime and Amazon Business orders.</li>
+  <li><span class="btn">Create PrestaShop Orders</span> turns staged orders into PrestaShop orders with your carriers, statuses, invoices and taxes, following the routing rules in 4.5. Orders that lack stock are parked (7.2) if you chose to.</li>
+</ol>
+<p>The scheduled tasks <i>Import orders</i> and <i>Create PrestaShop orders</i> do the same two steps unattended, every 15 minutes by default. When an order is marked Shipped in PrestaShop, and the hook in 4.3 is on, the module confirms the shipment to Amazon with the tracking number and the mapped carrier code.</p>
+
+<h2>7.2 Pending orders and reserved stock</h2>
+<p><b>Pending Orders</b> holds Amazon orders that could not become PrestaShop orders because a product lacks stock. Restock and re-run Create PrestaShop Orders, force the order with <span class="btn">Create anyway</span>, or remove it.</p>
+<p><b>Reserved Stock (Remote Cart)</b> lists units held for Amazon checkouts that are not payable yet. Amazon exposes a checkout in progress as a "Pending" order; with Remote Cart on (4.5), the module takes those units out of PrestaShop stock at once so no other channel can sell them, hands them over when the order becomes payable, and returns them after the grace period if it never does. The <i>Settle remote carts</i> task does the settling.</p>
+
+<h2>7.3 Returns and cancellations</h2>
+<p><span class="btn">Import Returns from Amazon</span> fetches returns and cancellations; <span class="btn">Process Pending Returns</span> creates PrestaShop credit slips or cancels PrestaShop orders accordingly. The Return History table shows each one with its type, refund amount, PrestaShop order and credit slip. The <i>Import returns</i> and <i>Process returns</i> tasks automate both.</p>
+
+<h2>7.4 Buyer messaging</h2>
+<p>Enter an Amazon order ID and press <span class="btn">Load allowed message types</span>; Amazon limits which message types are permitted per order. Write the message and send it, or press <span class="btn">Request a review</span> to send Amazon's standard review request, allowed once per order, 5 to 30 days after delivery. Replies arrive by e-mail and can be filed into Customer Service with the Messaging settings (4.6).</p>
+
+<!-- ───────────────────────── 8 FULFILMENT ───────────────────────── -->
+<h1>8. Fulfilment</h1>
+<figure>
+  <img src="img/10-fulfilment-fba.png" alt="">
+  <figcaption>Fulfilment &gt; FBA.</figcaption>
+</figure>
+<h3>FBA Inventory</h3>
+<p><span class="btn">Sync FBA Inventory</span> downloads the stock Amazon holds for you: fulfillable, reserved, inbound and unfulfillable per SKU. <span class="btn">Update PS Stock from FBA</span> writes the fulfillable quantity into PrestaShop, for merchants whose stock lives in Amazon's warehouses. The <i>FBA inventory sync</i> task runs the download hourly by default.</p>
+<h3>Multi-Channel Fulfilment</h3>
+<p>Enter a PrestaShop order ID and press <span class="btn">Create MCF Order</span> to have Amazon ship a PrestaShop order from your FBA inventory.</p>
+<h3>Multi-Account</h3>
+<p>Add further Amazon marketplaces, each with its own or the primary seller ID, and choose per marketplace whether orders, products and stock sync. The <i>Import orders, all marketplaces</i> and <i>Product sync, all marketplaces</i> tasks cover them. The primary marketplace from Settings is always active.</p>
+
+<!-- ───────────────────────── 9 MONEY ───────────────────────── -->
+<h1>9. Money</h1>
+<figure>
+  <img src="img/11-money-repricing.png" alt="">
+  <figcaption>Money &gt; Repricing.</figcaption>
+</figure>
+<h3>Repricing</h3>
+<p>Three buttons, in order: <span class="btn">Fetch Competitive Pricing</span> downloads the Buy Box price, the lowest price and the number of offers for each of your listings; <span class="btn">Apply Pricing Rules</span> computes a suggested price per SKU; <span class="btn">Push Suggested Prices</span> sends the ones you approve. The Buy Box Status table shows your price against the market and whether you hold the Buy Box.</p>
+<p>A pricing rule has a type (match or beat the lowest price, match or beat the Buy Box, or a fixed margin), an adjustment as a percentage or a fixed amount, and a minimum and maximum price as guard rails. The <i>Repricing cycle</i> task runs fetch and apply on a timer; pushing stays manual unless you enable it there.</p>
+<h3>Fees</h3>
+<p><span class="btn">Fetch Order Fees</span> pulls referral fees, FBA fees and commissions per order from Amazon's Finances API, so the true margin of every sale is visible. The summary groups them by fee type. The <i>Fetch fees</i> task runs every six hours by default.</p>
+<h3>Promotions</h3>
+<p>Import the promotions applied to Amazon orders, export PrestaShop cart rules for tracking, or create PrestaShop cart rules from Amazon promotions. The history table shows each promotion with its direction.</p>
+
+<!-- ───────────────────────── 10 INSIGHTS ───────────────────────── -->
+<h1>10. Insights</h1>
+<figure>
+  <img src="img/13-insights-reports.png" alt="">
+  <figcaption>Insights &gt; Reports.</figcaption>
+</figure>
+<p>Request Amazon's Merchant Listings, Settlement, or FBA Inventory reports. Amazon prepares reports in the background; <span class="btn">Poll Pending Reports</span> checks for finished ones and downloads them, and the history table shows status and row counts. The <i>Poll reports</i> task does the polling every 30 minutes by default.</p>
+
+<!-- ───────────────────────── 11 SYSTEM ───────────────────────── -->
+<h1>11. System</h1>
+
+<h2>11.1 Automation</h2>
+<figure>
+  <img src="img/14-system-automation.png" alt="">
+  <figcaption>System &gt; Automation. The shop address and token shown are placeholders.</figcaption>
+</figure>
+<p>A shop only runs code when a request arrives, so something has to call it on a timer. Choose who does the calling:</p>
+<table>
+  <tr><th style="width:26%">Mode</th><th>How it works</th><th style="width:30%">Choose it when</th></tr>
+  <tr><td><b>My own server cron</b> (default, recommended)</td><td>Add the one line shown to your hosting control panel or crontab. It calls your shop every five minutes; each call runs only the tasks that are due. Nothing sits between your shop and its schedule.</td><td>Your hosting has a crontab or a scheduled-task feature, which most do.</td></tr>
+  <tr><td><b>The IntelliPresta scheduler</b></td><td>Select it, save, then press <span class="btn">Register this shop</span>. The IntelliPresta server calls your shop every five minutes, so intervals are kept exactly with nothing to set up. Your shop address and cron token are stored on that server; if it is unreachable, your schedule pauses until it returns. <span class="btn">Stop using the scheduler</span> removes the registration.</td><td>Your hosting has no crontab, or you would rather not keep one. The shop must be reachable over HTTPS.</td></tr>
+</table>
+<p>The cron line has this form; the module shows yours with the right address and token:</p>
+<pre>*/5 * * * * curl -s "https://www.your-shop.example/module/amazonmarketplacepro/cron?token=YOUR-TOKEN&amp;action=run_due" &gt; /dev/null 2&gt;&amp;1</pre>
+<div class="note"><b>A five-minute cron does not mean a five-minute sync.</b> The cron only asks the shop "is anything due?". Each task runs at its own interval from the table. Runs are serialised with a lock, so two calls never do the same work twice, and a pass stops before the web server's time limit and continues on the next call.</div>
+
+<h2>11.2 The scheduled tasks</h2>
+<figure>
+  <img src="img/15-system-schedule-table.png" alt="">
+  <figcaption>The task table. Every task can be switched on or off, given a different interval, run now, or removed.</figcaption>
+</figure>
+<p>Each row is one task with its interval in minutes, when it last ran and with what result, and when it runs next. <span class="btn">On</span>/<span class="btn">Off</span> toggles it, <span class="btn">Run now</span> executes it immediately, and the bin removes it. Removed tasks can be added back with the form under the table. New installs have every task present and switched off, so nothing runs until you decide.</p>
+<table>
+  <tr><th style="width:26%">Task</th><th style="width:11%">Default</th><th>What it does</th></tr>
+  <tr><td>Import orders</td><td>15 min</td><td>Fetches and stages Amazon orders in the lookback window (7.1, step 1).</td></tr>
+  <tr><td>Create PrestaShop orders</td><td>15 min</td><td>Turns staged orders into PrestaShop orders (7.1, step 2).</td></tr>
+  <tr><td>Sync stock</td><td>30 min</td><td>Sends current quantities, and prices when the sync mode includes them, for products in the delta window.</td></tr>
+  <tr><td>Full product sync</td><td>daily</td><td>Reads the PrestaShop catalogue, compares with Amazon and pushes pending listings (5.1, steps 1 and 3).</td></tr>
+  <tr><td>Process feed queue</td><td>15 min</td><td>Submits queued listing changes as feeds and records Amazon's results.</td></tr>
+  <tr><td>Import returns / Process returns</td><td>60 min</td><td>Fetch returns and cancellations, then create credit slips or cancel orders (7.3).</td></tr>
+  <tr><td>FBA inventory sync</td><td>60 min</td><td>Downloads Amazon-held stock levels (section 8).</td></tr>
+  <tr><td>Repricing cycle</td><td>60 min</td><td>Fetches competitive prices and applies your rules (section 9).</td></tr>
+  <tr><td>Fetch fees</td><td>6 h</td><td>Records Amazon fees per order.</td></tr>
+  <tr><td>Poll reports</td><td>30 min</td><td>Downloads finished reports (section 10).</td></tr>
+  <tr><td>Sync promotions</td><td>6 h</td><td>Imports promotions from orders.</td></tr>
+  <tr><td>Import orders / Product sync, all marketplaces</td><td>15 min / daily</td><td>The multi-marketplace versions of the order import and product sync.</td></tr>
+  <tr><td>Request reviews</td><td>daily</td><td>Sends review requests for delivered orders, when enabled in 4.5.</td></tr>
+  <tr><td>Settle remote carts</td><td>15 min</td><td>Hands over or releases reserved stock (7.2).</td></tr>
+  <tr><td>Fetch buyer messages</td><td>60 min</td><td>Reads buyer replies from the mailbox into Customer Service (4.6).</td></tr>
+  <tr><td>Upload invoices</td><td>6 h</td><td>Uploads VAT invoices for VCS-enrolled sellers.</td></tr>
+  <tr><td>Purge buyer data past retention</td><td>daily</td><td>Deletes buyer personal data from orders older than the retention period (section 12).</td></tr>
+</table>
+<div class="note"><b>A sensible starting set</b> for a shop that ships its own orders: Import orders, Create PrestaShop orders, Sync stock, Full product sync, Process feed queue, Poll reports, and Purge buyer data. Add FBA inventory sync if you use FBA, and Repricing cycle once your pricing rules are set.</div>
+
+<h2>11.3 Tools</h2>
+<p><b>Catalogue Check.</b> Amazon matches everything on the reference and the barcode. Products missing either, or sharing a reference with another product, cannot be listed or matched to incoming orders. <span class="btn">Check my catalogue</span> lists them.</p>
+<p><b>Reference &amp; Barcode Editor.</b> Export every product and combination as CSV, fix references and barcodes in a spreadsheet, and upload the file back. Only reference, EAN, UPC and supplier reference are written. This edits your PrestaShop catalogue directly and cannot be undone; back up first, and do it before you publish, or you will create duplicate SKUs on Amazon.</p>
+<p><b>Delete Listings from Amazon.</b> Finds offers for products you no longer sell, whether deleted, disabled, or switched off for Amazon, and lets you review the list before deleting the selected ones. Deletion removes the offer and its history on Amazon, which is not reversible. To stop selling temporarily, publish quantity 0 instead (4.2).</p>
+<p><b>Submitted Feed Payloads.</b> The exact JSON sent to Amazon for each feed, downloadable by feed ID. Amazon support will ask for it when a listing is rejected for a reason the report does not explain.</p>
+
+<h2>11.4 Logs</h2>
+<p>The last 50 entries of the module's activity log, with date, level, source and message. Errors are highlighted. This is the first place to look when a scheduled task shows "Failed".</p>
+
+<!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
+<h1>12. Buyer data and compliance</h1>
+<h3>Buyer data deletion</h3>
+<p>Amazon's Data Protection Policy requires buyer data to be deleted within 30 days of delivery. With <b>Buyer data deletion</b> on, which is the default, the module clears the buyer's name, e-mail, street, city, region, postcode, phone and the stored Amazon payload from its own order table once an order is finished and older than the retention period you set. Order totals, tax, fees and the destination country stay, so reporting and VAT records are unaffected. The Orders settings show how many orders are waiting to be cleared and offer <span class="btn">Clear them now</span>; the <i>Purge buyer data past retention</i> task does it daily.</p>
+<p>Turning deletion off means keeping Amazon buyer data longer than Amazon permits. Only do so under a legal obligation you can show.</p>
+<p><b>Also anonymise the PrestaShop customer and address</b> is off by default on purpose. PrestaShop renders invoices from the stored address, so anonymising it changes documents you may be legally required to keep intact, and an invoice you must keep is exactly the exception Amazon's policy allows. When on, a customer is anonymised only if every order they have is a cleared Amazon order, and city, postcode and country are kept so the VAT treatment stays justifiable.</p>
+<h3>GPSR and country of origin</h3>
+<p>The EU General Product Safety Regulation requires a responsible-person contact on listings. Set it per product (section 6), per manufacturer or supplier (5.5), and choose which of the two wins. The contact must already be registered in Seller Central under Account Health &gt; Product Policy Compliance. Country of origin is set per manufacturer.</p>
+<h3>VAT</h3>
+<p>Imported orders can use Amazon's reported tax amounts or your own tax rules (4.5). Sellers enrolled in Amazon's VAT Calculation Service can have their PrestaShop invoices uploaded automatically.</p>
+
+<!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
+<h1>13. Troubleshooting</h1>
+<h3>Reading the connection test</h3>
+<table>
+  <tr><th style="width:38%">Result</th><th>Meaning and what to do</th></tr>
+  <tr><td>"This shop is not connected to Amazon yet."</td><td>No authorisation is stored. Press Connect to Amazon and approve the connection in Seller Central.</td></tr>
+  <tr><td>Token step fails</td><td>The authorisation was revoked in Seller Central, or the IntelliPresta connection service is unreachable. Reconnect, or try again later.</td></tr>
+  <tr><td>"Access token obtained", then HTTP 403 on the orders call</td><td>The connection is fine; Amazon refuses the seller account. Check, in this order: the seller account is active and on a Professional plan (Seller Central &gt; Settings &gt; Account Info); the app has the required roles and the seller re-authorised after they were added.</td></tr>
+  <tr><td>Both steps succeed</td><td>The connection works. A sync problem lies elsewhere: check the Logs tab.</td></tr>
+</table>
+<h3>Common situations</h3>
+<table>
+  <tr><th style="width:38%">Symptom</th><th>Cause and remedy</th></tr>
+  <tr><td>"No products with a reference (SKU) found" after Sync PS to Amazon</td><td>Products have no reference in the field chosen as SKU source (4.2). Fill them in, or use the Reference &amp; Barcode Editor (11.3).</td></tr>
+  <tr><td>Push accepted, but the listing on Amazon is offer-only</td><td>The product's category has neither a profile nor a category mapping, or "Send full product data" is No (4.3).</td></tr>
+  <tr><td>Listing rejected with a missing-attribute error</td><td>Amazon decides required fields dynamically. Open the profile, find the attribute in the optional list, fill it in, save, and push again. The feed payload (11.3) shows exactly what was sent.</td></tr>
+  <tr><td>Imported orders show 0% VAT</td><td>Choose "Apply my PrestaShop tax rules" in 4.5.</td></tr>
+  <tr><td>A scheduled task shows "Failed"</td><td>The message column and the Logs tab give the reason. Press Run now to retry after fixing it. After repeated failures, check the connection test.</td></tr>
+  <tr><td>Nothing runs although tasks are on</td><td>No cron is calling the shop. Confirm the cron line exists in your hosting panel, or that the shop is registered with the IntelliPresta scheduler and reachable over HTTPS.</td></tr>
+  <tr><td>Bounced e-mails to Amazon buyers</td><td>Amazon relay addresses expire. Enable the anonymised e-mail (4.5).</td></tr>
+</table>
+<h3>Getting help</h3>
+<p>E-mail <b>support@intellipresta.com</b>. Include the module version, the PrestaShop version, the relevant lines from the Logs tab, and for listing problems the feed ID or the SKU. We answer within one business day.</p>
+
+<!-- ───────────────────────── 14 GLOSSARY ───────────────────────── -->
+<h1>14. Glossary</h1>
+<table>
+  <tr><td class="k">SKU</td><td>Your own identifier for a product on Amazon. The module builds it from a PrestaShop field, usually the reference.</td></tr>
+  <tr><td class="k">ASIN</td><td>Amazon's identifier for a catalogue page. Several sellers can offer the same ASIN.</td></tr>
+  <tr><td class="k">EAN / UPC / GTIN</td><td>Product barcodes. Amazon uses them to match your product to an existing page.</td></tr>
+  <tr><td class="k">Listing vs offer</td><td>A listing is the catalogue page with title, description and images. An offer is your price and stock on that page.</td></tr>
+  <tr><td class="k">Product type</td><td>Amazon's category schema (SHIRT, FASHION_RING) that decides which attributes a listing must carry.</td></tr>
+  <tr><td class="k">Profile</td><td>The module's saved answers for one product type, bound to PrestaShop categories.</td></tr>
+  <tr><td class="k">Feed</td><td>A batch document sent to Amazon and processed in the background. Used for pushes of more than 25 SKUs.</td></tr>
+  <tr><td class="k">MFN / AFN / FBA</td><td>Merchant Fulfilled Network: you ship. Amazon Fulfilled Network, also Fulfillment by Amazon: Amazon ships from its warehouses.</td></tr>
+  <tr><td class="k">MCF</td><td>Multi-Channel Fulfilment: Amazon ships an order from another channel, such as your own shop, from your FBA stock.</td></tr>
+  <tr><td class="k">Buy Box</td><td>The default offer shown on an Amazon product page. Repricing aims to win or keep it.</td></tr>
+  <tr><td class="k">RDT</td><td>Restricted Data Token: the mechanism through which Amazon releases buyer addresses to the shop for one call at a time.</td></tr>
+  <tr><td class="k">GPSR</td><td>The EU General Product Safety Regulation, which requires a responsible-person contact on listings.</td></tr>
+  <tr><td class="k">VCS</td><td>Amazon's VAT Calculation Service, whose enrolled sellers upload their own VAT invoices.</td></tr>
+  <tr><td class="k">Delta window</td><td>The period within which a product must have changed to be included in a push.</td></tr>
+  <tr><td class="k">Remote cart</td><td>An Amazon checkout in progress, exposed as a Pending order, whose stock the module can reserve.</td></tr>
+</table>
+<p class="small">Amazon Marketplace Pro is developed and maintained by IntelliPresta and is not endorsed by or affiliated with Amazon or PrestaShop. Amazon is a trademark of Amazon.com, Inc. or its affiliates. PrestaShop is a trademark of PrestaShop SA.</p>
+
+</body>
+</html>
