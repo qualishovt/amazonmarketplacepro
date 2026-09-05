@@ -70,6 +70,25 @@ class AmazonSpApiClient
     }
 
     /**
+     * The authentication mode in force: 'connect' or 'manual'.
+     *
+     * A sandbox app client has no OAuth fields in the Developer Console, so
+     * the consent page cannot serve it (MD9100); the only sandbox token is
+     * the one Create Token issues. Sandbox is therefore always manual,
+     * whatever is stored. The stored value is kept untouched so that
+     * switching back to production restores the merchant's real choice.
+     */
+    public static function authMode()
+    {
+        if (self::isSandboxEnv()) {
+            return 'manual';
+        }
+        $stored = Configuration::get('AMZPRO_AUTH_MODE');
+
+        return $stored === 'manual' ? 'manual' : 'connect';
+    }
+
+    /**
      * Should the consent URL carry version=beta?
      *
      * The sandbox app is never published, so sandbox always sends it. For

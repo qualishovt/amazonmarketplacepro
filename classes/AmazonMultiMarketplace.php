@@ -220,7 +220,7 @@ class AmazonMultiMarketplace
         $client = new AmazonSpApiClient($clientId, $clientSecret, $refreshToken, $endpoint);
 
         // Primary credentials in "Connect with Amazon" mode use the token relay.
-        if ($usingPrimary && Configuration::get('AMZPRO_AUTH_MODE') !== 'manual') {
+        if ($usingPrimary && AmazonSpApiClient::authMode() !== 'manual') {
             $client->setTokenRelay(AmazonSpApiClient::relayUrl());
         }
 

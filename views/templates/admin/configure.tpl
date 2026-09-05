@@ -245,12 +245,15 @@
         {/if}
 
         {if $mkpro_dev_mode}
-        <div class="form-group">
+        {* Hidden in sandbox: manual is the only mode that can work there, so
+           there is nothing to choose. The stored choice is what the select
+           shows, so a save in sandbox does not overwrite it. *}
+        <div class="form-group" id="mkpro-authmode-group"{if $mkpro_environment == 'sandbox'} style="display:none;"{/if}>
             <label class="control-label col-lg-3">{l s='Authentication mode' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_auth_mode" class="form-control">
-                    <option value="connect"{if $mkpro_auth_mode != 'manual'} selected="selected"{/if}>{l s='Connect with Amazon (recommended)' mod='amazonmarketplacepro'}</option>
-                    <option value="manual"{if $mkpro_auth_mode == 'manual'} selected="selected"{/if}>{l s='Manual SP-API credentials (advanced)' mod='amazonmarketplacepro'}</option>
+                    <option value="connect"{if $mkpro_auth_mode_stored != 'manual'} selected="selected"{/if}>{l s='Connect with Amazon (recommended)' mod='amazonmarketplacepro'}</option>
+                    <option value="manual"{if $mkpro_auth_mode_stored == 'manual'} selected="selected"{/if}>{l s='Manual SP-API credentials (advanced)' mod='amazonmarketplacepro'}</option>
                 </select>
             </div>
         </div>
@@ -4394,12 +4397,15 @@
     (function () {
         var envSel = document.querySelector('select[name="mkpro_environment"]');
         var betaGroup = document.getElementById('mkpro-beta-group');
+        var authGroup = document.getElementById('mkpro-authmode-group');
         if (!envSel || !betaGroup) return;
 
         function toggle() {
             // Sandbox connects always send version=beta, so the choice only
             // exists for the production app.
             betaGroup.style.display = (envSel.value === 'sandbox') ? 'none' : '';
+            // Sandbox is always manual, so the mode selector has nothing to offer there.
+            if (authGroup) authGroup.style.display = (envSel.value === 'sandbox') ? 'none' : '';
         }
         envSel.addEventListener('change', toggle);
         toggle();

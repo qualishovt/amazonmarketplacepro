@@ -631,14 +631,16 @@ class AmazonMarketplacePro extends Module
             'amazon_carrier_codes'  => self::$amazonCarrierCodes,
 
             // Connect with Amazon
-            'mkpro_auth_mode'       => Configuration::get('AMZPRO_AUTH_MODE'),
+            'mkpro_auth_mode'       => AmazonSpApiClient::authMode(),
+            // What the select shows: the stored choice, not the sandbox override.
+            'mkpro_auth_mode_stored' => Configuration::get('AMZPRO_AUTH_MODE'),
             'mkpro_lwa_app_id'      => AmazonSpApiClient::lwaAppId(),
             'mkpro_relay_url'       => Configuration::get('AMZPRO_RELAY_URL'),
             'mkpro_oauth_beta'      => AmazonSpApiClient::oauthBeta(),
             'mkpro_connected'       => (AmazonSpApiClient::storedRefreshToken() != ''),
             // Manual mode is "connected" as soon as a token is stored for the
             // active environment — the OAuth Connect flow is never used there.
-            'mkpro_manual_connected' => (Configuration::get('AMZPRO_AUTH_MODE') === 'manual'
+            'mkpro_manual_connected' => (AmazonSpApiClient::authMode() === 'manual'
                 && AmazonSpApiClient::storedRefreshToken() != ''),
             // Sandbox and production hold separate tokens; knowing the inactive
             // one is connected lets the UI promise that switching back is free.
@@ -1223,7 +1225,7 @@ class AmazonMarketplacePro extends Module
 
         // "Connect with Amazon" mode: access tokens come from the IntelliPresta
         // relay instead of local LWA credentials.
-        if (Configuration::get('AMZPRO_AUTH_MODE') !== 'manual') {
+        if (AmazonSpApiClient::authMode() !== 'manual') {
             $client->setTokenRelay(AmazonSpApiClient::relayUrl());
         }
 
@@ -1873,7 +1875,7 @@ class AmazonMarketplacePro extends Module
         // the LWA client ID and secret live on the relay and the shop holds
         // only the refresh token, so asking for a local client ID there
         // refused every connected shop. Manual mode is the reverse.
-        $manual = Configuration::get('AMZPRO_AUTH_MODE') === 'manual';
+        $manual = AmazonSpApiClient::authMode() === 'manual';
         $configured = $manual
             ? (bool) Configuration::get('AMZPRO_CLIENT_ID')
             : (AmazonSpApiClient::storedRefreshToken() != '');

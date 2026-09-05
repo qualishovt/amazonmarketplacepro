@@ -620,7 +620,7 @@ class AmazonTaskRunner
         $refreshToken = AmazonSpApiClient::storedRefreshToken();
         $env = AmazonSpApiClient::environment();
 
-        $relayMode = (Configuration::get('AMZPRO_AUTH_MODE') !== 'manual');
+        $relayMode = (AmazonSpApiClient::authMode() !== 'manual');
 
         if (!$refreshToken || (!$relayMode && (!$clientId || !$clientSecret))) {
             return null;
