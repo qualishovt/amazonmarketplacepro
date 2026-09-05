@@ -203,7 +203,15 @@
                     {l s='Not connected in this environment yet. The other environment is still connected — switching back restores it without re-authorizing.' mod='amazonmarketplacepro'}
                 </div>
             {/if}
-            {if $mkpro_auth_mode == 'manual'}
+            {if $mkpro_dev_mode && $mkpro_environment == 'sandbox'}
+                {* A sandbox app client has no OAuth fields in the Developer
+                   Console, so Amazon's consent page answers MD9100 for it.
+                   The only way to a sandbox token is Create Token there. *}
+                <div class="alert alert-warning">
+                    <i class="icon-info-circle"></i>
+                    {l s='Sandbox apps cannot use "Connect to Amazon": Amazon gives them no consent page (error MD9100). In the Solution Provider Portal, open the sandbox app\'s menu next to Edit App, choose Create Token, and paste the refresh token with the sandbox client ID and secret into the Manual SP-API Credentials panel below, then Save Settings.' mod='amazonmarketplacepro'}
+                </div>
+            {elseif $mkpro_auth_mode == 'manual'}
                 <div class="alert alert-info">
                     <i class="icon-info-circle"></i>
                     {l s='Manual credentials mode: fill in the Manual SP-API Credentials panel below (client ID, secret, refresh token from self-authorization) and click Save Settings. The OAuth "Connect to Amazon" button is not used in this mode.' mod='amazonmarketplacepro'}
