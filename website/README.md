@@ -25,7 +25,7 @@ Amazon declined the Appstore listing on 3 September 2026 (case 21813956421) on t
 points: the app name carried the Amazon trademark, and the listing logo matched
 nothing on the website - because the website showed no logo at all. The PrestaShop
 module keeps its name inside the shop and on PrestaShop Addons; the Appstore listing
-and this website use **Marketplace Pro for PrestaShop**, and the listing logo is the
+and this website use **IntelliPresta Marketplace Pro**, and the listing logo is the
 same IntelliPresta file every page header shows. The two must keep matching: a reviewer
 compares them.
 
@@ -45,7 +45,7 @@ each module has its own page underneath it.
 |---|---|---|
 | `index.html` | `public_html/index.html` | `https://intellipresta.com/` — company page, lists every IntelliPresta module |
 | `marketplaces/index.html` | `public_html/marketplaces/index.html` | `https://intellipresta.com/marketplaces/` — hub for the two marketplace modules |
-| `marketplaces/marketplace-pro.html` | `public_html/marketplaces/marketplace-pro.html` | `https://intellipresta.com/marketplaces/marketplace-pro.html` — **Amazon app page**, "Marketplace Pro for PrestaShop" |
+| `marketplaces/marketplace-pro.html` | `public_html/marketplaces/marketplace-pro.html` | `https://intellipresta.com/marketplaces/marketplace-pro.html` — **Amazon app page**, "IntelliPresta Marketplace Pro" |
 | `brand/intellipresta-300.png`, `-220.png` | `public_html/brand/` | `https://intellipresta.com/brand/…` — the logo every page header shows, and the two files the Appstore listing must use |
 | `marketplaces/ebay.html` | `public_html/marketplaces/ebay.html` | `https://intellipresta.com/marketplaces/ebay.html` — **eBay app page** |
 | `marketplaces/privacy.html` | `public_html/marketplaces/privacy.html` | `https://intellipresta.com/marketplaces/privacy.html` — one policy covering both modules |
