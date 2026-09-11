@@ -358,7 +358,7 @@
 <p>The scheduled tasks <i>Import orders</i> and <i>Create PrestaShop orders</i> do the same two steps unattended, every 15 minutes by default. When an order is marked Shipped in PrestaShop, and the hook in 4.3 is on, the module confirms the shipment to Amazon with the tracking number and the mapped carrier code.</p>
 
 <h2>7.2 Buyer addresses from an order report</h2>
-<p>Amazon gives an app the buyer's name, street and phone number only after approving it for restricted personal data. Until then, imported orders carry the city, region, postcode and country only: the PrestaShop customer is named "Amazon Buyer" and the street reads "Amazon Marketplace Order". Seller Central's order report has the full details, and the module can read it.</p>
+<p>Reading the buyer's name, address and phone number directly from Amazon is coming soon. For now, the way to get them is to download the order report from Seller Central and upload it to the module. Until you do, the order shows the customer as "Amazon Buyer" and the street as "Amazon Marketplace Order".</p>
 <ol class="steps">
   <li>Import the orders first (7.1).</li>
   <li>In Seller Central, open <b>Orders &gt; Order Reports &gt; Unshipped Orders</b>, press <b>Request report</b>, and <b>Download</b> it when it is ready. It lists the orders you have not shipped yet, which are the ones that need an address.</li>
