@@ -31,6 +31,19 @@ if (!defined('_PS_VERSION_')) {
 
 class AmazonOrderCreator
 {
+    /**
+     * Stand-ins for what Amazon withholds without the personal-data role.
+     *
+     * Public because AmazonOrderReportImporter recognises an unfilled address
+     * by exactly these values; change them here and it follows.
+     */
+    const PLACEHOLDER_FIRSTNAME = 'Amazon';
+    const PLACEHOLDER_LASTNAME = 'Buyer';
+    const PLACEHOLDER_ADDRESS1 = 'Amazon Marketplace Order';
+    const PLACEHOLDER_CITY = 'Amazon';
+    const PLACEHOLDER_POSTCODE = '00000';
+    const PLACEHOLDER_PHONE = '0000000000';
+
     private $idCarrier;
     private $idOrderState;
     private $idLang;
@@ -537,7 +550,11 @@ class AmazonOrderCreator
      */
     private function createAddress($customer, $stagedOrder)
     {
-        $parts = $this->splitName($stagedOrder['buyer_name']);
+        // The recipient from an uploaded order report, when there is one: the
+        // parcel goes to them, and for a gift that is not the buyer.
+        $parts = $this->splitName(
+            !empty($stagedOrder['ship_name']) ? $stagedOrder['ship_name'] : $stagedOrder['buyer_name']
+        );
 
         // Determine country from Amazon address or fallback
         $countryCode = !empty($stagedOrder['ship_country_code'])
@@ -566,19 +583,19 @@ class AmazonOrderCreator
         // Use real address data when available, placeholder when not
         $address1 = !empty($stagedOrder['ship_address1'])
             ? $stagedOrder['ship_address1']
-            : 'Amazon Marketplace Order';
+            : self::PLACEHOLDER_ADDRESS1;
         $address2 = !empty($stagedOrder['ship_address2'])
             ? $stagedOrder['ship_address2']
             : '';
         $city = !empty($stagedOrder['ship_city'])
             ? $stagedOrder['ship_city']
-            : 'Amazon';
+            : self::PLACEHOLDER_CITY;
         $postalCode = !empty($stagedOrder['ship_postal_code'])
             ? $stagedOrder['ship_postal_code']
-            : '00000';
+            : self::PLACEHOLDER_POSTCODE;
         $phone = !empty($stagedOrder['ship_phone'])
             ? $stagedOrder['ship_phone']
-            : '0000000000';
+            : self::PLACEHOLDER_PHONE;
 
         $address = new Address();
         $address->id_customer = (int) $customer->id;
@@ -737,33 +754,68 @@ class AmazonOrderCreator
      */
     private function splitName($fullName)
     {
+        return self::splitFullName($fullName);
+    }
+
+    /**
+     * Split a full name into a firstname and lastname PrestaShop will accept.
+     *
+     * The first word is the first name and the rest the last name; either
+     * one missing falls back to the placeholder. Public because the order
+     * report import has to split names the same way.
+     *
+     * @param string $fullName
+     * @return array 'firstname', 'lastname'
+     */
+    public static function splitFullName($fullName)
+    {
         $fullName = trim((string) $fullName);
-        if ($fullName === '') {
-            return array('firstname' => 'Amazon', 'lastname' => 'Buyer');
+        $parts = $fullName === '' ? array() : explode(' ', $fullName, 2);
+
+        $firstname = self::cleanNamePart(isset($parts[0]) ? $parts[0] : '', 'firstname');
+        $lastname = self::cleanNamePart(isset($parts[1]) ? $parts[1] : '', 'lastname');
+
+        return array(
+            'firstname' => $firstname !== '' ? $firstname : self::PLACEHOLDER_FIRSTNAME,
+            'lastname' => $lastname !== '' ? $lastname : self::PLACEHOLDER_LASTNAME,
+        );
+    }
+
+    /**
+     * Remove what Validate::isName rejects and fit the shorter of the
+     * customer and address columns.
+     *
+     * The filter used to keep ASCII letters only, which turned "Jürgen Müller"
+     * into "Jrgen Mller" - on marketplaces where most names carry accents.
+     * The columns are 32 characters in PrestaShop 1.6 and 255 in 8 and 9, and
+     * a longer value fails validation when the address is saved.
+     *
+     * @param string $part
+     * @param string $field 'firstname' or 'lastname'
+     * @return string
+     */
+    private static function cleanNamePart($part, $field)
+    {
+        $clean = preg_replace('/[0-9!<>,;?=+()@#"°{}_$%:¤|]/u', '', (string) $part);
+        if ($clean === null) {
+            // Not valid UTF-8: keep the ASCII letters rather than lose the name.
+            $clean = preg_replace('/[^a-zA-Z\s\-\.]/', '', (string) $part);
+        }
+        $clean = preg_replace('/\s+/u', ' ', (string) $clean);
+        $clean = trim((string) $clean);
+
+        $size = 0;
+        foreach (array('Customer', 'Address') as $class) {
+            $def = $class::$definition;
+            if (isset($def['fields'][$field]['size'])) {
+                $limit = (int) $def['fields'][$field]['size'];
+                $size = $size > 0 ? min($size, $limit) : $limit;
+            }
+        }
+        if ($size > 0 && Tools::strlen($clean) > $size) {
+            $clean = trim(Tools::substr($clean, 0, $size));
         }
 
-        $parts = explode(' ', $fullName, 2);
-        $firstname = isset($parts[0]) ? trim($parts[0]) : 'Amazon';
-        $lastname = isset($parts[1]) ? trim($parts[1]) : 'Buyer';
-
-        if ($firstname === '') {
-            $firstname = 'Amazon';
-        }
-        if ($lastname === '') {
-            $lastname = 'Buyer';
-        }
-
-        // PrestaShop validates name fields - strip invalid chars
-        $firstname = preg_replace('/[^a-zA-Z0-9\s\-\.]/', '', $firstname);
-        $lastname = preg_replace('/[^a-zA-Z0-9\s\-\.]/', '', $lastname);
-
-        if ($firstname === '') {
-            $firstname = 'Amazon';
-        }
-        if ($lastname === '') {
-            $lastname = 'Buyer';
-        }
-
-        return array('firstname' => $firstname, 'lastname' => $lastname);
+        return $clean;
     }
 }

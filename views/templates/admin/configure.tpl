@@ -2188,6 +2188,21 @@
         <div id="amazon-orders-result" style="display:none; margin-top:10px;"></div>
     </div>
 
+    {* ── Buyer addresses from an Amazon order report ── *}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-map-marker"></i> {l s='Buyer addresses from an Amazon order report' mod='amazonmarketplacepro'}</div>
+        <p>{l s='Until Amazon approves this app to read buyer addresses, orders arrive without the street and the recipient name. Download the order report in Seller Central and upload it here to fill them in.' mod='amazonmarketplacepro'}</p>
+        <p>{l s='In Seller Central: Orders > Order Reports > Unshipped Orders, then Request report and Download.' mod='amazonmarketplacepro'}</p>
+        <div class="form-inline">
+            <input type="file" id="order-report-file" accept=".txt,.tsv,.csv,text/plain,text/tab-separated-values,text/csv" class="form-control" />
+            <button type="button" id="order-report-import" class="btn btn-default">
+                <i class="icon-upload"></i> {l s='Upload report' mod='amazonmarketplacepro'}
+            </button>
+        </div>
+        <p class="help-block">{l s='Only orders that are already imported are updated. Placeholder values are replaced; an address that has already been filled in or edited is left as it is. The file is read once and not stored.' mod='amazonmarketplacepro'}</p>
+        <div id="order-report-result" style="display:none; margin-top:10px;"></div>
+    </div>
+
     {* ── Buyer Messaging ── *}
     <div class="panel">
         <div class="panel-heading"><i class="icon-envelope"></i> {l s='Buyer Messaging' mod='amazonmarketplacepro'}</div>
@@ -4562,6 +4577,47 @@
             };
             xhr.send(fd);
         });
+
+        /* Buyer addresses from an Amazon order report (multipart, so not via ajaxPost) */
+        var reportBtn = document.getElementById('order-report-import');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', function () {
+                var input = document.getElementById('order-report-file');
+                var out = document.getElementById('order-report-result');
+                out.style.display = 'block';
+                if (!input.files || !input.files.length) {
+                    out.innerHTML = '<div class="alert alert-danger">' + esc('{l s='Choose the order report file first.' mod='amazonmarketplacepro' js=1}') + '</div>';
+                    return;
+                }
+
+                reportBtn.disabled = true;
+                out.innerHTML = '<div class="alert alert-info">' + esc('{l s='Reading the report...' mod='amazonmarketplacepro' js=1}') + '</div>';
+
+                var fd = new FormData();
+                fd.append('order_report', input.files[0]);
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '{$ajax_import_order_addresses_url|escape:'javascript':'UTF-8'}', true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) return;
+                    reportBtn.disabled = false;
+                    var data = null;
+                    try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+                    if (!data || !data.success) {
+                        out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : '{l s='The report could not be processed.' mod='amazonmarketplacepro' js=1}') + '</div>';
+                        return;
+                    }
+                    var h = '';
+                    var msgs = data.messages || [];
+                    for (var i = 0; i < msgs.length; i++) {
+                        h += '<div class="alert alert-' + (i === 0 ? 'success' : 'info') + '">' + esc(msgs[i]) + '</div>';
+                    }
+                    out.innerHTML = h;
+                    input.value = '';
+                };
+                xhr.send(fd);
+            });
+        }
 
         /* Deletion pipeline: list, then send */
         var listBtn = document.getElementById('deletions-list');

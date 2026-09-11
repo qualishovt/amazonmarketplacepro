@@ -549,6 +549,11 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a2222dae57b83e500b1371f45d
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d5aeb34d79c5ae7309197c9c93d0f0e8'] = 'Amazon-Bestellungen holen und bereitstellen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5683669210adf78a21c102ca929b97d3'] = 'PrestaShop-Bestellungen anlegen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d5f69819b4859a3e8b62007c34505a60'] = 'Bereitgestellte Bestellungen werden zu PrestaShop-Bestellungen mit Ihren eigenen Versanddienstleistern, Status und Rechnungen.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_47d8f70eae6427713a70d37697d89634'] = 'Käuferadressen aus einem Amazon-Bestellbericht';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_b706f7d4d5d7d2c35e00233cde0dfb69'] = 'Solange Amazon dieser App das Lesen von Käuferadressen nicht erlaubt hat, kommen Bestellungen ohne Straße und Empfängernamen an. Laden Sie den Bestellbericht in Seller Central herunter und hier hoch, um sie zu vervollständigen.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9733849df43bb78379eaa1845b187b00'] = 'In Seller Central: Orders > Order Reports > Unshipped Orders, dann Request report und Download.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_b50d264b2a8df1a0db46d9fc5e3c5cdb'] = 'Bericht hochladen';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9ae1f1611275e65ba3b263b428f82947'] = 'Nur bereits importierte Bestellungen werden aktualisiert. Platzhalter werden ersetzt; eine bereits ausgefüllte oder bearbeitete Adresse bleibt unverändert. Die Datei wird einmal gelesen und nicht gespeichert.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_98453fae44e7cbd3f88c3b318cf0d402'] = 'Käuferkommunikation';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2ac2d421cf8167c6eb624b6f92d4573c'] = 'Senden Sie dem Käufer einer importierten Bestellung eine von Amazon zugelassene, bestellbezogene Nachricht. Amazon begrenzt, welche Nachrichtentypen je Bestellung erlaubt sind; Antworten des Käufers erscheinen in Seller Central.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9c64e5de247c23a3adba5c8feffd11c3'] = 'Amazon-Bestellnummer (z. B. 123-1234567-1234567)';
@@ -687,6 +692,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_d9175a0a13df50924384ac6deb
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_530f488f7a9800411efc6926ab189708'] = 'Zeilen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fcdf8a82eba24e303b63b2e49a507ecb'] = 'Angefordert';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_50dee5a60f4e6b6be99ecdb656bdbe91'] = 'Noch keine Berichte angefordert.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9c0624da0925317b887d55a1ad9c963f'] = 'Wählen Sie zuerst die Datei mit dem Bestellbericht.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_34e4e633a9e262c3fda017a3b865a646'] = 'Bericht wird gelesen...';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3be3efb5e052d02769c87e3ec50f4ce7'] = 'Der Bericht konnte nicht verarbeitet werden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4e3afdcdb9271864468bac7ec14926ae'] = 'Amazon Marketplace Pro';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8ce00040577818534c89794c05c7ee26'] = 'Diese Einstellungen gelten nur für dieses Produkt und haben Vorrang vor dem Angebotsprofil, den Kategorie-, Hersteller- und Lieferantenregeln sowie den globalen Einstellungen. Lassen Sie ein Feld leer, um den Wert zu erben.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_efbdbfee2f06fe431e92788f16ac4163'] = 'Dieses Produkt mit Amazon abgleichen';
@@ -766,6 +774,14 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_fe07db1b56a2301
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_8c9067e52e4440d8a20e74fdc745b0c6'] = 'Es wurde keine Datei hochgeladen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_83d447e273c890c62684b046528f2658'] = 'Die Datei ist größer als 10 MB.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_57c3c048c3746fcf6573314d1f3b4f3c'] = 'Die hochgeladene Datei konnte nicht gelesen werden.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e4a47597d975e0ee44f1c72eb51557fd'] = 'Diese Datei ist kein Amazon-Bestellbericht: Sie hat keine Spalte order-id.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_cc3a7818d4289bba3a85ec58b95b6317'] = 'Dieser Bericht hat keine Spalten für die Lieferadresse. Laden Sie stattdessen den Bericht Unshipped Orders oder New Orders herunter.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_b16d3ca26d66036877db556a6f935bc2'] = 'Der Bericht enthält keine Bestellungen.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_26dd8624fa0738a42b6673f1afa27061'] = '%d Bestellung(en) aus dem Bericht ergänzt.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_076ca88508f857997862f81c51e115cc'] = '%d Bestellung(en) hatten bereits eine vollständige Adresse.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e2fad198556a0b6cf71ba2e4ed80244f'] = '%d PrestaShop-Adresse(n) unverändert gelassen, weil sie bereits ausgefüllt oder bearbeitet waren.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1ac8490f522b5c1b58b0b7307ef40f4a'] = '%d Bestellung(en) noch nicht importiert. Importieren Sie sie zuerst und laden Sie den Bericht dann erneut hoch.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_0abd7c078133fc1d0022254f570c90f4'] = '%d Bestellung(en) übersprungen: deren Käuferdaten wurden gemäß der Aufbewahrungsfrist bereits gelöscht.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_63f484f16741e65b53a387b34a3028c5'] = 'Wählen Sie mindestens ein zu löschendes Angebot aus.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_12983867e0b91ca9e5ee36b849c3959c'] = 'Die Amazon-Bestellnummer ist erforderlich.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3730cfcc28f4449520e138d06c7d187b'] = 'Ihre Rechnung zur Bestellung';

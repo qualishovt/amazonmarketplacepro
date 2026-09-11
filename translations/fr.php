@@ -549,6 +549,11 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a2222dae57b83e500b1371f45d
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d5aeb34d79c5ae7309197c9c93d0f0e8'] = 'Récupérer et préparer les commandes Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5683669210adf78a21c102ca929b97d3'] = 'Créer les commandes PrestaShop';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d5f69819b4859a3e8b62007c34505a60'] = 'Les commandes préparées deviennent des commandes PrestaShop, avec vos propres transporteurs, statuts et factures.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_47d8f70eae6427713a70d37697d89634'] = 'Adresses des acheteurs depuis un rapport de commandes Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_b706f7d4d5d7d2c35e00233cde0dfb69'] = 'Tant qu\'Amazon n\'a pas autorisé cette application à lire les adresses des acheteurs, les commandes arrivent sans la rue ni le nom du destinataire. Téléchargez le rapport de commandes dans Seller Central et importez-le ici pour les compléter.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9733849df43bb78379eaa1845b187b00'] = 'Dans Seller Central : Orders > Order Reports > Unshipped Orders, puis Request report et Download.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_b50d264b2a8df1a0db46d9fc5e3c5cdb'] = 'Importer le rapport';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9ae1f1611275e65ba3b263b428f82947'] = 'Seules les commandes déjà importées sont mises à jour. Les valeurs provisoires sont remplacées ; une adresse déjà complétée ou modifiée reste inchangée. Le fichier est lu une seule fois et n\'est pas conservé.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_98453fae44e7cbd3f88c3b318cf0d402'] = 'Messagerie acheteur';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2ac2d421cf8167c6eb624b6f92d4573c'] = 'Envoyez à l\'acheteur d\'une commande importée un message lié à la commande et approuvé par Amazon. Amazon limite les types de messages autorisés par commande ; les réponses de l\'acheteur arrivent dans Seller Central.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9c64e5de247c23a3adba5c8feffd11c3'] = 'Numéro de commande Amazon (par ex. 123-1234567-1234567)';
@@ -687,6 +692,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_d9175a0a13df50924384ac6deb
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_530f488f7a9800411efc6926ab189708'] = 'Lignes';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fcdf8a82eba24e303b63b2e49a507ecb'] = 'Demandé';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_50dee5a60f4e6b6be99ecdb656bdbe91'] = 'Aucun rapport demandé pour le moment.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9c0624da0925317b887d55a1ad9c963f'] = 'Choisissez d\'abord le fichier du rapport de commandes.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_34e4e633a9e262c3fda017a3b865a646'] = 'Lecture du rapport...';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3be3efb5e052d02769c87e3ec50f4ce7'] = 'Le rapport n\'a pas pu être traité.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4e3afdcdb9271864468bac7ec14926ae'] = 'Amazon Marketplace Pro';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8ce00040577818534c89794c05c7ee26'] = 'Ces réglages ne concernent que ce produit et priment sur le profil d\'offre, sur les règles de catégorie, fabricant et fournisseur ainsi que sur les paramètres globaux. Laissez un champ vide pour en hériter.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_efbdbfee2f06fe431e92788f16ac4163'] = 'Synchroniser ce produit vers Amazon';
@@ -766,6 +774,14 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_fe07db1b56a2301
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_8c9067e52e4440d8a20e74fdc745b0c6'] = 'Aucun fichier n\'a été envoyé.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_83d447e273c890c62684b046528f2658'] = 'Le fichier dépasse 10 Mo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_57c3c048c3746fcf6573314d1f3b4f3c'] = 'Le fichier envoyé n\'a pas pu être lu.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e4a47597d975e0ee44f1c72eb51557fd'] = 'Ce fichier n\'est pas un rapport de commandes Amazon : il n\'a pas de colonne order-id.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_cc3a7818d4289bba3a85ec58b95b6317'] = 'Ce rapport n\'a pas de colonnes d\'adresse de livraison. Téléchargez plutôt le rapport Unshipped Orders ou New Orders.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_b16d3ca26d66036877db556a6f935bc2'] = 'Le rapport ne contient aucune commande.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_26dd8624fa0738a42b6673f1afa27061'] = '%d commande(s) complétée(s) à partir du rapport.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_076ca88508f857997862f81c51e115cc'] = 'Adresse déjà complète pour %d commande(s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e2fad198556a0b6cf71ba2e4ed80244f'] = '%d adresse(s) PrestaShop laissée(s) telle(s) quelle(s), car déjà complétée(s) ou modifiée(s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1ac8490f522b5c1b58b0b7307ef40f4a'] = '%d commande(s) pas encore importée(s). Importez-les d\'abord, puis envoyez à nouveau le rapport.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_0abd7c078133fc1d0022254f570c90f4'] = '%d commande(s) ignorée(s) : leurs données acheteur ont déjà été supprimées selon la politique de conservation.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_63f484f16741e65b53a387b34a3028c5'] = 'Sélectionnez au moins une offre à supprimer.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_12983867e0b91ca9e5ee36b849c3959c'] = 'Le numéro de commande Amazon est obligatoire.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3730cfcc28f4449520e138d06c7d187b'] = 'Votre facture pour la commande';

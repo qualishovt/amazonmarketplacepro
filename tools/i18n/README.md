@@ -72,7 +72,10 @@ so a loop inside one process would test the first language five times over.
 - PrestaShop's own vocabulary follows PrestaShop's translations, not a literal
   rendering: *reference* is `Artikelnummer` in German, *credit slip* is
   `avoir` in French, and so on.
-- The formal register throughout (`vous`, `Sie`, `usted` implied).
+- The register follows what the existing strings do, not a single rule:
+  formal in French and German (`vous`, `Sie`), informal imperative in
+  Spanish, Italian and Polish (`elige`, `scegli`, `wybierz`). Match it when
+  adding a string, or one screen ends up speaking two ways.
 - Three strings are embedded in JavaScript in `configure.tpl` and are tagged
   `js=1` there, so PrestaShop applies `addslashes` and a French apostrophe is
   safe. Any new JS-embedded string must carry `js=1`, and its translations

@@ -85,6 +85,7 @@ class AmazonOrderImporter
             `ship_postal_code` VARCHAR(20) NOT NULL DEFAULT \'\',
             `ship_country_code` VARCHAR(8) NOT NULL DEFAULT \'\',
             `ship_phone` VARCHAR(32) NOT NULL DEFAULT \'\',
+            `ship_name` VARCHAR(255) NOT NULL DEFAULT \'\',
             `items_matched` INT(11) NOT NULL DEFAULT 0,
             `items_unmatched` INT(11) NOT NULL DEFAULT 0,
             `raw_json` LONGTEXT NULL,
@@ -172,6 +173,9 @@ class AmazonOrderImporter
         $add = array(
             'ship_service_level' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'is_business' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            // The recipient, filled from an uploaded order report (see
+            // AmazonOrderReportImporter) while the API withholds it.
+            'ship_name' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
         );
         foreach ($add as $name => $definition) {
             if (!isset($existing[$name])) {

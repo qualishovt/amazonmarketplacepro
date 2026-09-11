@@ -83,6 +83,7 @@ class AmazonPiiPurger
         'ship_state',
         'ship_postal_code',
         'ship_phone',
+        'ship_name',
     );
 
     /** @var string|null */
@@ -149,6 +150,18 @@ class AmazonPiiPurger
                 'ALTER TABLE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                  ADD COLUMN `pii_purged_at` DATETIME NULL DEFAULT NULL,
                  ADD KEY `pii_purged_at` (`pii_purged_at`)'
+            );
+        }
+
+        // The recipient column is cleared with the rest, so it has to exist
+        // even on an install that has never had an order report uploaded.
+        $cols = Db::getInstance()->executeS(
+            'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` LIKE \'ship_name\''
+        );
+        if (empty($cols)) {
+            Db::getInstance()->execute(
+                'ALTER TABLE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                 ADD COLUMN `ship_name` VARCHAR(255) NOT NULL DEFAULT \'\''
             );
         }
     }

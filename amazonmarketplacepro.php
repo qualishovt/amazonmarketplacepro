@@ -478,6 +478,7 @@ class AmazonMarketplacePro extends Module
             'ajaxFetchBuyerMessages'  => 'runFetchBuyerMessages',
             'ajaxAuditCatalogue'      => 'runAuditCatalogue',
             'ajaxImportReferences'    => 'runImportReferences',
+            'ajaxImportOrderAddresses' => 'runImportOrderAddresses',
             'ajaxListDeletions'       => 'runListDeletions',
             'ajaxDeleteListings'      => 'runDeleteListings',
         );
@@ -838,6 +839,7 @@ class AmazonMarketplacePro extends Module
             'ajax_fetch_buyer_messages_url' => $baseUrl . '&ajaxFetchBuyerMessages=1',
             'ajax_audit_catalogue_url'      => $baseUrl . '&ajaxAuditCatalogue=1',
             'ajax_import_references_url'    => $baseUrl . '&ajaxImportReferences=1',
+            'ajax_import_order_addresses_url' => $baseUrl . '&ajaxImportOrderAddresses=1',
             'ajax_list_deletions_url'       => $baseUrl . '&ajaxListDeletions=1',
             'ajax_delete_listings_url'      => $baseUrl . '&ajaxDeleteListings=1',
             'export_references_url'         => $baseUrl . '&mkproExportReferences=1',
@@ -1820,6 +1822,80 @@ class AmazonMarketplacePro extends Module
             . count($summary['errors']) . ' error(s).');
 
         return array('success' => true, 'summary' => $summary);
+    }
+
+    /**
+     * Fill buyer names and addresses in from an uploaded Amazon order report.
+     *
+     * The fallback while the app lacks Amazon's personal-data role: see
+     * AmazonOrderReportImporter. The file is read here and never stored, and
+     * the log gets counts only.
+     */
+    protected function runImportOrderAddresses()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonOrderReportImporter.php';
+
+        if (!isset($_FILES['order_report']) || !is_uploaded_file($_FILES['order_report']['tmp_name'])) {
+            return array('success' => false, 'error' => $this->l('No file was uploaded.'));
+        }
+        if ($_FILES['order_report']['size'] > AmazonOrderReportImporter::MAX_BYTES) {
+            return array('success' => false, 'error' => $this->l('The file is larger than 10 MB.'));
+        }
+
+        $content = file_get_contents($_FILES['order_report']['tmp_name']);
+        if ($content === false) {
+            return array('success' => false, 'error' => $this->l('The uploaded file could not be read.'));
+        }
+
+        $importer = new AmazonOrderReportImporter();
+        $parsed = $importer->parse($content);
+        unset($content);
+
+        if ($parsed['error'] === 'no_order_id') {
+            return array('success' => false,
+                'error' => $this->l('This file is not an Amazon order report: it has no order-id column.'));
+        }
+        if ($parsed['error'] === 'no_address') {
+            return array('success' => false,
+                'error' => $this->l('This report has no shipping address columns. Download the Unshipped Orders or New Orders report instead.'));
+        }
+        if (!$parsed['orders']) {
+            return array('success' => false, 'error' => $this->l('The report contains no orders.'));
+        }
+
+        $s = $importer->apply($parsed['orders']);
+
+        $messages = array(sprintf($this->l('%d order(s) filled in from the report.'), $s['updated']));
+        if ($s['already'] > 0) {
+            $messages[] = sprintf($this->l('%d order(s) already had a full address.'), $s['already']);
+        }
+        if ($s['kept'] > 0) {
+            $messages[] = sprintf(
+                $this->l('%d PrestaShop address(es) left unchanged because they had already been filled in or edited.'),
+                $s['kept']
+            );
+        }
+        if ($s['not_imported'] > 0) {
+            $messages[] = sprintf(
+                $this->l('%d order(s) are not imported yet. Import them first, then upload the report again.'),
+                $s['not_imported']
+            );
+        }
+        if ($s['purged'] > 0) {
+            $messages[] = sprintf(
+                $this->l('%d order(s) skipped: their buyer data was already removed under the retention policy.'),
+                $s['purged']
+            );
+        }
+
+        $this->logActivity('info', 'order_addresses', sprintf(
+            'Order report: %d order(s) in the file, %d filled in (%d address(es), %d customer(s)), '
+            . '%d already complete, %d address(es) kept as edited, %d not imported, %d purged.',
+            $s['in_report'], $s['updated'], $s['addresses'], $s['customers'],
+            $s['already'], $s['kept'], $s['not_imported'], $s['purged']
+        ));
+
+        return array('success' => true, 'summary' => $s, 'messages' => $messages);
     }
 
     protected function runListDeletions()
