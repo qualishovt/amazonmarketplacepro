@@ -89,9 +89,10 @@
   <li><span class="n">6</span>The Amazon tab on a product</li>
   <li><span class="n">7</span>Orders</li>
   <li class="l2">7.1 Importing orders</li>
-  <li class="l2">7.2 Pending orders and reserved stock</li>
-  <li class="l2">7.3 Returns and cancellations</li>
-  <li class="l2">7.4 Buyer messaging</li>
+  <li class="l2">7.2 Buyer addresses from an order report</li>
+  <li class="l2">7.3 Pending orders and reserved stock</li>
+  <li class="l2">7.4 Returns and cancellations</li>
+  <li class="l2">7.5 Buyer messaging</li>
   <li><span class="n">8</span>Fulfilment</li>
   <li><span class="n">9</span>Money</li>
   <li><span class="n">10</span>Insights</li>
@@ -252,7 +253,7 @@
   <tr><td class="k">Use an anonymized e-mail for customers</td><td>Amazon relay addresses expire; a synthetic address avoids bounced shop e-mails. Buyer messaging through Amazon still works.</td></tr>
   <tr><td class="k">Buyer data deletion, Delete buyer data after</td><td>See section 12.</td></tr>
   <tr><td class="k">Customer group for Amazon buyers</td><td>The group given to customers created by imports.</td></tr>
-  <tr><td class="k">Remote Cart, Release a hold after</td><td>Reserve stock for Amazon checkouts that are not payable yet; return it after the grace period if the order never becomes payable. See 7.2.</td></tr>
+  <tr><td class="k">Remote Cart, Release a hold after</td><td>Reserve stock for Amazon checkouts that are not payable yet; return it after the grace period if the order never becomes payable. See 7.3.</td></tr>
   <tr><td class="k">Orders without enough stock</td><td>Create the PrestaShop order anyway, or park it in Pending Orders for review.</td></tr>
   <tr><td class="k">Default Carrier, Default Order State</td><td>Used for imported orders when nothing more specific applies.</td></tr>
 </table>
@@ -351,19 +352,40 @@
 <h2>7.1 Importing orders</h2>
 <p>Importing is two steps, like the catalogue, so you can look before anything is created.</p>
 <ol class="steps">
-  <li><span class="btn">Fetch &amp; Stage Amazon Orders</span> downloads orders inside the lookback window (4.5) and stages them, with shipping costs, tax, the buyer address, and whether Amazon or you fulfil them. The table shows each order's items matched to PrestaShop products, and flags Prime and Amazon Business orders.</li>
-  <li><span class="btn">Create PrestaShop Orders</span> turns staged orders into PrestaShop orders with your carriers, statuses, invoices and taxes, following the routing rules in 4.5. Orders that lack stock are parked (7.2) if you chose to.</li>
+  <li><span class="btn">Fetch &amp; Stage Amazon Orders</span> downloads orders inside the lookback window (4.5) and stages them, with shipping costs, tax, the buyer address (see 7.2), and whether Amazon or you fulfil them. The table shows each order's items matched to PrestaShop products, and flags Prime and Amazon Business orders.</li>
+  <li><span class="btn">Create PrestaShop Orders</span> turns staged orders into PrestaShop orders with your carriers, statuses, invoices and taxes, following the routing rules in 4.5. Orders that lack stock are parked (7.3) if you chose to.</li>
 </ol>
 <p>The scheduled tasks <i>Import orders</i> and <i>Create PrestaShop orders</i> do the same two steps unattended, every 15 minutes by default. When an order is marked Shipped in PrestaShop, and the hook in 4.3 is on, the module confirms the shipment to Amazon with the tracking number and the mapped carrier code.</p>
 
-<h2>7.2 Pending orders and reserved stock</h2>
+<h2>7.2 Buyer addresses from an order report</h2>
+<p>Amazon gives an app the buyer's name, street and phone number only after approving it for restricted personal data. Until then, imported orders carry the city, region, postcode and country only: the PrestaShop customer is named "Amazon Buyer" and the street reads "Amazon Marketplace Order". Seller Central's order report has the full details, and the module can read it.</p>
+<ol class="steps">
+  <li>Import the orders first (7.1).</li>
+  <li>In Seller Central, open <b>Orders &gt; Order Reports &gt; Unshipped Orders</b>, press <b>Request report</b>, and <b>Download</b> it when it is ready. It lists the orders you have not shipped yet, which are the ones that need an address.</li>
+  <li>On the module's <b>Orders &gt; Orders</b> tab, choose the file in the panel <b>Buyer addresses from an Amazon order report</b> and press <span class="btn">Upload report</span>. Upload the file as downloaded.</li>
+</ol>
+<figure>
+  <img src="img/09b-orders-report.png" alt="">
+  <figcaption>The report panel after an upload.</figcaption>
+</figure>
+<p>The result says how many orders were filled in, how many already had a full address, how many PrestaShop addresses were left alone, how many orders are not imported yet, and how many were skipped because their buyer data was already deleted. The upload follows these rules:</p>
+<ul>
+  <li><b>Imported orders only.</b> Lines for orders the module does not know yet are counted, not stored. Import those orders, then upload the report again.</li>
+  <li><b>Empty fields only.</b> Nothing Amazon already sent is overwritten.</li>
+  <li><b>Your edits stay.</b> A PrestaShop address is filled in only while it still shows the placeholder street; an address you have corrected is left as it is. The country never changes, because it decided the tax. The customer's name replaces "Amazon Buyer" only while the customer still has that name.</li>
+  <li><b>Deleted data stays deleted.</b> Orders whose buyer data was cleared under the retention policy (section 12) are skipped.</li>
+  <li><b>The file is not kept.</b> The activity log records only the counts.</li>
+</ul>
+<p>Uploading the same report again is harmless: every order is then reported as already complete. Details filled in from a report are deleted with the rest of the buyer data after the retention period (section 12).</p>
+
+<h2>7.3 Pending orders and reserved stock</h2>
 <p><b>Pending Orders</b> holds Amazon orders that could not become PrestaShop orders because a product lacks stock. Restock and re-run Create PrestaShop Orders, force the order with <span class="btn">Create anyway</span>, or remove it.</p>
 <p><b>Reserved Stock (Remote Cart)</b> lists units held for Amazon checkouts that are not payable yet. Amazon exposes a checkout in progress as a "Pending" order; with Remote Cart on (4.5), the module takes those units out of PrestaShop stock at once so no other channel can sell them, hands them over when the order becomes payable, and returns them after the grace period if it never does. The <i>Settle remote carts</i> task does the settling.</p>
 
-<h2>7.3 Returns and cancellations</h2>
+<h2>7.4 Returns and cancellations</h2>
 <p><span class="btn">Import Returns from Amazon</span> fetches returns and cancellations; <span class="btn">Process Pending Returns</span> creates PrestaShop credit slips or cancels PrestaShop orders accordingly. The Return History table shows each one with its type, refund amount, PrestaShop order and credit slip. The <i>Import returns</i> and <i>Process returns</i> tasks automate both.</p>
 
-<h2>7.4 Buyer messaging</h2>
+<h2>7.5 Buyer messaging</h2>
 <p>Enter an Amazon order ID and press <span class="btn">Load allowed message types</span>; Amazon limits which message types are permitted per order. Write the message and send it, or press <span class="btn">Request a review</span> to send Amazon's standard review request, allowed once per order, 5 to 30 days after delivery. Replies arrive by e-mail and can be filed into Customer Service with the Messaging settings (4.6).</p>
 
 <!-- ───────────────────────── 8 FULFILMENT ───────────────────────── -->
@@ -432,7 +454,7 @@
   <tr><td>Sync stock</td><td>30 min</td><td>Sends current quantities, and prices when the sync mode includes them, for products in the delta window.</td></tr>
   <tr><td>Full product sync</td><td>daily</td><td>Reads the PrestaShop catalogue, compares with Amazon and pushes pending listings (5.1, steps 1 and 3).</td></tr>
   <tr><td>Process feed queue</td><td>15 min</td><td>Submits queued listing changes as feeds and records Amazon's results.</td></tr>
-  <tr><td>Import returns / Process returns</td><td>60 min</td><td>Fetch returns and cancellations, then create credit slips or cancel orders (7.3).</td></tr>
+  <tr><td>Import returns / Process returns</td><td>60 min</td><td>Fetch returns and cancellations, then create credit slips or cancel orders (7.4).</td></tr>
   <tr><td>FBA inventory sync</td><td>60 min</td><td>Downloads Amazon-held stock levels (section 8).</td></tr>
   <tr><td>Repricing cycle</td><td>60 min</td><td>Fetches competitive prices and applies your rules (section 9).</td></tr>
   <tr><td>Fetch fees</td><td>6 h</td><td>Records Amazon fees per order.</td></tr>
@@ -440,7 +462,7 @@
   <tr><td>Sync promotions</td><td>6 h</td><td>Imports promotions from orders.</td></tr>
   <tr><td>Import orders / Product sync, all marketplaces</td><td>15 min / daily</td><td>The multi-marketplace versions of the order import and product sync.</td></tr>
   <tr><td>Request reviews</td><td>daily</td><td>Sends review requests for delivered orders, when enabled in 4.5.</td></tr>
-  <tr><td>Settle remote carts</td><td>15 min</td><td>Hands over or releases reserved stock (7.2).</td></tr>
+  <tr><td>Settle remote carts</td><td>15 min</td><td>Hands over or releases reserved stock (7.3).</td></tr>
   <tr><td>Fetch buyer messages</td><td>60 min</td><td>Reads buyer replies from the mailbox into Customer Service (4.6).</td></tr>
   <tr><td>Upload invoices</td><td>6 h</td><td>Uploads VAT invoices for VCS-enrolled sellers.</td></tr>
   <tr><td>Purge buyer data past retention</td><td>daily</td><td>Deletes buyer personal data from orders older than the retention period (section 12).</td></tr>
