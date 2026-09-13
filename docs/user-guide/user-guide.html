@@ -142,7 +142,7 @@
   <li><b>Install the module</b> from Modules &gt; Module Manager, then open Configure. All of the module's screens are on that one page, grouped in a sidebar.</li>
   <li><b>Choose your marketplace</b> on Settings &gt; Connection, in the Marketplace panel, and press <span class="btn">Save Settings</span>. The marketplace decides the Amazon site, the currency and the listing language.</li>
   <li><b>Connect.</b> Press <span class="btn">Connect to Amazon</span>. You are sent to Seller Central to approve the connection, then returned to the shop. There are no credentials to copy. You can revoke the authorisation from Seller Central at any time, or press <span class="btn">Disconnect</span> in the module.</li>
-  <li><b>Check the connection.</b> Press <span class="btn">Test Amazon Connection</span>. It requests an access token and reads your recent orders, printing each step. Section 13 explains the possible results.</li>
+  <li><b>Check the connection.</b> Press <span class="btn">Check connection</span> in the green banner. It reads your recent orders and says in plain words whether everything works. Section 13 explains the possible results.</li>
   <li><b>Turn on automation.</b> On System &gt; Automation, either add the one cron line shown to your hosting control panel, or register with the IntelliPresta scheduler. Then switch on the tasks you need in the table below it. Section 11 covers this in detail.</li>
 </ol>
 <p>After that, the usual order of work is: check your catalogue references (11.3), create a listing profile for each product family (5.4), run the two-step sync on Catalog &gt; Products (5.1), and let the scheduled tasks keep everything current.</p>
@@ -174,10 +174,9 @@
 <h2>4.1 Connection</h2>
 <h3>Amazon Connection</h3>
 <p>Shows whether the shop is connected and to which seller. <span class="btn">Connect to Amazon</span> starts the approval flow in Seller Central; <span class="btn">Disconnect</span> clears the stored authorisation. Select the marketplace before connecting, since the consent page depends on it.</p>
+<p>The green banner only means a connection is saved. <span class="btn">Check connection</span>, inside the banner, shows that it still works: it connects to Amazon, reads your recent orders, and says in plain words that everything works or what to do. Run it after connecting, or whenever a sync reports an authorisation error. Section 13 lists the results.</p>
 <h3>Marketplace</h3>
 <p><b>Amazon Marketplace.</b> The Amazon site this shop sells on. Additional marketplaces are added under Fulfilment &gt; Multi-Account (section 8).</p>
-<h3>Connection Test</h3>
-<p><span class="btn">Test Amazon Connection</span> checks the connection made with Connect to Amazon: it requests an access token and reads recent orders, printing each step. Run it after connecting, or whenever a sync reports an authorisation error. See section 13 for what each outcome means.</p>
 
 <h2>4.2 Listings</h2>
 <figure>
@@ -491,13 +490,15 @@
 
 <!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
 <h1>13. Troubleshooting</h1>
-<h3>Reading the connection test</h3>
+<h3>Reading Check connection</h3>
+<p>The result appears under the green banner in Settings &gt; Connection. When the check fails, the technical details are also written to the Logs tab (11.4); support will ask for them.</p>
 <table>
   <tr><th style="width:38%">Result</th><th>Meaning and what to do</th></tr>
-  <tr><td>"This shop is not connected to Amazon yet."</td><td>No authorisation is stored. Press Connect to Amazon and approve the connection in Seller Central.</td></tr>
-  <tr><td>Token step fails</td><td>The authorisation was revoked in Seller Central, or the IntelliPresta connection service is unreachable. Reconnect, or try again later.</td></tr>
-  <tr><td>"Access token obtained", then HTTP 403 on the orders call</td><td>The connection is fine; Amazon refuses the seller account. Check, in this order: the seller account is active and on a Professional plan (Seller Central &gt; Settings &gt; Account Info); the app has the required roles and the seller re-authorised after they were added.</td></tr>
-  <tr><td>Both steps succeed</td><td>The connection works. A sync problem lies elsewhere: check the Logs tab.</td></tr>
+  <tr><td>"Everything works: the module can reach your Amazon account."</td><td>The connection works. If a sync still fails, the reason is in the Logs tab.</td></tr>
+  <tr><td>"Amazon refused access to your seller account."</td><td>The connection itself is fine, but Amazon will not serve data for this seller. Check in Seller Central that the account is active and on the Professional selling plan. If it is, press Disconnect, then Connect to Amazon again.</td></tr>
+  <tr><td>"Amazon no longer accepts this connection."</td><td>The connection was removed in Seller Central. Press Disconnect, then Connect to Amazon again.</td></tr>
+  <tr><td>"Amazon or the IntelliPresta connection service could not be reached."</td><td>Usually a passing network problem. Try again in a few minutes; if it keeps happening, contact support.</td></tr>
+  <tr><td>"This server cannot open a secure connection to Amazon."</td><td>The server's security certificates are out of date. Ask your hosting provider to update them.</td></tr>
 </table>
 <h3>Common situations</h3>
 <table>
@@ -506,7 +507,7 @@
   <tr><td>Push accepted, but the listing on Amazon is offer-only</td><td>The product's category has neither a profile nor a category mapping, or "Send full product data" is No (4.3).</td></tr>
   <tr><td>Listing rejected with a missing-attribute error</td><td>Amazon decides required fields dynamically. Open the profile, find the attribute in the optional list, fill it in, save, and push again. The feed payload (11.3) shows exactly what was sent.</td></tr>
   <tr><td>Imported orders show 0% VAT</td><td>Choose "Apply my PrestaShop tax rules" in 4.5.</td></tr>
-  <tr><td>A scheduled task shows "Failed"</td><td>The message column and the Logs tab give the reason. Press Run now to retry after fixing it. After repeated failures, check the connection test.</td></tr>
+  <tr><td>A scheduled task shows "Failed"</td><td>The message column and the Logs tab give the reason. Press Run now to retry after fixing it. After repeated failures, press Check connection (4.1).</td></tr>
   <tr><td>Nothing runs although tasks are on</td><td>No cron is calling the shop. Confirm the cron line exists in your hosting panel, or that the shop is registered with the IntelliPresta scheduler and reachable over HTTPS.</td></tr>
   <tr><td>Bounced e-mails to Amazon buyers</td><td>Amazon relay addresses expire. Enable the anonymised e-mail (4.5).</td></tr>
 </table>

@@ -177,13 +177,6 @@ return array(
     'it' => 'Connesso con credenziali SP-API manuali',
     'pl' => 'Połączono za pomocą ręcznych danych SP-API',
 ),
-'A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Test Amazon Connection" below to verify the link.' => array(
-    'fr' => 'Un jeton de rafraîchissement est enregistré pour cet environnement. Le bouton « Se connecter à Amazon » ne sert qu\'au parcours OAuth et n\'est pas utilisé en mode manuel — utilisez « Tester la connexion Amazon » ci-dessous pour vérifier le lien.',
-    'es' => 'Hay un token de actualización guardado para este entorno. El botón «Conectar con Amazon» solo sirve para el flujo OAuth y no se usa en modo manual: utiliza «Probar la conexión con Amazon» más abajo para verificar el enlace.',
-    'de' => 'Für diese Umgebung ist ein Refresh-Token gespeichert. Die Schaltfläche „Mit Amazon verbinden“ gilt nur für den OAuth-Ablauf und wird im manuellen Modus nicht verwendet — prüfen Sie die Verbindung unten mit „Amazon-Verbindung testen“.',
-    'it' => 'Per questo ambiente è memorizzato un refresh token. Il pulsante «Connetti ad Amazon» serve solo al flusso OAuth e non viene usato in modalità manuale: usa «Verifica la connessione ad Amazon» qui sotto per controllare il collegamento.',
-    'pl' => 'Dla tego środowiska zapisano token odświeżania. Przycisk „Połącz z Amazon” dotyczy wyłącznie procesu OAuth i nie jest używany w trybie ręcznym — użyj poniżej przycisku „Testuj połączenie z Amazon”, aby sprawdzić powiązanie.',
-),
 'Clear the stored token for this environment?' => array(
     'fr' => 'Effacer le jeton enregistré pour cet environnement ?',
     'es' => '¿Borrar el token guardado para este entorno?',
@@ -477,27 +470,6 @@ return array(
     'de' => 'Deaktiviert',
     'it' => 'Disattivato',
     'pl' => 'Wyłączony',
-),
-'Connection Test' => array(
-    'fr' => 'Test de connexion',
-    'es' => 'Prueba de conexión',
-    'de' => 'Verbindungstest',
-    'it' => 'Test di connessione',
-    'pl' => 'Test połączenia',
-),
-'Checks the connection made with Connect to Amazon: requests an access token and reads recent orders. Run it after connecting, or whenever a sync reports an authorisation error.' => array(
-    'fr' => 'Vérifie la connexion établie avec « Se connecter à Amazon » : demande un jeton d\'accès et lit les commandes récentes. Lancez-le après la connexion, ou chaque fois qu\'une synchronisation signale une erreur d\'autorisation.',
-    'es' => 'Comprueba la conexión creada con Conectar con Amazon: pide un token de acceso y lee los pedidos recientes. Ejecútala después de conectar o siempre que una sincronización dé un error de autorización.',
-    'de' => 'Prüft die mit „Mit Amazon verbinden“ hergestellte Verbindung: fordert ein Access-Token an und liest aktuelle Bestellungen. Führen Sie ihn nach dem Verbinden aus oder wenn eine Synchronisierung einen Autorisierungsfehler meldet.',
-    'it' => 'Verifica la connessione creata con «Connetti ad Amazon»: richiede un access token e legge gli ordini recenti. Eseguilo dopo la connessione o ogni volta che una sincronizzazione segnala un errore di autorizzazione.',
-    'pl' => 'Sprawdza połączenie utworzone przyciskiem Połącz z Amazon: pobiera token dostępu i odczytuje ostatnie zamówienia. Uruchom go po połączeniu lub zawsze, gdy synchronizacja zgłasza błąd autoryzacji.',
-),
-'Test Amazon Connection' => array(
-    'fr' => 'Tester la connexion Amazon',
-    'es' => 'Probar la conexión con Amazon',
-    'de' => 'Amazon-Verbindung testen',
-    'it' => 'Verifica la connessione ad Amazon',
-    'pl' => 'Testuj połączenie z Amazon',
 ),
 'Listing Defaults' => array(
     'fr' => 'Valeurs par défaut des offres',

@@ -166,10 +166,14 @@
 
         {if $mkpro_connected && $mkpro_auth_mode != 'manual'}
             <div class="alert alert-success">
+                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;">
+                    <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
+                </button>
                 <i class="icon-check"></i> {l s='Connected to Amazon' mod='amazonmarketplacepro'}
                 {if $mkpro_dev_mode} ({if $mkpro_environment == 'sandbox'}{l s='sandbox app' mod='amazonmarketplacepro'}{else}{l s='production app' mod='amazonmarketplacepro'}{/if}){/if}
                 {if $mkpro_selling_partner_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_selling_partner_id|escape:'htmlall':'UTF-8'}</strong>{/if}
             </div>
+            <div id="amazon-connection-result" style="display:none; white-space:pre-line;"></div>
             <div class="form-group">
                 <div class="col-lg-offset-3 col-lg-6">
                     <button type="submit" name="mkproDisconnectAmazon" class="btn btn-default"
@@ -183,11 +187,15 @@
             </div>
         {elseif $mkpro_manual_connected}
             <div class="alert alert-success">
+                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;">
+                    <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
+                </button>
                 <i class="icon-check"></i> {l s='Connected with manual SP-API credentials' mod='amazonmarketplacepro'}
                 {if $mkpro_dev_mode} ({if $mkpro_environment == 'sandbox'}{l s='sandbox app' mod='amazonmarketplacepro'}{else}{l s='production app' mod='amazonmarketplacepro'}{/if}){/if}
                 {if $mkpro_seller_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_seller_id|escape:'htmlall':'UTF-8'}</strong>{/if}
-                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Test Amazon Connection" below to verify the link.' mod='amazonmarketplacepro'}</small>
+                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Check connection" to verify the link.' mod='amazonmarketplacepro'}</small>
             </div>
+            <div id="amazon-connection-result" style="display:none; white-space:pre-line;"></div>
             <div class="form-group">
                 <div class="col-lg-offset-3 col-lg-6">
                     <button type="submit" name="mkproDisconnectAmazon" class="btn btn-default"
@@ -356,15 +364,6 @@
             </div>
         </div>
         {/if}
-    </div>
-    {* ── Connection Test ── *}
-    <div class="panel">
-        <div class="panel-heading"><i class="icon-plug"></i> {l s='Connection Test' mod='amazonmarketplacepro'}</div>
-        <p>{l s='Checks the connection made with Connect to Amazon: requests an access token and reads recent orders. Run it after connecting, or whenever a sync reports an authorisation error.' mod='amazonmarketplacepro'}</p>
-        <button type="button" id="test-amazon-connection" class="btn btn-primary">
-            <i class="icon-refresh"></i> {l s='Test Amazon Connection' mod='amazonmarketplacepro'}
-        </button>
-        <pre id="amazon-connection-result" style="display:none; margin-top:15px; padding:12px; white-space:pre-wrap; word-break:break-word;"></pre>
     </div>
     </div>
 
@@ -2847,22 +2846,20 @@
             btn.disabled = true;
             out.style.display = 'block';
             out.className = '';
-            out.textContent = 'Contacting Amazon...';
+            out.className = 'alert alert-info';
+            out.textContent = '{l s='Checking the connection to Amazon...' mod='amazonmarketplacepro' js=1}';
 
             ajaxPost('{$ajax_test_amazon_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.className='alert alert-danger'; out.textContent='Unexpected response'; return; }
-                var text = (data.lines || []).join('\n');
-                if (data.success) {
-                    out.className = 'alert alert-success';
-                } else {
+                if (!data) {
                     out.className = 'alert alert-danger';
-                    if (data.error) {
-                        text += '\nFAILED: ' + data.error;
-                        if (data.hint) text += '\nHint: ' + data.hint;
-                    }
+                    out.textContent = '{l s='The check could not be completed. Try again.' mod='amazonmarketplacepro' js=1}';
+                    return;
                 }
-                out.textContent = text;
+                var lines = (data.lines || []).slice();
+                if (!data.success && data.error) lines.push(data.error);
+                out.className = data.success ? 'alert alert-success' : 'alert alert-danger';
+                out.textContent = lines.join('\n');
             });
         });
     })();

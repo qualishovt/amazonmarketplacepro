@@ -1935,14 +1935,20 @@ class AmazonMarketplacePro extends Module
 
     /* ─────────────────── Feature: Connection Test ─────────────────── */
 
+    /**
+     * "Check connection" in the Connected banner. The banner only says a
+     * token is stored; this gets an access token and reads the last week's
+     * orders, which proves the stored connection still works.
+     *
+     * Messages are plain and translated. The raw Amazon error goes to the
+     * activity log, where support can read it.
+     */
     protected function runAmazonConnectionTest()
     {
         $result = array(
-            'success'    => false,
-            'lines'      => array(),
-            'error'      => null,
-            'error_type' => null,
-            'hint'       => null,
+            'success' => false,
+            'lines'   => array(),
+            'error'   => null,
         );
 
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
@@ -1957,20 +1963,20 @@ class AmazonMarketplacePro extends Module
             : (AmazonSpApiClient::storedRefreshToken() != '');
         if (!$configured) {
             $result['error'] = $manual
-                ? 'Amazon credentials not configured. Enter them in the Manual SP-API Credentials panel, or switch to Connect with Amazon.'
-                : 'This shop is not connected to Amazon yet. Press Connect to Amazon above, approve the connection in Seller Central, then run this test again.';
+                ? $this->l('The Amazon credentials are not filled in. Enter them in the Manual SP-API Credentials panel.')
+                : $this->l('This shop is not connected to Amazon yet. Press Connect to Amazon.');
             return $result;
         }
 
         $client = $this->buildAmazonClient();
 
-        $result['lines'][] = 'Requesting LWA access token...';
+        $result['lines'][] = $this->l('Connecting to Amazon...');
         if (!$client->authenticate()) {
-            return $this->amazonTestError($result, $client->getLastError());
+            return $this->amazonTestError($result, $client->getLastError(), 'token', $manual);
         }
-        $result['lines'][] = 'Access token obtained.';
+        $result['lines'][] = $this->l('Connected.');
 
-        $result['lines'][] = 'Calling getOrders (' . ($this->isProduction() ? 'production' : 'sandbox') . ')...';
+        $result['lines'][] = $this->l('Reading your recent orders...');
         $createdAfter = $this->isProduction()
             ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-7 days'))
             : 'TEST_CASE_200';
@@ -1981,11 +1987,11 @@ class AmazonMarketplacePro extends Module
         ));
 
         if ($resp === false) {
-            return $this->amazonTestError($result, $client->getLastError());
+            return $this->amazonTestError($result, $client->getLastError(), 'orders', $manual);
         }
         if ($resp['status'] >= 400) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
-            return $this->amazonTestError($result, 'HTTP ' . $resp['status'] . ': ' . $body);
+            return $this->amazonTestError($result, 'HTTP ' . $resp['status'] . ': ' . $body, 'orders', $manual);
         }
 
         $orders = array();
@@ -1993,46 +1999,53 @@ class AmazonMarketplacePro extends Module
             $orders = $resp['body']['payload']['Orders'];
         }
 
-        $result['lines'][] = 'API call succeeded.';
-        $result['lines'][] = 'Orders returned: ' . count($orders);
-
-        if (!empty($orders)) {
-            $first = $orders[0];
-            $result['lines'][] = 'Sample order ID: ' . (isset($first['AmazonOrderId']) ? $first['AmazonOrderId'] : 'n/a');
-            $result['lines'][] = 'Status: ' . (isset($first['OrderStatus']) ? $first['OrderStatus'] : 'n/a');
-            $result['lines'][] = 'Channel: ' . (isset($first['FulfillmentChannel']) ? $first['FulfillmentChannel'] : 'n/a');
-        }
-
-        $result['lines'][] = 'SUCCESS - credentials and connection are working.';
+        $result['lines'][] = sprintf($this->l('Orders found: %d.'), count($orders));
+        $result['lines'][] = $this->l('Everything works: the module can reach your Amazon account.');
         $result['success'] = true;
 
         $this->logActivity('info', 'connection_test', 'Connection test passed.');
         return $result;
     }
 
-    private function amazonTestError($result, $message)
+    /**
+     * Turns a failed step into plain advice for the merchant. The raw message
+     * (HTTP status, Amazon's JSON, cURL's wording) is logged, not shown.
+     *
+     * @param array  $result
+     * @param string $message raw error from the client
+     * @param string $step    'token' or 'orders': which call failed
+     * @param bool   $manual  manual credentials rather than Connect
+     * @return array
+     */
+    private function amazonTestError($result, $message, $step, $manual)
     {
         $message = (string) $message;
         $result['success'] = false;
-        $result['error'] = $message;
-        $result['error_type'] = 'AmazonSpApiError';
 
         if (strpos($message, 'invalid_grant') !== false) {
-            $result['hint'] = 'Refresh token is wrong/expired, or doesn\'t match this client.';
-        } elseif (strpos($message, 'invalid_client') !== false) {
-            $result['hint'] = 'Client ID or Client Secret is incorrect.';
+            $explain = $manual
+                ? $this->l('Amazon rejected the refresh token: it is wrong, expired, or belongs to a different app.')
+                : $this->l('Amazon no longer accepts this connection, usually because it was removed in Seller Central. Press Disconnect, then Connect to Amazon again.');
+        } elseif ($manual && strpos($message, 'invalid_client') !== false) {
+            $explain = $this->l('Amazon rejected the client ID or the client secret.');
         } elseif (strpos($message, '403') !== false || stripos($message, 'Unauthorized') !== false) {
             // A 403 on EVERY endpoint (rather than one) usually means the
-            // seller account itself cannot serve API data — that outranks
+            // seller account itself cannot serve API data - that outranks
             // app roles as an explanation, and is the easiest thing to check.
-            $result['hint'] = 'The token is valid but Amazon denied access. Check, in this order: '
-                . '1) the seller account is active and on a Professional selling plan '
-                . '(Seller Central > Settings > Account Info); '
-                . '2) the LWA client id, secret and refresh token all belong to the SAME registered app; '
-                . '3) the app has the required roles AND the seller re-authorized after they were added.';
+            $explain = $manual
+                ? $this->l('Amazon refused access. Check that the seller account is active and on the Professional selling plan, and that the client ID, client secret and refresh token all come from the same app.')
+                : $this->l('Amazon refused access to your seller account. Check in Seller Central that the account is active and on the Professional selling plan. If it is, press Disconnect, then Connect to Amazon again.');
         } elseif (stripos($message, 'SSL') !== false || stripos($message, 'certificate') !== false) {
-            $result['hint'] = 'cURL cannot verify SSL. Drop a cacert.pem into the module\'s classes/ folder.';
+            $explain = $this->l('This server cannot open a secure connection to Amazon because the certificate check failed. Ask your hosting provider to update the CA certificates on the server.');
+        } elseif ($step === 'token') {
+            // Also covers invalid_client in Connect mode: the client ID and
+            // secret belong to the relay, so the merchant cannot fix them.
+            $explain = $this->l('Amazon or the IntelliPresta connection service could not be reached. Try again in a few minutes; if it keeps happening, contact support.');
+        } else {
+            $explain = $this->l('Amazon returned an error.');
         }
+
+        $result['error'] = $explain . "\n" . $this->l('The technical details are in the Logs tab.');
 
         $this->logActivity('error', 'connection_test', $message);
         return $result;
