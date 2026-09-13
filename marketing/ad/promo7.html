@@ -96,16 +96,25 @@ const $   = id => document.getElementById(id);
 const fl  = (t,a,p,ph) => Math.sin((t/p + (ph||0)) * Math.PI*2) * a;
 const A   = window.ART, C = A.C;
 
-// A name card for the marketplace side of the picture, in our own
-// palette. Amazon is named, never imitated.
+// A name card for the marketplace side of the picture: the wordmark set in
+// the film's type, with Amazon's smile under it. The smile is the logo's own
+// outline (Amazon_logo.svg, 603 units wide), not a drawing of it. The
+// transform sizes it to this wordmark as the logo does: the tip under the
+// end of the first "a", the arrowhead ending under the "z", and the same
+// clearance below the letters. Positions were measured from the rendered
+// glyphs, not guessed.
 const sign = () => `<g>
   <rect x="-128" y="-45" width="256" height="90" rx="24" fill="${C.white}"
         stroke="${C.line}" stroke-width="3"/>
   <text x="0" y="-4" text-anchor="middle" font-family="Segoe UI,sans-serif"
         font-size="42" font-weight="700" letter-spacing="-1" fill="${C.amzInk}">amazon</text>
-  <path d="M -76 6 C -60 23, -32 31, -4 30 C 6 29.5, 14 28, 20 25
-           L 36 4 L 26 29 C 13 35, -12 39, -34 34 C -54 30, -70 19, -76 6 Z"
-        fill="${C.amber}"/>
+  <path transform="translate(-75.75,-26.95) scale(0.2418)" fill="${C.amber}"
+        d="M 374.01 142.18 C 338.98 168 288.2 181.78 244.47 181.78 C 183.14 181.78 127.94 159.1 86.1 121.36
+           C 82.81 118.39 85.76 114.35 89.7 116.66 C 134.85 142.93 190.68 158.73 248.33 158.73
+           C 287.21 158.73 329.98 150.69 369.31 134.09 C 375.25 131.57 380.22 137.98 374.01 142.18 Z
+           M 388.6 125.59 C 384.12 119.85 358.89 122.87 347.58 124.21 C 344.14 124.63 343.62 121.63 346.71 119.48
+           C 366.81 105.34 399.78 109.42 403.63 114.16 C 407.47 118.93 402.63 151.98 383.74 167.76
+           C 380.85 170.19 378.08 168.89 379.37 165.68 C 383.61 155.09 393.12 131.36 388.6 125.59 Z"/>
 </g>`;
 
 // ── background: soft floating panels + a dot field, as in the reference ───
