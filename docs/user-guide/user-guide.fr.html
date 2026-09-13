@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Amazon Marketplace Pro — Guide d'utilisation</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  :root { --brand: #25b2a8; --dark: #1d5c56; --ink: #23282d; --muted: #667077; --line: #dfe4e6; --soft: #f3f8f8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--dark); font-weight: 700; line-height: 1.25; page-break-after: avoid; }
+  h1 { font-size: 22pt; margin: 0 0 6pt; padding-bottom: 6pt; border-bottom: 3px solid var(--brand); page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 15pt; margin: 20pt 0 6pt; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; }
+  h4 { font-size: 10.5pt; margin: 10pt 0 2pt; color: var(--ink); }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 20pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #f1f3f4; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: #f1f3f4; padding: 8pt 10pt; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin: 4pt 0 10pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 12pt; font-size: 9.5pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 5pt 7pt; vertical-align: top; text-align: left; }
+  th { background: var(--soft); color: var(--dark); font-weight: 700; }
+  td.k { white-space: nowrap; font-weight: 600; width: 32%; }
+  .note { border-left: 4px solid var(--brand); background: var(--soft); padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .warn { border-left: 4px solid #d9822b; background: #fff7ee; padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .note b, .warn b { color: var(--dark); }
+  figure { margin: 10pt 0 14pt; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 3pt; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps li { counter-increment: s; position: relative; padding-left: 30pt; margin-bottom: 6pt; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 1pt; width: 20pt; height: 20pt; border-radius: 10pt; background: var(--brand); color: #fff; font-weight: 700; text-align: center; line-height: 20pt; font-size: 9.5pt; }
+  .btn { display: inline-block; border: 1px solid #b9c2c6; border-radius: 3px; padding: 0 5px; font-size: 9.5pt; background: #fafbfb; white-space: nowrap; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .kicker { color: var(--brand); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10pt; }
+  .cover h1 { font-size: 34pt; border: 0; margin: 6pt 0 10pt; page-break-before: auto; }
+  .cover .sub { font-size: 14pt; color: var(--muted); margin-bottom: 30pt; }
+  .cover .meta { font-size: 10pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10pt; }
+  .cover img.logo { width: 90px; margin-bottom: 20pt; }
+  .toc ol { list-style: none; padding-left: 0; column-count: 2; column-gap: 24pt; }
+  .toc li { margin-bottom: 4pt; break-inside: avoid; }
+  .toc li.l2 { padding-left: 16pt; color: var(--muted); font-size: 9.5pt; }
+  .toc .n { display: inline-block; width: 22pt; color: var(--brand); font-weight: 700; }
+  .cols { column-count: 2; column-gap: 20pt; }
+  .small { font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────── COVER ───────────────────────── -->
+<div class="cover">
+  <img class="logo" src="img/logo.png" alt="">
+  <div class="kicker">Module PrestaShop · version 1.5.0</div>
+  <h1>Amazon Marketplace Pro</h1>
+  <div class="sub">Guide d'utilisation&nbsp;: ce que fait le module, comment fonctionne chaque écran et comment le laisser tourner sans surveillance.</div>
+  <div class="meta">
+    IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
+    Pour PrestaShop 1.6 à 9 · Date du document&nbsp;: 4 septembre 2026
+  </div>
+</div>
+
+<!-- ───────────────────────── TOC ───────────────────────── -->
+<h1>Sommaire</h1>
+<div class="toc">
+<ol>
+  <li><span class="n">1</span>Ce que fait le module</li>
+  <li class="l2">1.1 Où sont stockées vos données</li>
+  <li class="l2">1.2 Configuration requise</li>
+  <li><span class="n">2</span>Prise en main en cinq étapes</li>
+  <li><span class="n">3</span>Organisation de l'écran</li>
+  <li><span class="n">4</span>Paramètres</li>
+  <li class="l2">4.1 Connexion</li>
+  <li class="l2">4.2 Offres</li>
+  <li class="l2">4.3 Synchronisation</li>
+  <li class="l2">4.4 Livraison</li>
+  <li class="l2">4.5 Commandes</li>
+  <li class="l2">4.6 Messagerie</li>
+  <li><span class="n">5</span>Catalogue</li>
+  <li class="l2">5.1 Produits&nbsp;: PrestaShop → Amazon</li>
+  <li class="l2">5.2 Produits&nbsp;: Amazon → PrestaShop</li>
+  <li class="l2">5.3 État du flux et Correspondance des catégories</li>
+  <li class="l2">5.4 Profils d'offre</li>
+  <li class="l2">5.5 Majorations et règles</li>
+  <li class="l2">5.6 Règles par produit, File d'attente, Orphelines</li>
+  <li><span class="n">6</span>L'onglet Amazon d'un produit</li>
+  <li><span class="n">7</span>Commandes</li>
+  <li class="l2">7.1 Import des commandes</li>
+  <li class="l2">7.2 Adresses des acheteurs depuis un rapport de commandes</li>
+  <li class="l2">7.3 Commandes en attente et stock réservé</li>
+  <li class="l2">7.4 Retours et annulations</li>
+  <li class="l2">7.5 Messagerie acheteur</li>
+  <li><span class="n">8</span>Logistique</li>
+  <li><span class="n">9</span>Finances</li>
+  <li><span class="n">10</span>Analyses</li>
+  <li><span class="n">11</span>Système</li>
+  <li class="l2">11.1 Automatisation</li>
+  <li class="l2">11.2 Les tâches planifiées</li>
+  <li class="l2">11.3 Outils</li>
+  <li class="l2">11.4 Journaux</li>
+  <li><span class="n">12</span>Données acheteur et conformité</li>
+  <li><span class="n">13</span>Dépannage</li>
+  <li><span class="n">14</span>Glossaire</li>
+</ol>
+</div>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<h1>1. Ce que fait le module</h1>
+<p>Amazon Marketplace Pro relie une boutique PrestaShop à Amazon via l'API officielle d'Amazon, la Selling Partner API, pour que vous puissiez gérer votre activité Amazon depuis le back-office que vous utilisez déjà. Il couvre tout le cycle de vente&nbsp;:</p>
+<ul>
+  <li><b>Publication.</b> Vos produits PrestaShop deviennent des offres Amazon. Le module télécharge les exigences d'attributs d'Amazon pour chaque type de produit et les transforme en formulaire (un <i>profil</i>), afin que les offres soient construites avec la bonne structure. Les déclinaisons PrestaShop deviennent des variantes Amazon.</li>
+  <li><b>Prix et stock.</b> Des prix avec majorations, arrondis, périodes de promotion et paliers professionnels (B2B)&nbsp;; des quantités avec une réserve de sécurité. Seules les modifications sont envoyées, si bien que les grands catalogues restent dans les limites d'Amazon.</li>
+  <li><b>Commandes.</b> Les commandes Amazon deviennent des commandes PrestaShop, avec vos transporteurs, statuts, factures et taxes. Les confirmations d'expédition et le suivi repartent automatiquement vers Amazon. Les commandes que vous expédiez et celles qu'Amazon expédie (FBA) sont distinguées.</li>
+  <li><b>Protection contre la survente.</b> Le stock des achats Amazon pas encore payés peut être réservé dans PrestaShop, puis libéré si l'achat n'aboutit jamais.</li>
+  <li><b>Finances.</b> Les prix concurrents et la Buy Box sont suivis et peuvent piloter des règles de repricing&nbsp;; les frais sont enregistrés commande par commande&nbsp;; les rapports de règlement et de stock sont collectés.</li>
+  <li><b>Conformité.</b> Coordonnées de la personne responsable au sens du GPSR et pays d'origine, import des commandes tenant compte de la TVA, envoi des factures de TVA et suppression automatique des données acheteur au terme de la durée de conservation exigée par Amazon.</li>
+  <li><b>Automatisation.</b> Chaque traitement récurrent est une tâche planifiée avec son propre intervalle, exécutée soit par le cron de votre hébergement, soit par le planificateur IntelliPresta.</li>
+</ul>
+
+<h2>1.1 Où sont stockées vos données</h2>
+<p>Le module fonctionne entièrement au sein de votre installation PrestaShop et appelle Amazon directement depuis votre serveur. Les données produits, commandes et acheteurs sont stockées uniquement dans votre propre base de données.</p>
+<p>IntelliPresta exploite un petit service sur <code>intellipresta.com</code>. Il fait deux choses, et rien d'autre&nbsp;:</p>
+<ul>
+  <li>Il mène à bien l'échange d'autorisation «&nbsp;Se connecter à Amazon&nbsp;» et remet le jeton obtenu à votre boutique. Il ne conserve aucune donnée produit, commande ou acheteur.</li>
+  <li>Si vous choisissez le planificateur IntelliPresta (section 11.1), il stocke l'adresse cron et le jeton cron de votre boutique pour pouvoir l'appeler toutes les cinq minutes. Ce service n'est activé qu'à votre demande, et ces données sont supprimées lorsque vous revenez à votre propre cron.</li>
+</ul>
+
+<h2>1.2 Configuration requise</h2>
+<table>
+  <tr><td class="k">PrestaShop</td><td>1.6 à 9. L'interface s'adapte aux présentations du back-office 1.6, 1.7–9 et «&nbsp;Basic Edition&nbsp;».</td></tr>
+  <tr><td class="k">Compte Amazon</td><td>Offre Vendeur Professionnel, active, sur l'une des 23 places de marché prises en charge (Europe, Amérique du Nord, Brésil, Moyen-Orient, Afrique, Japon, Australie, Singapour, Inde).</td></tr>
+  <tr><td class="k">Hébergement</td><td>PHP avec cURL. Une crontab est recommandée&nbsp;; si votre hébergement n'en propose pas, le planificateur IntelliPresta prend le relais. La fonction facultative de réponses des acheteurs nécessite l'extension PHP IMAP.</td></tr>
+  <tr><td class="k">Catalogue</td><td>Chaque produit et chaque déclinaison doivent avoir une référence (SKU) et un code-barres (EAN ou UPC). L'outil Contrôle du catalogue (section 11.3) repère ceux qui en manquent.</td></tr>
+</table>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<h1>2. Prise en main en cinq étapes</h1>
+<ol class="steps">
+  <li><b>Installez le module</b> depuis Modules &gt; Gestionnaire de modules, puis ouvrez Configurer. Tous les écrans du module se trouvent sur cette seule page, regroupés dans une barre latérale.</li>
+  <li><b>Choisissez votre place de marché</b> dans Paramètres &gt; Connexion, panneau Place de marché, puis cliquez sur <span class="btn">Enregistrer les paramètres</span>. La place de marché détermine le site Amazon, la devise et la langue des offres.</li>
+  <li><b>Connectez la boutique.</b> Cliquez sur <span class="btn">Se connecter à Amazon</span>. Vous êtes redirigé vers Seller Central pour approuver la connexion, puis renvoyé vers la boutique. Aucun identifiant à recopier. Vous pouvez révoquer l'autorisation depuis Seller Central à tout moment, ou cliquer sur <span class="btn">Déconnecter</span> dans le module.</li>
+  <li><b>Vérifiez la connexion.</b> Cliquez sur <span class="btn">Vérifier la connexion</span> dans le bandeau vert. Le module lit vos commandes récentes et indique en termes simples si tout fonctionne. La section 13 explique les résultats possibles.</li>
+  <li><b>Activez l'automatisation.</b> Dans Système &gt; Automatisation, ajoutez la ligne cron affichée dans le panneau de votre hébergeur, ou enregistrez la boutique auprès du planificateur IntelliPresta. Activez ensuite les tâches dont vous avez besoin dans le tableau situé en dessous. La section 11 détaille tout cela.</li>
+</ol>
+<p>Ensuite, l'ordre de travail habituel est le suivant&nbsp;: vérifiez les références de votre catalogue (11.3), créez un profil d'offre pour chaque famille de produits (5.4), lancez la synchronisation en deux étapes dans Catalogue &gt; Produits (5.1), puis laissez les tâches planifiées tout maintenir à jour.</p>
+
+<figure>
+  <img src="img/fr/01-settings-connection.png" alt="">
+  <figcaption>Paramètres &gt; Connexion après la connexion. L'identifiant vendeur affiché est fictif.</figcaption>
+</figure>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<h1>3. Organisation de l'écran</h1>
+<p>La page Configurer comporte une barre latérale de sept groupes. Chaque groupe a des sous-onglets en haut, et chaque sous-onglet contient un ou plusieurs panneaux. Le module retient le groupe sur lequel vous étiez lorsque vous rechargez la page ou enregistrez.</p>
+<table>
+  <tr><th style="width:18%">Groupe</th><th style="width:34%">Sous-onglets</th><th>Utilisation</th></tr>
+  <tr><td>Paramètres</td><td>Connexion, Offres, Synchronisation, Livraison, Commandes, Messagerie</td><td>Tout ce que vous configurez une fois pour toutes. Un seul bouton <span class="btn">Enregistrer les paramètres</span> enregistre les six sous-onglets ensemble.</td></tr>
+  <tr><td>Catalogue</td><td>Produits, Profils, Majorations et règles, Règles par produit, File d'attente, Orphelines</td><td>Publier les produits sur Amazon et garder les deux catalogues en phase.</td></tr>
+  <tr><td>Commandes</td><td>Commandes, Commandes en attente, Retours</td><td>Faire entrer les commandes Amazon, gérer les ruptures de stock, les retours et les messages des acheteurs.</td></tr>
+  <tr><td>Logistique</td><td>FBA, Multi-comptes</td><td>Stock expédié par Amazon, expédition multicanal, places de marché supplémentaires.</td></tr>
+  <tr><td>Finances</td><td>Repricing, Frais, Promotions</td><td>Prix concurrentiels, frais Amazon, promotions.</td></tr>
+  <tr><td>Analyses</td><td>Rapports</td><td>Demander et télécharger des rapports Amazon.</td></tr>
+  <tr><td>Système</td><td>Automatisation, Outils, Journaux</td><td>La planification, les outils catalogue, les suppressions, les contenus des flux, le journal d'activité.</td></tr>
+</table>
+<div class="note"><b>Les actions manuelles et les tâches planifiées font la même chose.</b> La plupart des boutons des groupes Catalogue, Commandes, Logistique et Finances ont une tâche planifiée jumelle (section 11.2). Cliquez sur le bouton pour agir tout de suite et voir le résultat&nbsp;; activez la tâche pour que l'opération se fasse à intervalles réguliers.</div>
+
+<!-- ───────────────────────── 4 SETTINGS ───────────────────────── -->
+<h1>4. Paramètres</h1>
+<p>Le groupe Paramètres forme un seul formulaire. Modifiez ce que vous voulez dans l'un de ses six sous-onglets, puis cliquez sur <span class="btn">Enregistrer les paramètres</span> en bas de page.</p>
+
+<h2>4.1 Connexion</h2>
+<h3>Connexion Amazon</h3>
+<p>Indique si la boutique est connectée, et à quel vendeur. <span class="btn">Se connecter à Amazon</span> lance le parcours d'approbation dans Seller Central&nbsp;; <span class="btn">Déconnecter</span> efface l'autorisation enregistrée. Choisissez la place de marché avant de vous connecter, car la page de consentement en dépend.</p>
+<p>Le bandeau vert signifie seulement qu'une connexion est enregistrée. <span class="btn">Vérifier la connexion</span>, dans le bandeau, montre qu'elle fonctionne toujours&nbsp;: le module se connecte à Amazon, lit vos commandes récentes et indique en termes simples que tout fonctionne ou ce qu'il faut faire. Lancez cette vérification après la connexion, ou chaque fois qu'une synchronisation signale une erreur d'autorisation. La section 13 en détaille les résultats.</p>
+<h3>Place de marché</h3>
+<p><b>Place de marché Amazon.</b> Le site Amazon sur lequel vend cette boutique. Les places de marché supplémentaires s'ajoutent dans Logistique &gt; Multi-comptes (section 8).</p>
+
+<h2>4.2 Offres</h2>
+<figure>
+  <img src="img/fr/02-settings-listings.png" alt="">
+  <figcaption>Paramètres &gt; Offres.</figcaption>
+</figure>
+<h3>Valeurs par défaut des offres</h3>
+<table>
+  <tr><td class="k">État de l'article</td><td>État envoyé avec chaque offre&nbsp;: Neuf, les quatre grades Occasion, ou Reconditionné. Un produit peut le remplacer dans son onglet Amazon (section 6).</td></tr>
+  <tr><td class="k">Réserve de stock</td><td>Unités non déclarées à Amazon. Avec une réserve de 2 et 10 en stock, Amazon voit 8. Évite la survente quand plusieurs canaux partagent le même stock.</td></tr>
+  <tr><td class="k">Langue des offres</td><td>Langue des titres, descriptions et points clés. «&nbsp;Auto&nbsp;» suit la place de marché (l'Allemagne reçoit l'allemand, la France le français) et nécessite que cette langue soit installée dans la boutique&nbsp;; à défaut, la langue par défaut de la boutique est utilisée.</td></tr>
+  <tr><td class="k">En rupture de stock</td><td>Publier une quantité de 0 (l'offre reste, affichée indisponible) ou supprimer l'offre d'Amazon.</td></tr>
+  <tr><td class="k">Nom du modèle de livraison</td><td>Facultatif. Le nom exact d'un modèle de livraison Seller Central&nbsp;; chaque offre lui est rattachée. Les tranches par prix ou par poids se règlent dans Livraison (4.4).</td></tr>
+  <tr><td class="k">Prix Amazon Business (B2B)</td><td>Pourcentage de remise facultatif sur votre prix normal, envoyé comme prix professionnel aux acheteurs Amazon Business. 0 le désactive.</td></tr>
+  <tr><td class="k">Remises quantitatives B2B issues du groupe</td><td>Un groupe de clients PrestaShop dont les prix spécifiques avec une quantité minimale supérieure à 1 deviennent des paliers de volume Amazon Business, jusqu'à cinq.</td></tr>
+</table>
+<h3>SKU et filtres d'export</h3>
+<table>
+  <tr><td class="k">Source du SKU</td><td>Le champ PrestaShop qui devient le SKU Amazon&nbsp;: référence, EAN ou référence fournisseur. Les produits dont ce champ est vide ne sont pas exportés.</td></tr>
+  <tr><td class="k">Préfixe du SKU</td><td>Ajouté devant le SKU avec un tiret&nbsp;: le préfixe AMZ donne AMZ-REF123.</td></tr>
+  <tr><td class="k">Fourchette de prix, Quantité min.</td><td>N'exporter que les produits dont le prix final se situe dans la fourchette et dont le stock atteint au moins le minimum. 0 désactive une borne.</td></tr>
+  <tr><td class="k">Utiliser les prix spécifiques</td><td>Applique les prix spécifiques PrestaShop, éventuellement ceux d'un seul groupe de clients, avant la majoration.</td></tr>
+  <tr><td class="k">E-mail de rapport</td><td>Les exécutions planifiées envoient un court rapport à cette adresse. Vide = aucun rapport.</td></tr>
+</table>
+<div class="warn"><b>Modifier la source du SKU sur un catalogue déjà en ligne crée de nouvelles offres</b> sous les nouveaux SKU. Décidez-en avant de publier.</div>
+
+<h2>4.3 Synchronisation</h2>
+<figure>
+  <img src="img/fr/03-settings-sync.png" alt="">
+  <figcaption>Paramètres &gt; Synchronisation.</figcaption>
+</figure>
+<h3>Options de synchronisation</h3>
+<table>
+  <tr><td class="k">Mode de synchronisation des offres</td><td>Normal envoie les données complètes de l'offre. «&nbsp;Prix uniquement&nbsp;» et «&nbsp;Quantité uniquement&nbsp;» envoient de petites mises à jour partielles, bien plus rapides sur les grands catalogues.</td></tr>
+  <tr><td class="k">Forcer toutes les quantités à zéro</td><td>Interrupteur d'urgence pour les congés ou un gel du stock. Les offres restent en ligne et s'affichent indisponibles.</td></tr>
+  <tr><td class="k">Envoyer les images</td><td>Amazon télécharge chaque URL d'image que vous envoyez, ce qui ralentit les envois volumineux. Beaucoup de marchands envoient les images à la première publication, puis désactivent cette option.</td></tr>
+  <tr><td class="k">Envoyer toutes les données produit</td><td>Oui envoie le titre, la description, les points clés, la marque et les images. Non envoie l'offre seule (prix et stock), sans jamais réécrire le contenu de la fiche. Choisissez Non une fois vos offres établies ou quand vous vendez sur la fiche catalogue d'un autre vendeur.</td></tr>
+  <tr><td class="k">Envoyer tout le catalogue</td><td>Ignore la fenêtre de modification, pour une première publication ou après un réglage qui touche toutes les offres. Désactivez-le ensuite.</td></tr>
+  <tr><td class="k">N'exporter que les produits avec un ASIN</td><td>Limite les envois aux produits déjà associés à une fiche Amazon.</td></tr>
+  <tr><td class="k">Limiter l'export à N lignes</td><td>Plafonne chaque lot envoyé entre 100 et 1500 lignes.</td></tr>
+  <tr><td class="k">Traiter le champ EAN-13 de PrestaShop comme</td><td>Choisissez UPC si vous stockez des codes-barres américains à 12 chiffres dans le champ EAN.</td></tr>
+  <tr><td class="k">N'exporter que les produits modifiés au cours des</td><td>La fenêtre de modification&nbsp;: de 1 à 24 heures. Vivement recommandée pour les grands catalogues. Les produits touchés par un changement de règle sont inclus via la File d'attente (5.6).</td></tr>
+  <tr><td class="k">Supprimer les entrées de la file après</td><td>Durée de conservation des entrées envoyées&nbsp;: 1, 7 ou 15 jours.</td></tr>
+  <tr><td class="k">Arrondi des prix</td><td>Au centime le plus proche, «&nbsp;Intelligent&nbsp;» jusqu'à ,99, ou nombre entier. Appliqué après les majorations à chaque prix exporté.</td></tr>
+  <tr><td class="k">Envoyer les prix promotionnels</td><td>Un prix spécifique doté d'une date de début et d'une date de fin devient une promotion Amazon sur la même période, ce qui permet d'envoyer les promotions à l'avance.</td></tr>
+  <tr><td class="k">Envoyer le prix barré</td><td>Envoie le prix avant remise comme prix barré lorsqu'il est supérieur au prix exporté.</td></tr>
+  <tr><td class="k">Précommande</td><td>Les produits dont la date de disponibilité est future sont publiés avec cette date de réapprovisionnement.</td></tr>
+  <tr><td class="k">Correspondance des états</td><td>Fait correspondre les trois états de PrestaShop à la liste plus riche d'Amazon.</td></tr>
+  <tr><td class="k">Format du titre des offres</td><td>Nom du produit tel quel, ou «&nbsp;Marque - Nom du produit - Déclinaisons&nbsp;» selon la recommandation d'Amazon. La marque est omise lorsque le nom commence déjà par elle.</td></tr>
+  <tr><td class="k">Notes d'état</td><td>Texte libre envoyé avec les états Occasion et Reconditionné.</td></tr>
+</table>
+<h3>Synchronisation en temps réel (hooks)</h3>
+<p>Trois interrupteurs font réagir le module aux événements de PrestaShop au lieu d'attendre la prochaine exécution planifiée&nbsp;: envoyer le prix et le stock à l'enregistrement d'un produit, confirmer l'expédition avec le suivi lorsqu'une commande passe au statut Expédiée, et annuler sur Amazon lorsqu'une commande Amazon est annulée dans PrestaShop.</p>
+
+<h2>4.4 Livraison</h2>
+<p><b>Modèles de livraison par tranche de prix ou de poids.</b> Attribuez différents modèles de livraison Seller Central selon le prix ou le poids du produit. Ajoutez des tranches avec un minimum (inclus), un maximum (exclu, 0 pour illimité) et le nom du modèle. Si l'option est désactivée, ou si aucune tranche ne correspond, c'est le modèle unique des Valeurs par défaut des offres qui s'applique.</p>
+<p><b>Correspondance des transporteurs.</b> Le code transporteur Amazon à signaler lors de la confirmation d'expédition, pour chaque transporteur PrestaShop. Les transporteurs sans correspondance sont détectés par leur nom.</p>
+
+<h2>4.5 Commandes</h2>
+<figure>
+  <img src="img/fr/04-settings-orders.png" alt="">
+  <figcaption>Paramètres &gt; Commandes.</figcaption>
+</figure>
+<h3>Paramètres d'import des commandes</h3>
+<table>
+  <tr><td class="k">Taxes sur les commandes importées</td><td>Utiliser les montants de taxe communiqués par Amazon, ou appliquer vos règles de taxes PrestaShop en considérant les prix Amazon comme TTC. Choisissez la seconde option si les commandes importées de l'UE affichent 0&nbsp;% de TVA.</td></tr>
+  <tr><td class="k">Envoi des factures VCS</td><td>Envoie à Amazon le PDF de la facture PrestaShop de chaque commande. Réservé aux vendeurs inscrits au VAT Calculation Service d'Amazon. S'exécute via la tâche <i>Envoyer les factures</i>.</td></tr>
+  <tr><td class="k">Demandes d'avis automatiques</td><td>Envoie la demande d'avis standard d'Amazon une fois par commande livrée, dans la fenêtre autorisée par Amazon, via la tâche <i>Demander des avis</i>.</td></tr>
+  <tr><td class="k">Télécharger les commandes des</td><td>Fenêtre de rétrospective des imports manuels et planifiés, en jours ou en heures.</td></tr>
+  <tr><td class="k">Importer les commandes FBA, Statut des commandes FBA, Statut des commandes expédiées</td><td>Indique s'il faut importer les commandes expédiées par Amazon, et quel statut PrestaShop reçoivent ces commandes et celles déjà expédiées.</td></tr>
+  <tr><td class="k">Rapprocher les lignes de commande par</td><td>Référence ou SKU personnalisé du produit (recommandé), ou identifiants PrestaShop si vos SKU Amazon ont été construits à partir des identifiants produit et déclinaison.</td></tr>
+  <tr><td class="k">Donner la priorité à l'ASIN pour rapprocher les produits</td><td>Rapproche par ASIN avant le SKU, à l'aide de la table constituée par les synchronisations et par Associer les ASIN via l'EAN.</td></tr>
+  <tr><td class="k">Utiliser une adresse e-mail anonymisée pour les clients</td><td>Les adresses relais d'Amazon expirent&nbsp;; une adresse synthétique évite les e-mails de la boutique en échec. La messagerie acheteur via Amazon continue de fonctionner.</td></tr>
+  <tr><td class="k">Suppression des données acheteur, Supprimer les données acheteur après</td><td>Voir la section 12.</td></tr>
+  <tr><td class="k">Groupe de clients pour les acheteurs Amazon</td><td>Le groupe attribué aux clients créés par les imports.</td></tr>
+  <tr><td class="k">Panier distant, Libérer une réservation après</td><td>Réserve le stock des paiements Amazon pas encore exigibles&nbsp;; le restitue après le délai de grâce si la commande ne devient jamais payable. Voir 7.3.</td></tr>
+  <tr><td class="k">Commandes sans stock suffisant</td><td>Créer quand même la commande PrestaShop, ou la mettre en attente dans Commandes en attente pour examen.</td></tr>
+  <tr><td class="k">Transporteur par défaut, Statut de commande par défaut</td><td>Utilisés pour les commandes importées lorsqu'aucun réglage plus précis ne s'applique.</td></tr>
+</table>
+<h3>Acheminement des commandes importées</h3>
+<p>Amazon indique le délai de livraison promis à l'acheteur&nbsp;; faites correspondre chaque délai à un transporteur PrestaShop. Les <b>Règles de statut avancées</b> donnent à certaines commandes leur propre statut, par exemple les commandes Prime dans un statut que l'entrepôt ne peut pas manquer, ou les commandes FBA directement en Expédiée. Les règles sont évaluées de haut en bas et la première correspondance l'emporte. <b>Facture par e-mail</b> envoie le PDF de la facture PrestaShop, avec une pièce jointe facultative comme vos conditions générales, lorsqu'une commande atteint le statut choisi.</p>
+
+<h2>4.6 Messagerie</h2>
+<p>Amazon ne propose aucune API pour lire ce qu'un acheteur répond&nbsp;; les réponses arrivent par e-mail à votre adresse vendeur. Indiquez cette boîte mail au module (hôte IMAP, port, utilisateur, mot de passe, dossier, SSL) et il classe chaque message citant une commande Amazon dans le Service client de PrestaShop, en face de la bonne commande. Utilisez une boîte dédiée ou un mot de passe d'application limité à un accès en lecture. <span class="btn">Relever les réponses des acheteurs maintenant</span> relève les messages non lus&nbsp;; la tâche <i>Relever les messages des acheteurs</i> le fait à intervalles réguliers.</p>
+
+<!-- ───────────────────────── 5 CATALOG ───────────────────────── -->
+<h1>5. Catalogue</h1>
+<p>C'est dans le sous-onglet Produits que les produits circulent entre les deux catalogues. Les deux sens fonctionnent de la même façon&nbsp;: une synchronisation lit et compare d'abord, et affiche un tableau par SKU&nbsp;; une seconde étape écrit ensuite. Rien n'est modifié avant la seconde étape.</p>
+<figure>
+  <img src="img/fr/05-catalog-products.png" alt="">
+  <figcaption>Catalogue &gt; Produits.</figcaption>
+</figure>
+
+<h2>5.1 Produits&nbsp;: PrestaShop → Amazon</h2>
+<ol class="steps">
+  <li><span class="btn">Synchroniser PS vers Amazon</span> lit votre catalogue PrestaShop et signale, SKU par SKU, ce qui diffère d'Amazon&nbsp;: description, points clés, marque, images, EAN et catégories. Le tableau de comparaison s'affiche sous les étapes. Chaque ligne montre le côté PrestaShop, le côté Amazon et un badge de sens&nbsp;: <i>PS uniquement</i>, <i>Amazon uniquement</i>, <i>conflit</i> ou <i>synchronisé</i>.</li>
+  <li><span class="btn">Associer les ASIN via l'EAN</span>, facultatif. Pour les produits qu'Amazon vend déjà, retrouve la fiche existante grâce au code-barres afin que vous y ajoutiez une offre au lieu de créer une fiche en double.</li>
+  <li><span class="btn">Envoyer vers Amazon</span> envoie ce que le tableau signale comme en attente. Jusqu'à 25 SKU partent un par un et reçoivent une réponse immédiate, avec un statut et les éventuels problèmes pour chaque SKU. Au-delà de 25, l'envoi se fait en un seul document de flux, qu'Amazon traite en arrière-plan&nbsp;; suivez-le sous État du flux.</li>
+</ol>
+<div class="note"><b>Ce que signifie «&nbsp;en attente&nbsp;».</b> Une ligne est en attente lorsqu'elle existe dans PrestaShop et qu'elle est soit absente d'Amazon (<i>PS uniquement</i>), soit différente (<i>conflit</i>). Les réglages de Synchronisation (4.3) déterminent quelle part de chaque ligne en attente est envoyée&nbsp;: données complètes ou offre seule, images ou non, et application ou non de la fenêtre de modification.</div>
+
+<h2>5.2 Produits&nbsp;: Amazon → PrestaShop</h2>
+<ol class="steps">
+  <li><span class="btn">Synchroniser Amazon vers PS</span> lit vos offres Amazon et signale, SKU par SKU, ce qui manque à PrestaShop ou y figure différemment. La comparaison s'affiche en dessous. Rien n'est encore écrit.</li>
+  <li>Choisissez ce que vous faites de la comparaison&nbsp;:
+    <ul>
+      <li><b>A. Créer les produits que PrestaShop n'a pas.</b> Choisissez une catégorie, puis cliquez sur <span class="btn">Créer les produits PS à partir des offres présentes uniquement sur Amazon</span>. Ils sont créés inactifs, avec titre, description, marque, prix, stock et images, pour relecture. Les prix arrivent sans groupe de taxes&nbsp;; attribuez-en un avant l'activation.</li>
+      <li><b>B. Mettre à jour les produits que PrestaShop possède déjà.</b> Cochez les champs à écraser (titre, description et marque&nbsp;; prix&nbsp;; stock&nbsp;; points clés en tant que caractéristiques&nbsp;; désactiver ce qu'Amazon ne propose plus) et cliquez sur <span class="btn">Mettre à jour depuis Amazon</span>. L'opération est irréversible&nbsp;: sauvegardez d'abord. Les prix arrivent TTC et sont convertis à l'aide de la règle de taxe de chaque produit.</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>5.3 État du flux et Correspondance des catégories</h2>
+<p><b>État du flux.</b> Un envoi de plus de 25 SKU part sous la forme d'un seul flux. <span class="btn">Vérifier l'état du flux</span> demande à Amazon s'il est terminé et affiche, pour chaque flux, le nombre d'éléments acceptés, d'erreurs et d'avertissements. Le JSON exact de chaque flux est conservé et peut être téléchargé dans Système &gt; Outils.</p>
+<p><b>Correspondance des catégories.</b> La méthode plus ancienne et plus simple pour indiquer à Amazon le type d'un produit&nbsp;: un type de produit Amazon et un browse node facultatif par catégorie PrestaShop, plus des attributs supplémentaires facultatifs en JSON. Les produits d'une catégorie associée envoient les données complètes de l'offre&nbsp;; ceux d'une catégorie non associée envoient l'offre seule. Les Profils d'offre (5.4) remplissent le même rôle avec le formulaire d'attributs propre à Amazon et sont prioritaires&nbsp;; la Correspondance des catégories reste une solution de repli pour les catégories sans profil.</p>
+<p><b>Liste des produits Amazon.</b> Un affichage en lecture seule de ce qu'Amazon renvoie pour votre compte.</p>
+
+<h2>5.4 Profils d'offre</h2>
+<figure>
+  <img src="img/fr/06-catalog-profiles.png" alt="">
+  <figcaption>Catalogue &gt; Profils.</figcaption>
+</figure>
+<p>Un profil fixe un type de produit Amazon (SHIRT, FASHION_RING, etc.) et répond, une fois pour toutes, à chaque attribut exigé par ce type. Amazon publie ces exigences sous forme de schéma&nbsp;; le module le télécharge et construit un formulaire, si bien que vous remplissez de vrais champs au lieu d'écrire du JSON. Rattachez le profil à des catégories PrestaShop, et chaque produit qu'elles contiennent est publié avec la bonne structure. Chaque catégorie n'appartient qu'à un seul profil au maximum.</p>
+<h3>Créer un profil</h3>
+<ol class="steps">
+  <li>Cliquez sur <span class="btn">Nouveau profil</span> et donnez-lui un nom, par exemple «&nbsp;Jupes - Femme&nbsp;».</li>
+  <li>Recherchez un type de produit Amazon (par exemple «&nbsp;shirt&nbsp;»), choisissez-le et cliquez sur <span class="btn">Charger les champs obligatoires</span>. Les attributs obligatoires apparaissent sous forme de formulaire&nbsp;; les attributs facultatifs sont listés en dessous, avec un filtre. Les schémas sont mis en cache 30 jours par place de marché&nbsp;; <span class="btn">Actualiser depuis Amazon</span> en récupère une copie à jour.</li>
+  <li>Définissez les options du profil&nbsp;: si les produits ont des déclinaisons et sur quels groupes d'attributs (Taille, Couleur)&nbsp;; les browse nodes recommandés, obligatoires pour le Canada, l'Europe et le Japon&nbsp;; le délai de traitement&nbsp;; le modèle de livraison&nbsp;; la dérogation GTIN si Amazon vous en a accordé une.</li>
+  <li>Cochez les catégories PrestaShop couvertes par le profil, ajoutez des attributs supplémentaires en JSON brut si le formulaire ne permet pas de les exprimer, puis cliquez sur <span class="btn">Enregistrer le profil</span>.</li>
+</ol>
+<div class="note"><b>Déclinaisons.</b> La référence du produit de base fait office de SKU parent&nbsp;; la référence de chaque déclinaison devient un SKU enfant et doit avoir son propre code-barres.</div>
+
+<h2>5.5 Majorations et règles</h2>
+<figure>
+  <img src="img/fr/07-catalog-markup.png" alt="">
+  <figcaption>Catalogue &gt; Majorations et règles.</figcaption>
+</figure>
+<p>Les majorations sont des valeurs fixes («&nbsp;5.99&nbsp;») ou des pourcentages («&nbsp;10%&nbsp;») appliqués au prix exporté. Les règles se cascadent produit par produit&nbsp;: catégorie, puis fabricant, puis fournisseur&nbsp;; la première source pourvue d'une valeur l'emporte, et les valeurs par défaut s'appliquent lorsqu'aucune ne correspond. La même cascade détermine le délai de traitement et le contact GPSR.</p>
+<p>Les tableaux <b>Règles par catégorie</b>, <b>Règles par fabricant</b> et <b>Règles par fournisseur</b> contiennent, pour chaque entité, la majoration de prix, le délai d'expédition, l'e-mail ou le lien GPSR, et un interrupteur de synchronisation oui/non. Le tableau des fabricants contient aussi le pays d'origine. L'enregistrement met les produits concernés en file d'attente afin que la prochaine synchronisation différentielle les renvoie.</p>
+
+<h2>5.6 Règles par produit, File d'attente, Orphelines</h2>
+<p>Les <b>Règles par produit</b> excluent certains produits de la synchronisation Amazon ou attribuent à un produit son propre contact GPSR, qui prime sur les contacts du fabricant et du fournisseur. Les mêmes réglages, et d'autres encore, sont disponibles dans l'onglet Amazon de chaque produit (section 6).</p>
+<p>La <b>File d'attente</b> liste les produits modifiés dans PrestaShop ou touchés par un changement de règle. Lorsque la fenêtre de modification est activée, les entrées actives sont incluses dans la prochaine synchronisation même si le produit lui-même n'a pas été modifié récemment. Les entrées envoyées deviennent inactives et sont purgées au terme de la durée de conservation configurée. Le panneau propose de tout activer, tout désactiver, purger les entrées expirées et tout supprimer.</p>
+<p>L'onglet <b>Orphelines</b> liste les offres Amazon qui ne correspondent plus à un produit PrestaShop vendable, parce que le produit a été supprimé ou désactivé, ou que son SKU a changé. Lancez d'abord Synchroniser Amazon vers PS pour que la liste reflète votre inventaire réel, puis corrigez les produits ou supprimez les offres avec l'outil décrit en 11.3.</p>
+
+<!-- ───────────────────────── 6 PRODUCT TAB ───────────────────────── -->
+<h1>6. L'onglet Amazon d'un produit</h1>
+<p>Chaque fiche produit de PrestaShop reçoit un onglet <b>Amazon Marketplace Pro</b>. Ses réglages ne concernent que ce produit et priment sur le profil d'offre, sur les règles de catégorie, fabricant et fournisseur ainsi que sur les paramètres globaux. Laissez un champ vide pour en hériter.</p>
+<table>
+  <tr><td class="k">Synchroniser ce produit vers Amazon</td><td>Oui, ou l'exclure de tous les exports.</td></tr>
+  <tr><td class="k">Envoyer le prix / envoyer la quantité</td><td>Décochez l'une des deux cases pour laisser la valeur correspondante inchangée sur Amazon, par exemple lorsque vous ajustez vos prix directement sur Amazon.</td></tr>
+  <tr><td class="k">Forçage du stock</td><td>Envoyer la quantité réelle, toujours en stock (999) ou toujours en rupture (0).</td></tr>
+  <tr><td class="k">Prix imposé</td><td>Envoyé à la place du prix boutique&nbsp;; les majorations et les règles tarifaires sont ignorées.</td></tr>
+  <tr><td class="k">SKU personnalisé</td><td>Pour un produit qui existe déjà dans votre inventaire Amazon sous un autre SKU vendeur. Sert aux mises à jour d'offre et au rapprochement des commandes.</td></tr>
+  <tr><td class="k">ASIN</td><td>Rattache l'offre à une fiche Amazon connue au lieu de laisser Amazon la rapprocher par code-barres.</td></tr>
+  <tr><td class="k">Expédié par Amazon</td><td>Indique si vous l'expédiez (MFN) ou si Amazon l'expédie (AFN).</td></tr>
+  <tr><td class="k">Délai de traitement, Modèle de livraison, Browse node, Marque imposée</td><td>Versions propres au produit des valeurs du profil et des valeurs globales.</td></tr>
+  <tr><td class="k">État, Note d'état</td><td>Remplace la valeur globale par défaut, avec la liste complète des états d'Amazon.</td></tr>
+  <tr><td class="k">Points clés du produit</td><td>Un point clé par ligne, jusqu'à cinq, de 500 caractères chacun. Vide&nbsp;: ils sont générés à partir de la description courte.</td></tr>
+  <tr><td class="k">Contact GPSR</td><td>E-mail ou URL de la personne responsable&nbsp;; prime sur le contact du fabricant et du fournisseur.</td></tr>
+  <tr><td class="k">Options cadeau, Code Transparency</td><td>Proposer l'emballage cadeau et le message cadeau&nbsp;; le code Transparency du produit s'il est inscrit au programme.</td></tr>
+  <tr><td class="k">Propager ces réglages à</td><td>Applique les mêmes valeurs, à l'enregistrement, à tous les produits de la même catégorie par défaut, du même fabricant, du même fournisseur, ou à tous les produits actifs. Les champs d'identité (SKU, ASIN, prix, code Transparency) ne sont jamais propagés.</td></tr>
+</table>
+
+<!-- ───────────────────────── 7 ORDERS ───────────────────────── -->
+<h1>7. Commandes</h1>
+<figure>
+  <img src="img/fr/09-orders.png" alt="">
+  <figcaption>Commandes &gt; Commandes.</figcaption>
+</figure>
+
+<h2>7.1 Import des commandes</h2>
+<p>L'import se fait en deux étapes, comme pour le catalogue, pour que vous puissiez vérifier avant que quoi que ce soit ne soit créé.</p>
+<ol class="steps">
+  <li><span class="btn">Récupérer et préparer les commandes Amazon</span> télécharge les commandes de la fenêtre de rétrospective (4.5) et les prépare, avec les frais de port, la taxe, l'adresse de l'acheteur (voir 7.2) et le mode d'expédition&nbsp;: par Amazon ou par vous. Le tableau montre les articles de chaque commande rapprochés des produits PrestaShop, et signale les commandes Prime et Amazon Business.</li>
+  <li><span class="btn">Créer les commandes PrestaShop</span> transforme les commandes préparées en commandes PrestaShop, avec vos transporteurs, statuts, factures et taxes, selon les règles d'acheminement de 4.5. Les commandes en manque de stock sont mises en attente (7.3) si vous l'avez choisi.</li>
+</ol>
+<p>Les tâches planifiées <i>Importer les commandes</i> et <i>Créer les commandes PrestaShop</i> effectuent ces deux mêmes étapes sans intervention, toutes les 15 minutes par défaut. Lorsqu'une commande passe au statut Expédiée dans PrestaShop et que le hook de 4.3 est activé, le module confirme l'expédition à Amazon avec le numéro de suivi et le code transporteur associé.</p>
+
+<h2>7.2 Adresses des acheteurs depuis un rapport de commandes</h2>
+<p>La lecture du nom, de l'adresse et du numéro de téléphone de l'acheteur directement depuis Amazon arrive bientôt. En attendant, pour les obtenir, téléchargez le rapport de commandes dans Seller Central et importez-le dans le module. Tant que vous ne l'avez pas fait, la commande affiche le client sous le nom «&nbsp;Amazon Buyer&nbsp;» et la rue «&nbsp;Amazon Marketplace Order&nbsp;».</p>
+<ol class="steps">
+  <li>Importez d'abord les commandes (7.1).</li>
+  <li>Dans Seller Central, ouvrez <b>Orders &gt; Order Reports &gt; Unshipped Orders</b>, cliquez sur <b>Request report</b>, puis sur <b>Download</b> lorsque le rapport est prêt. Il liste les commandes que vous n'avez pas encore expédiées, c'est-à-dire celles qui ont besoin d'une adresse.</li>
+  <li>Dans l'onglet <b>Commandes &gt; Commandes</b> du module, choisissez le fichier dans le panneau <b>Adresses des acheteurs depuis un rapport de commandes Amazon</b> et cliquez sur <span class="btn">Importer le rapport</span>. Importez le fichier tel qu'il a été téléchargé.</li>
+</ol>
+<figure>
+  <img src="img/fr/09b-orders-report.png" alt="">
+  <figcaption>Le panneau du rapport après un import.</figcaption>
+</figure>
+<p>Le résultat indique combien de commandes ont été complétées, combien avaient déjà une adresse complète, combien d'adresses PrestaShop ont été laissées telles quelles, combien de commandes ne sont pas encore importées et combien ont été ignorées parce que leurs données acheteur avaient déjà été supprimées. L'import suit ces règles&nbsp;:</p>
+<ul>
+  <li><b>Commandes importées uniquement.</b> Les lignes des commandes que le module ne connaît pas encore sont comptées, pas enregistrées. Importez ces commandes, puis importez à nouveau le rapport.</li>
+  <li><b>Champs vides uniquement.</b> Rien de ce qu'Amazon a déjà envoyé n'est écrasé.</li>
+  <li><b>Vos modifications sont conservées.</b> Une adresse PrestaShop n'est complétée que tant qu'elle affiche encore la rue provisoire&nbsp;; une adresse que vous avez corrigée reste telle quelle. Le pays ne change jamais, car c'est lui qui a déterminé la taxe. Le nom du client ne remplace «&nbsp;Amazon Buyer&nbsp;» que tant que le client porte encore ce nom.</li>
+  <li><b>Les données supprimées le restent.</b> Les commandes dont les données acheteur ont été effacées selon la politique de conservation (section 12) sont ignorées.</li>
+  <li><b>Le fichier n'est pas conservé.</b> Le journal d'activité n'enregistre que les compteurs.</li>
+</ul>
+<p>Importer à nouveau le même rapport est sans risque&nbsp;: chaque commande est alors signalée comme déjà complète. Les informations complétées depuis un rapport sont supprimées avec le reste des données acheteur au terme de la durée de conservation (section 12).</p>
+
+<h2>7.3 Commandes en attente et stock réservé</h2>
+<p>L'onglet <b>Commandes en attente</b> contient les commandes Amazon qui n'ont pas pu devenir des commandes PrestaShop faute de stock sur un produit. Réapprovisionnez et relancez Créer les commandes PrestaShop, forcez la commande avec <span class="btn">Créer quand même</span>, ou supprimez-la.</p>
+<p>Le panneau <b>Stock réservé (panier distant)</b> liste les unités retenues pour des paiements Amazon pas encore exigibles. Amazon présente un paiement en cours comme une commande «&nbsp;Pending&nbsp;»&nbsp;; lorsque le Panier distant est activé (4.5), le module retire immédiatement ces unités du stock PrestaShop afin qu'aucun autre canal ne puisse les vendre, les transmet lorsque la commande devient payable et les restitue après le délai de grâce si elle ne le devient jamais. La tâche <i>Solder les paniers distants</i> se charge de solder ces réservations.</p>
+
+<h2>7.4 Retours et annulations</h2>
+<p><span class="btn">Importer les retours depuis Amazon</span> récupère les retours et les annulations&nbsp;; <span class="btn">Traiter les retours en attente</span> crée en conséquence des avoirs PrestaShop ou annule des commandes PrestaShop. Le tableau Historique des retours affiche chacun d'eux avec son type, le montant remboursé, la commande PrestaShop et l'avoir. Les tâches <i>Importer les retours</i> et <i>Traiter les retours</i> automatisent les deux opérations.</p>
+
+<h2>7.5 Messagerie acheteur</h2>
+<p>Saisissez un numéro de commande Amazon et cliquez sur <span class="btn">Charger les types de messages autorisés</span>&nbsp;; Amazon limite les types de messages permis pour chaque commande. Rédigez le message et envoyez-le, ou cliquez sur <span class="btn">Demander un avis</span> pour envoyer la demande d'avis standard d'Amazon, autorisée une fois par commande, entre 5 et 30 jours après la livraison. Les réponses arrivent par e-mail et peuvent être classées dans le Service client grâce aux réglages de Messagerie (4.6).</p>
+
+<!-- ───────────────────────── 8 FULFILMENT ───────────────────────── -->
+<h1>8. Logistique</h1>
+<figure>
+  <img src="img/fr/10-fulfilment-fba.png" alt="">
+  <figcaption>Logistique &gt; FBA.</figcaption>
+</figure>
+<h3>Stock FBA</h3>
+<p><span class="btn">Synchroniser le stock FBA</span> télécharge le stock qu'Amazon détient pour vous&nbsp;: disponible, réservé, en transit et non expédiable, par SKU. <span class="btn">Mettre à jour le stock PS depuis FBA</span> écrit la quantité disponible dans PrestaShop, pour les marchands dont le stock se trouve dans les entrepôts d'Amazon. La tâche <i>Synchronisation du stock FBA</i> exécute le téléchargement toutes les heures par défaut.</p>
+<h3>Expédition multicanal</h3>
+<p>Saisissez l'ID d'une commande PrestaShop et cliquez sur <span class="btn">Créer la commande MCF</span> pour qu'Amazon expédie cette commande PrestaShop depuis votre stock FBA.</p>
+<h3>Multi-comptes</h3>
+<p>Ajoutez d'autres places de marché Amazon, chacune avec son propre identifiant vendeur ou celui de la place principale, et choisissez pour chacune si les commandes, les produits et le stock sont synchronisés. Les tâches <i>Importer les commandes, toutes places de marché</i> et <i>Synchronisation des produits, toutes places de marché</i> les prennent en charge. La place de marché principale définie dans Paramètres est toujours active.</p>
+
+<!-- ───────────────────────── 9 MONEY ───────────────────────── -->
+<h1>9. Finances</h1>
+<figure>
+  <img src="img/fr/11-money-repricing.png" alt="">
+  <figcaption>Finances &gt; Repricing.</figcaption>
+</figure>
+<h3>Repricing</h3>
+<p>Trois boutons, dans l'ordre&nbsp;: <span class="btn">Récupérer les prix concurrents</span> télécharge le prix de la Buy Box, le prix le plus bas et le nombre d'offres pour chacune de vos offres&nbsp;; <span class="btn">Appliquer les règles tarifaires</span> calcule un prix suggéré par SKU&nbsp;; <span class="btn">Envoyer les prix suggérés</span> envoie ceux que vous approuvez. Le tableau État de la Buy Box compare votre prix au marché et indique si vous détenez la Buy Box.</p>
+<p>Une règle tarifaire comporte un type (égaler le prix le plus bas ou passer en dessous, égaler la Buy Box ou passer en dessous, ou marge fixe), un ajustement en pourcentage ou en montant fixe, et un prix minimum et un prix maximum servant de garde-fous. La tâche <i>Cycle de repricing</i> exécute la récupération et l'application à intervalles réguliers&nbsp;; l'envoi reste manuel, sauf si vous l'activez dans la tâche.</p>
+<h3>Frais</h3>
+<p><span class="btn">Récupérer les frais des commandes</span> rapatrie les frais de recommandation, les frais FBA et les commissions de chaque commande depuis l'API Finances d'Amazon, pour que la marge réelle de chaque vente soit visible. Le récapitulatif les regroupe par type de frais. La tâche <i>Récupérer les frais</i> s'exécute toutes les six heures par défaut.</p>
+<h3>Promotions</h3>
+<p>Importez les promotions appliquées aux commandes Amazon, exportez les règles panier PrestaShop à des fins de suivi, ou créez des règles panier PrestaShop à partir des promotions Amazon. Le tableau d'historique affiche chaque promotion avec son sens.</p>
+
+<!-- ───────────────────────── 10 INSIGHTS ───────────────────────── -->
+<h1>10. Analyses</h1>
+<figure>
+  <img src="img/fr/13-insights-reports.png" alt="">
+  <figcaption>Analyses &gt; Rapports.</figcaption>
+</figure>
+<p>Demandez à Amazon un rapport Offres du vendeur, un rapport de règlement ou un rapport de stock FBA. Amazon prépare les rapports en arrière-plan&nbsp;; <span class="btn">Interroger les rapports en attente</span> repère ceux qui sont terminés et les télécharge, et le tableau d'historique affiche leur statut et leur nombre de lignes. La tâche <i>Interroger les rapports</i> effectue cette vérification toutes les 30 minutes par défaut.</p>
+
+<!-- ───────────────────────── 11 SYSTEM ───────────────────────── -->
+<h1>11. Système</h1>
+
+<h2>11.1 Automatisation</h2>
+<figure>
+  <img src="img/fr/14-system-automation.png" alt="">
+  <figcaption>Système &gt; Automatisation. L'adresse de la boutique et le jeton affichés sont fictifs.</figcaption>
+</figure>
+<p>Une boutique n'exécute du code que lorsqu'une requête arrive&nbsp;; quelque chose doit donc l'appeler à intervalles réguliers. Choisissez qui passe cet appel&nbsp;:</p>
+<table>
+  <tr><th style="width:26%">Mode</th><th>Fonctionnement</th><th style="width:30%">À choisir lorsque</th></tr>
+  <tr><td><b>Le cron de mon propre serveur</b> (par défaut, recommandé)</td><td>Ajoutez la ligne affichée dans le panneau de votre hébergeur ou dans votre crontab. Elle appelle votre boutique toutes les cinq minutes&nbsp;; chaque appel n'exécute que les tâches échues. Rien ne s'interpose entre votre boutique et sa planification.</td><td>Votre hébergement propose une crontab ou une fonction de tâches planifiées, ce qui est le cas de la plupart.</td></tr>
+  <tr><td><b>Le planificateur IntelliPresta</b></td><td>Sélectionnez-le, enregistrez, puis cliquez sur <span class="btn">Enregistrer cette boutique</span>. Le serveur IntelliPresta appelle votre boutique toutes les cinq minutes, si bien que les intervalles sont respectés à la lettre, sans rien à configurer. L'adresse de votre boutique et son jeton cron sont conservés sur ce serveur&nbsp;; s'il est injoignable, votre planification se met en pause jusqu'à son retour. <span class="btn">Cesser d'utiliser le planificateur</span> supprime l'enregistrement.</td><td>Votre hébergement n'a pas de crontab, ou vous préférez ne pas en gérer une. La boutique doit être accessible en HTTPS.</td></tr>
+</table>
+<p>La ligne cron a la forme suivante&nbsp;; le module affiche la vôtre avec la bonne adresse et le bon jeton&nbsp;:</p>
+<pre>*/5 * * * * curl -s "https://www.your-shop.example/module/amazonmarketplacepro/cron?token=YOUR-TOKEN&amp;action=run_due" &gt; /dev/null 2&gt;&amp;1</pre>
+<div class="note"><b>Un cron toutes les cinq minutes ne signifie pas une synchronisation toutes les cinq minutes.</b> Le cron se contente de demander à la boutique «&nbsp;y a-t-il quelque chose d'échu&nbsp;?&nbsp;». Chaque tâche s'exécute à son propre intervalle, défini dans le tableau. Les exécutions sont sérialisées par un verrou, si bien que deux appels ne font jamais le même travail en double, et un passage s'arrête avant la limite de temps du serveur web pour reprendre à l'appel suivant.</div>
+
+<h2>11.2 Les tâches planifiées</h2>
+<figure>
+  <img src="img/fr/15-system-schedule-table.png" alt="">
+  <figcaption>Le tableau des tâches. Chaque tâche peut être activée ou désactivée, recevoir un autre intervalle, être exécutée immédiatement ou être retirée.</figcaption>
+</figure>
+<p>Chaque ligne correspond à une tâche, avec son intervalle en minutes, sa dernière exécution et son résultat, et sa prochaine exécution. <span class="btn">Actif</span>/<span class="btn">Désactivée</span> l'active ou la désactive, <span class="btn">Exécuter</span> la lance immédiatement, et la corbeille la retire. Les tâches retirées peuvent être ajoutées de nouveau avec le formulaire situé sous le tableau. Sur une nouvelle installation, toutes les tâches sont présentes et désactivées&nbsp;: rien ne s'exécute tant que vous ne l'avez pas décidé.</p>
+<table>
+  <tr><th style="width:26%">Tâche</th><th style="width:11%">Par défaut</th><th>Rôle</th></tr>
+  <tr><td>Importer les commandes</td><td>15 min</td><td>Récupère et prépare les commandes Amazon de la fenêtre de rétrospective (7.1, étape 1).</td></tr>
+  <tr><td>Créer les commandes PrestaShop</td><td>15 min</td><td>Transforme les commandes préparées en commandes PrestaShop (7.1, étape 2).</td></tr>
+  <tr><td>Synchroniser le stock</td><td>30 min</td><td>Envoie les quantités actuelles, et les prix lorsque le mode de synchronisation les inclut, pour les produits de la fenêtre de modification.</td></tr>
+  <tr><td>Synchronisation complète des produits</td><td>quotidien</td><td>Lit le catalogue PrestaShop, le compare à Amazon et envoie les offres en attente (5.1, étapes 1 et 3).</td></tr>
+  <tr><td>Traiter la file d'attente des flux</td><td>15 min</td><td>Soumet sous forme de flux les modifications d'offres en file d'attente et enregistre les résultats d'Amazon.</td></tr>
+  <tr><td>Importer les retours / Traiter les retours</td><td>60 min</td><td>Récupèrent les retours et les annulations, puis créent les avoirs ou annulent les commandes (7.4).</td></tr>
+  <tr><td>Synchronisation du stock FBA</td><td>60 min</td><td>Télécharge les niveaux de stock détenus par Amazon (section 8).</td></tr>
+  <tr><td>Cycle de repricing</td><td>60 min</td><td>Récupère les prix concurrents et applique vos règles (section 9).</td></tr>
+  <tr><td>Récupérer les frais</td><td>6 h</td><td>Enregistre les frais Amazon de chaque commande.</td></tr>
+  <tr><td>Interroger les rapports</td><td>30 min</td><td>Télécharge les rapports terminés (section 10).</td></tr>
+  <tr><td>Synchroniser les promotions</td><td>6 h</td><td>Importe les promotions des commandes.</td></tr>
+  <tr><td>Importer les commandes / Synchronisation des produits, toutes places de marché</td><td>15 min / quotidien</td><td>Les versions multi-places de marché de l'import des commandes et de la synchronisation des produits.</td></tr>
+  <tr><td>Demander des avis</td><td>quotidien</td><td>Envoie les demandes d'avis pour les commandes livrées, si l'option est activée en 4.5.</td></tr>
+  <tr><td>Solder les paniers distants</td><td>15 min</td><td>Transmet ou libère le stock réservé (7.3).</td></tr>
+  <tr><td>Relever les messages des acheteurs</td><td>60 min</td><td>Relève les réponses des acheteurs dans la boîte mail et les classe dans le Service client (4.6).</td></tr>
+  <tr><td>Envoyer les factures</td><td>6 h</td><td>Envoie les factures de TVA des vendeurs inscrits au VCS.</td></tr>
+  <tr><td>Purger les données acheteur après le délai de conservation</td><td>quotidien</td><td>Supprime les données personnelles des acheteurs dans les commandes plus anciennes que la durée de conservation (section 12).</td></tr>
+</table>
+<div class="note"><b>Une sélection de départ raisonnable</b> pour une boutique qui expédie elle-même ses commandes&nbsp;: Importer les commandes, Créer les commandes PrestaShop, Synchroniser le stock, Synchronisation complète des produits, Traiter la file d'attente des flux, Interroger les rapports et Purger les données acheteur après le délai de conservation. Ajoutez Synchronisation du stock FBA si vous utilisez FBA, et Cycle de repricing une fois vos règles tarifaires définies.</div>
+
+<h2>11.3 Outils</h2>
+<p><b>Contrôle du catalogue.</b> Amazon fait toutes ses correspondances sur la référence et le code-barres. Les produits auxquels il manque l'un des deux, ou qui partagent une référence avec un autre produit, ne peuvent être ni publiés ni rattachés aux commandes entrantes. <span class="btn">Contrôler mon catalogue</span> les liste.</p>
+<p><b>Éditeur de références et codes-barres.</b> Exportez tous les produits et déclinaisons en CSV, corrigez les références et les codes-barres dans un tableur, puis renvoyez le fichier. Seuls la référence, l'EAN, l'UPC et la référence fournisseur sont écrits. Cette opération modifie directement votre catalogue PrestaShop et ne peut pas être annulée&nbsp;; sauvegardez d'abord, et faites-le avant de publier, sinon vous créerez des SKU en double sur Amazon.</p>
+<p><b>Supprimer des offres sur Amazon.</b> Repère les offres des produits que vous ne vendez plus, qu'ils soient supprimés, désactivés ou exclus d'Amazon, et vous laisse examiner la liste avant de supprimer celles que vous sélectionnez. La suppression retire l'offre et son historique sur Amazon, de façon irréversible. Pour interrompre la vente temporairement, publiez plutôt une quantité de 0 (4.2).</p>
+<p><b>Contenus des flux envoyés.</b> Le JSON exact envoyé à Amazon pour chaque flux, téléchargeable par ID de flux. L'assistance d'Amazon vous le demandera lorsqu'une offre est rejetée pour un motif que le rapport n'explique pas.</p>
+
+<h2>11.4 Journaux</h2>
+<p>Les 50 dernières entrées du journal d'activité du module, avec la date, le niveau, la source et le message. Les erreurs sont mises en évidence. C'est le premier endroit à consulter lorsqu'une tâche planifiée affiche «&nbsp;Échec&nbsp;».</p>
+
+<!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
+<h1>12. Données acheteur et conformité</h1>
+<h3>Suppression des données acheteur</h3>
+<p>La politique de protection des données d'Amazon impose de supprimer les données acheteur dans les 30 jours suivant la livraison. Lorsque <b>Suppression des données acheteur</b> est activée, ce qui est le cas par défaut, le module efface de sa propre table de commandes le nom, l'e-mail, la rue, la ville, la région, le code postal et le téléphone de l'acheteur, ainsi que la charge utile Amazon conservée, dès qu'une commande est terminée et plus ancienne que la durée de conservation que vous avez fixée. Les totaux, les taxes, les frais et le pays de destination sont conservés&nbsp;: vos états et vos registres de TVA ne sont pas affectés. Le sous-onglet Paramètres &gt; Commandes indique combien de commandes attendent d'être effacées et propose <span class="btn">Les effacer maintenant</span>&nbsp;; la tâche <i>Purger les données acheteur après le délai de conservation</i> s'en charge chaque jour.</p>
+<p>Désactiver la suppression revient à conserver les données acheteur d'Amazon plus longtemps qu'Amazon ne l'autorise. Ne le faites que dans le cadre d'une obligation légale que vous pouvez démontrer.</p>
+<p><b>Anonymiser également le client et l'adresse PrestaShop</b> est désactivé par défaut, volontairement. PrestaShop compose ses factures à partir de l'adresse enregistrée&nbsp;: l'anonymiser modifie donc des documents que la loi peut vous imposer de conserver intacts, et une facture que vous devez conserver constitue précisément l'exception prévue par la politique d'Amazon. Lorsque l'option est active, un client n'est anonymisé que si toutes ses commandes sont des commandes Amazon déjà effacées, et la ville, le code postal et le pays sont conservés afin que le traitement de la TVA reste justifiable.</p>
+<h3>GPSR et pays d'origine</h3>
+<p>Le règlement européen sur la sécurité générale des produits (GPSR) impose d'indiquer sur les offres les coordonnées d'une personne responsable. Définissez-les par produit (section 6), par fabricant ou par fournisseur (5.5), et choisissez lequel des deux l'emporte. Le contact doit déjà être enregistré dans Seller Central, sous Account Health &gt; Product Policy Compliance. Le pays d'origine se définit par fabricant.</p>
+<h3>TVA</h3>
+<p>Les commandes importées peuvent utiliser les montants de taxe communiqués par Amazon ou vos propres règles de taxes (4.5). Les vendeurs inscrits au VAT Calculation Service d'Amazon peuvent faire envoyer automatiquement leurs factures PrestaShop.</p>
+
+<!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
+<h1>13. Dépannage</h1>
+<h3>Lire le résultat de «&nbsp;Vérifier la connexion&nbsp;»</h3>
+<p>Le résultat s'affiche sous le bandeau vert, dans Paramètres &gt; Connexion. En cas d'échec, les détails techniques sont aussi écrits dans l'onglet Journaux (11.4)&nbsp;; le support vous les demandera.</p>
+<table>
+  <tr><th style="width:38%">Résultat</th><th>Signification et marche à suivre</th></tr>
+  <tr><td>«&nbsp;Tout fonctionne&nbsp;: le module accède à votre compte Amazon.&nbsp;»</td><td>La connexion fonctionne. Si une synchronisation échoue malgré tout, la raison figure dans l'onglet Journaux.</td></tr>
+  <tr><td>«&nbsp;Amazon a refusé l'accès à votre compte vendeur.&nbsp;»</td><td>La connexion elle-même est correcte, mais Amazon refuse de fournir des données pour ce vendeur. Vérifiez dans Seller Central que le compte est actif et sur l'offre Vendeur Professionnel. Si c'est le cas, cliquez sur Déconnecter, puis de nouveau sur Se connecter à Amazon.</td></tr>
+  <tr><td>«&nbsp;Amazon n'accepte plus cette connexion.&nbsp;»</td><td>La connexion a été supprimée dans Seller Central. Cliquez sur Déconnecter, puis de nouveau sur Se connecter à Amazon.</td></tr>
+  <tr><td>«&nbsp;Impossible de joindre Amazon ou le service de connexion IntelliPresta.&nbsp;»</td><td>Il s'agit généralement d'un problème réseau passager. Réessayez dans quelques minutes&nbsp;; si le problème persiste, contactez le support.</td></tr>
+  <tr><td>«&nbsp;Ce serveur ne peut pas établir de connexion sécurisée avec Amazon.&nbsp;»</td><td>Les certificats de sécurité du serveur sont obsolètes. Demandez à votre hébergeur de les mettre à jour.</td></tr>
+</table>
+<h3>Situations courantes</h3>
+<table>
+  <tr><th style="width:38%">Symptôme</th><th>Cause et solution</th></tr>
+  <tr><td>«&nbsp;Aucun produit avec une référence (SKU) trouvé&nbsp;» après Synchroniser PS vers Amazon</td><td>Les produits n'ont pas de référence dans le champ choisi comme source du SKU (4.2). Renseignez-les, ou utilisez l'Éditeur de références et codes-barres (11.3).</td></tr>
+  <tr><td>Envoi accepté, mais seule l'offre (prix et stock) arrive sur Amazon</td><td>La catégorie du produit n'a ni profil ni correspondance de catégorie, ou «&nbsp;Envoyer toutes les données produit&nbsp;» est réglé sur Non (4.3).</td></tr>
+  <tr><td>Offre rejetée avec une erreur d'attribut manquant</td><td>Amazon détermine les champs obligatoires de façon dynamique. Ouvrez le profil, trouvez l'attribut dans la liste facultative, renseignez-le, enregistrez et envoyez à nouveau. Le contenu du flux (11.3) montre exactement ce qui a été envoyé.</td></tr>
+  <tr><td>Les commandes importées affichent 0&nbsp;% de TVA</td><td>Choisissez «&nbsp;Appliquer mes règles de taxes PrestaShop&nbsp;» en 4.5.</td></tr>
+  <tr><td>Une tâche planifiée affiche «&nbsp;Échec&nbsp;»</td><td>La colonne des messages et l'onglet Journaux en donnent la raison. Cliquez sur Exécuter pour réessayer après correction. Après des échecs répétés, cliquez sur Vérifier la connexion (4.1).</td></tr>
+  <tr><td>Rien ne s'exécute alors que des tâches sont activées</td><td>Aucun cron n'appelle la boutique. Vérifiez que la ligne cron existe bien dans le panneau de votre hébergeur, ou que la boutique est enregistrée auprès du planificateur IntelliPresta et accessible en HTTPS.</td></tr>
+  <tr><td>E-mails aux acheteurs Amazon renvoyés en erreur</td><td>Les adresses relais d'Amazon expirent. Activez l'e-mail anonymisé (4.5).</td></tr>
+</table>
+<h3>Obtenir de l'aide</h3>
+<p>Écrivez à <b>support@intellipresta.com</b>. Indiquez la version du module, la version de PrestaShop, les lignes utiles de l'onglet Journaux et, pour les problèmes d'offres, l'ID du flux ou le SKU. Nous répondons sous un jour ouvré.</p>
+
+<!-- ───────────────────────── 14 GLOSSARY ───────────────────────── -->
+<h1>14. Glossaire</h1>
+<table>
+  <tr><td class="k">SKU</td><td>Votre propre identifiant d'un produit sur Amazon. Le module le construit à partir d'un champ PrestaShop, généralement la référence.</td></tr>
+  <tr><td class="k">ASIN</td><td>L'identifiant d'Amazon pour une fiche catalogue. Plusieurs vendeurs peuvent proposer le même ASIN.</td></tr>
+  <tr><td class="k">EAN / UPC / GTIN</td><td>Codes-barres des produits. Amazon s'en sert pour rapprocher votre produit d'une fiche existante.</td></tr>
+  <tr><td class="k">Fiche et offre</td><td>La fiche est la page catalogue, avec le titre, la description et les images. L'offre, ce sont votre prix et votre stock sur cette page.</td></tr>
+  <tr><td class="k">Type de produit</td><td>Le schéma de catégorie d'Amazon (SHIRT, FASHION_RING) qui détermine les attributs qu'une offre doit comporter.</td></tr>
+  <tr><td class="k">Profil</td><td>Les réponses enregistrées par le module pour un type de produit, rattachées à des catégories PrestaShop.</td></tr>
+  <tr><td class="k">Flux</td><td>Un document groupé envoyé à Amazon et traité en arrière-plan. Utilisé pour les envois de plus de 25 SKU.</td></tr>
+  <tr><td class="k">MFN / AFN / FBA</td><td>Merchant Fulfilled Network&nbsp;: vous expédiez. Amazon Fulfilled Network, aussi appelé Fulfillment by Amazon (Expédié par Amazon)&nbsp;: Amazon expédie depuis ses entrepôts.</td></tr>
+  <tr><td class="k">MCF</td><td>Multi-Channel Fulfilment (expédition multicanal)&nbsp;: Amazon expédie depuis votre stock FBA une commande passée sur un autre canal, par exemple votre propre boutique.</td></tr>
+  <tr><td class="k">Buy Box</td><td>L'offre affichée par défaut sur une fiche produit Amazon. Le repricing vise à la remporter ou à la conserver.</td></tr>
+  <tr><td class="k">RDT</td><td>Restricted Data Token&nbsp;: le mécanisme par lequel Amazon communique les adresses des acheteurs à la boutique, un appel à la fois.</td></tr>
+  <tr><td class="k">GPSR</td><td>Le règlement européen sur la sécurité générale des produits (General Product Safety Regulation), qui impose d'indiquer sur les offres les coordonnées d'une personne responsable.</td></tr>
+  <tr><td class="k">VCS</td><td>Le VAT Calculation Service d'Amazon, dont les vendeurs inscrits envoient eux-mêmes leurs factures de TVA.</td></tr>
+  <tr><td class="k">Fenêtre de modification</td><td>La période pendant laquelle un produit doit avoir été modifié pour être inclus dans un envoi.</td></tr>
+  <tr><td class="k">Panier distant</td><td>Un paiement Amazon en cours, présenté comme une commande Pending, dont le module peut réserver le stock.</td></tr>
+</table>
+<p class="small">Amazon Marketplace Pro est développé et maintenu par IntelliPresta et n'est ni approuvé par Amazon ou PrestaShop, ni affilié à ces sociétés. Amazon est une marque d'Amazon.com, Inc. ou de ses sociétés affiliées. PrestaShop est une marque de PrestaShop SA.</p>
+
+</body>
+</html>

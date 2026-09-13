@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Amazon Marketplace Pro — Guía del usuario</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  :root { --brand: #25b2a8; --dark: #1d5c56; --ink: #23282d; --muted: #667077; --line: #dfe4e6; --soft: #f3f8f8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--dark); font-weight: 700; line-height: 1.25; page-break-after: avoid; }
+  h1 { font-size: 22pt; margin: 0 0 6pt; padding-bottom: 6pt; border-bottom: 3px solid var(--brand); page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 15pt; margin: 20pt 0 6pt; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; }
+  h4 { font-size: 10.5pt; margin: 10pt 0 2pt; color: var(--ink); }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 20pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #f1f3f4; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: #f1f3f4; padding: 8pt 10pt; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin: 4pt 0 10pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 12pt; font-size: 9.5pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 5pt 7pt; vertical-align: top; text-align: left; }
+  th { background: var(--soft); color: var(--dark); font-weight: 700; }
+  td.k { white-space: nowrap; font-weight: 600; width: 32%; }
+  .note { border-left: 4px solid var(--brand); background: var(--soft); padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .warn { border-left: 4px solid #d9822b; background: #fff7ee; padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .note b, .warn b { color: var(--dark); }
+  figure { margin: 10pt 0 14pt; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 3pt; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps li { counter-increment: s; position: relative; padding-left: 30pt; margin-bottom: 6pt; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 1pt; width: 20pt; height: 20pt; border-radius: 10pt; background: var(--brand); color: #fff; font-weight: 700; text-align: center; line-height: 20pt; font-size: 9.5pt; }
+  .btn { display: inline-block; border: 1px solid #b9c2c6; border-radius: 3px; padding: 0 5px; font-size: 9.5pt; background: #fafbfb; white-space: nowrap; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .kicker { color: var(--brand); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10pt; }
+  .cover h1 { font-size: 34pt; border: 0; margin: 6pt 0 10pt; page-break-before: auto; }
+  .cover .sub { font-size: 14pt; color: var(--muted); margin-bottom: 30pt; }
+  .cover .meta { font-size: 10pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10pt; }
+  .cover img.logo { width: 90px; margin-bottom: 20pt; }
+  .toc ol { list-style: none; padding-left: 0; column-count: 2; column-gap: 24pt; }
+  .toc li { margin-bottom: 4pt; break-inside: avoid; }
+  .toc li.l2 { padding-left: 16pt; color: var(--muted); font-size: 9.5pt; }
+  .toc .n { display: inline-block; width: 22pt; color: var(--brand); font-weight: 700; }
+  .cols { column-count: 2; column-gap: 20pt; }
+  .small { font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────── COVER ───────────────────────── -->
+<div class="cover">
+  <img class="logo" src="img/logo.png" alt="">
+  <div class="kicker">Módulo para PrestaShop · versión 1.5.0</div>
+  <h1>Amazon Marketplace Pro</h1>
+  <div class="sub">Guía del usuario: qué hace el módulo, cómo funciona cada pantalla y cómo dejarlo trabajando sin supervisión.</div>
+  <div class="meta">
+    IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
+    Para PrestaShop 1.6 a 9 · Fecha del documento: 4 de septiembre de 2026
+  </div>
+</div>
+
+<!-- ───────────────────────── TOC ───────────────────────── -->
+<h1>Índice</h1>
+<div class="toc">
+<ol>
+  <li><span class="n">1</span>Qué hace el módulo</li>
+  <li class="l2">1.1 Dónde se guardan tus datos</li>
+  <li class="l2">1.2 Requisitos</li>
+  <li><span class="n">2</span>Puesta en marcha en cinco pasos</li>
+  <li><span class="n">3</span>Cómo está organizada la pantalla</li>
+  <li><span class="n">4</span>Ajustes</li>
+  <li class="l2">4.1 Conexión</li>
+  <li class="l2">4.2 Anuncios</li>
+  <li class="l2">4.3 Sincronización</li>
+  <li class="l2">4.4 Envío</li>
+  <li class="l2">4.5 Pedidos</li>
+  <li class="l2">4.6 Mensajería</li>
+  <li><span class="n">5</span>Catálogo</li>
+  <li class="l2">5.1 Productos: PrestaShop → Amazon</li>
+  <li class="l2">5.2 Productos: Amazon → PrestaShop</li>
+  <li class="l2">5.3 Estado del feed y correspondencia de categorías</li>
+  <li class="l2">5.4 Perfiles de anuncio</li>
+  <li class="l2">5.5 Márgenes y reglas</li>
+  <li class="l2">5.6 Reglas por producto, Cola, Huérfanos</li>
+  <li><span class="n">6</span>La pestaña Amazon de un producto</li>
+  <li><span class="n">7</span>Pedidos</li>
+  <li class="l2">7.1 Importar pedidos</li>
+  <li class="l2">7.2 Direcciones de los compradores desde un informe de pedidos</li>
+  <li class="l2">7.3 Pedidos pendientes y existencias reservadas</li>
+  <li class="l2">7.4 Devoluciones y cancelaciones</li>
+  <li class="l2">7.5 Mensajería con el comprador</li>
+  <li><span class="n">8</span>Logística</li>
+  <li><span class="n">9</span>Finanzas</li>
+  <li><span class="n">10</span>Análisis</li>
+  <li><span class="n">11</span>Sistema</li>
+  <li class="l2">11.1 Automatización</li>
+  <li class="l2">11.2 Las tareas programadas</li>
+  <li class="l2">11.3 Herramientas</li>
+  <li class="l2">11.4 Registros</li>
+  <li><span class="n">12</span>Datos de los compradores y cumplimiento normativo</li>
+  <li><span class="n">13</span>Solución de problemas</li>
+  <li><span class="n">14</span>Glosario</li>
+</ol>
+</div>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<h1>1. Qué hace el módulo</h1>
+<p>Amazon Marketplace Pro conecta una tienda PrestaShop con Amazon a través de la Selling Partner API oficial de Amazon, para que puedas gestionar tu negocio en Amazon desde el back office que ya utilizas. Cubre todo el ciclo de venta:</p>
+<ul>
+  <li><b>Anuncios.</b> Tus productos de PrestaShop se convierten en anuncios de Amazon. El módulo descarga los requisitos de atributos de Amazon para cada tipo de producto y los convierte en un formulario (un <i>perfil</i>), de modo que los anuncios se crean con la estructura correcta. Las combinaciones de PrestaShop se convierten en variaciones de Amazon.</li>
+  <li><b>Precio y existencias.</b> Precios con márgenes, redondeo, periodos de oferta y tramos para empresas (B2B); cantidades con una reserva de seguridad. Solo se envía lo que ha cambiado, así que los catálogos grandes se mantienen dentro de los límites de Amazon.</li>
+  <li><b>Pedidos.</b> Los pedidos de Amazon se convierten en pedidos de PrestaShop con tus transportistas, estados, facturas e impuestos. Las confirmaciones de envío y el seguimiento se comunican a Amazon automáticamente. Se distinguen los pedidos que envías tú de los que envía Amazon (FBA).</li>
+  <li><b>Protección contra la sobreventa.</b> Las existencias de las compras de Amazon que aún no se han pagado pueden reservarse en PrestaShop y liberarse si la compra no llega a completarse.</li>
+  <li><b>Finanzas.</b> Se hace un seguimiento de los precios de la competencia y de la Buy Box, que pueden alimentar reglas de reprecio; las comisiones se registran por pedido; se recogen los informes de liquidación y de inventario.</li>
+  <li><b>Cumplimiento normativo.</b> Datos de la persona responsable según el GPSR y país de origen, importación de pedidos que tiene en cuenta el IVA, subida de facturas de IVA y eliminación automática de los datos del comprador cuando termina el periodo de conservación que exige Amazon.</li>
+  <li><b>Automatización.</b> Cada tarea periódica es una tarea programada con su propio intervalo, que ejecuta el cron de tu alojamiento o el programador de IntelliPresta.</li>
+</ul>
+
+<h2>1.1 Dónde se guardan tus datos</h2>
+<p>El módulo funciona íntegramente dentro de tu instalación de PrestaShop y llama a Amazon directamente desde tu servidor. Los datos de productos, pedidos y compradores se guardan únicamente en tu propia base de datos.</p>
+<p>IntelliPresta gestiona un pequeño servicio en <code>intellipresta.com</code>. Hace dos cosas y nada más:</p>
+<ul>
+  <li>Completa el proceso de «Conectar con Amazon» y entrega el token resultante a tu tienda. No guarda ningún dato de productos, pedidos ni compradores.</li>
+  <li>Si eliges el programador de IntelliPresta (sección 11.1), guarda la dirección de cron y el token de cron de tu tienda para poder llamarla cada cinco minutos. Es opcional y se elimina cuando vuelves a tu propio cron.</li>
+</ul>
+
+<h2>1.2 Requisitos</h2>
+<table>
+  <tr><td class="k">PrestaShop</td><td>1.6 a 9. La interfaz se adapta a los diseños de back office de 1.6, de 1.7–9 y de «Basic Edition».</td></tr>
+  <tr><td class="k">Cuenta de Amazon</td><td>Un plan de venta Profesional, activo, en cualquiera de los 23 marketplaces compatibles (Europa, Norteamérica, Brasil, Oriente Medio, África, Japón, Australia, Singapur, India).</td></tr>
+  <tr><td class="k">Alojamiento</td><td>PHP con cURL. Se recomienda un crontab; si tu alojamiento no lo tiene, el programador de IntelliPresta lo suple. La función opcional de respuestas de los compradores necesita la extensión IMAP de PHP.</td></tr>
+  <tr><td class="k">Catálogo</td><td>Cada producto y cada combinación necesitan una referencia (SKU) y un código de barras (EAN o UPC). La herramienta Comprobación del catálogo (sección 11.3) encuentra los que faltan.</td></tr>
+</table>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<h1>2. Puesta en marcha en cinco pasos</h1>
+<ol class="steps">
+  <li><b>Instala el módulo</b> desde Módulos &gt; Gestor de módulos y abre Configurar. Todas las pantallas del módulo están en esa única página, agrupadas en una barra lateral.</li>
+  <li><b>Elige tu marketplace</b> en Ajustes &gt; Conexión, en el panel Marketplace, y pulsa <span class="btn">Guardar los ajustes</span>. El marketplace determina el sitio de Amazon, la moneda y el idioma de los anuncios.</li>
+  <li><b>Conecta.</b> Pulsa <span class="btn">Conectar con Amazon</span>. Te llevaremos a Seller Central para que apruebes la conexión y después volverás a la tienda. No hay credenciales que copiar. Puedes revocar la autorización desde Seller Central en cualquier momento, o pulsar <span class="btn">Desconectar</span> en el módulo.</li>
+  <li><b>Comprueba la conexión.</b> Pulsa <span class="btn">Comprobar la conexión</span> en el aviso verde. Lee tus pedidos recientes y te dice con palabras claras si todo funciona. La sección 13 explica los posibles resultados.</li>
+  <li><b>Activa la automatización.</b> En Sistema &gt; Automatización, añade la línea de cron que se muestra en el panel de control de tu alojamiento o regístrate en el programador de IntelliPresta. Después activa las tareas que necesites en la tabla de debajo. La sección 11 lo explica en detalle.</li>
+</ol>
+<p>A partir de ahí, el orden de trabajo habitual es: revisar las referencias de tu catálogo (11.3), crear un perfil de anuncio para cada familia de productos (5.4), ejecutar la sincronización en dos pasos en Catálogo &gt; Productos (5.1) y dejar que las tareas programadas lo mantengan todo al día.</p>
+
+<figure>
+  <img src="img/es/01-settings-connection.png" alt="">
+  <figcaption>Ajustes &gt; Conexión después de conectar. El ID de vendedor que se muestra es ficticio.</figcaption>
+</figure>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<h1>3. Cómo está organizada la pantalla</h1>
+<p>La página Configurar tiene una barra lateral con siete grupos. Cada grupo tiene pestañas en la parte superior, y cada pestaña contiene uno o varios paneles. El módulo recuerda en qué grupo estabas al recargar o guardar.</p>
+<table>
+  <tr><th style="width:18%">Grupo</th><th style="width:34%">Pestañas</th><th>Para qué sirve</th></tr>
+  <tr><td>Ajustes</td><td>Conexión, Anuncios, Sincronización, Envío, Pedidos, Mensajería</td><td>Todo lo que se configura una sola vez. Un único botón <span class="btn">Guardar los ajustes</span> guarda las seis pestañas a la vez.</td></tr>
+  <tr><td>Catálogo</td><td>Productos, Perfiles, Márgenes y reglas, Reglas por producto, Cola, Huérfanos</td><td>Publicar los productos en Amazon y mantener los dos catálogos al día.</td></tr>
+  <tr><td>Pedidos</td><td>Pedidos, Pedidos pendientes, Devoluciones</td><td>Traer los pedidos de Amazon y gestionar la falta de existencias, las devoluciones y los mensajes de los compradores.</td></tr>
+  <tr><td>Logística</td><td>FBA, Multicuenta</td><td>Existencias gestionadas por Amazon, logística multicanal y marketplaces adicionales.</td></tr>
+  <tr><td>Finanzas</td><td>Reprecio, Comisiones, Promociones</td><td>Precios competitivos, comisiones de Amazon y promociones.</td></tr>
+  <tr><td>Análisis</td><td>Informes</td><td>Solicitar y descargar informes de Amazon.</td></tr>
+  <tr><td>Sistema</td><td>Automatización, Herramientas, Registros</td><td>La programación, las herramientas de catálogo, las eliminaciones, el contenido de los feeds y el registro de actividad.</td></tr>
+</table>
+<div class="note"><b>Las acciones manuales y las tareas programadas hacen lo mismo.</b> La mayoría de los botones de Catálogo, Pedidos, Logística y Finanzas tienen una tarea programada equivalente (sección 11.2). Pulsa el botón para hacerlo ahora y ver el resultado; activa la tarea para que se haga a intervalos regulares.</div>
+
+<!-- ───────────────────────── 4 SETTINGS ───────────────────────── -->
+<h1>4. Ajustes</h1>
+<p>El grupo Ajustes es un único formulario. Cambia lo que quieras en cualquiera de sus seis pestañas y pulsa <span class="btn">Guardar los ajustes</span> al final.</p>
+
+<h2>4.1 Conexión</h2>
+<h3>Conexión con Amazon</h3>
+<p>Muestra si la tienda está conectada y con qué vendedor. <span class="btn">Conectar con Amazon</span> inicia el proceso de aprobación en Seller Central; <span class="btn">Desconectar</span> borra la autorización guardada. Elige el marketplace antes de conectar, ya que la página de consentimiento depende de él.</p>
+<p>El aviso verde solo indica que hay una conexión guardada. <span class="btn">Comprobar la conexión</span>, dentro del aviso, demuestra que sigue funcionando: se conecta con Amazon, lee tus pedidos recientes y te dice con palabras claras que todo funciona o qué debes hacer. Úsalo después de conectar o cuando una sincronización informe de un error de autorización. La sección 13 enumera los resultados.</p>
+<h3>Marketplace</h3>
+<p><b>Marketplace de Amazon.</b> El sitio de Amazon en el que vende esta tienda. Los marketplaces adicionales se añaden en Logística &gt; Multicuenta (sección 8).</p>
+
+<h2>4.2 Anuncios</h2>
+<figure>
+  <img src="img/es/02-settings-listings.png" alt="">
+  <figcaption>Ajustes &gt; Anuncios.</figcaption>
+</figure>
+<h3>Valores por defecto de los anuncios</h3>
+<table>
+  <tr><td class="k">Estado del artículo</td><td>Estado que se envía con cada anuncio: Nuevo, los cuatro grados de Usado o Reacondicionado. Un producto puede cambiarlo en su pestaña Amazon (sección 6).</td></tr>
+  <tr><td class="k">Reserva de existencias</td><td>Unidades que no se declaran a Amazon. Con una reserva de 2 y 10 en existencias, Amazon ve 8. Evita la sobreventa cuando varios canales comparten las mismas existencias.</td></tr>
+  <tr><td class="k">Idioma de los anuncios</td><td>Idioma de los títulos, las descripciones y los puntos clave. «Auto» sigue el marketplace (Alemania en alemán, Francia en francés) y necesita que ese idioma esté instalado en la tienda; si no, se usa el idioma predeterminado de la tienda.</td></tr>
+  <tr><td class="k">Cuando no hay existencias</td><td>Publicar cantidad 0 (el anuncio se mantiene y aparece como no disponible) o eliminar el anuncio de Amazon.</td></tr>
+  <tr><td class="k">Nombre de la plantilla de envío</td><td>Opcional. El nombre exacto de una plantilla de envío de Seller Central; todas las ofertas se asignan a ella. Los intervalos por precio o peso se definen en Envío (4.4).</td></tr>
+  <tr><td class="k">Precio Amazon Business (B2B)</td><td>Porcentaje opcional de descuento sobre tu precio normal, que se envía como precio profesional para los compradores de Amazon Business. 0 lo desactiva.</td></tr>
+  <tr><td class="k">Descuentos por cantidad B2B a partir del grupo</td><td>Un grupo de clientes de PrestaShop cuyos precios específicos con una cantidad mínima superior a 1 se convierten en tramos de volumen de Amazon Business, hasta un máximo de cinco.</td></tr>
+</table>
+<h3>SKU y filtros de exportación</h3>
+<table>
+  <tr><td class="k">Origen del SKU</td><td>Qué campo de PrestaShop se convierte en el SKU de Amazon: la referencia, el EAN o la referencia del proveedor. Los productos con ese campo vacío no se exportan.</td></tr>
+  <tr><td class="k">Prefijo del SKU</td><td>Se añade delante del SKU con un guion: el prefijo AMZ da AMZ-REF123.</td></tr>
+  <tr><td class="k">Intervalo de precios, Cantidad mín.</td><td>Exporta solo los productos cuyo precio final esté dentro del intervalo y cuyas existencias alcancen al menos el mínimo. 0 desactiva ese límite.</td></tr>
+  <tr><td class="k">Usar precios específicos</td><td>Aplica los precios específicos de PrestaShop, opcionalmente los de un grupo de clientes, antes del margen.</td></tr>
+  <tr><td class="k">Correo para informes</td><td>Las ejecuciones programadas envían aquí un breve informe. Vacío significa sin informes.</td></tr>
+</table>
+<div class="warn"><b>Cambiar el origen del SKU en un catálogo en producción crea anuncios nuevos</b> con los nuevos SKU. Decídelo antes de publicar.</div>
+
+<h2>4.3 Sincronización</h2>
+<figure>
+  <img src="img/es/03-settings-sync.png" alt="">
+  <figcaption>Ajustes &gt; Sincronización.</figcaption>
+</figure>
+<h3>Opciones de sincronización</h3>
+<table>
+  <tr><td class="k">Modo de sincronización de anuncios</td><td>Normal envía los datos completos del anuncio. «Solo el precio» y «Solo la cantidad» envían pequeñas actualizaciones parciales, mucho más rápidas en catálogos grandes.</td></tr>
+  <tr><td class="k">Forzar todas las cantidades a cero</td><td>Interruptor de emergencia para vacaciones o una congelación de existencias. Los anuncios siguen en línea y aparecen como no disponibles.</td></tr>
+  <tr><td class="k">Enviar las imágenes</td><td>Amazon descarga cada URL de imagen que envías, lo que ralentiza los envíos grandes. Muchos comerciantes envían las imágenes en la primera publicación y luego desactivan esta opción.</td></tr>
+  <tr><td class="k">Enviar todos los datos del producto</td><td>Sí envía título, descripción, puntos clave, marca e imágenes. No envía solo la oferta (precio y existencias), lo que nunca reescribe el contenido del anuncio. Usa No cuando tus anuncios ya estén consolidados o cuando vendas en la ficha de catálogo de otro.</td></tr>
+  <tr><td class="k">Enviar todo el catálogo</td><td>Ignora la ventana de cambios en una primera publicación o después de cambiar un ajuste que afecta a todos los anuncios. Vuelve a desactivarlo después.</td></tr>
+  <tr><td class="k">Exportar solo los productos con ASIN</td><td>Limita los envíos a los productos ya asociados a una ficha de Amazon.</td></tr>
+  <tr><td class="k">Limitar la exportación a N líneas</td><td>Limita cada lote de envío a entre 100 y 1500 líneas.</td></tr>
+  <tr><td class="k">Tratar el campo EAN-13 como</td><td>Elige UPC si guardas códigos de barras estadounidenses de 12 dígitos en el campo EAN.</td></tr>
+  <tr><td class="k">Exportar solo los productos modificados en las últimas</td><td>La ventana de cambios: de 1 a 24 horas. Muy recomendable en catálogos grandes. Los productos afectados por un cambio de reglas se incluyen a través de la Cola (5.6).</td></tr>
+  <tr><td class="k">Eliminar las entradas de la cola después de</td><td>Tiempo de conservación de las entradas de la cola ya enviadas: 1, 7 o 15 días.</td></tr>
+  <tr><td class="k">Redondeo de precios</td><td>Al céntimo más cercano, «inteligente» al alza hasta ,99, o números enteros. Se aplica después de los márgenes a todos los precios exportados.</td></tr>
+  <tr><td class="k">Enviar los precios de oferta</td><td>Un precio específico con fecha de inicio y de fin se convierte en una oferta de Amazon con esa misma ventana, así que las promociones pueden enviarse por adelantado.</td></tr>
+  <tr><td class="k">Enviar el precio de referencia</td><td>Envía el precio antes del descuento como precio de referencia tachado cuando es superior al precio exportado.</td></tr>
+  <tr><td class="k">Reserva anticipada</td><td>Los productos con una fecha de disponibilidad futura se publican con esa fecha de reposición.</td></tr>
+  <tr><td class="k">Correspondencia de estados</td><td>Hace corresponder los tres estados de PrestaShop con la lista más amplia de Amazon.</td></tr>
+  <tr><td class="k">Formato del título de los anuncios</td><td>Nombre del producto tal cual, o «Marca - Nombre del producto - Atributos» según la recomendación de Amazon. La marca se omite cuando el nombre ya empieza por ella.</td></tr>
+  <tr><td class="k">Notas de estado</td><td>Texto libre que se envía con los estados Usado y Reacondicionado.</td></tr>
+</table>
+<h3>Sincronización en tiempo real (hooks)</h3>
+<p>Tres interruptores hacen que el módulo reaccione a lo que ocurre en PrestaShop en lugar de esperar a la siguiente ejecución programada: enviar el precio y las existencias al guardar un producto, confirmar el envío con el seguimiento cuando un pedido pasa a Enviado, y cancelar en Amazon cuando un pedido de Amazon se cancela en PrestaShop.</p>
+
+<h2>4.4 Envío</h2>
+<p><b>Plantillas de envío por intervalo de precio o peso.</b> Asigna distintas plantillas de envío de Seller Central según el precio o el peso del producto. Añade intervalos con un mínimo (incluido), un máximo (excluido, 0 para sin límite) y el nombre de la plantilla. Si está desactivado, o si ningún intervalo coincide, se usa la plantilla única de Valores por defecto de los anuncios.</p>
+<p><b>Correspondencia de transportistas.</b> Qué código de transportista de Amazon se comunica al confirmar los envíos de cada transportista de PrestaShop. Los transportistas sin correspondencia se detectan por su nombre.</p>
+
+<h2>4.5 Pedidos</h2>
+<figure>
+  <img src="img/es/04-settings-orders.png" alt="">
+  <figcaption>Ajustes &gt; Pedidos.</figcaption>
+</figure>
+<h3>Ajustes de importación de pedidos</h3>
+<table>
+  <tr><td class="k">Impuestos en los pedidos importados</td><td>Usa los importes de impuestos que comunica Amazon, o aplica tus reglas de impuestos de PrestaShop considerando los precios de Amazon con impuestos incluidos. Elige la segunda opción si los pedidos importados de la UE muestran un 0 % de IVA.</td></tr>
+  <tr><td class="k">Subida de facturas VCS</td><td>Sube a Amazon el PDF de la factura de PrestaShop de cada pedido. Solo para vendedores inscritos en el VAT Calculation Service de Amazon. Se ejecuta con la tarea <i>Subir facturas</i>.</td></tr>
+  <tr><td class="k">Solicitudes de valoración automáticas</td><td>Envía la solicitud de valoración estándar de Amazon una vez por pedido entregado, dentro del plazo que Amazon permite, mediante la tarea <i>Solicitar valoraciones</i>.</td></tr>
+  <tr><td class="k">Descargar los pedidos de los últimos</td><td>Ventana de retroceso para las importaciones manuales y programadas, en días u horas.</td></tr>
+  <tr><td class="k">Importar los pedidos FBA, Estado de los pedidos FBA, Estado de los pedidos enviados</td><td>Si se importan los pedidos gestionados por Amazon y qué estado de PrestaShop reciben estos y los pedidos ya enviados.</td></tr>
+  <tr><td class="k">Emparejar las líneas de pedido por</td><td>La referencia o el SKU personalizado de cada producto (recomendado), o los ID de PrestaShop si tus SKU de Amazon se crearon a partir de los ID de producto y de combinación.</td></tr>
+  <tr><td class="k">Dar prioridad al ASIN al emparejar</td><td>Empareja por ASIN antes que por SKU, usando la correspondencia que crean las sincronizaciones y Emparejar ASIN por EAN.</td></tr>
+  <tr><td class="k">Usar un correo anonimizado para los clientes</td><td>Las direcciones de retransmisión de Amazon caducan; una dirección sintética evita que reboten los correos de la tienda. La mensajería con el comprador a través de Amazon sigue funcionando.</td></tr>
+  <tr><td class="k">Eliminación de los datos del comprador, Eliminar los datos del comprador después de</td><td>Consulta la sección 12.</td></tr>
+  <tr><td class="k">Grupo de clientes para los compradores de Amazon</td><td>El grupo que se asigna a los clientes creados por las importaciones.</td></tr>
+  <tr><td class="k">Carrito remoto, Liberar una reserva después de</td><td>Reserva existencias para las compras de Amazon que aún no son pagaderas y las devuelve tras el periodo de gracia si el pedido nunca llega a ser pagadero. Consulta 7.3.</td></tr>
+  <tr><td class="k">Pedidos sin existencias suficientes</td><td>Crear el pedido de PrestaShop de todos modos, o dejarlo en Pedidos pendientes para revisarlo.</td></tr>
+  <tr><td class="k">Transportista predeterminado, Estado de pedido predeterminado</td><td>Se usan para los pedidos importados cuando no se aplica nada más específico.</td></tr>
+</table>
+<h3>Enrutamiento de los pedidos importados</h3>
+<p>Amazon indica la velocidad de entrega que prometió al comprador; asocia cada velocidad a un transportista de PrestaShop. Las <b>Reglas de estado avanzadas</b> dan a determinados pedidos su propio estado, por ejemplo los pedidos Prime en un estado que el almacén no pueda pasar por alto, o los pedidos FBA directamente a Enviado. Las reglas se evalúan de arriba abajo y gana la primera coincidencia. <b>Factura por correo</b> envía el PDF de la factura de PrestaShop, junto con un adjunto opcional como tus condiciones, cuando un pedido alcanza el estado elegido.</p>
+
+<h2>4.6 Mensajería</h2>
+<p>Amazon no ofrece ninguna API para leer lo que responde un comprador; las respuestas llegan por correo a tu dirección de vendedor. Indica ese buzón al módulo (host IMAP, puerto, usuario, contraseña, carpeta, SSL) y archivará cada mensaje que cite un pedido de Amazon en el Servicio de atención al cliente de PrestaShop, junto al pedido correcto. Usa un buzón específico o una contraseña de aplicación con acceso solo de lectura. <span class="btn">Recoger ahora las respuestas de los compradores</span> lee los mensajes no leídos; la tarea <i>Recoger mensajes de compradores</i> lo hace a intervalos regulares.</p>
+
+<!-- ───────────────────────── 5 CATALOG ───────────────────────── -->
+<h1>5. Catálogo</h1>
+<p>La pestaña Productos es donde los productos pasan de un catálogo a otro. Las dos direcciones funcionan igual: primero una sincronización lee y compara, y muestra una tabla organizada por SKU; después, un segundo paso escribe. No se cambia nada hasta el segundo paso.</p>
+<figure>
+  <img src="img/es/05-catalog-products.png" alt="">
+  <figcaption>Catálogo &gt; Productos.</figcaption>
+</figure>
+
+<h2>5.1 Productos: PrestaShop → Amazon</h2>
+<ol class="steps">
+  <li><span class="btn">Sincronizar PS con Amazon</span> lee tu catálogo de PrestaShop y señala, SKU por SKU, lo que difiere de Amazon: descripción, puntos clave, marca, imágenes, EAN y categorías. La tabla comparativa aparece debajo de los pasos. Cada fila muestra el lado de PrestaShop, el lado de Amazon y una etiqueta de dirección: <i>solo en PS</i>, <i>solo en Amazon</i>, <i>conflicto</i> o <i>sincronizado</i>.</li>
+  <li><span class="btn">Emparejar ASIN por EAN</span>, opcional. Para los productos que Amazon ya vende, localiza la ficha existente por el código de barras para que añadas una oferta a ella en lugar de crear un anuncio duplicado.</li>
+  <li><span class="btn">Enviar a Amazon</span> envía lo que la tabla marca como pendiente. Hasta 25 SKU se envían uno a uno y se responden al momento, con un estado y los posibles problemas de cada SKU. A partir de 25 van en un único documento de feed, que Amazon procesa en segundo plano; puedes seguirlo en Estado del feed.</li>
+</ol>
+<div class="note"><b>Qué significa «pendiente».</b> Una fila está pendiente cuando existe en PrestaShop y, o bien falta en Amazon (<i>solo en PS</i>), o bien difiere de lo que hay allí (<i>conflicto</i>). Los ajustes de Sincronización (4.3) deciden cuánto se envía de cada fila pendiente: datos completos o solo la oferta, con imágenes o sin ellas, y si se aplica la ventana de cambios.</div>
+
+<h2>5.2 Productos: Amazon → PrestaShop</h2>
+<ol class="steps">
+  <li><span class="btn">Sincronizar Amazon con PS</span> lee tus anuncios de Amazon y señala, SKU por SKU, lo que le falta a PrestaShop o lo que guarda de otra manera. La comparación aparece debajo. Todavía no se escribe nada.</li>
+  <li>Elige qué hacer con la comparación:
+    <ul>
+      <li><b>A. Crear los productos que PrestaShop no tiene.</b> Elige una categoría y pulsa <span class="btn">Crear productos de PS a partir de los anuncios que solo están en Amazon</span>. Se crean inactivos, con título, descripción, marca, precio, existencias e imágenes, para que los revises. Los precios llegan sin grupo de impuestos; asigna uno antes de activarlos.</li>
+      <li><b>B. Actualizar los productos que PrestaShop ya tiene.</b> Marca los campos que quieras sobrescribir (título, descripción y marca; precio; existencias; puntos clave como características; desactivar lo que Amazon ya no ofrece) y pulsa <span class="btn">Actualizar desde Amazon</span>. No se puede deshacer, así que haz antes una copia de seguridad. Los precios llegan con impuestos incluidos y se convierten con la regla fiscal de cada producto.</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>5.3 Estado del feed y correspondencia de categorías</h2>
+<p><b>Estado del feed.</b> Un envío de más de 25 SKU va en un único feed. <span class="btn">Comprobar el estado del feed</span> pregunta a Amazon si ha terminado y muestra el número de aceptados, errores y advertencias de cada feed. El JSON exacto de cada feed se guarda y puede descargarse en Sistema &gt; Herramientas.</p>
+<p><b>Correspondencia de categorías.</b> La forma antigua y más sencilla de indicar a Amazon qué tipo de producto es: un tipo de producto de Amazon y un browse node opcional por cada categoría de PrestaShop, más atributos adicionales opcionales en JSON. Los productos de una categoría con correspondencia envían los datos completos del anuncio; los de una categoría sin correspondencia envían solo la oferta. Los perfiles de anuncio (5.4) hacen lo mismo con el propio formulario de atributos de Amazon y tienen prioridad; la correspondencia de categorías se mantiene como alternativa para las categorías sin perfil.</p>
+<p><b>Lista de productos de Amazon.</b> Una vista de solo lectura de lo que Amazon devuelve para tu cuenta.</p>
+
+<h2>5.4 Perfiles de anuncio</h2>
+<figure>
+  <img src="img/es/06-catalog-profiles.png" alt="">
+  <figcaption>Catálogo &gt; Perfiles.</figcaption>
+</figure>
+<p>Un perfil fija un tipo de producto de Amazon (SHIRT, FASHION_RING, etc.) y responde, de una vez, a todos los atributos que ese tipo exige. Amazon publica esos requisitos como un esquema; el módulo lo descarga y construye un formulario, de modo que rellenas campos reales en lugar de escribir JSON. Asocia el perfil a categorías de PrestaShop y todos sus productos se publicarán con la estructura correcta. Cada categoría pertenece como máximo a un perfil.</p>
+<h3>Crear un perfil</h3>
+<ol class="steps">
+  <li>Pulsa <span class="btn">Nuevo perfil</span> y dale un nombre, como «Faldas - Mujer».</li>
+  <li>Busca tipos de producto de Amazon (por ejemplo, «shirt»), elige uno y pulsa <span class="btn">Cargar los campos obligatorios</span>. Los atributos obligatorios aparecen como un formulario; los opcionales se enumeran debajo con un filtro. Los esquemas se guardan en caché 30 días por marketplace; <span class="btn">Actualizar desde Amazon</span> descarga una copia nueva.</li>
+  <li>Define las opciones del perfil: si los productos tienen variaciones y con qué grupos de atributos (Talla, Color); los browse nodes recomendados, obligatorios en Canadá, Europa y Japón; el plazo de preparación; la plantilla de envío; la exención de GTIN si Amazon te la ha concedido.</li>
+  <li>Marca las categorías de PrestaShop que cubre el perfil, añade atributos adicionales en JSON en bruto si el formulario no puede expresarlos y pulsa <span class="btn">Guardar el perfil</span>.</li>
+</ol>
+<div class="note"><b>Variaciones.</b> La referencia del producto base es el SKU padre; la referencia de cada combinación es un SKU hijo y necesita su propio código de barras.</div>
+
+<h2>5.5 Márgenes y reglas</h2>
+<figure>
+  <img src="img/es/07-catalog-markup.png" alt="">
+  <figcaption>Catálogo &gt; Márgenes y reglas.</figcaption>
+</figure>
+<p>Los márgenes son valores fijos («5.99») o porcentajes («10%») que se aplican al precio exportado. Las reglas se aplican en cascada por producto: categoría, luego fabricante y luego proveedor; gana la primera fuente que tenga un valor, y si ninguna coincide se aplican los valores por defecto. La misma cascada fija el plazo de preparación y el contacto GPSR.</p>
+<p>Las tablas <b>Reglas por categoría</b>, <b>Reglas por fabricante</b> y <b>Reglas por proveedor</b> contienen, para cada elemento, el margen de precio, el plazo de envío, el correo o enlace GPSR y un interruptor de Sincronización (sí/no). La tabla de fabricantes también contiene el país de origen. Al guardar, los productos afectados pasan a la cola para que la próxima sincronización diferencial vuelva a enviarlos.</p>
+
+<h2>5.6 Reglas por producto, Cola, Huérfanos</h2>
+<p><b>Reglas por producto</b> excluye productos concretos de la sincronización con Amazon o da a un producto su propio contacto GPSR, que tiene prioridad sobre los contactos del fabricante y del proveedor. Lo mismo, y más, está disponible en la pestaña Amazon de cada producto (sección 6).</p>
+<p><b>Cola</b> enumera los productos modificados en PrestaShop o afectados por un cambio de reglas. Con la ventana de cambios activada, las entradas activas se incluyen en la próxima sincronización aunque el producto en sí no se haya modificado hace poco. Las entradas enviadas pasan a inactivas y se purgan cuando termina el periodo de conservación configurado. El panel permite activar todo, desactivar todo, purgar las entradas caducadas y eliminar todo.</p>
+<p><b>Huérfanos</b> enumera los anuncios de Amazon que ya no corresponden a un producto vendible de PrestaShop, porque el producto se eliminó, se desactivó o cambió su SKU. Ejecuta primero Sincronizar Amazon con PS para que la lista refleje tu inventario real y después corrige los productos o elimina los anuncios con la herramienta de 11.3.</p>
+
+<!-- ───────────────────────── 6 PRODUCT TAB ───────────────────────── -->
+<h1>6. La pestaña Amazon de un producto</h1>
+<p>Cada ficha de producto de PrestaShop recibe una pestaña <b>Amazon Marketplace Pro</b>. Sus ajustes se aplican solo a ese producto y tienen prioridad sobre el perfil de anuncio, las reglas de categoría, fabricante y proveedor, y los ajustes globales. Deja un campo vacío para heredarlo.</p>
+<table>
+  <tr><td class="k">Sincronizar este producto con Amazon</td><td>Sí, o excluirlo de todas las exportaciones.</td></tr>
+  <tr><td class="k">Enviar precio / enviar cantidad</td><td>Desmarca una de las dos casillas para dejar ese valor intacto en Amazon, por ejemplo cuando ajustas los precios en la propia Amazon.</td></tr>
+  <tr><td class="k">Forzado de existencias</td><td>Enviar la cantidad real, siempre disponible (999) o siempre agotado (0).</td></tr>
+  <tr><td class="k">Precio sustitutivo</td><td>Se envía en lugar del precio de la tienda; se omiten los márgenes y las reglas de precio.</td></tr>
+  <tr><td class="k">SKU personalizado</td><td>Para un producto que ya existe en tu inventario de Amazon con otro SKU de vendedor. Sirve para actualizar el anuncio y para emparejar pedidos.</td></tr>
+  <tr><td class="k">ASIN</td><td>Asocia la oferta a una ficha de Amazon conocida en lugar de dejar que Amazon la empareje por el código de barras.</td></tr>
+  <tr><td class="k">Gestionado por Logística de Amazon</td><td>Si lo envías tú (MFN) o lo envía Amazon (AFN).</td></tr>
+  <tr><td class="k">Plazo de preparación, Plantilla de envío, Browse node, Marca sustitutiva</td><td>Versiones por producto de los valores del perfil y de los globales.</td></tr>
+  <tr><td class="k">Estado, Nota de estado</td><td>Sustituyen el valor global predeterminado, con la lista completa de estados de Amazon.</td></tr>
+  <tr><td class="k">Características principales del producto</td><td>Un punto clave por línea, hasta cinco de 500 caracteres. Si se deja vacío, se generan a partir de la descripción corta.</td></tr>
+  <tr><td class="k">Contacto GPSR</td><td>Correo o URL de la persona responsable; tiene prioridad sobre el contacto del fabricante y del proveedor.</td></tr>
+  <tr><td class="k">Opciones de regalo, Código Transparency</td><td>Ofrecer envoltorio y mensaje de regalo; el código Transparency del producto si está inscrito.</td></tr>
+  <tr><td class="k">Propagar estos ajustes a</td><td>Aplica los mismos valores, al guardar, a todos los productos de la misma categoría predeterminada, del mismo fabricante o del mismo proveedor, o a todos los productos activos. Los campos de identidad (SKU, ASIN, precio, código Transparency) nunca se propagan.</td></tr>
+</table>
+
+<!-- ───────────────────────── 7 ORDERS ───────────────────────── -->
+<h1>7. Pedidos</h1>
+<figure>
+  <img src="img/es/09-orders.png" alt="">
+  <figcaption>Pedidos &gt; Pedidos.</figcaption>
+</figure>
+
+<h2>7.1 Importar pedidos</h2>
+<p>La importación tiene dos pasos, como el catálogo, para que puedas revisar antes de que se cree nada.</p>
+<ol class="steps">
+  <li><span class="btn">Recuperar y preparar los pedidos de Amazon</span> descarga los pedidos de la ventana de retroceso (4.5) y los deja preparados, con los gastos de envío, los impuestos, la dirección del comprador (consulta 7.2) y si los gestiona Amazon o tú. La tabla muestra los artículos de cada pedido emparejados con productos de PrestaShop y señala los pedidos Prime y Amazon Business.</li>
+  <li><span class="btn">Crear los pedidos de PrestaShop</span> convierte los pedidos preparados en pedidos de PrestaShop con tus transportistas, estados, facturas e impuestos, siguiendo las reglas de enrutamiento de 4.5. Los pedidos sin existencias quedan en espera (7.3) si así lo has elegido.</li>
+</ol>
+<p>Las tareas programadas <i>Importar pedidos</i> y <i>Crear pedidos de PrestaShop</i> hacen estos mismos dos pasos sin intervención, cada 15 minutos por defecto. Cuando un pedido pasa a Enviado en PrestaShop, y el hook de 4.3 está activado, el módulo confirma el envío a Amazon con el número de seguimiento y el código de transportista asociado.</p>
+
+<h2>7.2 Direcciones de los compradores desde un informe de pedidos</h2>
+<p>La lectura del nombre, la dirección y el teléfono del comprador directamente desde Amazon llegará pronto. Por ahora, la forma de obtenerlos es descargar el informe de pedidos de Seller Central y subirlo al módulo. Hasta que lo hagas, el pedido muestra el cliente como «Amazon Buyer» y la calle como «Amazon Marketplace Order».</p>
+<ol class="steps">
+  <li>Importa primero los pedidos (7.1).</li>
+  <li>En Seller Central, abre <b>Orders &gt; Order Reports &gt; Unshipped Orders</b>, pulsa <b>Request report</b> y, cuando esté listo, descárgalo con <b>Download</b>. Enumera los pedidos que aún no has enviado, que son los que necesitan dirección.</li>
+  <li>En la pestaña <b>Pedidos &gt; Pedidos</b> del módulo, elige el archivo en el panel <b>Direcciones de compradores desde un informe de pedidos de Amazon</b> y pulsa <span class="btn">Subir informe</span>. Sube el archivo tal como lo descargaste.</li>
+</ol>
+<figure>
+  <img src="img/es/09b-orders-report.png" alt="">
+  <figcaption>El panel del informe después de una subida.</figcaption>
+</figure>
+<p>El resultado indica cuántos pedidos se han completado, cuántos ya tenían la dirección completa, cuántas direcciones de PrestaShop se han dejado sin cambios, cuántos pedidos aún no están importados y cuántos se han omitido porque sus datos de comprador ya se habían eliminado. La subida sigue estas reglas:</p>
+<ul>
+  <li><b>Solo pedidos importados.</b> Las líneas de pedidos que el módulo aún no conoce se cuentan, pero no se guardan. Importa esos pedidos y vuelve a subir el informe.</li>
+  <li><b>Solo campos vacíos.</b> No se sobrescribe nada de lo que Amazon ya ha enviado.</li>
+  <li><b>Tus cambios se respetan.</b> Una dirección de PrestaShop solo se completa mientras siga mostrando la calle provisional; una dirección que hayas corregido se deja como está. El país nunca cambia, porque es el que determinó los impuestos. El nombre del cliente sustituye a «Amazon Buyer» solo mientras el cliente siga teniendo ese nombre.</li>
+  <li><b>Los datos eliminados siguen eliminados.</b> Se omiten los pedidos cuyos datos de comprador se borraron según la política de conservación (sección 12).</li>
+  <li><b>El archivo no se guarda.</b> El registro de actividad solo anota los recuentos.</li>
+</ul>
+<p>Volver a subir el mismo informe no causa ningún problema: todos los pedidos aparecerán entonces como ya completos. Los datos completados a partir de un informe se eliminan con el resto de los datos del comprador cuando termina el periodo de conservación (sección 12).</p>
+
+<h2>7.3 Pedidos pendientes y existencias reservadas</h2>
+<p><b>Pedidos pendientes</b> contiene los pedidos de Amazon que no han podido convertirse en pedidos de PrestaShop porque a un producto le faltan existencias. Repón las existencias y vuelve a ejecutar Crear los pedidos de PrestaShop, fuerza el pedido con <span class="btn">Crear de todos modos</span> o elimínalo.</p>
+<p><b>Existencias reservadas (carrito remoto)</b> enumera las unidades retenidas para las compras de Amazon que aún no son pagaderas. Amazon presenta una compra en curso como un pedido «Pending»; con el carrito remoto activado (4.5), el módulo retira esas unidades del stock de PrestaShop de inmediato para que ningún otro canal pueda venderlas, las entrega cuando el pedido pasa a ser pagadero y las devuelve tras el periodo de gracia si no llega a serlo. La tarea <i>Liquidar carritos remotos</i> se encarga de liquidar estas reservas.</p>
+
+<h2>7.4 Devoluciones y cancelaciones</h2>
+<p><span class="btn">Importar devoluciones de Amazon</span> recupera las devoluciones y cancelaciones; <span class="btn">Procesar las devoluciones pendientes</span> crea las facturas por abono de PrestaShop o cancela los pedidos de PrestaShop, según corresponda. La tabla Historial de devoluciones muestra cada una con su tipo, el importe reembolsado, el pedido de PrestaShop y la factura por abono. Las tareas <i>Importar devoluciones</i> y <i>Procesar devoluciones</i> automatizan ambos pasos.</p>
+
+<h2>7.5 Mensajería con el comprador</h2>
+<p>Introduce un ID de pedido de Amazon y pulsa <span class="btn">Cargar los tipos de mensaje permitidos</span>; Amazon limita qué tipos de mensaje se permiten por pedido. Escribe el mensaje y envíalo, o pulsa <span class="btn">Solicitar una valoración</span> para enviar la solicitud de valoración estándar de Amazon, permitida una vez por pedido, entre 5 y 30 días después de la entrega. Las respuestas llegan por correo y pueden archivarse en el Servicio de atención al cliente con los ajustes de Mensajería (4.6).</p>
+
+<!-- ───────────────────────── 8 FULFILMENT ───────────────────────── -->
+<h1>8. Logística</h1>
+<figure>
+  <img src="img/es/10-fulfilment-fba.png" alt="">
+  <figcaption>Logística &gt; FBA.</figcaption>
+</figure>
+<h3>Inventario FBA</h3>
+<p><span class="btn">Sincronizar el inventario FBA</span> descarga las existencias que Amazon guarda para ti, por SKU: disponibles, reservadas, en tránsito y no disponibles. <span class="btn">Actualizar el stock de PS desde FBA</span> escribe la cantidad disponible en PrestaShop, para los comerciantes cuyas existencias están en los almacenes de Amazon. La tarea <i>Sincronización del inventario FBA</i> ejecuta la descarga cada hora por defecto.</p>
+<h3>Logística multicanal</h3>
+<p>Introduce un ID de pedido de PrestaShop y pulsa <span class="btn">Crear pedido MCF</span> para que Amazon envíe un pedido de PrestaShop desde tu inventario de FBA.</p>
+<h3>Multicuenta</h3>
+<p>Añade más marketplaces de Amazon, cada uno con su propio ID de vendedor o con el principal, y elige para cada marketplace si se sincronizan los pedidos, los productos y las existencias. Las tareas <i>Importar pedidos, todos los marketplaces</i> y <i>Sincronización de productos, todos los marketplaces</i> se encargan de ellos. El marketplace principal de Ajustes siempre está activo.</p>
+
+<!-- ───────────────────────── 9 MONEY ───────────────────────── -->
+<h1>9. Finanzas</h1>
+<figure>
+  <img src="img/es/11-money-repricing.png" alt="">
+  <figcaption>Finanzas &gt; Reprecio.</figcaption>
+</figure>
+<h3>Reprecio</h3>
+<p>Tres botones, en este orden: <span class="btn">Recuperar los precios de la competencia</span> descarga el precio de la Buy Box, el precio más bajo y el número de ofertas de cada uno de tus anuncios; <span class="btn">Aplicar las reglas de precio</span> calcula un precio sugerido por SKU; <span class="btn">Enviar los precios sugeridos</span> envía los que apruebes. La tabla Estado de la Buy Box muestra tu precio frente al mercado y si tienes la Buy Box.</p>
+<p>Una regla de precio tiene un tipo (igualar o bajar del precio más bajo, igualar o bajar de la Buy Box, o un margen fijo), un ajuste en porcentaje o en importe fijo, y un precio mínimo y otro máximo como límites de seguridad. La tarea <i>Ciclo de reprecio</i> recupera los precios y aplica las reglas a intervalos regulares; el envío sigue siendo manual salvo que lo actives allí.</p>
+<h3>Comisiones</h3>
+<p><span class="btn">Recuperar las tarifas de los pedidos</span> trae desde la API Finances de Amazon las tarifas por referencia, las tarifas de FBA y las comisiones de cada pedido, para que veas el margen real de cada venta. El resumen las agrupa por tipo de tarifa. La tarea <i>Recuperar tarifas</i> se ejecuta cada seis horas por defecto.</p>
+<h3>Promociones</h3>
+<p>Importa las promociones aplicadas a los pedidos de Amazon, exporta las reglas de carrito de PrestaShop para su seguimiento o crea reglas de carrito de PrestaShop a partir de las promociones de Amazon. La tabla del historial muestra cada promoción con su dirección.</p>
+
+<!-- ───────────────────────── 10 INSIGHTS ───────────────────────── -->
+<h1>10. Análisis</h1>
+<figure>
+  <img src="img/es/13-insights-reports.png" alt="">
+  <figcaption>Análisis &gt; Informes.</figcaption>
+</figure>
+<p>Solicita los informes de Amazon Anuncios del vendedor, Liquidación o Inventario FBA. Amazon prepara los informes en segundo plano; <span class="btn">Consultar los informes pendientes</span> comprueba cuáles han terminado y los descarga, y la tabla del historial muestra el estado y el número de filas. La tarea <i>Consultar informes</i> hace esa consulta cada 30 minutos por defecto.</p>
+
+<!-- ───────────────────────── 11 SYSTEM ───────────────────────── -->
+<h1>11. Sistema</h1>
+
+<h2>11.1 Automatización</h2>
+<figure>
+  <img src="img/es/14-system-automation.png" alt="">
+  <figcaption>Sistema &gt; Automatización. La dirección de la tienda y el token que se muestran son ficticios.</figcaption>
+</figure>
+<p>Una tienda solo ejecuta código cuando llega una petición, así que algo tiene que llamarla a intervalos regulares. Elige quién hace esa llamada:</p>
+<table>
+  <tr><th style="width:26%">Modo</th><th>Cómo funciona</th><th style="width:30%">Elígelo cuando</th></tr>
+  <tr><td><b>El cron de mi propio servidor</b> (predeterminado, recomendado)</td><td>Añade la línea que se muestra en el panel de control de tu alojamiento o en el crontab. Llama a tu tienda cada cinco minutos; cada llamada ejecuta solo las tareas pendientes. Nada se interpone entre tu tienda y su programación.</td><td>Tu alojamiento tiene crontab o una función de tareas programadas, como la mayoría.</td></tr>
+  <tr><td><b>El programador de IntelliPresta</b></td><td>Selecciónalo, guarda y pulsa <span class="btn">Registrar esta tienda</span>. El servidor de IntelliPresta llama a tu tienda cada cinco minutos, así que los intervalos se respetan con exactitud sin que tengas que configurar nada. La dirección de tu tienda y el token de cron se guardan en ese servidor; si no está disponible, tu programación se detiene hasta que vuelva. <span class="btn">Dejar de usar el programador</span> elimina el registro.</td><td>Tu alojamiento no tiene crontab o prefieres no mantener uno. La tienda debe ser accesible por HTTPS.</td></tr>
+</table>
+<p>La línea de cron tiene esta forma; el módulo muestra la tuya con la dirección y el token correctos:</p>
+<pre>*/5 * * * * curl -s "https://www.your-shop.example/module/amazonmarketplacepro/cron?token=YOUR-TOKEN&amp;action=run_due" &gt; /dev/null 2&gt;&amp;1</pre>
+<div class="note"><b>Un cron de cinco minutos no significa una sincronización cada cinco minutos.</b> El cron solo pregunta a la tienda «¿hay algo pendiente?». Cada tarea se ejecuta con su propio intervalo, el que figura en la tabla. Las ejecuciones se serializan con un bloqueo, así que dos llamadas nunca hacen dos veces el mismo trabajo, y cada pasada se detiene antes del límite de tiempo del servidor web y continúa en la siguiente llamada.</div>
+
+<h2>11.2 Las tareas programadas</h2>
+<figure>
+  <img src="img/es/15-system-schedule-table.png" alt="">
+  <figcaption>La tabla de tareas. Cada tarea puede activarse o desactivarse, recibir otro intervalo, ejecutarse al momento o quitarse.</figcaption>
+</figure>
+<p>Cada fila es una tarea con su intervalo en minutos, cuándo se ejecutó por última vez y con qué resultado, y cuándo se ejecutará la próxima vez. <span class="btn">Activo</span>/<span class="btn">Desactivada</span> la activa o la desactiva, <span class="btn">Ejecutar ahora</span> la ejecuta de inmediato y la papelera la quita. Las tareas quitadas pueden volver a añadirse con el formulario de debajo de la tabla. En las instalaciones nuevas están todas las tareas, desactivadas, así que no se ejecuta nada hasta que tú lo decidas.</p>
+<table>
+  <tr><th style="width:26%">Tarea</th><th style="width:11%">Por defecto</th><th>Qué hace</th></tr>
+  <tr><td>Importar pedidos</td><td>15 min</td><td>Recupera y prepara los pedidos de Amazon de la ventana de retroceso (7.1, paso 1).</td></tr>
+  <tr><td>Crear pedidos de PrestaShop</td><td>15 min</td><td>Convierte los pedidos preparados en pedidos de PrestaShop (7.1, paso 2).</td></tr>
+  <tr><td>Sincronizar existencias</td><td>30 min</td><td>Envía las cantidades actuales, y los precios cuando el modo de sincronización los incluye, de los productos de la ventana de cambios.</td></tr>
+  <tr><td>Sincronización completa de productos</td><td>diaria</td><td>Lee el catálogo de PrestaShop, lo compara con Amazon y envía los anuncios pendientes (5.1, pasos 1 y 3).</td></tr>
+  <tr><td>Procesar la cola de feeds</td><td>15 min</td><td>Envía como feeds los cambios de anuncios que están en cola y registra los resultados de Amazon.</td></tr>
+  <tr><td>Importar devoluciones / Procesar devoluciones</td><td>60 min</td><td>Recuperan las devoluciones y cancelaciones, y después crean facturas por abono o cancelan pedidos (7.4).</td></tr>
+  <tr><td>Sincronización del inventario FBA</td><td>60 min</td><td>Descarga los niveles de las existencias que guarda Amazon (sección 8).</td></tr>
+  <tr><td>Ciclo de reprecio</td><td>60 min</td><td>Recupera los precios de la competencia y aplica tus reglas (sección 9).</td></tr>
+  <tr><td>Recuperar tarifas</td><td>6 h</td><td>Registra las comisiones de Amazon por pedido.</td></tr>
+  <tr><td>Consultar informes</td><td>30 min</td><td>Descarga los informes terminados (sección 10).</td></tr>
+  <tr><td>Sincronizar promociones</td><td>6 h</td><td>Importa las promociones de los pedidos.</td></tr>
+  <tr><td>Importar pedidos / Sincronización de productos, todos los marketplaces</td><td>15 min / diaria</td><td>Las versiones multimarketplace de la importación de pedidos y de la sincronización de productos.</td></tr>
+  <tr><td>Solicitar valoraciones</td><td>diaria</td><td>Envía solicitudes de valoración para los pedidos entregados, si están activadas en 4.5.</td></tr>
+  <tr><td>Liquidar carritos remotos</td><td>15 min</td><td>Entrega o libera las existencias reservadas (7.3).</td></tr>
+  <tr><td>Recoger mensajes de compradores</td><td>60 min</td><td>Lee las respuestas de los compradores en el buzón y las lleva al Servicio de atención al cliente (4.6).</td></tr>
+  <tr><td>Subir facturas</td><td>6 h</td><td>Sube las facturas de IVA de los vendedores inscritos en VCS.</td></tr>
+  <tr><td>Purgar datos de compradores fuera del plazo de conservación</td><td>diaria</td><td>Elimina los datos personales del comprador de los pedidos más antiguos que el periodo de conservación (sección 12).</td></tr>
+</table>
+<div class="note"><b>Un buen conjunto inicial</b> para una tienda que envía sus propios pedidos: Importar pedidos, Crear pedidos de PrestaShop, Sincronizar existencias, Sincronización completa de productos, Procesar la cola de feeds, Consultar informes y Purgar datos de compradores fuera del plazo de conservación. Añade Sincronización del inventario FBA si usas FBA, y Ciclo de reprecio cuando tengas definidas tus reglas de precio.</div>
+
+<h2>11.3 Herramientas</h2>
+<p><b>Comprobación del catálogo.</b> Amazon hace todas sus correspondencias con la referencia y el código de barras. Los productos a los que les falte alguno de los dos, o que compartan referencia con otro producto, no pueden publicarse ni asociarse a los pedidos entrantes. <span class="btn">Comprobar mi catálogo</span> los enumera.</p>
+<p><b>Editor de referencias y códigos de barras.</b> Exporta todos los productos y combinaciones en CSV, corrige las referencias y los códigos de barras en una hoja de cálculo y vuelve a subir el archivo. Solo se escriben la referencia, el EAN, el UPC y la referencia del proveedor. Esto modifica directamente tu catálogo de PrestaShop y no se puede deshacer; haz antes una copia de seguridad y hazlo antes de publicar, o crearás SKU duplicados en Amazon.</p>
+<p><b>Eliminar anuncios de Amazon.</b> Encuentra las ofertas de los productos que ya no vendes, ya estén eliminados, desactivados o excluidos de Amazon, y te permite revisar la lista antes de eliminar los seleccionados. La eliminación borra la oferta y su historial en Amazon, y no se puede deshacer. Para dejar de vender temporalmente, publica la cantidad 0 en su lugar (4.2).</p>
+<p><b>Contenido de los feeds enviados.</b> El JSON exacto que se envió a Amazon en cada feed, descargable por ID de feed. El soporte de Amazon te lo pedirá cuando un anuncio se rechace por un motivo que el informe no explique.</p>
+
+<h2>11.4 Registros</h2>
+<p>Las últimas 50 entradas del registro de actividad del módulo, con fecha, nivel, origen y mensaje. Los errores aparecen resaltados. Es el primer sitio que debes mirar cuando una tarea programada muestra «Error».</p>
+
+<!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
+<h1>12. Datos de los compradores y cumplimiento normativo</h1>
+<h3>Eliminación de los datos del comprador</h3>
+<p>La política de protección de datos de Amazon obliga a eliminar los datos del comprador en un plazo de 30 días desde la entrega. Con <b>Eliminación de los datos del comprador</b> activada, que es la opción predeterminada, el módulo borra de su propia tabla de pedidos el nombre, el correo, la calle, la ciudad, la región, el código postal y el teléfono del comprador, además de la carga útil de Amazon almacenada, en cuanto un pedido está finalizado y es más antiguo que el periodo de conservación que hayas fijado. Los totales, los impuestos, las comisiones y el país de destino se conservan, así que los informes y los registros de IVA no se ven afectados. Los ajustes de Pedidos muestran cuántos pedidos están pendientes de borrado y ofrecen <span class="btn">Borrarlos ahora</span>; la tarea <i>Purgar datos de compradores fuera del plazo de conservación</i> lo hace a diario.</p>
+<p>Desactivar la eliminación significa conservar los datos del comprador de Amazon más tiempo del que Amazon permite. Hazlo solo si tienes una obligación legal que puedas acreditar.</p>
+<p><b>Anonimizar también el cliente y la dirección de PrestaShop</b> está desactivado por defecto a propósito. PrestaShop compone las facturas a partir de la dirección guardada, así que anonimizarla altera documentos que la ley puede obligarte a conservar intactos, y una factura que debes conservar es justamente la excepción que permite la política de Amazon. Cuando está activado, un cliente se anonimiza únicamente si todos sus pedidos son pedidos de Amazon ya borrados, y la ciudad, el código postal y el país se conservan para que el tratamiento del IVA siga siendo justificable.</p>
+<h3>GPSR y país de origen</h3>
+<p>El Reglamento de seguridad general de los productos de la UE exige un contacto de persona responsable en los anuncios. Defínelo por producto (sección 6) o por fabricante o proveedor (5.5), y elige cuál de los dos tiene prioridad. El contacto ya debe estar registrado en Seller Central, en Account Health &gt; Product Policy Compliance. El país de origen se define por fabricante.</p>
+<h3>IVA</h3>
+<p>Los pedidos importados pueden usar los importes de impuestos que comunica Amazon o tus propias reglas de impuestos (4.5). Los vendedores inscritos en el VAT Calculation Service de Amazon pueden subir automáticamente sus facturas de PrestaShop.</p>
+
+<!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
+<h1>13. Solución de problemas</h1>
+<h3>Resultados de Comprobar la conexión</h3>
+<p>El resultado aparece bajo el aviso verde en Ajustes &gt; Conexión. Cuando la comprobación falla, los detalles técnicos también se escriben en la pestaña Registros (11.4); el soporte te los pedirá.</p>
+<table>
+  <tr><th style="width:38%">Resultado</th><th>Significado y qué hacer</th></tr>
+  <tr><td>«Todo funciona: el módulo puede acceder a tu cuenta de Amazon.»</td><td>La conexión funciona. Si una sincronización sigue fallando, el motivo está en la pestaña Registros.</td></tr>
+  <tr><td>«Amazon ha denegado el acceso a tu cuenta de vendedor.»</td><td>La conexión en sí está bien, pero Amazon no ofrece datos de este vendedor. Comprueba en Seller Central que la cuenta está activa y en el plan de venta Profesional. Si lo está, pulsa Desconectar y después otra vez Conectar con Amazon.</td></tr>
+  <tr><td>«Amazon ya no acepta esta conexión.»</td><td>La conexión se eliminó en Seller Central. Pulsa Desconectar y después otra vez Conectar con Amazon.</td></tr>
+  <tr><td>«No se ha podido contactar con Amazon ni con el servicio de conexión de IntelliPresta.»</td><td>Suele ser un problema de red pasajero. Inténtalo de nuevo en unos minutos; si sigue ocurriendo, contacta con soporte.</td></tr>
+  <tr><td>«Este servidor no puede abrir una conexión segura con Amazon.»</td><td>Los certificados de seguridad del servidor están desactualizados. Pide a tu proveedor de alojamiento que los actualice.</td></tr>
+</table>
+<h3>Situaciones habituales</h3>
+<table>
+  <tr><th style="width:38%">Síntoma</th><th>Causa y solución</th></tr>
+  <tr><td>«No se han encontrado productos con referencia (SKU)» después de Sincronizar PS con Amazon</td><td>Los productos no tienen referencia en el campo elegido como origen del SKU (4.2). Complétalos o usa el Editor de referencias y códigos de barras (11.3).</td></tr>
+  <tr><td>Envío aceptado, pero el anuncio en Amazon es solo de oferta</td><td>La categoría del producto no tiene perfil ni correspondencia de categoría, o «Enviar todos los datos del producto» está en No (4.3).</td></tr>
+  <tr><td>Anuncio rechazado con un error por falta de un atributo</td><td>Amazon decide los campos obligatorios de forma dinámica. Abre el perfil, busca el atributo en la lista opcional, rellénalo, guarda y vuelve a enviar. El contenido del feed (11.3) muestra exactamente lo que se envió.</td></tr>
+  <tr><td>Los pedidos importados muestran un 0 % de IVA</td><td>Elige «Aplicar mis reglas de impuestos de PrestaShop» en 4.5.</td></tr>
+  <tr><td>Una tarea programada muestra «Error»</td><td>La columna del mensaje y la pestaña Registros indican el motivo. Pulsa Ejecutar ahora para reintentarlo después de corregirlo. Si falla repetidamente, pulsa Comprobar la conexión (4.1).</td></tr>
+  <tr><td>No se ejecuta nada aunque las tareas están activadas</td><td>Ningún cron está llamando a la tienda. Comprueba que la línea de cron existe en el panel de tu alojamiento, o que la tienda está registrada en el programador de IntelliPresta y es accesible por HTTPS.</td></tr>
+  <tr><td>Correos rebotados a compradores de Amazon</td><td>Las direcciones de retransmisión de Amazon caducan. Activa el correo anonimizado (4.5).</td></tr>
+</table>
+<h3>Obtener ayuda</h3>
+<p>Escribe a <b>support@intellipresta.com</b>. Incluye la versión del módulo, la versión de PrestaShop, las líneas relevantes de la pestaña Registros y, en problemas con anuncios, el ID del feed o el SKU. Respondemos en un plazo de un día laborable.</p>
+
+<!-- ───────────────────────── 14 GLOSSARY ───────────────────────── -->
+<h1>14. Glosario</h1>
+<table>
+  <tr><td class="k">SKU</td><td>Tu propio identificador de un producto en Amazon. El módulo lo crea a partir de un campo de PrestaShop, normalmente la referencia.</td></tr>
+  <tr><td class="k">ASIN</td><td>El identificador de Amazon para una ficha de catálogo. Varios vendedores pueden ofrecer el mismo ASIN.</td></tr>
+  <tr><td class="k">EAN / UPC / GTIN</td><td>Códigos de barras de los productos. Amazon los usa para asociar tu producto a una ficha existente.</td></tr>
+  <tr><td class="k">Anuncio frente a oferta</td><td>Un anuncio es la ficha de catálogo con título, descripción e imágenes. Una oferta es tu precio y tus existencias en esa ficha.</td></tr>
+  <tr><td class="k">Tipo de producto</td><td>El esquema de categoría de Amazon (SHIRT, FASHION_RING) que determina qué atributos debe llevar un anuncio.</td></tr>
+  <tr><td class="k">Perfil</td><td>Las respuestas guardadas del módulo para un tipo de producto, asociadas a categorías de PrestaShop.</td></tr>
+  <tr><td class="k">Feed</td><td>Un documento por lotes que se envía a Amazon y se procesa en segundo plano. Se usa para envíos de más de 25 SKU.</td></tr>
+  <tr><td class="k">MFN / AFN / FBA</td><td>Merchant Fulfilled Network: envías tú. Amazon Fulfilled Network, también llamado Fulfillment by Amazon (Logística de Amazon): Amazon envía desde sus almacenes.</td></tr>
+  <tr><td class="k">MCF</td><td>Multi-Channel Fulfilment (logística multicanal): Amazon envía un pedido de otro canal, como tu propia tienda, desde tus existencias de FBA.</td></tr>
+  <tr><td class="k">Buy Box</td><td>La oferta predeterminada que se muestra en la ficha de un producto de Amazon. El reprecio intenta ganarla o conservarla.</td></tr>
+  <tr><td class="k">RDT</td><td>Restricted Data Token: el mecanismo mediante el cual Amazon entrega a la tienda las direcciones de los compradores, de llamada en llamada.</td></tr>
+  <tr><td class="k">GPSR</td><td>El Reglamento de seguridad general de los productos de la UE, que exige un contacto de persona responsable en los anuncios.</td></tr>
+  <tr><td class="k">VCS</td><td>El VAT Calculation Service de Amazon, cuyos vendedores inscritos suben sus propias facturas de IVA.</td></tr>
+  <tr><td class="k">Ventana de cambios</td><td>El periodo dentro del cual un producto debe haber cambiado para incluirse en un envío.</td></tr>
+  <tr><td class="k">Carrito remoto</td><td>Una compra de Amazon en curso, presentada como un pedido Pending, cuyas existencias el módulo puede reservar.</td></tr>
+</table>
+<p class="small">Amazon Marketplace Pro lo desarrolla y mantiene IntelliPresta, y no está respaldado por Amazon ni por PrestaShop ni afiliado a ellos. Amazon es una marca comercial de Amazon.com, Inc. o de sus filiales. PrestaShop es una marca comercial de PrestaShop SA.</p>
+
+</body>
+</html>

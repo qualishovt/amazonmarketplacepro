@@ -9,8 +9,8 @@ stays in the parent folder. Nothing in `marketing/` ships with the module
 | ad video, spoken and on screen (`amazon-marketplace-pro-promo-<iso>.mp4` + `.srt`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 | YouTube thumbnail (`youtube-thumbnail.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 | listing images (`listing-images/addons-0N-*.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
-| back-office screenshots (`addons-shot-*.png`) | ☐ | ☐ | ☐ | ☐ | ☐ |
-| user guide PDF (`Amazon-Marketplace-Pro-Guide-<iso>.pdf`) | ☐ | ☐ | ☐ | ☐ | ☐ |
+| back-office screenshots (`addons-shot-*.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
+| user guide PDF (`Amazon-Marketplace-Pro-Guide-<iso>.pdf`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 
 ## How each piece is built
 
@@ -43,11 +43,13 @@ one table; `node render-thumb.js out-<iso>.png thumb.<iso>.html`.
 
 **Screenshots** (`shots/`). Taken from the p915 back office in each language
 (the employee's language switched between passes), through `snap-page.js` in
-the logged-in browser and `snap-render.js`. The same set is the guide's
-`docs/user-guide/img/<iso>/`.
+the logged-in browser and `snap-render.js out-<iso> <names>`. The same set is
+the guide's `docs/user-guide/img/<iso>/`.
 
-**User guide** (`docs/user-guide/user-guide.<iso>.html`), rendered with the
-guide's `render.js`.
+**User guide** (`docs/user-guide/user-guide.<iso>.html`). Translated from the
+English guide with the same tag sequence; task names, badges and quoted
+messages are the module's own translations. `node render.js <out.pdf> <iso>`
+prints it with the header and footer in that language.
 
 ## Notes
 

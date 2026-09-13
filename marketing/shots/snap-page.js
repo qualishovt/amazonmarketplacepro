@@ -14,7 +14,8 @@ window.mkproSnap = async function (name, group, sub, marketplace, token) {
   if (g) g.click();
   const s = sub ? document.querySelector('a[href="' + sub + '"]') : null;
   if (s) s.click();
-  await new Promise(r => setTimeout(r, 400));
+  window.scrollTo(0, 0);
+  await new Promise(r => setTimeout(r, 500));
 
   const clone = document.documentElement.cloneNode(true);
   clone.querySelectorAll('script, noscript, iframe, .sf-toolbar, .sf-minitoolbar, [id^="sfwdt"], [id^="sfToolbar"]').forEach(e => e.remove());

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Amazon Marketplace Pro — Benutzerhandbuch</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+  :root { --brand: #25b2a8; --dark: #1d5c56; --ink: #23282d; --muted: #667077; --line: #dfe4e6; --soft: #f3f8f8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: var(--ink); }
+  h1, h2, h3, h4 { color: var(--dark); font-weight: 700; line-height: 1.25; page-break-after: avoid; }
+  h1 { font-size: 22pt; margin: 0 0 6pt; padding-bottom: 6pt; border-bottom: 3px solid var(--brand); page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 15pt; margin: 20pt 0 6pt; }
+  h3 { font-size: 12pt; margin: 14pt 0 4pt; }
+  h4 { font-size: 10.5pt; margin: 10pt 0 2pt; color: var(--ink); }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 20pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #f1f3f4; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, 'Courier New', monospace; font-size: 9pt; background: #f1f3f4; padding: 8pt 10pt; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin: 4pt 0 10pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 12pt; font-size: 9.5pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid var(--line); padding: 5pt 7pt; vertical-align: top; text-align: left; }
+  th { background: var(--soft); color: var(--dark); font-weight: 700; }
+  td.k { white-space: nowrap; font-weight: 600; width: 32%; }
+  .note { border-left: 4px solid var(--brand); background: var(--soft); padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .warn { border-left: 4px solid #d9822b; background: #fff7ee; padding: 7pt 10pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+  .note b, .warn b { color: var(--dark); }
+  figure { margin: 10pt 0 14pt; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 3pt; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps li { counter-increment: s; position: relative; padding-left: 30pt; margin-bottom: 6pt; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 1pt; width: 20pt; height: 20pt; border-radius: 10pt; background: var(--brand); color: #fff; font-weight: 700; text-align: center; line-height: 20pt; font-size: 9.5pt; }
+  .btn { display: inline-block; border: 1px solid #b9c2c6; border-radius: 3px; padding: 0 5px; font-size: 9.5pt; background: #fafbfb; white-space: nowrap; }
+  .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .kicker { color: var(--brand); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 10pt; }
+  .cover h1 { font-size: 34pt; border: 0; margin: 6pt 0 10pt; page-break-before: auto; }
+  .cover .sub { font-size: 14pt; color: var(--muted); margin-bottom: 30pt; }
+  .cover .meta { font-size: 10pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10pt; }
+  .cover img.logo { width: 90px; margin-bottom: 20pt; }
+  .toc ol { list-style: none; padding-left: 0; column-count: 2; column-gap: 24pt; }
+  .toc li { margin-bottom: 4pt; break-inside: avoid; }
+  .toc li.l2 { padding-left: 16pt; color: var(--muted); font-size: 9.5pt; }
+  .toc .n { display: inline-block; width: 22pt; color: var(--brand); font-weight: 700; }
+  .cols { column-count: 2; column-gap: 20pt; }
+  .small { font-size: 9pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────── COVER ───────────────────────── -->
+<div class="cover">
+  <img class="logo" src="img/logo.png" alt="">
+  <div class="kicker">PrestaShop-Modul · Version 1.5.0</div>
+  <h1>Amazon Marketplace Pro</h1>
+  <div class="sub">Benutzerhandbuch: was das Modul leistet, wie jede Ansicht funktioniert und wie es ohne Aufsicht läuft.</div>
+  <div class="meta">
+    IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
+    Für PrestaShop 1.6 bis 9 · Stand: 4. September 2026
+  </div>
+</div>
+
+<!-- ───────────────────────── TOC ───────────────────────── -->
+<h1>Inhalt</h1>
+<div class="toc">
+<ol>
+  <li><span class="n">1</span>Was das Modul leistet</li>
+  <li class="l2">1.1 Wo Ihre Daten liegen</li>
+  <li class="l2">1.2 Voraussetzungen</li>
+  <li><span class="n">2</span>In fünf Schritten starten</li>
+  <li><span class="n">3</span>Wie die Oberfläche aufgebaut ist</li>
+  <li><span class="n">4</span>Einstellungen</li>
+  <li class="l2">4.1 Verbindung</li>
+  <li class="l2">4.2 Angebote</li>
+  <li class="l2">4.3 Synchronisierung</li>
+  <li class="l2">4.4 Versand</li>
+  <li class="l2">4.5 Bestellungen</li>
+  <li class="l2">4.6 Nachrichten</li>
+  <li><span class="n">5</span>Katalog</li>
+  <li class="l2">5.1 Produkte: PrestaShop → Amazon</li>
+  <li class="l2">5.2 Produkte: Amazon → PrestaShop</li>
+  <li class="l2">5.3 Feed-Status und Kategoriezuordnung</li>
+  <li class="l2">5.4 Angebotsprofile</li>
+  <li class="l2">5.5 Aufschläge und Regeln</li>
+  <li class="l2">5.6 Produktregeln, Warteschlange, Verwaiste</li>
+  <li><span class="n">6</span>Der Amazon-Tab eines Produkts</li>
+  <li><span class="n">7</span>Bestellungen</li>
+  <li class="l2">7.1 Bestellungen importieren</li>
+  <li class="l2">7.2 Käuferadressen aus einem Bestellbericht</li>
+  <li class="l2">7.3 Ausstehende Bestellungen und reservierter Bestand</li>
+  <li class="l2">7.4 Retouren und Stornierungen</li>
+  <li class="l2">7.5 Käuferkommunikation</li>
+  <li><span class="n">8</span>Fulfillment</li>
+  <li><span class="n">9</span>Finanzen</li>
+  <li><span class="n">10</span>Auswertungen</li>
+  <li><span class="n">11</span>System</li>
+  <li class="l2">11.1 Automatisierung</li>
+  <li class="l2">11.2 Die geplanten Aufgaben</li>
+  <li class="l2">11.3 Werkzeuge</li>
+  <li class="l2">11.4 Protokolle</li>
+  <li><span class="n">12</span>Käuferdaten und Konformität</li>
+  <li><span class="n">13</span>Fehlerbehebung</li>
+  <li><span class="n">14</span>Glossar</li>
+</ol>
+</div>
+
+<!-- ───────────────────────── 1 ───────────────────────── -->
+<h1>1. Was das Modul leistet</h1>
+<p>Amazon Marketplace Pro verbindet einen PrestaShop-Shop über Amazons offizielle Selling Partner API mit Amazon, sodass Sie Ihr Amazon-Geschäft aus dem Back Office heraus führen, das Sie bereits nutzen. Das Modul deckt den gesamten Verkaufszyklus ab:</p>
+<ul>
+  <li><b>Angebote.</b> Ihre PrestaShop-Produkte werden zu Amazon-Angeboten. Das Modul lädt für jeden Produkttyp Amazons Attributanforderungen herunter und macht daraus ein Formular (ein <i>Profil</i>), damit Angebote in der richtigen Form entstehen. PrestaShop-Kombinationen werden zu Amazon-Variationen.</li>
+  <li><b>Preis und Bestand.</b> Preise mit Aufschlägen, Rundung, Aktionszeiträumen und Staffeln für Geschäftskunden (B2B); Mengen mit einem Sicherheitspuffer. Gesendet wird nur, was sich geändert hat, damit auch große Kataloge innerhalb der Grenzen von Amazon bleiben.</li>
+  <li><b>Bestellungen.</b> Amazon-Bestellungen werden zu PrestaShop-Bestellungen mit Ihren Versanddienstleistern, Status, Rechnungen und Steuern. Versandbestätigungen und Sendungsnummern gehen automatisch an Amazon zurück. Bestellungen, die Sie selbst versenden, und Bestellungen, die Amazon versendet (FBA), werden auseinandergehalten.</li>
+  <li><b>Schutz vor Überverkäufen.</b> Bestand für noch nicht bezahlte Amazon-Kaufvorgänge kann in PrestaShop reserviert und wieder freigegeben werden, wenn der Kauf nie zustande kommt.</li>
+  <li><b>Finanzen.</b> Wettbewerbspreise und die Buy Box werden verfolgt und können Preisregeln steuern; Gebühren werden je Bestellung erfasst; Abrechnungs- und Bestandsberichte werden gesammelt.</li>
+  <li><b>Konformität.</b> Angaben zur verantwortlichen Person nach GPSR und Ursprungsland, umsatzsteuergerechter Bestellimport, Upload von Umsatzsteuerrechnungen und automatische Löschung der Käuferdaten nach der Aufbewahrungsfrist, die Amazon vorschreibt.</li>
+  <li><b>Automatisierung.</b> Jeder wiederkehrende Vorgang ist eine geplante Aufgabe mit eigenem Intervall, ausgeführt entweder vom Cron Ihres Hostings oder vom IntelliPresta-Scheduler.</li>
+</ul>
+
+<h2>1.1 Wo Ihre Daten liegen</h2>
+<p>Das Modul läuft vollständig in Ihrer PrestaShop-Installation und ruft Amazon direkt von Ihrem Server aus auf. Produkt-, Bestell- und Käuferdaten werden ausschließlich in Ihrer eigenen Datenbank gespeichert.</p>
+<p>IntelliPresta betreibt einen kleinen Dienst unter <code>intellipresta.com</code>. Er erledigt zwei Dinge und sonst nichts:</p>
+<ul>
+  <li>Er schließt den Verbindungsaufbau über „Mit Amazon verbinden“ ab und übergibt das dabei erhaltene Token an Ihren Shop. Er speichert keine Produkt-, Bestell- oder Käuferdaten.</li>
+  <li>Wenn Sie den IntelliPresta-Scheduler wählen (Abschnitt 11.1), speichert er die Cron-Adresse und das Cron-Token Ihres Shops, um Ihren Shop alle fünf Minuten aufrufen zu können. Das geschieht nur, wenn Sie es ausdrücklich wählen, und wird entfernt, sobald Sie zu Ihrem eigenen Cron zurückwechseln.</li>
+</ul>
+
+<h2>1.2 Voraussetzungen</h2>
+<table>
+  <tr><td class="k">PrestaShop</td><td>1.6 bis 9. Die Oberfläche passt sich an die Back-Office-Designs von 1.6, 1.7–9 und der „Basic Edition“ an.</td></tr>
+  <tr><td class="k">Amazon-Konto</td><td>Ein aktives Konto mit dem Tarif Professional auf einem der 23 unterstützten Marktplätze (Europa, Nordamerika, Brasilien, Naher Osten, Afrika, Japan, Australien, Singapur, Indien).</td></tr>
+  <tr><td class="k">Hosting</td><td>PHP mit cURL. Eine Crontab wird empfohlen; bietet Ihr Hosting keine, übernimmt das der IntelliPresta-Scheduler. Die optionale Funktion für Käuferantworten benötigt die PHP-Erweiterung IMAP.</td></tr>
+  <tr><td class="k">Katalog</td><td>Jedes Produkt und jede Kombination braucht eine Artikelnummer (SKU) und einen Barcode (EAN oder UPC). Das Werkzeug Katalogprüfung (Abschnitt 11.3) findet die Produkte, bei denen etwas fehlt.</td></tr>
+</table>
+
+<!-- ───────────────────────── 2 ───────────────────────── -->
+<h1>2. In fünf Schritten starten</h1>
+<ol class="steps">
+  <li><b>Installieren Sie das Modul</b> unter Module &gt; Modul-Verwaltung und klicken Sie dann auf Einstellungen. Alle Ansichten des Moduls liegen auf dieser einen Seite, gruppiert in einer Seitenleiste.</li>
+  <li><b>Wählen Sie Ihren Marktplatz</b> unter Einstellungen &gt; Verbindung im Bereich Marktplatz und klicken Sie auf <span class="btn">Einstellungen speichern</span>. Der Marktplatz bestimmt die Amazon-Website, die Währung und die Sprache der Angebote.</li>
+  <li><b>Verbinden.</b> Klicken Sie auf <span class="btn">Mit Amazon verbinden</span>. Sie werden zu Seller Central geleitet, um die Verbindung zu bestätigen, und danach zum Shop zurückgeführt. Es müssen keine Zugangsdaten kopiert werden. Sie können die Autorisierung jederzeit in Seller Central widerrufen oder im Modul auf <span class="btn">Trennen</span> klicken.</li>
+  <li><b>Verbindung prüfen.</b> Klicken Sie im grünen Banner auf <span class="btn">Verbindung prüfen</span>. Die Prüfung liest Ihre letzten Bestellungen und sagt in einfachen Worten, ob alles funktioniert. Abschnitt 13 erklärt die möglichen Ergebnisse.</li>
+  <li><b>Automatisierung einschalten.</b> Tragen Sie unter System &gt; Automatisierung entweder die angezeigte Cron-Zeile im Kontrollpanel Ihres Hostings ein oder registrieren Sie den Shop beim IntelliPresta-Scheduler. Schalten Sie dann in der Tabelle darunter die Aufgaben ein, die Sie benötigen. Abschnitt 11 behandelt das im Detail.</li>
+</ol>
+<p>Danach ist die übliche Reihenfolge: die Artikelnummern im Katalog prüfen (11.3), für jede Produktfamilie ein Angebotsprofil anlegen (5.4), den zweistufigen Abgleich unter Katalog &gt; Produkte ausführen (5.1) und die geplanten Aufgaben alles aktuell halten lassen.</p>
+
+<figure>
+  <img src="img/de/01-settings-connection.png" alt="">
+  <figcaption>Einstellungen &gt; Verbindung nach dem Verbinden. Die angezeigte Verkäufer-ID ist ein Platzhalter.</figcaption>
+</figure>
+
+<!-- ───────────────────────── 3 ───────────────────────── -->
+<h1>3. Wie die Oberfläche aufgebaut ist</h1>
+<p>Die Konfigurationsseite hat eine Seitenleiste mit sieben Gruppen. Jede Gruppe hat oben Unterregisterkarten, und jede Unterregisterkarte enthält einen oder mehrere Bereiche. Das Modul merkt sich, in welcher Gruppe Sie waren, wenn Sie neu laden oder speichern.</p>
+<table>
+  <tr><th style="width:18%">Gruppe</th><th style="width:34%">Unterregisterkarten</th><th>Wofür</th></tr>
+  <tr><td>Einstellungen</td><td>Verbindung, Angebote, Synchronisierung, Versand, Bestellungen, Nachrichten</td><td>Alles, was Sie einmalig einrichten. Eine einzige Schaltfläche <span class="btn">Einstellungen speichern</span> speichert alle sechs Unterregisterkarten zusammen.</td></tr>
+  <tr><td>Katalog</td><td>Produkte, Profile, Aufschläge und Regeln, Produktregeln, Warteschlange, Verwaiste</td><td>Produkte zu Amazon bringen und die beiden Kataloge auf demselben Stand halten.</td></tr>
+  <tr><td>Bestellungen</td><td>Bestellungen, Ausstehende Bestellungen, Retouren</td><td>Amazon-Bestellungen übernehmen, Bestandsengpässe, Retouren und Käufernachrichten bearbeiten.</td></tr>
+  <tr><td>Fulfillment</td><td>FBA, Mehrere Konten</td><td>Von Amazon versandter Bestand, Multi-Channel-Fulfillment, weitere Marktplätze.</td></tr>
+  <tr><td>Finanzen</td><td>Repricing, Gebühren, Aktionen</td><td>Wettbewerbsfähige Preise, Amazon-Gebühren, Aktionen.</td></tr>
+  <tr><td>Auswertungen</td><td>Berichte</td><td>Amazon-Berichte anfordern und herunterladen.</td></tr>
+  <tr><td>System</td><td>Automatisierung, Werkzeuge, Protokolle</td><td>Der Zeitplan, Katalogwerkzeuge, Löschungen, Feed-Inhalte, das Aktivitätsprotokoll.</td></tr>
+</table>
+<div class="note"><b>Manuelle Aktionen und geplante Aufgaben tun dasselbe.</b> Die meisten Schaltflächen unter Katalog, Bestellungen, Fulfillment und Finanzen haben eine geplante Aufgabe als Gegenstück (Abschnitt 11.2). Klicken Sie auf die Schaltfläche, um den Vorgang sofort auszuführen und das Ergebnis zu sehen; schalten Sie die Aufgabe ein, damit er zeitgesteuert abläuft.</div>
+
+<!-- ───────────────────────── 4 SETTINGS ───────────────────────── -->
+<h1>4. Einstellungen</h1>
+<p>Die Gruppe Einstellungen ist ein einziges Formular. Ändern Sie beliebige Werte auf einer ihrer sechs Unterregisterkarten und klicken Sie dann unten auf <span class="btn">Einstellungen speichern</span>.</p>
+
+<h2>4.1 Verbindung</h2>
+<h3>Amazon-Verbindung</h3>
+<p>Zeigt, ob der Shop verbunden ist und mit welchem Verkäufer. <span class="btn">Mit Amazon verbinden</span> startet den Bestätigungsablauf in Seller Central; <span class="btn">Trennen</span> löscht die gespeicherte Autorisierung. Wählen Sie den Marktplatz vor dem Verbinden, denn die Zustimmungsseite hängt von ihm ab.</p>
+<p>Das grüne Banner bedeutet nur, dass eine Verbindung gespeichert ist. <span class="btn">Verbindung prüfen</span> im Banner zeigt, dass sie noch funktioniert: Die Prüfung verbindet sich mit Amazon, liest Ihre letzten Bestellungen und sagt in einfachen Worten, dass alles funktioniert oder was zu tun ist. Führen Sie sie nach dem Verbinden aus und immer dann, wenn eine Synchronisierung einen Autorisierungsfehler meldet. Abschnitt 13 listet die Ergebnisse auf.</p>
+<h3>Marktplatz</h3>
+<p><b>Amazon-Marktplatz.</b> Die Amazon-Website, auf der dieser Shop verkauft. Weitere Marktplätze fügen Sie unter Fulfillment &gt; Mehrere Konten hinzu (Abschnitt 8).</p>
+
+<h2>4.2 Angebote</h2>
+<figure>
+  <img src="img/de/02-settings-listings.png" alt="">
+  <figcaption>Einstellungen &gt; Angebote.</figcaption>
+</figure>
+<h3>Standardwerte für Angebote</h3>
+<table>
+  <tr><td class="k">Artikelzustand</td><td>Zustand, der mit jedem Angebot gesendet wird: Neu, die vier „Gebraucht“-Stufen oder Generalüberholt. Ein Produkt kann ihn auf seinem Amazon-Tab überschreiben (Abschnitt 6).</td></tr>
+  <tr><td class="k">Lagerpuffer</td><td>Einheiten, die Amazon nicht gemeldet werden. Bei Puffer 2 und 10 auf Lager sieht Amazon 8. Verhindert Überverkäufe, wenn mehrere Kanäle denselben Bestand teilen.</td></tr>
+  <tr><td class="k">Sprache der Angebote</td><td>Sprache von Titeln, Beschreibungen und Aufzählungspunkten. „Automatisch“ folgt dem Marktplatz (Deutschland erhält Deutsch, Frankreich Französisch) und setzt voraus, dass diese Sprache im Shop installiert ist; andernfalls wird die Standardsprache des Shops verwendet.</td></tr>
+  <tr><td class="k">Bei Nichtverfügbarkeit</td><td>Menge 0 veröffentlichen (das Angebot bleibt bestehen und gilt als nicht verfügbar) oder das Angebot bei Amazon löschen.</td></tr>
+  <tr><td class="k">Name der Versandvorlage</td><td>Optional. Der exakte Name einer Versandvorlage aus Seller Central; jedes Angebot wird ihr zugeordnet. Bereiche nach Preis oder Gewicht legen Sie unter Versand fest (4.4).</td></tr>
+  <tr><td class="k">Amazon-Business-Preis (B2B)</td><td>Optionaler prozentualer Abschlag auf Ihren normalen Preis, der als Geschäftspreis für Amazon-Business-Käufer gesendet wird. 0 deaktiviert die Funktion.</td></tr>
+  <tr><td class="k">B2B-Mengenrabatte aus Gruppe</td><td>Eine PrestaShop-Kundengruppe, deren Sonderpreise mit einer Mindestmenge über 1 zu Amazon-Business-Mengenstaffeln werden, bis zu fünf.</td></tr>
+</table>
+<h3>SKU und Exportfilter</h3>
+<table>
+  <tr><td class="k">Quelle der SKU</td><td>Welches PrestaShop-Feld zur Amazon-SKU wird: Artikelnummer, EAN oder Lieferantenartikelnummer. Produkte mit leerem Quellfeld werden nicht exportiert.</td></tr>
+  <tr><td class="k">SKU-Präfix</td><td>Wird der SKU mit einem Bindestrich vorangestellt: Das Präfix AMZ ergibt AMZ-REF123.</td></tr>
+  <tr><td class="k">Preisspanne, Mindestmenge</td><td>Nur Produkte exportieren, deren Endpreis in der Spanne liegt und deren Bestand mindestens die Mindestmenge erreicht. 0 deaktiviert die jeweilige Grenze.</td></tr>
+  <tr><td class="k">Sonderpreise verwenden</td><td>PrestaShop-Sonderpreise vor dem Aufschlag anwenden, wahlweise die einer bestimmten Kundengruppe.</td></tr>
+  <tr><td class="k">E-Mail für Berichte</td><td>Geplante Läufe senden einen kurzen Bericht an diese Adresse. Leer bedeutet: keine Berichte.</td></tr>
+</table>
+<div class="warn"><b>Eine Änderung der Quelle der SKU im laufenden Katalog erzeugt neue Angebote</b> unter den neuen SKUs. Legen Sie sie vor der Veröffentlichung fest.</div>
+
+<h2>4.3 Synchronisierung</h2>
+<figure>
+  <img src="img/de/03-settings-sync.png" alt="">
+  <figcaption>Einstellungen &gt; Synchronisierung.</figcaption>
+</figure>
+<h3>Synchronisierungsoptionen</h3>
+<table>
+  <tr><td class="k">Synchronisierungsmodus für Angebote</td><td>„Normal“ sendet die vollständigen Angebotsdaten. „Nur Preis“ und „Nur Menge“ senden kleine Teilaktualisierungen, bei großen Katalogen deutlich schneller.</td></tr>
+  <tr><td class="k">Alle Mengen auf null setzen</td><td>Notschalter für Urlaub oder eine Bestandssperre. Die Angebote bleiben online und gelten als nicht verfügbar.</td></tr>
+  <tr><td class="k">Bilder senden</td><td>Amazon lädt jede gesendete Bild-URL herunter, was große Übertragungen verlangsamt. Viele Händler senden die Bilder bei der ersten Veröffentlichung und schalten diese Option danach ab.</td></tr>
+  <tr><td class="k">Vollständige Produktdaten senden</td><td>„Ja“ sendet Titel, Beschreibung, Aufzählungspunkte, Marke und Bilder. „Nein“ sendet nur das Angebot (Preis und Bestand) und überschreibt nie den Inhalt der Produktseite. Wählen Sie „Nein“, sobald Ihre Angebote etabliert sind oder wenn Sie auf der Katalogseite eines anderen Anbieters verkaufen.</td></tr>
+  <tr><td class="k">Gesamten Katalog senden</td><td>Ignoriert das Änderungsfenster, für eine erste Veröffentlichung oder nach einer Einstellung, die alle Angebote betrifft. Schalten Sie die Option danach wieder ab.</td></tr>
+  <tr><td class="k">Nur Produkte mit ASIN exportieren</td><td>Beschränkt Übertragungen auf Produkte, die bereits einer Amazon-Produktseite zugeordnet sind.</td></tr>
+  <tr><td class="k">Export auf N Zeilen begrenzen</td><td>Begrenzt jeden Übertragungsstapel auf 100 bis 1500 Zeilen.</td></tr>
+  <tr><td class="k">Das PrestaShop-Feld EAN-13 behandeln als</td><td>Wählen Sie UPC, wenn Sie zwölfstellige US-Barcodes im EAN-Feld speichern.</td></tr>
+  <tr><td class="k">Nur Produkte exportieren, die geändert wurden in den letzten</td><td>Das Änderungsfenster: 1 bis 24 Stunden. Bei großen Katalogen dringend empfohlen. Produkte, die von Regeländerungen berührt wurden, werden über die Warteschlange einbezogen (5.6).</td></tr>
+  <tr><td class="k">Warteschlangeneinträge löschen nach</td><td>Aufbewahrungsdauer gesendeter Warteschlangeneinträge: 1, 7 oder 15 Tage.</td></tr>
+  <tr><td class="k">Preisrundung</td><td>Auf den nächsten Cent, „Intelligent“ auf ,99 aufrunden oder ganze Zahlen. Wird nach den Aufschlägen auf jeden exportierten Preis angewendet.</td></tr>
+  <tr><td class="k">Aktionspreise senden</td><td>Ein Sonderpreis mit Start- und Enddatum wird zu einer Amazon-Aktion mit demselben Zeitfenster, sodass Aktionen im Voraus übertragen werden können.</td></tr>
+  <tr><td class="k">Listenpreis senden</td><td>Sendet den Preis vor Rabatt als durchgestrichenen Listenpreis, sofern er über dem exportierten Preis liegt.</td></tr>
+  <tr><td class="k">Vorbestellung</td><td>Produkte mit einem Verfügbarkeitsdatum in der Zukunft werden mit diesem Wiederauffülldatum eingestellt.</td></tr>
+  <tr><td class="k">Zuordnung der Zustände</td><td>Ordnet die drei Zustände von PrestaShop Amazons feinerer Liste zu.</td></tr>
+  <tr><td class="k">Format des Angebotstitels</td><td>Produktname unverändert oder „Marke - Produktname - Merkmale“ gemäß Amazon-Richtlinie. Die Marke wird ausgelassen, wenn der Name schon mit ihr beginnt.</td></tr>
+  <tr><td class="k">Zustandshinweise</td><td>Freitext, der bei den Zuständen „Gebraucht“ und „Generalüberholt“ mitgesendet wird.</td></tr>
+</table>
+<h3>Echtzeit-Synchronisierung (Hooks)</h3>
+<p>Drei Schalter lassen das Modul auf Ereignisse in PrestaShop reagieren, statt auf den nächsten geplanten Lauf zu warten: Preis und Bestand übertragen, wenn ein Produkt gespeichert wird; den Versand samt Sendungsnummer bestätigen, wenn eine Bestellung als versandt markiert wird; und bei Amazon stornieren, wenn eine Amazon-Bestellung in PrestaShop storniert wird.</p>
+
+<h2>4.4 Versand</h2>
+<p><b>Versandvorlagen nach Preis- oder Gewichtsbereich.</b> Weisen Sie je nach Produktpreis oder -gewicht unterschiedliche Versandvorlagen aus Seller Central zu. Fügen Sie Bereiche mit einem Minimum (einschließlich), einem Maximum (ausschließlich, 0 für offen) und dem Vorlagennamen hinzu. Ist die Option deaktiviert oder passt kein Bereich, gilt die einzelne Vorlage aus den Standardwerten für Angebote.</p>
+<p><b>Zuordnung der Versanddienstleister.</b> Welcher Amazon-Carrier-Code bei der Versandbestätigung für den jeweiligen PrestaShop-Versanddienstleister gemeldet wird. Nicht zugeordnete Versanddienstleister werden anhand des Namens erkannt.</p>
+
+<h2>4.5 Bestellungen</h2>
+<figure>
+  <img src="img/de/04-settings-orders.png" alt="">
+  <figcaption>Einstellungen &gt; Bestellungen.</figcaption>
+</figure>
+<h3>Einstellungen für den Bestellimport</h3>
+<table>
+  <tr><td class="k">Steuern bei importierten Bestellungen</td><td>Die von Amazon gemeldeten Steuerbeträge verwenden oder Ihre PrestaShop-Steuerregeln anwenden, wobei Amazon-Preise als Bruttopreise gelten. Wählen Sie die zweite Option, wenn importierte EU-Bestellungen 0 % MwSt. zeigen.</td></tr>
+  <tr><td class="k">VCS-Rechnungsupload</td><td>Lädt das PrestaShop-Rechnungs-PDF jeder Bestellung zu Amazon hoch. Nur für Verkäufer, die am VAT Calculation Service von Amazon teilnehmen. Läuft über die Aufgabe <i>Rechnungen hochladen</i>.</td></tr>
+  <tr><td class="k">Automatische Bewertungsanfragen</td><td>Sendet Amazons Standard-Bewertungsanfrage einmal je zugestellter Bestellung, innerhalb des von Amazon erlaubten Zeitfensters, über die Aufgabe <i>Bewertungen anfordern</i>.</td></tr>
+  <tr><td class="k">Bestellungen herunterladen der letzten</td><td>Rückblickzeitraum für manuelle und geplante Importe, in Tagen oder Stunden.</td></tr>
+  <tr><td class="k">FBA-Bestellungen importieren, Status für FBA-Bestellungen, Status für versandte Bestellungen</td><td>Ob von Amazon versandte Bestellungen importiert werden und welchen PrestaShop-Status sie und bereits versandte Bestellungen erhalten.</td></tr>
+  <tr><td class="k">Bestellpositionen zuordnen über</td><td>Artikelnummer oder produktbezogene abweichende SKU (empfohlen) oder PrestaShop-IDs, wenn Ihre Amazon-SKUs aus Produkt- und Kombinations-IDs gebildet wurden.</td></tr>
+  <tr><td class="k">Beim Zuordnen von Produkten die ASIN bevorzugen</td><td>Zuerst über die ASIN und dann über die SKU zuordnen, anhand der Zuordnungstabelle, die durch Synchronisierungen und „ASINs über EAN zuordnen“ entsteht.</td></tr>
+  <tr><td class="k">Anonymisierte E-Mail-Adresse für Kunden verwenden</td><td>Amazon-Relay-Adressen laufen ab; eine synthetische Adresse verhindert unzustellbare Shop-E-Mails. Die Käuferkommunikation über Amazon funktioniert weiterhin.</td></tr>
+  <tr><td class="k">Löschung der Käuferdaten, Käuferdaten löschen nach</td><td>Siehe Abschnitt 12.</td></tr>
+  <tr><td class="k">Kundengruppe für Amazon-Käufer</td><td>Die Gruppe, die durch Importe angelegte Kunden erhalten.</td></tr>
+  <tr><td class="k">Externer Warenkorb, Reservierung freigeben nach</td><td>Bestand für noch nicht zahlungspflichtige Amazon-Kaufvorgänge reservieren; nach Ablauf der Karenzzeit zurückgeben, falls die Bestellung nie zahlungspflichtig wird. Siehe 7.3.</td></tr>
+  <tr><td class="k">Bestellungen ohne ausreichenden Bestand</td><td>Die PrestaShop-Bestellung trotzdem anlegen oder sie zur Prüfung unter Ausstehende Bestellungen parken.</td></tr>
+  <tr><td class="k">Standard-Versanddienstleister, Standard-Bestellstatus</td><td>Werden für importierte Bestellungen verwendet, wenn nichts Spezifischeres greift.</td></tr>
+</table>
+<h3>Zuordnung importierter Bestellungen</h3>
+<p>Amazon nennt die Liefergeschwindigkeit, die es dem Käufer zugesagt hat; ordnen Sie jede Geschwindigkeit einem PrestaShop-Versanddienstleister zu. <b>Erweiterte Statusregeln</b> geben bestimmten Bestellungen einen eigenen Status, etwa Prime-Bestellungen einen Status, den das Lager nicht übersehen kann, oder FBA-Bestellungen direkt „Versandt“. Die Regeln werden von oben nach unten geprüft, und die erste Übereinstimmung gewinnt. <b>Rechnung per E-Mail</b> sendet das PrestaShop-Rechnungs-PDF, auf Wunsch zusammen mit einem Anhang wie Ihren AGB, sobald eine Bestellung einen gewählten Status erreicht.</p>
+
+<h2>4.6 Nachrichten</h2>
+<p>Amazon bietet keine API, um Käuferantworten zu lesen; sie kommen per E-Mail an Ihre Verkäuferadresse. Verweisen Sie das Modul auf dieses Postfach (IMAP-Host, Port, Benutzer, Kennwort, Ordner, SSL), dann legt es jede Nachricht, die eine Amazon-Bestellung nennt, im Kundenservice von PrestaShop bei der richtigen Bestellung ab. Verwenden Sie ein eigenes Postfach oder ein App-Passwort mit reinem Lesezugriff. <span class="btn">Käuferantworten jetzt abrufen</span> liest ungelesene Nachrichten; die Aufgabe <i>Käufernachrichten abrufen</i> erledigt das zeitgesteuert.</p>
+
+<!-- ───────────────────────── 5 CATALOG ───────────────────────── -->
+<h1>5. Katalog</h1>
+<p>Auf der Unterregisterkarte Produkte wechseln Produkte zwischen den beiden Katalogen. Beide Richtungen funktionieren gleich: Zuerst liest und vergleicht ein Abgleich und zeigt eine Tabelle nach SKU; danach schreibt ein zweiter Schritt. Bis zum zweiten Schritt wird nichts geändert.</p>
+<figure>
+  <img src="img/de/05-catalog-products.png" alt="">
+  <figcaption>Katalog &gt; Produkte.</figcaption>
+</figure>
+
+<h2>5.1 Produkte: PrestaShop → Amazon</h2>
+<ol class="steps">
+  <li><span class="btn">PS mit Amazon abgleichen</span> liest Ihren PrestaShop-Katalog und markiert je SKU, was von Amazon abweicht: Beschreibung, Aufzählungspunkte, Marke, Bilder, EAN und Kategorien. Die Vergleichstabelle erscheint unter den Schritten. Jede Zeile zeigt die PrestaShop-Seite, die Amazon-Seite und ein Richtungskennzeichen: <i>nur PS</i>, <i>nur Amazon</i>, <i>Konflikt</i> oder <i>synchron</i>.</li>
+  <li><span class="btn">ASINs über EAN zuordnen</span>, optional. Findet für Produkte, die Amazon bereits verkauft, die vorhandene Produktseite über den Barcode, sodass Sie ihr ein Angebot hinzufügen, statt eine doppelte Produktseite anzulegen.</li>
+  <li><span class="btn">An Amazon senden</span> sendet, was die Tabelle als ausstehend markiert. Bis zu 25 SKUs gehen einzeln und werden sofort beantwortet, mit Status und etwaigen Problemen je SKU. Mehr als 25 gehen als ein einziges Feed-Dokument, das Amazon im Hintergrund verarbeitet; verfolgen Sie es unter Feed-Status.</li>
+</ol>
+<div class="note"><b>Was „ausstehend“ bedeutet.</b> Eine Zeile ist ausstehend, wenn sie in PrestaShop existiert und bei Amazon entweder fehlt (<i>nur PS</i>) oder abweicht (<i>Konflikt</i>). Die Synchronisierungseinstellungen (4.3) bestimmen, wie viel von jeder ausstehenden Zeile gesendet wird: vollständige Daten oder nur das Angebot, mit oder ohne Bilder, und ob das Änderungsfenster gilt.</div>
+
+<h2>5.2 Produkte: Amazon → PrestaShop</h2>
+<ol class="steps">
+  <li><span class="btn">Amazon mit PS abgleichen</span> liest Ihre Amazon-Angebote und markiert je SKU, was PrestaShop fehlt oder was dort anders hinterlegt ist. Der Vergleich erscheint darunter. Noch wird nichts geschrieben.</li>
+  <li>Wählen Sie, was mit dem Vergleich geschehen soll:
+    <ul>
+      <li><b>A. Die Produkte anlegen, die PrestaShop nicht hat.</b> Wählen Sie eine Kategorie und klicken Sie dann auf <span class="btn">PS-Produkte aus Angeboten anlegen, die es nur bei Amazon gibt</span>. Die Produkte werden zur Prüfung inaktiv angelegt, mit Titel, Beschreibung, Marke, Preis, Bestand und Bildern. Die Preise kommen ohne Steuerregel an; weisen Sie vor dem Aktivieren eine zu.</li>
+      <li><b>B. Die Produkte aktualisieren, die PrestaShop bereits hat.</b> Haken Sie die zu überschreibenden Felder an (Titel, Beschreibung und Marke; Preis; Bestand; Aufzählungspunkte als Merkmale; Deaktivieren, was Amazon nicht mehr führt) und klicken Sie auf <span class="btn">Von Amazon aktualisieren</span>. Der Vorgang lässt sich nicht rückgängig machen, sichern Sie also vorher. Die Preise kommen als Bruttopreise an und werden über die Steuerregel des jeweiligen Produkts umgerechnet.</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>5.3 Feed-Status und Kategoriezuordnung</h2>
+<p><b>Feed-Status.</b> Eine Übertragung mit mehr als 25 SKUs geht als ein Feed. <span class="btn">Feed-Status prüfen</span> fragt bei Amazon nach, ob er abgeschlossen ist, und zeigt je Feed die Zahl der angenommenen Einträge, Fehler und Warnungen. Das exakte JSON jedes Feeds wird aufbewahrt und kann unter System &gt; Werkzeuge heruntergeladen werden.</p>
+<p><b>Kategoriezuordnung.</b> Der ältere, einfachere Weg, Amazon mitzuteilen, welchen Typ ein Produkt hat: ein Amazon-Produkttyp und ein optionaler Browse-Node je PrestaShop-Kategorie, dazu optionale zusätzliche Attribute als JSON. Produkte in einer zugeordneten Kategorie senden die vollständigen Angebotsdaten; Produkte in einer nicht zugeordneten Kategorie senden nur das Angebot. Angebotsprofile (5.4) erfüllen dieselbe Aufgabe mit Amazons eigenem Attributformular und haben Vorrang; die Kategoriezuordnung bleibt als Rückfalloption für Kategorien ohne Profil erhalten.</p>
+<p><b>Amazon-Produktliste.</b> Eine schreibgeschützte Ansicht dessen, was Amazon für Ihr Konto zurückgibt.</p>
+
+<h2>5.4 Angebotsprofile</h2>
+<figure>
+  <img src="img/de/06-catalog-profiles.png" alt="">
+  <figcaption>Katalog &gt; Profile.</figcaption>
+</figure>
+<p>Ein Profil legt einen Amazon-Produkttyp fest (SHIRT, FASHION_RING und so weiter) und beantwortet einmalig jedes Attribut, das dieser Typ verlangt. Amazon veröffentlicht diese Anforderungen als Schema; das Modul lädt es herunter und baut daraus ein Formular, sodass Sie echte Felder ausfüllen, statt JSON zu schreiben. Verknüpfen Sie das Profil mit PrestaShop-Kategorien, und jedes Produkt darin wird in der richtigen Form eingestellt. Jede Kategorie gehört zu höchstens einem Profil.</p>
+<h3>Ein Profil anlegen</h3>
+<ol class="steps">
+  <li>Klicken Sie auf <span class="btn">Neues Profil</span> und geben Sie ihm einen Namen, etwa „Röcke - Damen“.</li>
+  <li>Suchen Sie nach Amazon-Produkttypen (zum Beispiel „shirt“), wählen Sie einen aus und klicken Sie auf <span class="btn">Pflichtfelder laden</span>. Die Pflichtattribute erscheinen als Formular; die optionalen sind darunter mit einem Filter aufgelistet. Schemata werden je Marktplatz 30 Tage zwischengespeichert; <span class="btn">Von Amazon aktualisieren</span> holt eine neue Fassung.</li>
+  <li>Legen Sie die Profileinstellungen fest: ob die Produkte Variationen haben und über welche Attributgruppen (Größe, Farbe); empfohlene Browse-Nodes, für Kanada, Europa und Japan erforderlich; Bearbeitungszeit; Versandvorlage; GTIN-Befreiung, falls Amazon eine erteilt hat.</li>
+  <li>Haken Sie die PrestaShop-Kategorien an, die das Profil abdeckt, fügen Sie zusätzliche Attribute als rohes JSON hinzu, falls das Formular sie nicht abbilden kann, und klicken Sie auf <span class="btn">Profil speichern</span>.</li>
+</ol>
+<div class="note"><b>Variationen.</b> Die Artikelnummer des Basisprodukts ist die Eltern-SKU; die Artikelnummer jeder Kombination ist eine Kind-SKU und braucht einen eigenen Barcode.</div>
+
+<h2>5.5 Aufschläge und Regeln</h2>
+<figure>
+  <img src="img/de/07-catalog-markup.png" alt="">
+  <figcaption>Katalog &gt; Aufschläge und Regeln.</figcaption>
+</figure>
+<p>Aufschläge sind feste Werte („5.99“) oder Prozentsätze („10%“), die auf den exportierten Preis angewendet werden. Die Regeln greifen je Produkt kaskadierend: Kategorie, dann Hersteller, dann Lieferant; die erste Quelle mit einem Wert gewinnt, und passt keine, gelten die Standardwerte. Dieselbe Kaskade legt die Bearbeitungszeit und den GPSR-Kontakt fest.</p>
+<p>Die Tabellen <b>Kategorieregeln</b>, <b>Herstellerregeln</b> und <b>Lieferantenregeln</b> enthalten je Eintrag den Preisaufschlag, die Versandvorlaufzeit, die GPSR-E-Mail oder den GPSR-Link und einen Synchronisierungsschalter (Ja/Nein). Die Herstellertabelle enthält zusätzlich das Ursprungsland. Beim Speichern werden die betroffenen Produkte in die Warteschlange gestellt, damit die nächste Delta-Synchronisierung sie erneut sendet.</p>
+
+<h2>5.6 Produktregeln, Warteschlange, Verwaiste</h2>
+<p><b>Produktregeln</b> nehmen einzelne Produkte von der Amazon-Synchronisierung aus oder geben einem Produkt einen eigenen GPSR-Kontakt, der die Hersteller- und Lieferantenkontakte überschreibt. Dasselbe und mehr bietet der Amazon-Tab jedes Produkts (Abschnitt 6).</p>
+<p><b>Warteschlange</b> listet Produkte, die in PrestaShop geändert oder von Regeländerungen berührt wurden. Bei aktivem Änderungsfenster gehen aktive Einträge auch dann in die nächste Synchronisierung ein, wenn das Produkt selbst nicht kürzlich geändert wurde. Gesendete Einträge werden inaktiv und nach der eingestellten Aufbewahrungsdauer bereinigt. Der Bereich bietet die Aktionen Alle aktivieren, Alle deaktivieren, Abgelaufene Einträge bereinigen und Alle entfernen.</p>
+<p><b>Verwaiste</b> listet Amazon-Angebote, die keinem verkäuflichen PrestaShop-Produkt mehr entsprechen, weil das Produkt gelöscht oder deaktiviert wurde oder sich seine SKU geändert hat. Führen Sie zuerst „Amazon mit PS abgleichen“ aus, damit die Liste Ihren tatsächlichen Bestand zeigt, und korrigieren Sie dann die Produkte oder löschen Sie die Angebote mit dem Werkzeug in 11.3.</p>
+
+<!-- ───────────────────────── 6 PRODUCT TAB ───────────────────────── -->
+<h1>6. Der Amazon-Tab eines Produkts</h1>
+<p>Jede Produktseite in PrestaShop erhält einen Tab <b>Amazon Marketplace Pro</b>. Seine Einstellungen gelten nur für dieses Produkt und haben Vorrang vor dem Angebotsprofil, den Kategorie-, Hersteller- und Lieferantenregeln sowie den globalen Einstellungen. Lassen Sie ein Feld leer, um den Wert zu erben.</p>
+<table>
+  <tr><td class="k">Dieses Produkt mit Amazon abgleichen</td><td>Ja, oder das Produkt von jedem Export ausschließen.</td></tr>
+  <tr><td class="k">Preis senden / Menge senden</td><td>Entfernen Sie eines der Häkchen, damit der jeweilige Wert bei Amazon unverändert bleibt, zum Beispiel wenn Sie Ihre Preise direkt bei Amazon anpassen.</td></tr>
+  <tr><td class="k">Bestand erzwingen</td><td>Die tatsächliche Menge senden, immer auf Lager (999) oder immer nicht verfügbar (0).</td></tr>
+  <tr><td class="k">Abweichender Preis</td><td>Wird anstelle des Shop-Preises gesendet; Aufschläge und Preisregeln entfallen.</td></tr>
+  <tr><td class="k">Abweichende SKU</td><td>Für ein Produkt, das in Ihrem Amazon-Bestand bereits unter einer anderen Verkäufer-SKU existiert. Wird für Angebotsaktualisierungen und die Bestellzuordnung genutzt.</td></tr>
+  <tr><td class="k">ASIN</td><td>Hängt das Angebot an eine bekannte Amazon-Produktseite, statt Amazon die Zuordnung über den Barcode zu überlassen.</td></tr>
+  <tr><td class="k">Versand durch Amazon</td><td>Ob Sie selbst versenden (MFN) oder Amazon versendet (AFN).</td></tr>
+  <tr><td class="k">Bearbeitungszeit, Versandvorlage, Browse-Node, Abweichende Marke</td><td>Produktbezogene Fassungen der Werte aus Profil und globalen Einstellungen.</td></tr>
+  <tr><td class="k">Zustand, Zustandshinweis</td><td>Überschreibt den globalen Standardwert, mit Amazons vollständiger Liste der Zustände.</td></tr>
+  <tr><td class="k">Wichtigste Produktmerkmale</td><td>Ein Aufzählungspunkt je Zeile, bis zu fünf mit je 500 Zeichen. Bleibt das Feld leer, werden sie aus der Kurzbeschreibung erzeugt.</td></tr>
+  <tr><td class="k">GPSR-Kontakt</td><td>E-Mail oder URL der verantwortlichen Person; überschreibt den Hersteller- und Lieferantenkontakt.</td></tr>
+  <tr><td class="k">Geschenkoptionen, Transparency-Code</td><td>Geschenkverpackung und Geschenknachricht anbieten; der Transparency-Code des Produkts, falls Sie am Programm teilnehmen.</td></tr>
+  <tr><td class="k">Diese Einstellungen übertragen auf</td><td>Beim Speichern dieselben Werte auf alle Produkte derselben Standardkategorie, desselben Herstellers oder desselben Lieferanten oder auf alle aktiven Produkte anwenden. Identitätsfelder (SKU, ASIN, Preis, Transparency-Code) werden nie übertragen.</td></tr>
+</table>
+
+<!-- ───────────────────────── 7 ORDERS ───────────────────────── -->
+<h1>7. Bestellungen</h1>
+<figure>
+  <img src="img/de/09-orders.png" alt="">
+  <figcaption>Bestellungen &gt; Bestellungen.</figcaption>
+</figure>
+
+<h2>7.1 Bestellungen importieren</h2>
+<p>Der Import erfolgt wie beim Katalog in zwei Schritten, damit Sie prüfen können, bevor etwas angelegt wird.</p>
+<ol class="steps">
+  <li><span class="btn">Amazon-Bestellungen holen und bereitstellen</span> lädt die Bestellungen im Rückblickzeitraum (4.5) herunter und stellt sie bereit, mit Versandkosten, Steuer, Käuferadresse (siehe 7.2) und der Angabe, ob Amazon oder Sie versenden. Die Tabelle zeigt die Artikel jeder Bestellung mit den zugeordneten PrestaShop-Produkten und kennzeichnet Prime- und Amazon-Business-Bestellungen.</li>
+  <li><span class="btn">PrestaShop-Bestellungen anlegen</span> macht aus bereitgestellten Bestellungen PrestaShop-Bestellungen mit Ihren Versanddienstleistern, Status, Rechnungen und Steuern, gemäß den Zuordnungsregeln in 4.5. Bestellungen ohne ausreichenden Bestand werden geparkt (7.3), wenn Sie das so gewählt haben.</li>
+</ol>
+<p>Die geplanten Aufgaben <i>Bestellungen importieren</i> und <i>PrestaShop-Bestellungen anlegen</i> erledigen dieselben zwei Schritte ohne Aufsicht, standardmäßig alle 15 Minuten. Wird eine Bestellung in PrestaShop als versandt markiert und ist der Hook aus 4.3 aktiv, bestätigt das Modul Amazon den Versand mit der Sendungsnummer und dem zugeordneten Carrier-Code.</p>
+
+<h2>7.2 Käuferadressen aus einem Bestellbericht</h2>
+<p>Das direkte Abrufen von Name, Adresse und Telefonnummer des Käufers bei Amazon folgt in Kürze. Bis dahin erhalten Sie diese Angaben, indem Sie den Bestellbericht in Seller Central herunterladen und in das Modul hochladen. Solange Sie das nicht tun, zeigt die Bestellung als Kunden „Amazon Buyer“ und als Straße „Amazon Marketplace Order“.</p>
+<ol class="steps">
+  <li>Importieren Sie zuerst die Bestellungen (7.1).</li>
+  <li>Öffnen Sie in Seller Central <b>Orders &gt; Order Reports &gt; Unshipped Orders</b>, klicken Sie auf <b>Request report</b> und laden Sie den Bericht mit <b>Download</b> herunter, sobald er bereit ist. Er listet die Bestellungen, die Sie noch nicht versandt haben, also genau die, die eine Adresse brauchen.</li>
+  <li>Wählen Sie im Modul auf der Registerkarte <b>Bestellungen &gt; Bestellungen</b> im Bereich <b>Käuferadressen aus einem Amazon-Bestellbericht</b> die Datei aus und klicken Sie auf <span class="btn">Bericht hochladen</span>. Laden Sie die Datei so hoch, wie Sie sie heruntergeladen haben.</li>
+</ol>
+<figure>
+  <img src="img/de/09b-orders-report.png" alt="">
+  <figcaption>Der Berichtsbereich nach einem Upload.</figcaption>
+</figure>
+<p>Das Ergebnis zeigt, wie viele Bestellungen ergänzt wurden, wie viele bereits eine vollständige Adresse hatten, wie viele PrestaShop-Adressen unverändert blieben, wie viele Bestellungen noch nicht importiert sind und wie viele übersprungen wurden, weil ihre Käuferdaten bereits gelöscht waren. Für den Upload gelten diese Regeln:</p>
+<ul>
+  <li><b>Nur importierte Bestellungen.</b> Zeilen zu Bestellungen, die das Modul noch nicht kennt, werden gezählt, aber nicht gespeichert. Importieren Sie diese Bestellungen und laden Sie den Bericht dann erneut hoch.</li>
+  <li><b>Nur leere Felder.</b> Nichts, was Amazon bereits gesendet hat, wird überschrieben.</li>
+  <li><b>Ihre Änderungen bleiben.</b> Eine PrestaShop-Adresse wird nur ergänzt, solange sie noch die Platzhalter-Straße zeigt; eine von Ihnen korrigierte Adresse bleibt unverändert. Das Land ändert sich nie, weil es die Besteuerung bestimmt hat. Der Name des Kunden ersetzt „Amazon Buyer“ nur, solange der Kunde noch diesen Namen trägt.</li>
+  <li><b>Gelöschte Daten bleiben gelöscht.</b> Bestellungen, deren Käuferdaten gemäß der Aufbewahrungsfrist gelöscht wurden (Abschnitt 12), werden übersprungen.</li>
+  <li><b>Die Datei wird nicht aufbewahrt.</b> Das Aktivitätsprotokoll erfasst nur die Zahlen.</li>
+</ul>
+<p>Denselben Bericht erneut hochzuladen, schadet nicht: Jede Bestellung wird dann als bereits vollständig gemeldet. Aus einem Bericht ergänzte Angaben werden nach Ablauf der Aufbewahrungsfrist zusammen mit den übrigen Käuferdaten gelöscht (Abschnitt 12).</p>
+
+<h2>7.3 Ausstehende Bestellungen und reservierter Bestand</h2>
+<p><b>Ausstehende Bestellungen</b> enthält Amazon-Bestellungen, die keine PrestaShop-Bestellungen werden konnten, weil einem Produkt der Bestand fehlt. Füllen Sie den Bestand auf und starten Sie „PrestaShop-Bestellungen anlegen“ erneut, erzwingen Sie die Bestellung mit <span class="btn">Trotzdem anlegen</span> oder entfernen Sie sie.</p>
+<p><b>Reservierter Bestand (externer Warenkorb)</b> listet Einheiten, die für noch nicht zahlungspflichtige Amazon-Kaufvorgänge zurückgehalten werden. Amazon zeigt einen laufenden Kaufvorgang als Bestellung im Status „Pending“; ist der externe Warenkorb aktiv (4.5), nimmt das Modul die betreffenden Einheiten sofort aus dem PrestaShop-Bestand, damit kein anderer Kanal sie verkaufen kann, übergibt sie, sobald die Bestellung zahlungspflichtig wird, und gibt sie nach Ablauf der Karenzzeit zurück, falls das nie geschieht. Die Aufgabe <i>Externe Warenkörbe auflösen</i> übernimmt diese Abwicklung.</p>
+
+<h2>7.4 Retouren und Stornierungen</h2>
+<p><span class="btn">Retouren von Amazon importieren</span> holt Retouren und Stornierungen; <span class="btn">Ausstehende Retouren verarbeiten</span> erstellt entsprechend PrestaShop-Gutschriften oder storniert PrestaShop-Bestellungen. Die Tabelle Retourenverlauf zeigt jeden Vorgang mit Typ, Erstattungsbetrag, PrestaShop-Bestellung und Gutschrift. Die Aufgaben <i>Retouren importieren</i> und <i>Retouren verarbeiten</i> automatisieren beides.</p>
+
+<h2>7.5 Käuferkommunikation</h2>
+<p>Geben Sie eine Amazon-Bestellnummer ein und klicken Sie auf <span class="btn">Zulässige Nachrichtentypen laden</span>; Amazon begrenzt, welche Nachrichtentypen je Bestellung erlaubt sind. Schreiben Sie die Nachricht und senden Sie sie, oder klicken Sie auf <span class="btn">Bewertung anfordern</span>, um Amazons Standard-Bewertungsanfrage zu senden, die einmal je Bestellung 5 bis 30 Tage nach Zustellung erlaubt ist. Antworten kommen per E-Mail und lassen sich mit den Einstellungen unter Nachrichten (4.6) im Kundenservice ablegen.</p>
+
+<!-- ───────────────────────── 8 FULFILMENT ───────────────────────── -->
+<h1>8. Fulfillment</h1>
+<figure>
+  <img src="img/de/10-fulfilment-fba.png" alt="">
+  <figcaption>Fulfillment &gt; FBA.</figcaption>
+</figure>
+<h3>FBA-Bestand</h3>
+<p><span class="btn">FBA-Bestand abgleichen</span> lädt den Bestand herunter, den Amazon für Sie lagert: verfügbar, reserviert, im Zulauf und nicht versandfähig, je SKU. <span class="btn">PS-Bestand aus FBA aktualisieren</span> schreibt die verfügbare Menge in PrestaShop, für Händler, deren Bestand in Amazons Lagern liegt. Die Aufgabe <i>FBA-Bestandsabgleich</i> führt den Download standardmäßig stündlich aus.</p>
+<h3>Multi-Channel-Fulfillment</h3>
+<p>Geben Sie eine PrestaShop-Bestell-ID ein und klicken Sie auf <span class="btn">MCF-Bestellung anlegen</span>, damit Amazon eine PrestaShop-Bestellung aus Ihrem FBA-Bestand versendet.</p>
+<h3>Mehrere Konten</h3>
+<p>Fügen Sie weitere Amazon-Marktplätze hinzu, jeweils mit eigener oder der Haupt-Verkäufer-ID, und wählen Sie je Marktplatz, ob Bestellungen, Produkte und Bestand synchronisiert werden. Die Aufgaben <i>Bestellungen importieren, alle Marktplätze</i> und <i>Produktsynchronisierung, alle Marktplätze</i> decken sie ab. Der Hauptmarktplatz aus den Einstellungen ist immer aktiv.</p>
+
+<!-- ───────────────────────── 9 MONEY ───────────────────────── -->
+<h1>9. Finanzen</h1>
+<figure>
+  <img src="img/de/11-money-repricing.png" alt="">
+  <figcaption>Finanzen &gt; Repricing.</figcaption>
+</figure>
+<h3>Repricing</h3>
+<p>Drei Schaltflächen, in dieser Reihenfolge: <span class="btn">Wettbewerbspreise holen</span> lädt für jedes Ihrer Angebote den Buy-Box-Preis, den Tiefstpreis und die Zahl der Angebote herunter; <span class="btn">Preisregeln anwenden</span> berechnet je SKU einen vorgeschlagenen Preis; <span class="btn">Vorgeschlagene Preise senden</span> sendet die Preise, die Sie freigeben. Die Tabelle Buy-Box-Status zeigt Ihren Preis im Vergleich zum Markt und ob Sie die Buy Box halten.</p>
+<p>Eine Preisregel hat einen Typ (Tiefstpreis angleichen oder unterbieten, Buy Box angleichen oder unterbieten oder feste Marge), eine Anpassung als Prozentsatz oder fester Betrag sowie einen Mindest- und Höchstpreis als Leitplanken. Die Aufgabe <i>Repricing-Durchlauf</i> führt Abrufen und Anwenden zeitgesteuert aus; das Senden bleibt manuell, sofern Sie es dort nicht aktivieren.</p>
+<h3>Gebühren</h3>
+<p><span class="btn">Bestellgebühren holen</span> ruft Verkaufsprovisionen, FBA-Gebühren und Provisionen je Bestellung über Amazons Finances-API ab, sodass die tatsächliche Marge jedes Verkaufs sichtbar wird. Die Übersicht gruppiert sie nach Gebührenart. Die Aufgabe <i>Gebühren holen</i> läuft standardmäßig alle sechs Stunden.</p>
+<h3>Aktionen</h3>
+<p>Importieren Sie die auf Amazon-Bestellungen angewendeten Aktionen, exportieren Sie PrestaShop-Warenkorbregeln zur Nachverfolgung oder legen Sie PrestaShop-Warenkorbregeln aus Amazon-Aktionen an. Die Verlaufstabelle zeigt jede Aktion mit ihrer Richtung.</p>
+
+<!-- ───────────────────────── 10 INSIGHTS ───────────────────────── -->
+<h1>10. Auswertungen</h1>
+<figure>
+  <img src="img/de/13-insights-reports.png" alt="">
+  <figcaption>Auswertungen &gt; Berichte.</figcaption>
+</figure>
+<p>Fordern Sie bei Amazon die Berichte Händlerangebote, Abrechnungsbericht oder FBA-Bestandsbericht an. Amazon erstellt Berichte im Hintergrund; <span class="btn">Ausstehende Berichte abfragen</span> sucht nach fertigen Berichten und lädt sie herunter, und die Verlaufstabelle zeigt Status und Zeilenzahl. Die Aufgabe <i>Berichte abfragen</i> fragt standardmäßig alle 30 Minuten ab.</p>
+
+<!-- ───────────────────────── 11 SYSTEM ───────────────────────── -->
+<h1>11. System</h1>
+
+<h2>11.1 Automatisierung</h2>
+<figure>
+  <img src="img/de/14-system-automation.png" alt="">
+  <figcaption>System &gt; Automatisierung. Die angezeigte Shop-Adresse und das Token sind Platzhalter.</figcaption>
+</figure>
+<p>Ein Shop führt nur dann Code aus, wenn eine Anfrage eintrifft; irgendetwas muss ihn also regelmäßig aufrufen. Wählen Sie, wer diesen Aufruf übernimmt:</p>
+<table>
+  <tr><th style="width:26%">Modus</th><th>So funktioniert es</th><th style="width:30%">Wählen Sie ihn, wenn</th></tr>
+  <tr><td><b>Der Cron meines eigenen Servers</b> (Standard, empfohlen)</td><td>Fügen Sie die angezeigte Zeile im Kontrollpanel Ihres Hostings oder in Ihrer Crontab ein. Sie ruft Ihren Shop alle fünf Minuten auf; jeder Aufruf führt nur die fälligen Aufgaben aus. Zwischen Ihrem Shop und seinem Zeitplan steht nichts.</td><td>Ihr Hosting eine Crontab oder eine Funktion für geplante Aufgaben bietet, was bei den meisten der Fall ist.</td></tr>
+  <tr><td><b>Der IntelliPresta-Scheduler</b></td><td>Wählen Sie ihn aus, speichern Sie und klicken Sie dann auf <span class="btn">Diesen Shop registrieren</span>. Der IntelliPresta-Server ruft Ihren Shop alle fünf Minuten auf, sodass die Intervalle exakt eingehalten werden, ohne dass Sie etwas einrichten müssen. Die Adresse Ihres Shops und sein Cron-Token werden auf diesem Server gespeichert; ist er nicht erreichbar, pausiert Ihr Zeitplan, bis er wieder da ist. <span class="btn">Scheduler nicht mehr verwenden</span> entfernt die Registrierung.</td><td>Ihr Hosting keine Crontab bietet oder Sie keine pflegen möchten. Der Shop muss über HTTPS erreichbar sein.</td></tr>
+</table>
+<p>Die Cron-Zeile hat diese Form; das Modul zeigt Ihre Zeile mit der richtigen Adresse und dem richtigen Token an:</p>
+<pre>*/5 * * * * curl -s "https://www.your-shop.example/module/amazonmarketplacepro/cron?token=YOUR-TOKEN&amp;action=run_due" &gt; /dev/null 2&gt;&amp;1</pre>
+<div class="note"><b>Ein Fünf-Minuten-Cron bedeutet keine Synchronisierung alle fünf Minuten.</b> Der Cron fragt den Shop nur: „Ist etwas fällig?“ Jede Aufgabe läuft in ihrem eigenen Intervall aus der Tabelle. Die Läufe werden über eine Sperre nacheinander ausgeführt, sodass zwei Aufrufe nie dieselbe Arbeit doppelt erledigen, und ein Durchlauf endet vor dem Zeitlimit des Webservers und wird beim nächsten Aufruf fortgesetzt.</div>
+
+<h2>11.2 Die geplanten Aufgaben</h2>
+<figure>
+  <img src="img/de/15-system-schedule-table.png" alt="">
+  <figcaption>Die Aufgabentabelle. Jede Aufgabe lässt sich ein- oder ausschalten, mit einem anderen Intervall versehen, sofort ausführen oder entfernen.</figcaption>
+</figure>
+<p>Jede Zeile ist eine Aufgabe mit ihrem Intervall in Minuten, dem Zeitpunkt und Ergebnis des letzten Laufs und dem Zeitpunkt des nächsten Laufs. <span class="btn">Ein</span>/<span class="btn">Aus</span> schaltet sie um, <span class="btn">Jetzt ausführen</span> führt sie sofort aus, und das Papierkorbsymbol entfernt sie. Entfernte Aufgaben lassen sich mit dem Formular unter der Tabelle wieder hinzufügen. Bei Neuinstallationen sind alle Aufgaben vorhanden und ausgeschaltet, damit nichts läuft, bevor Sie es entscheiden.</p>
+<table>
+  <tr><th style="width:26%">Aufgabe</th><th style="width:11%">Standard</th><th>Funktion</th></tr>
+  <tr><td>Bestellungen importieren</td><td>15 Min.</td><td>Holt Amazon-Bestellungen im Rückblickzeitraum und stellt sie bereit (7.1, Schritt 1).</td></tr>
+  <tr><td>PrestaShop-Bestellungen anlegen</td><td>15 Min.</td><td>Macht aus bereitgestellten Bestellungen PrestaShop-Bestellungen (7.1, Schritt 2).</td></tr>
+  <tr><td>Bestand abgleichen</td><td>30 Min.</td><td>Sendet für Produkte im Änderungsfenster die aktuellen Mengen und, sofern der Synchronisierungsmodus sie einschließt, die Preise.</td></tr>
+  <tr><td>Vollständige Produktsynchronisierung</td><td>täglich</td><td>Liest den PrestaShop-Katalog, vergleicht ihn mit Amazon und sendet ausstehende Angebote (5.1, Schritte 1 und 3).</td></tr>
+  <tr><td>Feed-Warteschlange verarbeiten</td><td>15 Min.</td><td>Reicht Angebotsänderungen aus der Warteschlange als Feeds ein und erfasst die Ergebnisse von Amazon.</td></tr>
+  <tr><td>Retouren importieren / Retouren verarbeiten</td><td>60 Min.</td><td>Holen Retouren und Stornierungen und erstellen dann Gutschriften oder stornieren Bestellungen (7.4).</td></tr>
+  <tr><td>FBA-Bestandsabgleich</td><td>60 Min.</td><td>Lädt die Bestandsmengen herunter, die Amazon lagert (Abschnitt 8).</td></tr>
+  <tr><td>Repricing-Durchlauf</td><td>60 Min.</td><td>Holt Wettbewerbspreise und wendet Ihre Regeln an (Abschnitt 9).</td></tr>
+  <tr><td>Gebühren holen</td><td>6 Std.</td><td>Erfasst Amazon-Gebühren je Bestellung.</td></tr>
+  <tr><td>Berichte abfragen</td><td>30 Min.</td><td>Lädt fertige Berichte herunter (Abschnitt 10).</td></tr>
+  <tr><td>Aktionen abgleichen</td><td>6 Std.</td><td>Importiert Aktionen aus Bestellungen.</td></tr>
+  <tr><td>Bestellungen importieren / Produktsynchronisierung, alle Marktplätze</td><td>15 Min. / täglich</td><td>Die Fassungen von Bestellimport und Produktsynchronisierung für mehrere Marktplätze.</td></tr>
+  <tr><td>Bewertungen anfordern</td><td>täglich</td><td>Sendet Bewertungsanfragen für zugestellte Bestellungen, sofern in 4.5 aktiviert.</td></tr>
+  <tr><td>Externe Warenkörbe auflösen</td><td>15 Min.</td><td>Übergibt reservierten Bestand oder gibt ihn frei (7.3).</td></tr>
+  <tr><td>Käufernachrichten abrufen</td><td>60 Min.</td><td>Liest Käuferantworten aus dem Postfach in den Kundenservice ein (4.6).</td></tr>
+  <tr><td>Rechnungen hochladen</td><td>6 Std.</td><td>Lädt Umsatzsteuerrechnungen für Verkäufer hoch, die am VCS teilnehmen.</td></tr>
+  <tr><td>Käuferdaten nach Ablauf der Aufbewahrungsfrist löschen</td><td>täglich</td><td>Löscht personenbezogene Käuferdaten aus Bestellungen, die älter als die Aufbewahrungsfrist sind (Abschnitt 12).</td></tr>
+</table>
+<div class="note"><b>Ein sinnvoller Grundstock</b> für einen Shop, der seine Bestellungen selbst versendet: Bestellungen importieren, PrestaShop-Bestellungen anlegen, Bestand abgleichen, Vollständige Produktsynchronisierung, Feed-Warteschlange verarbeiten, Berichte abfragen und Käuferdaten nach Ablauf der Aufbewahrungsfrist löschen. Nehmen Sie FBA-Bestandsabgleich hinzu, wenn Sie FBA nutzen, und Repricing-Durchlauf, sobald Ihre Preisregeln eingerichtet sind.</div>
+
+<h2>11.3 Werkzeuge</h2>
+<p><b>Katalogprüfung.</b> Amazon ordnet alles über Artikelnummer und Barcode zu. Produkte, denen eines von beiden fehlt oder die sich eine Artikelnummer mit einem anderen Produkt teilen, lassen sich weder einstellen noch eingehenden Bestellungen zuordnen. <span class="btn">Meinen Katalog prüfen</span> listet sie auf.</p>
+<p><b>Editor für Artikelnummern und Barcodes.</b> Exportieren Sie alle Produkte und Kombinationen als CSV, korrigieren Sie Artikelnummern und Barcodes in einer Tabellenkalkulation und laden Sie die Datei wieder hoch. Geschrieben werden nur Artikelnummer, EAN, UPC und Lieferantenartikelnummer. Dieser Vorgang ändert Ihren PrestaShop-Katalog direkt und lässt sich nicht rückgängig machen; sichern Sie zuerst, und erledigen Sie das vor der Veröffentlichung, sonst entstehen doppelte SKUs bei Amazon.</p>
+<p><b>Angebote bei Amazon löschen.</b> Findet Angebote für Produkte, die Sie nicht mehr verkaufen, ob gelöscht, deaktiviert oder für Amazon abgeschaltet, und lässt Sie die Liste prüfen, bevor Sie die ausgewählten löschen. Das Löschen entfernt das Angebot samt seiner Historie bei Amazon und ist nicht umkehrbar. Um den Verkauf nur vorübergehend einzustellen, veröffentlichen Sie stattdessen die Menge 0 (4.2).</p>
+<p><b>Inhalte der gesendeten Feeds.</b> Das exakte JSON, das für jeden Feed an Amazon ging, zum Herunterladen nach Feed-ID. Der Amazon-Support fragt danach, wenn ein Angebot aus einem Grund abgelehnt wird, den der Bericht nicht erklärt.</p>
+
+<h2>11.4 Protokolle</h2>
+<p>Die letzten 50 Einträge des Aktivitätsprotokolls des Moduls, mit Datum, Stufe, Quelle und Meldung. Fehler sind hervorgehoben. Hier sehen Sie als Erstes nach, wenn eine geplante Aufgabe „Fehlgeschlagen“ zeigt.</p>
+
+<!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
+<h1>12. Käuferdaten und Konformität</h1>
+<h3>Löschung der Käuferdaten</h3>
+<p>Amazons Datenschutzrichtlinie verlangt, Käuferdaten innerhalb von 30 Tagen nach Zustellung zu löschen. Ist <b>Löschung der Käuferdaten</b> aktiv, was der Standard ist, entfernt das Modul Name, E-Mail, Straße, Ort, Region, Postleitzahl und Telefonnummer des Käufers sowie die gespeicherten Amazon-Rohdaten aus seiner eigenen Bestelltabelle, sobald eine Bestellung abgeschlossen und älter als die von Ihnen eingestellte Aufbewahrungsfrist ist. Bestellsummen, Steuern, Gebühren und Zielland bleiben erhalten, Auswertungen und Umsatzsteueraufzeichnungen sind also nicht betroffen. Die Bestelleinstellungen zeigen, wie viele Bestellungen auf die Löschung warten, und bieten <span class="btn">Jetzt löschen</span> an; die Aufgabe <i>Käuferdaten nach Ablauf der Aufbewahrungsfrist löschen</i> erledigt das täglich.</p>
+<p>Die Löschung abzuschalten bedeutet, Amazon-Käuferdaten länger aufzubewahren, als Amazon erlaubt. Tun Sie das nur aufgrund einer gesetzlichen Pflicht, die Sie belegen können.</p>
+<p><b>Auch Kunde und Adresse in PrestaShop anonymisieren</b> ist bewusst standardmäßig deaktiviert. PrestaShop erzeugt Rechnungen aus der gespeicherten Adresse; sie zu anonymisieren verändert also Dokumente, die Sie möglicherweise gesetzlich unverändert aufbewahren müssen, und eine aufbewahrungspflichtige Rechnung ist genau die Ausnahme, die Amazons Richtlinie zulässt. Ist die Option aktiv, wird ein Kunde nur anonymisiert, wenn alle seine Bestellungen bereits gelöschte Amazon-Bestellungen sind; Ort, Postleitzahl und Land bleiben erhalten, damit die umsatzsteuerliche Behandlung nachvollziehbar bleibt.</p>
+<h3>GPSR und Ursprungsland</h3>
+<p>Die EU-Verordnung über die allgemeine Produktsicherheit (GPSR) verlangt in Angeboten einen Kontakt der verantwortlichen Person. Legen Sie ihn je Produkt (Abschnitt 6) oder je Hersteller bzw. Lieferant (5.5) fest und wählen Sie, welcher der beiden Vorrang hat. Der Kontakt muss bereits in Seller Central unter Account Health &gt; Product Policy Compliance hinterlegt sein. Das Ursprungsland wird je Hersteller festgelegt.</p>
+<h3>Umsatzsteuer</h3>
+<p>Importierte Bestellungen können die von Amazon gemeldeten Steuerbeträge oder Ihre eigenen Steuerregeln verwenden (4.5). Verkäufer, die am VAT Calculation Service von Amazon teilnehmen, können ihre PrestaShop-Rechnungen automatisch hochladen lassen.</p>
+
+<!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
+<h1>13. Fehlerbehebung</h1>
+<h3>Das Ergebnis von „Verbindung prüfen“ lesen</h3>
+<p>Das Ergebnis erscheint unter dem grünen Banner in Einstellungen &gt; Verbindung. Schlägt die Prüfung fehl, werden die technischen Details zusätzlich auf der Registerkarte Protokolle (11.4) festgehalten; der Support wird danach fragen.</p>
+<table>
+  <tr><th style="width:38%">Ergebnis</th><th>Bedeutung und was zu tun ist</th></tr>
+  <tr><td>„Alles funktioniert: Das Modul erreicht Ihr Amazon-Konto.“</td><td>Die Verbindung funktioniert. Schlägt eine Synchronisierung trotzdem fehl, steht der Grund auf der Registerkarte Protokolle.</td></tr>
+  <tr><td>„Amazon hat den Zugriff auf Ihr Verkäuferkonto verweigert.“</td><td>Die Verbindung selbst ist in Ordnung, aber Amazon liefert für diesen Verkäufer keine Daten. Prüfen Sie in Seller Central, ob das Konto aktiv ist und den Tarif Professional nutzt. Falls ja, klicken Sie auf Trennen und danach erneut auf Mit Amazon verbinden.</td></tr>
+  <tr><td>„Amazon akzeptiert diese Verbindung nicht mehr.“</td><td>Die Verbindung wurde in Seller Central entfernt. Klicken Sie auf Trennen und danach erneut auf Mit Amazon verbinden.</td></tr>
+  <tr><td>„Amazon oder der Verbindungsdienst von IntelliPresta war nicht erreichbar.“</td><td>Meist ein vorübergehendes Netzwerkproblem. Versuchen Sie es in einigen Minuten erneut; falls das weiterhin passiert, wenden Sie sich an den Support.</td></tr>
+  <tr><td>„Dieser Server kann keine sichere Verbindung zu Amazon aufbauen.“</td><td>Die Sicherheitszertifikate des Servers sind veraltet. Bitten Sie Ihren Hosting-Anbieter, sie zu aktualisieren.</td></tr>
+</table>
+<h3>Häufige Situationen</h3>
+<table>
+  <tr><th style="width:38%">Symptom</th><th>Ursache und Abhilfe</th></tr>
+  <tr><td>„Keine Produkte mit Artikelnummer (SKU) gefunden“ nach „PS mit Amazon abgleichen“</td><td>Die Produkte haben keine Artikelnummer in dem Feld, das als Quelle der SKU gewählt ist (4.2). Tragen Sie sie ein oder verwenden Sie den Editor für Artikelnummern und Barcodes (11.3).</td></tr>
+  <tr><td>Übertragung angenommen, aber bei Amazon erscheint nur das Angebot ohne Produktdaten</td><td>Die Kategorie des Produkts hat weder ein Profil noch eine Kategoriezuordnung, oder „Vollständige Produktdaten senden“ steht auf „Nein“ (4.3).</td></tr>
+  <tr><td>Angebot wegen eines fehlenden Attributs abgelehnt</td><td>Amazon legt Pflichtfelder dynamisch fest. Öffnen Sie das Profil, suchen Sie das Attribut in der optionalen Liste, füllen Sie es aus, speichern Sie und senden Sie erneut. Der Feed-Inhalt (11.3) zeigt genau, was gesendet wurde.</td></tr>
+  <tr><td>Importierte Bestellungen zeigen 0 % MwSt.</td><td>Wählen Sie in 4.5 „Meine PrestaShop-Steuerregeln anwenden“.</td></tr>
+  <tr><td>Eine geplante Aufgabe zeigt „Fehlgeschlagen“</td><td>Die Meldungsspalte und die Registerkarte Protokolle nennen den Grund. Klicken Sie nach der Behebung auf Jetzt ausführen, um es erneut zu versuchen. Nach wiederholten Fehlschlägen klicken Sie auf Verbindung prüfen (4.1).</td></tr>
+  <tr><td>Nichts läuft, obwohl Aufgaben eingeschaltet sind</td><td>Kein Cron ruft den Shop auf. Prüfen Sie, ob die Cron-Zeile in Ihrem Hosting-Panel eingetragen ist oder ob der Shop beim IntelliPresta-Scheduler registriert und über HTTPS erreichbar ist.</td></tr>
+  <tr><td>Unzustellbare E-Mails an Amazon-Käufer</td><td>Amazon-Relay-Adressen laufen ab. Aktivieren Sie die anonymisierte E-Mail-Adresse (4.5).</td></tr>
+</table>
+<h3>Hilfe erhalten</h3>
+<p>Schreiben Sie an <b>support@intellipresta.com</b>. Geben Sie die Modulversion, die PrestaShop-Version, die betreffenden Zeilen aus der Registerkarte Protokolle und bei Problemen mit Angeboten die Feed-ID oder die SKU an. Wir antworten innerhalb eines Werktags.</p>
+
+<!-- ───────────────────────── 14 GLOSSARY ───────────────────────── -->
+<h1>14. Glossar</h1>
+<table>
+  <tr><td class="k">SKU</td><td>Ihre eigene Kennung für ein Produkt bei Amazon. Das Modul bildet sie aus einem PrestaShop-Feld, meist aus der Artikelnummer.</td></tr>
+  <tr><td class="k">ASIN</td><td>Amazons Kennung für eine Katalogseite. Mehrere Verkäufer können dieselbe ASIN anbieten.</td></tr>
+  <tr><td class="k">EAN / UPC / GTIN</td><td>Produkt-Barcodes. Amazon ordnet Ihr Produkt damit einer vorhandenen Produktseite zu.</td></tr>
+  <tr><td class="k">Produktseite und Angebot</td><td>Die Produktseite ist die Katalogseite mit Titel, Beschreibung und Bildern. Das Angebot besteht aus Ihrem Preis und Ihrem Bestand auf dieser Seite.</td></tr>
+  <tr><td class="k">Produkttyp</td><td>Amazons Kategorieschema (SHIRT, FASHION_RING), das festlegt, welche Attribute ein Angebot enthalten muss.</td></tr>
+  <tr><td class="k">Profil</td><td>Die im Modul gespeicherten Antworten für einen Produkttyp, verknüpft mit PrestaShop-Kategorien.</td></tr>
+  <tr><td class="k">Feed</td><td>Ein Sammeldokument, das an Amazon gesendet und im Hintergrund verarbeitet wird. Wird für Übertragungen mit mehr als 25 SKUs verwendet.</td></tr>
+  <tr><td class="k">MFN / AFN / FBA</td><td>Merchant Fulfilled Network: Sie versenden. Amazon Fulfilled Network, auch Fulfillment by Amazon (Versand durch Amazon): Amazon versendet aus seinen Lagern.</td></tr>
+  <tr><td class="k">MCF</td><td>Multi-Channel-Fulfillment: Amazon versendet eine Bestellung aus einem anderen Kanal, etwa Ihrem eigenen Shop, aus Ihrem FBA-Bestand.</td></tr>
+  <tr><td class="k">Buy Box</td><td>Das Standardangebot, das auf einer Amazon-Produktseite angezeigt wird. Repricing zielt darauf, sie zu gewinnen oder zu halten.</td></tr>
+  <tr><td class="k">RDT</td><td>Restricted Data Token: der Mechanismus, über den Amazon Käuferadressen für jeweils einen einzelnen Aufruf an den Shop freigibt.</td></tr>
+  <tr><td class="k">GPSR</td><td>Die EU-Verordnung über die allgemeine Produktsicherheit (General Product Safety Regulation), die in Angeboten einen Kontakt der verantwortlichen Person verlangt.</td></tr>
+  <tr><td class="k">VCS</td><td>Amazons VAT Calculation Service, dessen teilnehmende Verkäufer ihre Umsatzsteuerrechnungen selbst hochladen.</td></tr>
+  <tr><td class="k">Änderungsfenster</td><td>Der Zeitraum, in dem sich ein Produkt geändert haben muss, um in eine Übertragung einbezogen zu werden.</td></tr>
+  <tr><td class="k">Externer Warenkorb</td><td>Ein laufender Amazon-Kaufvorgang, als Bestellung im Status „Pending“ geführt, dessen Bestand das Modul reservieren kann.</td></tr>
+</table>
+<p class="small">Amazon Marketplace Pro wird von IntelliPresta entwickelt und gepflegt und ist weder von Amazon noch von PrestaShop unterstützt oder mit ihnen verbunden. Amazon ist eine Marke von Amazon.com, Inc. oder seinen verbundenen Unternehmen. PrestaShop ist eine Marke der PrestaShop SA.</p>
+
+</body>
+</html>
