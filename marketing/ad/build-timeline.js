@@ -1,6 +1,6 @@
 /**
- * Turn a measured voiceover into one timeline shared by the animation, the
- * burned-in subtitles and the audio mix.
+ * Turn a measured voiceover into one timeline shared by the animation and
+ * the audio mix. The ad has no subtitles.
  *
  *   node build-timeline.js promo1
  *   node build-timeline.js promo2
@@ -12,12 +12,9 @@
  * Writes, per promo:
  *   timeline<N>.js    - window.TL for the scene file
  *   timeline<N>.json  - the same, for the PHP mixer
- *   <name>.srt        - the subtitles as a sidecar
  *
- * Long lines are split into subtitle chunks at sentence boundaries, and a
- * sentence too long for one line is split again at its commas, so no subtitle
- * ever wraps past two lines. Chunk timing is proportional to character count,
- * which tracks the voice closely enough at this length.
+ * Each line also carries chunks, split at sentence boundaries and then at
+ * commas, timed in proportion to character count.
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -28,7 +25,7 @@ const MAX = 72;   // characters per subtitle chunk
 const PROMOS = {
   promo1: {
     dir: 'vo',
-    out: { js: 'timeline1.js', json: 'timeline1.json', srt: 'amazon-marketplace-pro-promo.srt' },
+    out: { js: 'timeline1.js', json: 'timeline1.json' },
     tail: 1.2,
     lines: [
       ['l01', 0.8,  'Your products live in PrestaShop.'],
@@ -48,7 +45,7 @@ const PROMOS = {
   },
   promo2: {
     dir: 'vo2',
-    out: { js: 'timeline.js', json: 'timeline.json', srt: 'amazon-marketplace-pro-promo-2.srt' },
+    out: { js: 'timeline.js', json: 'timeline.json' },
     tail: 1.6,
     lines: [
       ['l01', 0.9,  'One product. One day. Here is what Amazon Marketplace Pro does with it.'],
@@ -130,16 +127,6 @@ TL.length = Math.round((last.end + P.tail) * 10) / 10;
 fs.writeFileSync(P.out.js, 'window.TL = ' + JSON.stringify(TL, null, 1) + ';\n');
 fs.writeFileSync(P.out.json, JSON.stringify(TL, null, 1));
 
-function ts(s) {
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${sec.toFixed(3).padStart(6,'0').replace('.', ',')}`;
-}
-let srt = '', n = 1;
-for (const l of TL.lines) for (const c of l.chunks) {
-  srt += `${n++}\n${ts(c.start)} --> ${ts(c.end)}\n${c.text}\n\n`;
-}
-fs.writeFileSync(P.out.srt, srt);
-
 let prev = null;
 for (const l of TL.lines) {
   const gap = prev ? (l.start - prev.end).toFixed(2) : '   -';
@@ -147,4 +134,4 @@ for (const l of TL.lines) {
   console.log(`${l.id}  ${l.start.toFixed(2).padStart(6)} - ${l.end.toFixed(2).padStart(6)}  gap ${gap}  chunks ${l.chunks.length}`);
   prev = l;
 }
-console.log(`\n${which}: ${TL.length}s, ${n - 1} subtitle cues`);
+console.log(`\n${which}: ${TL.length}s`);

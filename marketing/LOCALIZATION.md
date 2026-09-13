@@ -6,7 +6,7 @@ stays in the parent folder. Nothing in `marketing/` ships with the module
 
 | | fr | es | it | pl | de |
 | --- | --- | --- | --- | --- | --- |
-| ad video, spoken and on screen (`amazon-marketplace-pro-promo-<iso>.mp4` + `.srt`) | ☑ | ☑ | ☑ | ☑ | ☑ |
+| ad video, spoken and on screen, no subtitles (`amazon-marketplace-pro-promo-<iso>.mp4`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 | YouTube thumbnail (`youtube-thumbnail.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 | listing images (`listing-images/addons-0N-*.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
 | back-office screenshots (`addons-shot-*.png`) | ☑ | ☑ | ☑ | ☑ | ☑ |
@@ -32,7 +32,7 @@ table in `promo7.html`), so a translation has to fit each line's slot.
    then `node probe-locale.js <iso>` for a contact sheet of every scene.
 3. `node render.js promo7.<iso>.html 87.4 frames-<iso>` (about 5 minutes).
 4. `php mix-locale.php <iso> <outDir>` — mixes the voice at the English voice's
-   measured loudness over the same music bed, encodes, writes the `.srt`.
+   measured loudness over the same music bed and encodes.
 
 **Listing images** (`cards/`). `locale/cards.<iso>.json`, then
 `node render-cards.js out-<iso> cards.<iso>.html`. The map also carries a pass
@@ -58,6 +58,3 @@ prints it with the header and footer in that language.
   formal; es, it and pl informal).
 - Brand marks are artwork, never translated. "Seller Central", report names
   and menu paths stay in English, as in the module.
-- The English `.srt` caption for line 11 was corrected on 13 Sep 2026: the
-  audio says "…and nothing is shared with any third party", the caption still
-  carried the older thirty-day sentence.

@@ -26,7 +26,6 @@ $music = 'C:/Users/tehra/Downloads/Background Music for Presentation.mp3';
 $cfg = require $here . '/cues.php';
 $length = $cfg['length'];
 $fit = json_decode(file_get_contents("$here/locale/fit.$iso.json"), true);
-$lines = json_decode(file_get_contents("$here/locale/lines.$iso.json"), true);
 $frames = "$here/frames-$iso";
 
 if (count(glob("$frames/*.png")) < (int) floor($length * 30)) {
@@ -123,22 +122,4 @@ if (!is_file($out)) {
     exit(1);
 }
 
-// Subtitles: each caption runs from its cue to the end of the voice.
-function stamp($sec)
-{
-    $h = (int) ($sec / 3600);
-    $m = (int) (($sec - $h * 3600) / 60);
-    return str_replace('.', ',', sprintf('%02d:%02d:%06.3f', $h, $m, $sec - $h * 3600 - $m * 60));
-}
-$text = array();
-foreach ($lines as $l) {
-    $text[$l['id']] = isset($l['caption']) ? $l['caption'] : $l['text'];
-}
-$srt = array();
-$n = 0;
-foreach ($cfg['cues'] as $id => $start) {
-    $n++;
-    $srt[] = $n . "\n" . stamp($start) . ' --> ' . stamp($start + $fit[$id]['speech']) . "\n" . $text[$id] . "\n";
-}
-file_put_contents("$outDir/amazon-marketplace-pro-promo-$iso.srt", implode("\n", $srt));
-printf("wrote %s (%.1f MB) and its .srt\n", $out, filesize($out) / 1048576);
+printf("wrote %s (%.1f MB)\n", $out, filesize($out) / 1048576);
