@@ -12,6 +12,7 @@ if (!defined('_PS_VERSION_')) {
 
 $sql = array();
 
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amzpro_scheduled_task`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_pt_schema`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`';

@@ -22,12 +22,20 @@
  *
  * Captures shipping costs, tax, buyer address (via RDT), and FBA channel.
  *
+ * Multistore: orders are staged for the shop the importer works for (the shop
+ * whose Amazon account the client is connected to). amazon_order_id stays
+ * unique across shops, so an order already staged by another shop is left
+ * where it is and reported instead.
+ *
  * PHP 5.6+ compatible (no scalar type hints, no ?? operator, no enums).
  */
 
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonOrderImporter
 {
@@ -38,11 +46,23 @@ class AmazonOrderImporter
     private $client;
     private $marketplaceId;
     private $lastError = null;
+    private $notices = array();
+    /** The shop orders are staged for. */
+    private $idShop;
+    /** The shop the caller named, or 0 for "the request's shop". */
+    private $shopGiven;
 
-    public function __construct(AmazonSpApiClient $client, $marketplaceId)
+    /**
+     * @param AmazonSpApiClient $client
+     * @param string            $marketplaceId
+     * @param int               $idShop 0 = the shop the request acts for
+     */
+    public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;
+        $this->shopGiven = (int) $idShop;
+        $this->idShop = $this->shopGiven ? $this->shopGiven : AmzproShop::actingId();
     }
 
     /**
@@ -51,6 +71,16 @@ class AmazonOrderImporter
     public function getLastError()
     {
         return $this->lastError;
+    }
+
+    /**
+     * Messages from the last import, e.g. orders that belong to another shop.
+     *
+     * @return string[]
+     */
+    public function getNotices()
+    {
+        return $this->notices;
     }
 
     /**
@@ -91,10 +121,12 @@ class AmazonOrderImporter
             `raw_json` LONGTEXT NULL,
             `id_order` INT(11) NOT NULL DEFAULT 0,
             `import_status` VARCHAR(32) NOT NULL DEFAULT \'imported\',
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_order`),
-            UNIQUE KEY `amazon_order_id` (`amazon_order_id`)
+            UNIQUE KEY `amazon_order_id` (`amazon_order_id`),
+            KEY `shop_status` (`id_shop`, `import_status`)
         ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;';
 
         $sqls[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` (
@@ -122,6 +154,9 @@ class AmazonOrderImporter
         foreach ($sqls as $q) {
             Db::getInstance()->execute($q);
         }
+        // Tables from before multistore support get their shop column here.
+        // The item table has none: an item belongs to its order's shop.
+        AmzproShop::ensureTableShop('amazonmarketplacepro_order');
 
         // Older installs: add columns introduced after the table shipped.
         $cols = Db::getInstance()->executeS(
@@ -190,6 +225,7 @@ class AmazonOrderImporter
     public function importNewOrders($createdAfter)
     {
         $this->ensureTables();
+        $this->notices = array();
 
         $summary = array(
             'fetched' => 0,
@@ -256,9 +292,10 @@ class AmazonOrderImporter
         } while ($nextToken !== null);
 
         $summary['fetched'] = count($orders);
-        $importFba = (Configuration::get('AMZPRO_IMPORT_FBA_ORDERS') === false)
-            ? true : (bool) Configuration::get('AMZPRO_IMPORT_FBA_ORDERS');
+        $importFbaSetting = AmzproShop::get('AMZPRO_IMPORT_FBA_ORDERS', $this->idShop);
+        $importFba = ($importFbaSetting === false) ? true : (bool) $importFbaSetting;
         $skippedFba = 0;
+        $otherShop = 0;
 
         foreach ($orders as $order) {
             $amazonId = isset($order['AmazonOrderId']) ? $order['AmazonOrderId'] : null;
@@ -271,7 +308,19 @@ class AmazonOrderImporter
                 $skippedFba++;
                 continue;
             }
-            if ($this->orderExists($amazonId)) {
+            $owner = $this->orderOwner($amazonId);
+            if ($owner !== false && $owner !== 0 && $owner !== $this->idShop) {
+                // The order number is unique across shops: another shop staged
+                // it first, and it stays there untouched.
+                $otherShop++;
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('%1$s: skipped, this order is already imported in the shop "%2$s".', 'amazonorderimporter'),
+                    $amazonId,
+                    AmzproShop::name($owner)
+                );
+                continue;
+            }
+            if ($owner !== false) {
                 $summary['already']++;
                 continue;
             }
@@ -311,7 +360,7 @@ class AmazonOrderImporter
             // the shelf so no other channel can sell the same unit.
             if (isset($order['OrderStatus']) && $order['OrderStatus'] === 'Pending') {
                 require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
-                $held = AmazonRemoteCart::reserve($amazonId, $items);
+                $held = AmazonRemoteCart::reserve($amazonId, $items, $this->idShop);
                 if ($held > 0) {
                     $summary['reserved'] = (isset($summary['reserved']) ? $summary['reserved'] : 0) + $held;
                 }
@@ -325,13 +374,16 @@ class AmazonOrderImporter
         if ($skippedFba > 0) {
             $summary['skipped_fba'] = $skippedFba;
         }
+        if ($otherShop > 0) {
+            $summary['other_shop'] = $otherShop;
+        }
 
         // Reservations whose order has since been paid or cancelled are
         // settled on every import, not only by the cron.
         require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
-        if (AmazonRemoteCart::isEnabled()) {
-            $summary['reservations_settled'] = AmazonRemoteCart::convertConfirmed();
-            $expired = AmazonRemoteCart::releaseExpired();
+        if (AmazonRemoteCart::isEnabled($this->idShop)) {
+            $summary['reservations_settled'] = AmazonRemoteCart::convertConfirmed($this->idShop);
+            $expired = AmazonRemoteCart::releaseExpired($this->idShop);
             $summary['reservations_expired'] = $expired['orders'];
         }
 
@@ -342,20 +394,24 @@ class AmazonOrderImporter
      * The CreatedAfter date for order imports, from the configured lookback
      * window (e.g. "7 days" or "12 hours").
      *
+     * @param int|null $idShop the shop whose window applies (default: the current one)
      * @return string ISO-8601 timestamp
      */
-    public static function configuredCreatedAfter()
+    public static function configuredCreatedAfter($idShop = null)
     {
-        $value = (int) Configuration::get('AMZPRO_ORDER_LOOKBACK_VALUE');
+        $value = (int) AmzproShop::get('AMZPRO_ORDER_LOOKBACK_VALUE', $idShop);
         if ($value <= 0) {
             $value = 7;
         }
-        $unit = (Configuration::get('AMZPRO_ORDER_LOOKBACK_UNIT') === 'hours') ? 3600 : 86400;
+        $unit = (AmzproShop::get('AMZPRO_ORDER_LOOKBACK_UNIT', $idShop) === 'hours') ? 3600 : 86400;
 
         return gmdate('Y-m-d\TH:i:s\Z', time() - $value * $unit);
     }
 
     /**
+     * Staged orders of the importer's shop, or of every shop when the back
+     * office shows "All shops" (each row carries its id_shop).
+     *
      * @return array Staged orders (newest first), without the heavy raw_json blob.
      */
     public function listStagedOrders()
@@ -363,22 +419,33 @@ class AmazonOrderImporter
         $sql = 'SELECT `amazon_order_id`, `purchase_date`, `order_status`, `order_total`,
                        `currency`, `buyer_email`, `fulfillment_channel`, `is_prime`, `shipping_total`,
                        `order_tax`, `items_matched`, `items_unmatched`,
-                       `id_order`, `import_status`, `date_add`
+                       `id_order`, `import_status`, `date_add`, `id_shop`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                WHERE ' . AmzproShop::sqlWhere('', $this->shopGiven ? $this->shopGiven : null) . '
                 ORDER BY `purchase_date` DESC, `id_amazonmarketplacepro_order` DESC';
         $rows = Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : array();
     }
 
-    private function orderExists($amazonId)
+    /**
+     * The shop an Amazon order is staged in, or false when it is not staged.
+     *
+     * Deliberately not limited to the importer's shop: the order number is
+     * unique across shops, and an order another shop staged must be skipped,
+     * not imported a second time.
+     *
+     * @return int|false
+     */
+    private function orderOwner($amazonId)
     {
-        $val = Db::getInstance()->getValue(
-            'SELECT `id_amazonmarketplacepro_order` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_amazonmarketplacepro_order`, `id_shop`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\''
         );
 
-        return (bool) $val;
+        return $row ? (int) $row['id_shop'] : false;
     }
 
     /**
@@ -509,20 +576,29 @@ class AmazonOrderImporter
      * Checks combinations (product_attribute) first, then the base product.
      * Also tries matching by EAN13 as fallback.
      *
+     * Only products (and combinations) the importer's shop sells can match.
+     *
      * @return array array('id_product' => int, 'id_product_attribute' => int)
      */
     private function resolveProduct($sku, $asin = '')
     {
         $res = array('id_product' => 0, 'id_product_attribute' => 0);
+        $idShop = (int) $this->idShop;
+        $p = _DB_PREFIX_;
+        $inShop = ' INNER JOIN `' . $p . 'product_shop` ps
+                     ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')';
+        $combinationInShop = ' INNER JOIN `' . $p . 'product_attribute_shop` pas
+                     ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')';
 
         // Optional: trust the ASIN before the SKU. Uses the staged product
         // table, where "Match ASINs by EAN" / Amazon syncs record the mapping.
         $asin = trim((string) $asin);
-        if ($asin !== '' && Configuration::get('AMZPRO_PRIORITIZE_ASIN')) {
+        if ($asin !== '' && AmzproShop::get('AMZPRO_PRIORITIZE_ASIN', $idShop)) {
             $row = Db::getInstance()->getRow(
                 'SELECT `id_product`, `id_product_attribute`
-                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-                 WHERE `amazon_asin` = \'' . pSQL($asin) . '\' AND `id_product` > 0'
+                 FROM `' . $p . 'amazonmarketplacepro_product`
+                 WHERE `amazon_asin` = \'' . pSQL($asin) . '\' AND `id_product` > 0
+                   AND ' . AmzproShop::sqlWhere('', $idShop)
             );
             if ($row && (int) $row['id_product']) {
                 $res['id_product'] = (int) $row['id_product'];
@@ -540,11 +616,18 @@ class AmazonOrderImporter
         // Merchants already selling on Amazon under different seller SKUs
         // record the Amazon SKU on the product's Amazon tab. Checked in every
         // mode except the id one, where the SKU is not a reference at all.
-        $strategy = (string) Configuration::get('AMZPRO_ORDER_MATCH');
+        // A product's row for this shop replaces its row for all shops, so a
+        // shared row only counts while the shop has none of its own.
+        $strategy = (string) AmzproShop::get('AMZPRO_ORDER_MATCH', $idShop);
         if ($strategy !== 'id') {
             $idProduct = (int) Db::getInstance()->getValue(
-                'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`
-                 WHERE `override_sku` = \'' . $ref . '\' AND `override_sku` <> \'\''
+                'SELECT s.`id_product` FROM `' . $p . 'amazonmarketplacepro_product_setting` s
+                 WHERE s.`override_sku` = \'' . $ref . '\' AND s.`override_sku` <> \'\'
+                   AND ' . AmzproShop::sqlShared('s', $idShop) . '
+                   AND (s.`id_shop` = ' . $idShop . ' OR NOT EXISTS (
+                       SELECT 1 FROM `' . $p . 'amazonmarketplacepro_product_setting` own
+                       WHERE own.`id_product` = s.`id_product` AND own.`id_shop` = ' . $idShop . '))
+                 ORDER BY s.`id_shop` DESC'
             );
             if ($idProduct) {
                 $res['id_product'] = $idProduct;
@@ -556,8 +639,8 @@ class AmazonOrderImporter
         if ($strategy === 'id') {
             if (preg_match('/^(\d+)(?:[_-](\d+))?$/', $sku, $m)) {
                 $idProduct = (int) Db::getInstance()->getValue(
-                    'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-                     WHERE `id_product` = ' . (int) $m[1]
+                    'SELECT p.`id_product` FROM `' . $p . 'product` p' . $inShop . '
+                     WHERE p.`id_product` = ' . (int) $m[1]
                 );
                 if ($idProduct) {
                     $res['id_product'] = $idProduct;
@@ -568,16 +651,16 @@ class AmazonOrderImporter
         }
 
         // A configured SKU prefix is not part of the PrestaShop reference.
-        $prefix = trim((string) Configuration::get('AMZPRO_SKU_PREFIX'));
+        $prefix = trim((string) AmzproShop::get('AMZPRO_SKU_PREFIX', $idShop));
         if ($prefix !== '' && strpos($sku, $prefix . '-') === 0) {
             $ref = pSQL(Tools::substr($sku, Tools::strlen($prefix) + 1));
         }
 
         // Try combination reference first
         $row = Db::getInstance()->getRow(
-            'SELECT `id_product`, `id_product_attribute`
-             FROM `' . _DB_PREFIX_ . 'product_attribute`
-             WHERE `reference` = \'' . $ref . '\''
+            'SELECT pa.`id_product`, pa.`id_product_attribute`
+             FROM `' . $p . 'product_attribute` pa' . $combinationInShop . '
+             WHERE pa.`reference` = \'' . $ref . '\''
         );
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
@@ -587,8 +670,8 @@ class AmazonOrderImporter
 
         // Try base product reference
         $idProduct = (int) Db::getInstance()->getValue(
-            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `reference` = \'' . $ref . '\''
+            'SELECT p.`id_product` FROM `' . $p . 'product` p' . $inShop . '
+             WHERE p.`reference` = \'' . $ref . '\''
         );
         if ($idProduct) {
             $res['id_product'] = $idProduct;
@@ -597,9 +680,9 @@ class AmazonOrderImporter
 
         // Fallback: try matching by EAN13
         $row = Db::getInstance()->getRow(
-            'SELECT `id_product`, `id_product_attribute`
-             FROM `' . _DB_PREFIX_ . 'product_attribute`
-             WHERE `ean13` = \'' . $ref . '\''
+            'SELECT pa.`id_product`, pa.`id_product_attribute`
+             FROM `' . $p . 'product_attribute` pa' . $combinationInShop . '
+             WHERE pa.`ean13` = \'' . $ref . '\''
         );
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
@@ -608,8 +691,8 @@ class AmazonOrderImporter
         }
 
         $idProduct = (int) Db::getInstance()->getValue(
-            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `ean13` = \'' . $ref . '\''
+            'SELECT p.`id_product` FROM `' . $p . 'product` p' . $inShop . '
+             WHERE p.`ean13` = \'' . $ref . '\''
         );
         $res['id_product'] = $idProduct;
 
@@ -650,7 +733,7 @@ class AmazonOrderImporter
              `ship_address1`, `ship_address2`, `ship_city`, `ship_state`,
              `ship_postal_code`, `ship_country_code`, `ship_phone`,
              `items_matched`, `items_unmatched`, `ship_service_level`, `is_business`,
-             `raw_json`, `id_order`, `import_status`, `date_add`, `date_upd`)
+             `raw_json`, `id_order`, `import_status`, `id_shop`, `date_add`, `date_upd`)
             VALUES (
                 \'' . pSQL($amazonId) . '\',
                 ' . ($purchase ? '\'' . pSQL($purchase) . '\'' : 'NULL') . ',
@@ -680,6 +763,7 @@ class AmazonOrderImporter
                 \'' . pSQL(json_encode($order), true) . '\',
                 0,
                 \'imported\',
+                ' . (int) $this->idShop . ',
                 \'' . pSQL($now) . '\',
                 \'' . pSQL($now) . '\'
             )';

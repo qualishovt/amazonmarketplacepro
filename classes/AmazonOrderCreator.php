@@ -22,6 +22,11 @@
  *
  * Now uses real buyer address (when available via RDT), shipping costs, and tax.
  *
+ * Multistore: a creator works for one shop and only takes that shop's staged
+ * orders. Each order is built inside that shop (AmzproShop::runInShop) with the
+ * shop's own group, language, currency, country, carrier, order states and
+ * module settings, so nothing is borrowed from the back office's context.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -30,6 +35,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonOrderCreator
 {
@@ -48,34 +54,24 @@ class AmazonOrderCreator
 
     private $idCarrier;
     private $idOrderState;
+    /** Language the caller asked for; 0 = the default language of the order's shop. */
     private $idLang;
     private $idShop;
     private $lastError = null;
     private $notices = array();
 
-    /** 'amazon' = trust Amazon's tax amounts; 'ps_rules' = recompute from PS tax rules. */
-    private $taxMode = 'amazon';
-
     /**
      * @param int $idCarrier      Default carrier id for imported orders
      * @param int $idOrderState   Initial order state (e.g. PS_OS_PAYMENT for "Payment accepted")
-     * @param int $idLang         Language id
-     * @param int $idShop         Shop id
+     * @param int $idLang         Language id (0 = the shop's default language)
+     * @param int $idShop         Shop id (0 = the shop the request acts for)
      */
     public function __construct($idCarrier, $idOrderState, $idLang = 0, $idShop = 0)
     {
         $this->idCarrier = (int) $idCarrier;
         $this->idOrderState = (int) $idOrderState;
-        $this->idLang = $idLang ? (int) $idLang : (int) Configuration::get('PS_LANG_DEFAULT');
-        $this->idShop = $idShop ? (int) $idShop : (int) Context::getContext()->shop->id;
-        if (!$this->idShop) {
-            $this->idShop = 1;
-        }
-
-        $mode = (string) Configuration::get('AMZPRO_TAX_MODE');
-        if ($mode === 'ps_rules') {
-            $this->taxMode = 'ps_rules';
-        }
+        $this->idLang = (int) $idLang;
+        $this->idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
     }
 
     public function getLastError()
@@ -89,9 +85,9 @@ class AmazonOrderCreator
     }
 
     /**
-     * Create real PS orders for all staged Amazon orders that haven't been
-     * created yet (import_status = 'imported', id_order = 0). Only orders
-     * with at least one matched item are processed.
+     * Create real PS orders for all staged Amazon orders of the creator's
+     * shop that haven't been created yet (import_status = 'imported',
+     * id_order = 0). Only orders with at least one matched item are processed.
      *
      * @return array Summary: created, skipped, failed, errors
      */
@@ -106,6 +102,7 @@ class AmazonOrderCreator
                     ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
                 WHERE o.`id_order` = 0 AND o.`import_status` = \'imported\'
                   AND o.`order_status` <> \'Pending\'
+                  AND ' . AmzproShop::sqlWhere('o', $this->idShop) . '
                 GROUP BY o.`id_amazonmarketplacepro_order`
                 ORDER BY o.`purchase_date` ASC';
         $rows = Db::getInstance()->executeS($sql);
@@ -157,6 +154,9 @@ class AmazonOrderCreator
     /**
      * Create a single PS order from a staged Amazon order row.
      *
+     * The order is created in the shop the staged order belongs to, which has
+     * to be the creator's shop: an order of another shop is refused.
+     *
      * @param array $stagedOrder Row from amazonmarketplacepro_order
      * @param bool  $force       Skip the out-of-stock gate (Pending Orders "create anyway")
      * @return int|string|false PS order ID on success, 'pending_stock' when the
@@ -165,14 +165,175 @@ class AmazonOrderCreator
     public function createOneOrder($stagedOrder, $force = false)
     {
         $this->lastError = null;
+        $idShop = $this->stagedShopId($stagedOrder);
+        if ($idShop !== $this->idShop) {
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Order %1$s belongs to the shop "%2$s". Select that shop at the top of the page, then create it there.', 'amazonordercreator'),
+                $stagedOrder['amazon_order_id'],
+                AmzproShop::name($idShop)
+            );
+
+            return false;
+        }
+
+        return AmzproShop::runInShop($idShop, function ($idShop) use ($stagedOrder, $force) {
+            return $this->createInShop($stagedOrder, $force, $idShop);
+        });
+    }
+
+    /**
+     * The shop a staged order belongs to.
+     *
+     * @return int
+     */
+    private function stagedShopId($stagedOrder)
+    {
+        $idShop = isset($stagedOrder['id_shop']) ? (int) $stagedOrder['id_shop'] : 0;
+        if (!$idShop && !empty($stagedOrder['id_amazonmarketplacepro_order'])) {
+            // A row selected without its shop column: read the owner by id.
+            $idShop = (int) Db::getInstance()->getValue(
+                'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                 WHERE `id_amazonmarketplacepro_order` = ' . (int) $stagedOrder['id_amazonmarketplacepro_order']
+            );
+        }
+
+        return $idShop ? $idShop : $this->idShop;
+    }
+
+    /**
+     * What an order of this shop is built with, read for the shop itself
+     * rather than for the request's context.
+     *
+     * @param int $idShop
+     * @return array id_shop, id_shop_group, share_customer (bool), id_lang,
+     *               id_currency, id_country, id_carrier (the shop's default
+     *               carrier, or its first carrier; 0 when it has none)
+     */
+    public static function shopEnvironment($idShop)
+    {
+        $idShop = (int) $idShop;
+        $group = self::shopGroupInfo($idShop);
+        $idGroup = $group['id_shop_group'];
+
+        $idCarrier = self::carrierForShop(
+            (int) Configuration::get('PS_CARRIER_DEFAULT', null, $idGroup, $idShop),
+            $idShop
+        );
+        if (!$idCarrier) {
+            // "Best price" / "Best grade", or a default the shop does not use.
+            $idCarrier = (int) Db::getInstance()->getValue(
+                'SELECT c.`id_carrier`
+                 FROM `' . _DB_PREFIX_ . 'carrier` c
+                 INNER JOIN `' . _DB_PREFIX_ . 'carrier_shop` cs
+                     ON (cs.`id_carrier` = c.`id_carrier` AND cs.`id_shop` = ' . $idShop . ')
+                 WHERE c.`deleted` = 0 AND c.`active` = 1
+                 ORDER BY c.`position` ASC, c.`id_carrier` ASC'
+            );
+        }
+
+        return array(
+            'id_shop' => $idShop,
+            'id_shop_group' => $idGroup,
+            'share_customer' => $group['share_customer'],
+            'id_lang' => (int) Configuration::get('PS_LANG_DEFAULT', null, $idGroup, $idShop),
+            'id_currency' => (int) Configuration::get('PS_CURRENCY_DEFAULT', null, $idGroup, $idShop),
+            'id_country' => (int) Configuration::get('PS_COUNTRY_DEFAULT', null, $idGroup, $idShop),
+            'id_carrier' => $idCarrier,
+        );
+    }
+
+    /**
+     * The customer an order of this shop is filed under: looked up across the
+     * shop group when the group shares its customers, else in the shop only.
+     * Deleted customers are never reused.
+     *
+     * @param string $email
+     * @param int    $idShop
+     * @return int Customer id, or 0
+     */
+    public static function findCustomerId($email, $idShop)
+    {
+        $email = trim((string) $email);
+        if ($email === '') {
+            return 0;
+        }
+        $group = self::shopGroupInfo($idShop);
+        $scope = $group['share_customer']
+            ? '`id_shop_group` = ' . (int) $group['id_shop_group']
+            : '`id_shop` = ' . (int) $idShop;
+
+        // No LIMIT here: getValue() appends its own, and a duplicated LIMIT
+        // makes the query fail silently.
+        return (int) Db::getInstance()->getValue(
+            'SELECT `id_customer` FROM `' . _DB_PREFIX_ . 'customer`
+             WHERE `email` = \'' . pSQL($email) . '\'
+               AND `deleted` = 0
+               AND ' . $scope
+        );
+    }
+
+    /**
+     * The shop's group and whether that group shares customers. Read from the
+     * tables rather than Shop's cache, which depends on the employee.
+     *
+     * @return array id_shop_group (int), share_customer (bool)
+     */
+    private static function shopGroupInfo($idShop)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT s.`id_shop_group`, g.`share_customer`
+             FROM `' . _DB_PREFIX_ . 'shop` s
+             INNER JOIN `' . _DB_PREFIX_ . 'shop_group` g ON (g.`id_shop_group` = s.`id_shop_group`)
+             WHERE s.`id_shop` = ' . (int) $idShop
+        );
+        if (!$row) {
+            return array('id_shop_group' => AmzproShop::groupId($idShop), 'share_customer' => false);
+        }
+
+        return array(
+            'id_shop_group' => (int) $row['id_shop_group'],
+            'share_customer' => (bool) $row['share_customer'],
+        );
+    }
+
+    /**
+     * The carrier when the shop offers it (carrier_shop), else 0.
+     *
+     * @return int
+     */
+    private static function carrierForShop($idCarrier, $idShop)
+    {
+        if ((int) $idCarrier <= 0) {
+            return 0;
+        }
+
+        return (int) Db::getInstance()->getValue(
+            'SELECT `id_carrier` FROM `' . _DB_PREFIX_ . 'carrier_shop`
+             WHERE `id_carrier` = ' . (int) $idCarrier . '
+               AND `id_shop` = ' . (int) $idShop
+        );
+    }
+
+    /**
+     * createOneOrder() for a staged order of $idShop, running inside that shop.
+     *
+     * @return int|string|false
+     */
+    private function createInShop($stagedOrder, $force, $idShop)
+    {
         $amazonId = $stagedOrder['amazon_order_id'];
         $idStaged = (int) $stagedOrder['id_amazonmarketplacepro_order'];
+        $env = self::shopEnvironment($idShop);
+        $idLang = $this->idLang ? $this->idLang : $env['id_lang'];
 
         // Fetch matched items
         $items = Db::getInstance()->executeS(
-            'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item`
-             WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
-               AND `match_status` = \'matched\''
+            'SELECT i.* FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
+             INNER JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
+                 ON (o.`id_amazonmarketplacepro_order` = i.`id_amazonmarketplacepro_order`)
+             WHERE i.`id_amazonmarketplacepro_order` = ' . $idStaged . '
+               AND o.`id_shop` = ' . (int) $idShop . '
+               AND i.`match_status` = \'matched\''
         );
         if (!is_array($items) || empty($items)) {
             $this->lastError = sprintf(
@@ -186,14 +347,15 @@ class AmazonOrderCreator
         // ordered out of stock) are parked in Pending Orders instead of
         // being created. FBA orders ship from Amazon stock — never parked.
         $channel = isset($stagedOrder['fulfillment_channel']) ? $stagedOrder['fulfillment_channel'] : 'MFN';
-        if (!$force && $channel !== 'AFN' && Configuration::get('AMZPRO_SKIP_NO_STOCK')) {
-            $shortages = $this->stockShortages($items);
+        if (!$force && $channel !== 'AFN' && AmzproShop::get('AMZPRO_SKIP_NO_STOCK', $idShop)) {
+            $shortages = $this->stockShortages($items, $env);
             if (!empty($shortages)) {
                 Db::getInstance()->execute(
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                      SET `import_status` = \'pending_stock\',
                          `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-                     WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
+                     WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
+                       AND `id_shop` = ' . (int) $idShop
                 );
                 $this->lastError = sprintf(
                     AmazonI18n::get()->l('insufficient stock: %s', 'amazonordercreator'),
@@ -206,11 +368,11 @@ class AmazonOrderCreator
         // Hand any Remote Cart hold back before creating the order: the order
         // creation below decrements the same stock through the normal flow.
         require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
-        AmazonRemoteCart::convert($amazonId);
+        AmazonRemoteCart::convert($amazonId, $idShop);
 
         // 1. Find or create customer (optionally under an anonymized address)
         $buyerEmail = $stagedOrder['buyer_email'];
-        if (Configuration::get('AMZPRO_FAKE_EMAIL') && trim((string) $buyerEmail) !== '') {
+        if (AmzproShop::get('AMZPRO_FAKE_EMAIL', $idShop) && trim((string) $buyerEmail) !== '') {
             // Amazon relay addresses expire; a stable synthetic address keeps
             // one customer account per buyer order without leaking PII.
             $buyerEmail = Tools::strtolower(preg_replace('/[^a-zA-Z0-9\-]/', '', $amazonId))
@@ -218,7 +380,9 @@ class AmazonOrderCreator
         }
         $customer = $this->findOrCreateCustomer(
             $buyerEmail,
-            $stagedOrder['buyer_name']
+            $stagedOrder['buyer_name'],
+            $env,
+            $idLang
         );
         if (!$customer || !$customer->id) {
             $this->lastError = sprintf(
@@ -229,7 +393,7 @@ class AmazonOrderCreator
         }
 
         // 2. Create address using real data when available
-        $address = $this->createAddress($customer, $stagedOrder);
+        $address = $this->createAddress($customer, $stagedOrder, $env);
         if (!$address || !$address->id) {
             $this->lastError = sprintf(
                 AmazonI18n::get()->l('Could not create address for %s', 'amazonordercreator'),
@@ -238,11 +402,18 @@ class AmazonOrderCreator
             return false;
         }
 
-        // 3. Resolve currency
+        // 3. Resolve currency: one the shop accepts, else the shop's default.
         $currencyCode = !empty($stagedOrder['currency']) ? $stagedOrder['currency'] : 'EUR';
-        $idCurrency = (int) Currency::getIdByIsoCode($currencyCode);
+        $idCurrency = (int) Currency::getIdByIsoCode($currencyCode, $idShop);
         if (!$idCurrency) {
-            $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
+            $idCurrency = $env['id_currency'];
+        }
+
+        // Carrier: the one mapped to the shipping speed or the configured
+        // default, as long as this shop offers it; else the shop's default.
+        $idCarrier = self::resolveCarrier($stagedOrder, $this->idCarrier, $idShop);
+        if ($idCarrier !== 0 && !self::carrierForShop($idCarrier, $idShop)) {
+            $idCarrier = $env['id_carrier'];
         }
 
         // 4. Create cart + add products
@@ -251,10 +422,10 @@ class AmazonOrderCreator
         $cart->id_address_delivery = (int) $address->id;
         $cart->id_address_invoice = (int) $address->id;
         $cart->id_currency = $idCurrency;
-        $cart->id_lang = $this->idLang;
-        $idCarrier = self::resolveCarrier($stagedOrder, $this->idCarrier);
+        $cart->id_lang = $idLang;
         $cart->id_carrier = $idCarrier;
-        $cart->id_shop = $this->idShop;
+        $cart->id_shop = $idShop;
+        $cart->id_shop_group = $env['id_shop_group'];
         $cart->secure_key = $customer->secure_key;
         $cart->add();
 
@@ -269,7 +440,8 @@ class AmazonOrderCreator
         // Optional: recompute line taxes from the shop's own tax rules.
         // Amazon EU orders frequently report ItemTax = 0 with VAT-inclusive
         // prices; this mode restores a correct VAT breakdown for accounting.
-        if ($this->taxMode === 'ps_rules') {
+        // 'amazon' = trust Amazon's tax amounts; 'ps_rules' = recompute.
+        if ((string) AmzproShop::get('AMZPRO_TAX_MODE', $idShop) === 'ps_rules') {
             $items = $this->applyPsTaxRules($items, $address, $stagedOrder);
         }
 
@@ -277,13 +449,14 @@ class AmazonOrderCreator
         $totalProductsTaxIncl = 0;
         $totalTax = 0;
         $totalDiscount = 0;
+        $shop = new Shop($idShop);
 
         foreach ($items as $it) {
             $idProduct = (int) $it['id_product'];
             $idPa = (int) $it['id_product_attribute'];
             $qty = max(1, (int) $it['quantity']);
 
-            $cart->updateQty($qty, $idProduct, $idPa, false, 'up', $address->id);
+            $cart->updateQty($qty, $idProduct, $idPa, false, 'up', $address->id, $shop);
             $totalProducts += (float) $it['item_price'];
             $totalProductsTaxIncl += (float) $it['item_price'] + (float) $it['item_tax'];
             $totalTax += (float) $it['item_tax'] + (float) $it['shipping_tax'];
@@ -306,7 +479,7 @@ class AmazonOrderCreator
 
         // Order state: an advanced rule matching this order's flags wins;
         // otherwise the FBA / already-shipped states, else the default.
-        $idOrderState = self::resolveOrderState($stagedOrder, $this->idOrderState);
+        $idOrderState = self::resolveOrderState($stagedOrder, $this->idOrderState, $idShop);
 
         $order = new Order();
         $order->id_customer = (int) $customer->id;
@@ -314,9 +487,9 @@ class AmazonOrderCreator
         $order->id_address_invoice = (int) $address->id;
         $order->id_cart = (int) $cart->id;
         $order->id_currency = $idCurrency;
-        $order->id_lang = $this->idLang;
-        $order->id_shop = $this->idShop;
-        $order->id_shop_group = (int) Context::getContext()->shop->id_shop_group;
+        $order->id_lang = $idLang;
+        $order->id_shop = $idShop;
+        $order->id_shop_group = $env['id_shop_group'];
         $order->id_carrier = $idCarrier;
         $order->current_state = $idOrderState;
         $order->payment = 'Amazon Marketplace';
@@ -358,7 +531,7 @@ class AmazonOrderCreator
 
         // 7. Create OrderDetail for each matched item (with tax)
         foreach ($items as $it) {
-            $this->createOrderDetail($order, $it);
+            $this->createOrderDetail($order, $it, $idLang, $idShop);
         }
 
         // 8. Create OrderHistory
@@ -387,7 +560,8 @@ class AmazonOrderCreator
                 `id_order` = ' . (int) $order->id . ',
                 `import_status` = \'created\',
                 `date_upd` = \'' . pSQL($now) . '\'
-             WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
+             WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
+               AND `id_shop` = ' . (int) $idShop
         );
 
         // Note fulfillment channel
@@ -411,15 +585,18 @@ class AmazonOrderCreator
      * Amazon Business flags. The first match wins, which lets a merchant route
      * e.g. "Prime + Business" somewhere of its own.
      *
+     * @param array    $stagedOrder
+     * @param int      $defaultState
+     * @param int|null $idShop the shop whose rules apply (default: the current one)
      * @return int
      */
-    public static function resolveOrderState($stagedOrder, $defaultState)
+    public static function resolveOrderState($stagedOrder, $defaultState, $idShop = null)
     {
         $isPrime = !empty($stagedOrder['is_prime']) ? 1 : 0;
         $isFba = (isset($stagedOrder['fulfillment_channel']) && $stagedOrder['fulfillment_channel'] === 'AFN') ? 1 : 0;
         $isBusiness = !empty($stagedOrder['is_business']) ? 1 : 0;
 
-        $rules = json_decode((string) Configuration::get('AMZPRO_STATUS_RULES'), true);
+        $rules = json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES', $idShop), true);
         if (is_array($rules)) {
             foreach ($rules as $rule) {
                 if (empty($rule['state'])) {
@@ -434,8 +611,8 @@ class AmazonOrderCreator
             }
         }
 
-        $fbaState = (int) Configuration::get('AMZPRO_FBA_ORDER_STATE');
-        $shippedState = (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED');
+        $fbaState = (int) AmzproShop::get('AMZPRO_FBA_ORDER_STATE', $idShop);
+        $shippedState = (int) AmzproShop::get('AMZPRO_ORDER_STATE_SHIPPED', $idShop);
         if ($isFba && $fbaState > 0) {
             return $fbaState;
         }
@@ -459,16 +636,24 @@ class AmazonOrderCreator
      * Carrier for an imported order: mapped from the shipping speed Amazon
      * promised (Standard, Expedited, NextDay...), else the configured default.
      *
+     * With a shop, the map is that shop's and a mapped carrier the shop does
+     * not offer is passed over for the default.
+     *
+     * @param array    $stagedOrder
+     * @param int      $defaultCarrier
+     * @param int|null $idShop (default: the current shop, carrier not checked)
      * @return int
      */
-    public static function resolveCarrier($stagedOrder, $defaultCarrier)
+    public static function resolveCarrier($stagedOrder, $defaultCarrier, $idShop = null)
     {
         $level = isset($stagedOrder['ship_service_level']) ? trim((string) $stagedOrder['ship_service_level']) : '';
         if ($level !== '') {
-            $map = json_decode((string) Configuration::get('AMZPRO_CARRIER_MAP_IN'), true);
+            $map = json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN', $idShop), true);
             if (is_array($map)) {
                 foreach ($map as $amazonLevel => $idCarrier) {
-                    if ((int) $idCarrier > 0 && Tools::strtolower($amazonLevel) === Tools::strtolower($level)) {
+                    if ((int) $idCarrier > 0 && Tools::strtolower($amazonLevel) === Tools::strtolower($level)
+                        && ($idShop === null || self::carrierForShop($idCarrier, $idShop))
+                    ) {
                         return (int) $idCarrier;
                     }
                 }
@@ -481,23 +666,21 @@ class AmazonOrderCreator
     /**
      * Find an existing customer by email, or create a new one.
      *
+     * @param string $email
+     * @param string $fullName
+     * @param array  $env    shopEnvironment() of the order's shop
+     * @param int    $idLang
      * @return Customer|false
      */
-    private function findOrCreateCustomer($email, $fullName)
+    private function findOrCreateCustomer($email, $fullName, array $env, $idLang)
     {
         $email = trim((string) $email);
         if ($email === '') {
             $email = 'amazon-buyer-' . md5(uniqid((string) rand(), true)) . '@marketplace.local';
         }
+        $idShop = $env['id_shop'];
 
-        // Try to find existing customer. No LIMIT here: getValue() appends its
-        // own, and a duplicated LIMIT makes the query fail silently.
-        $idCustomer = (int) Db::getInstance()->getValue(
-            'SELECT `id_customer` FROM `' . _DB_PREFIX_ . 'customer`
-             WHERE `email` = \'' . pSQL($email) . '\'
-             AND `id_shop` = ' . $this->idShop
-        );
-
+        $idCustomer = self::findCustomerId($email, $idShop);
         if ($idCustomer) {
             $customer = new Customer($idCustomer);
             if (Validate::isLoadedObject($customer)) {
@@ -510,9 +693,9 @@ class AmazonOrderCreator
 
         // Amazon buyers can be filed under a dedicated customer group (own
         // pricing/tax rules, easy filtering). Falls back to the shop default.
-        $idGroup = (int) Configuration::get('AMZPRO_CUSTOMER_GROUP');
+        $idGroup = (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP', $idShop);
         if ($idGroup <= 0) {
-            $idGroup = (int) Configuration::get('PS_CUSTOMER_GROUP');
+            $idGroup = (int) Configuration::get('PS_CUSTOMER_GROUP', null, $env['id_shop_group'], $idShop);
         }
 
         $customer = new Customer();
@@ -521,8 +704,9 @@ class AmazonOrderCreator
         $customer->lastname = $parts['lastname'];
         $customer->passwd = md5(uniqid((string) rand(), true));
         $customer->id_default_group = $idGroup;
-        $customer->id_lang = $this->idLang;
-        $customer->id_shop = $this->idShop;
+        $customer->id_lang = (int) $idLang;
+        $customer->id_shop = $idShop;
+        $customer->id_shop_group = $env['id_shop_group'];
         $customer->active = 1;
         $customer->is_guest = 1;
 
@@ -539,10 +723,12 @@ class AmazonOrderCreator
      * does not allow out-of-stock orders).
      *
      * @param array $items Matched staged order items
+     * @param array $env   shopEnvironment() of the order's shop
      * @return array Human-readable shortage descriptions, empty when fulfillable
      */
-    private function stockShortages($items)
+    private function stockShortages($items, array $env)
     {
+        $idShop = $env['id_shop'];
         $shortages = array();
         foreach ($items as $it) {
             $idProduct = (int) $it['id_product'];
@@ -553,16 +739,17 @@ class AmazonOrderCreator
             $qty = max(1, (int) $it['quantity']);
 
             $available = (int) StockAvailable::getQuantityAvailableByProduct(
-                $idProduct, $idPa ? $idPa : null, $this->idShop
+                $idProduct, $idPa ? $idPa : null, $idShop
             );
             if ($available >= $qty) {
                 continue;
             }
 
             // Products configured to accept out-of-stock orders don't block.
-            $oosBehaviour = (int) StockAvailable::outOfStock($idProduct, $this->idShop);
+            $oosBehaviour = (int) StockAvailable::outOfStock($idProduct, $idShop);
             $acceptsOos = ($oosBehaviour === 1)
-                || ($oosBehaviour === 2 && Configuration::get('PS_ORDER_OUT_OF_STOCK'));
+                || ($oosBehaviour === 2
+                    && Configuration::get('PS_ORDER_OUT_OF_STOCK', null, $env['id_shop_group'], $idShop));
             if ($acceptsOos) {
                 continue;
             }
@@ -582,9 +769,12 @@ class AmazonOrderCreator
      * Create a delivery/invoice address for the customer.
      * Uses real Amazon shipping address when available, falls back to placeholder.
      *
+     * @param Customer $customer
+     * @param array    $stagedOrder
+     * @param array    $env shopEnvironment() of the order's shop
      * @return Address|false
      */
-    private function createAddress($customer, $stagedOrder)
+    private function createAddress($customer, $stagedOrder, array $env)
     {
         // The recipient from an uploaded order report, when there is one: the
         // parcel goes to them, and for a gift that is not the buyer.
@@ -601,7 +791,7 @@ class AmazonOrderCreator
             $idCountry = (int) Country::getByIso($countryCode);
         }
         if (!$idCountry) {
-            $idCountry = (int) Configuration::get('PS_COUNTRY_DEFAULT');
+            $idCountry = $env['id_country'];
         }
 
         // Resolve state if provided
@@ -705,8 +895,10 @@ class AmazonOrderCreator
      * Create an OrderDetail record for one order item.
      * Now includes tax data from Amazon.
      */
-    private function createOrderDetail($order, $item)
+    private function createOrderDetail($order, $item, $idLang, $idShop)
     {
+        $idLang = (int) $idLang;
+        $idShop = (int) $idShop;
         $idProduct = (int) $item['id_product'];
         $idPa = (int) $item['id_product_attribute'];
         $qty = max(1, (int) $item['quantity']);
@@ -725,8 +917,8 @@ class AmazonOrderCreator
             $psName = Db::getInstance()->getValue(
                 'SELECT `name` FROM `' . _DB_PREFIX_ . 'product_lang`
                  WHERE `id_product` = ' . $idProduct . '
-                   AND `id_lang` = ' . $this->idLang . '
-                   AND `id_shop` = ' . $this->idShop
+                   AND `id_lang` = ' . $idLang . '
+                   AND `id_shop` = ' . $idShop
             );
             if ($psName) {
                 $productName = $psName;
@@ -779,7 +971,7 @@ class AmazonOrderCreator
         $detail->product_ean13 = $ean13;
         $detail->product_upc = '';
         $detail->tax_rate = round($taxRate, 2);
-        $detail->id_shop = $this->idShop;
+        $detail->id_shop = $idShop;
         $detail->id_warehouse = 0;
 
         $detail->add();

@@ -34,6 +34,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 /**
  * Runs one scheduled task.
@@ -45,6 +46,11 @@ require_once dirname(__FILE__) . '/AmazonI18n.php';
  *
  * Nothing here touches the controller: no $this->context, no $this->module.
  * That is what made the move safe, and it is worth keeping true.
+ *
+ * Every task works for the shop the request acts for: the cron URL's shop, or
+ * the shop selected in the back office for Run now. Its settings, its Amazon
+ * connection, its log lines and its report e-mail are that shop's. The one
+ * exception is the buyer data purge, which covers every shop by itself.
  *
  * PHP 5.6+ compatible.
  */
@@ -158,11 +164,11 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
 
         $env = AmazonSpApiClient::environment();
-        $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
+        $useMock = AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production';
         $sync->setMock($useMock);
 
         // Expired change-queue entries age out before each sync.
@@ -194,11 +200,11 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
 
         $env = AmazonSpApiClient::environment();
-        $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
+        $useMock = AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production';
         $sync->setMock($useMock);
 
         $psSummary = $sync->syncPrestashopSide();
@@ -218,14 +224,15 @@ class AmazonTaskRunner
     {
         require_once dirname(__FILE__) . '/AmazonOrderCreator.php';
 
-        $idCarrier = (int) Configuration::get('AMZPRO_DEFAULT_CARRIER');
-        $idOrderState = (int) Configuration::get('AMZPRO_DEFAULT_ORDER_STATE');
+        $idShop = $this->shopId();
+        $idCarrier = (int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER');
+        $idOrderState = (int) AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE');
 
         if (!$idOrderState) {
-            $idOrderState = (int) Configuration::get('PS_OS_PAYMENT');
+            $idOrderState = (int) $this->shopConfig('PS_OS_PAYMENT');
         }
 
-        $creator = new AmazonOrderCreator($idCarrier, $idOrderState);
+        $creator = new AmazonOrderCreator($idCarrier, $idOrderState, (int) $this->shopConfig('PS_LANG_DEFAULT'), $idShop);
         $summary = $creator->createAllPending();
 
         return array('success' => true, 'action' => 'create_orders', 'summary' => $summary);
@@ -243,7 +250,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $sellerId);
 
         $env = AmazonSpApiClient::environment();
@@ -273,7 +280,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $sellerId);
 
         $summary = $manager->processReturns();
@@ -297,7 +304,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), $sellerId);
 
         $invSummary = $fba->syncFbaInventory();
@@ -324,7 +331,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), $sellerId);
 
         $fetchSummary = $engine->fetchCompetitivePricing();
@@ -451,7 +458,7 @@ class AmazonTaskRunner
      */
     private function actionRequestReviews()
     {
-        if (!Configuration::get('AMZPRO_AUTO_REVIEW_REQUEST')) {
+        if (!AmzproShop::get('AMZPRO_AUTO_REVIEW_REQUEST')) {
             return array('success' => true, 'action' => 'request_reviews',
                 'summary' => AmazonI18n::get()->l('Skipped: automatic review requests are disabled in module settings.', 'amazontaskrunner'));
         }
@@ -467,7 +474,7 @@ class AmazonTaskRunner
         $requester = new AmazonReviewRequester($client, $this->getMarketplaceId());
 
         $env = AmazonSpApiClient::environment();
-        $requester->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
+        $requester->setMock(AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         return array(
             'success' => true,
@@ -490,9 +497,9 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
         $env = AmazonSpApiClient::environment();
-        $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
+        $useMock = AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production';
 
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
         $sync->setMock($useMock);
@@ -559,7 +566,7 @@ class AmazonTaskRunner
      */
     private function actionUploadInvoices()
     {
-        if (!Configuration::get('AMZPRO_VCS_ENABLED')) {
+        if (!AmzproShop::get('AMZPRO_VCS_ENABLED')) {
             return array('success' => true, 'action' => 'upload_invoices',
                 'summary' => AmazonI18n::get()->l('Skipped: VCS invoice upload is disabled in module settings.', 'amazontaskrunner'));
         }
@@ -575,10 +582,10 @@ class AmazonTaskRunner
         $uploader = new AmazonVcsInvoiceUploader(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $env = AmazonSpApiClient::environment();
-        $uploader->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
+        $uploader->setMock(AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         return array(
             'success' => true,
@@ -598,7 +605,7 @@ class AmazonTaskRunner
     {
         require_once dirname(__FILE__) . '/AmazonPiiPurger.php';
 
-        if (!AmazonPiiPurger::isEnabled()) {
+        if (!AmazonPiiPurger::isEnabledInAnyShop()) {
             return array('success' => true, 'action' => 'purge_pii', 'summary' => array('disabled' => true));
         }
 
@@ -610,6 +617,7 @@ class AmazonTaskRunner
 
         return array('success' => true, 'action' => 'purge_pii', 'summary' => $summary);
     }
+
     /**
      * Build the SP-API client from stored configuration.
      *
@@ -617,8 +625,8 @@ class AmazonTaskRunner
      */
     private function buildClient()
     {
-        $clientId = Configuration::get('AMZPRO_CLIENT_ID');
-        $clientSecret = Configuration::get('AMZPRO_CLIENT_SECRET');
+        $clientId = AmzproShop::get('AMZPRO_CLIENT_ID');
+        $clientSecret = AmzproShop::get('AMZPRO_CLIENT_SECRET');
         $refreshToken = AmazonSpApiClient::storedRefreshToken();
         $env = AmazonSpApiClient::environment();
 
@@ -631,7 +639,7 @@ class AmazonTaskRunner
         // Resolve endpoint by marketplace + region
         $endpoint = AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
         if ($env === 'production') {
-            $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
+            $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
             $regionMap = array(
                 'ATVPDKIKX0DER' => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
                 'A2Q3Y263D00KMC' => 'NA',
@@ -675,11 +683,26 @@ class AmazonTaskRunner
     {
         $env = AmazonSpApiClient::environment();
         if ($env === 'production') {
-            $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
+            $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
             return $mp ? $mp : 'A1PA6795UKMFR9';
         }
         return 'ATVPDKIKX0DER';
     }
+
+    /** The shop this run works for. Never 0. */
+    private function shopId()
+    {
+        return (int) AmzproShop::actingId();
+    }
+
+    /** A PrestaShop setting (PS_*) as this run's shop sees it. */
+    private function shopConfig($key)
+    {
+        $idShop = $this->shopId();
+
+        return Configuration::get($key, null, AmzproShop::groupId($idShop), $idShop);
+    }
+
     private function logCronRun($action, $result)
     {
         $success = isset($result['success']) && $result['success'] ? 1 : 0;
@@ -688,8 +711,9 @@ class AmazonTaskRunner
 
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`
-             (`level`, `source`, `message`, `date_add`)
+             (`id_shop`, `level`, `source`, `message`, `date_add`)
              VALUES (
+                ' . (int) AmzproShop::id() . ',
                 \'' . ($success ? 'info' : 'error') . '\',
                 \'cron:' . pSQL($action) . '\',
                 \'' . pSQL(Tools::substr($message, 0, 1000)) . '\',
@@ -708,7 +732,7 @@ class AmazonTaskRunner
     {
         require_once dirname(__FILE__) . '/AmazonPiiPurger.php';
 
-        if (!AmazonPiiPurger::isEnabled()) {
+        if (!AmazonPiiPurger::isEnabledInAnyShop()) {
             return 0;
         }
 
@@ -717,33 +741,52 @@ class AmazonTaskRunner
 
         return ($done === false) ? 0 : (int) $done['orders'];
     }
+
     /**
      * Plain-text summary of a cron run, sent to the configured report
      * address. Silently disabled when no address is set.
      */
     private function sendReportEmail($subject, $stats)
     {
-        $to = trim((string) Configuration::get('AMZPRO_REPORT_EMAIL'));
+        $to = trim((string) AmzproShop::get('AMZPRO_REPORT_EMAIL'));
         if ($to === '' || !Validate::isEmail($to)) {
             return;
         }
 
+        $idShop = $this->shopId();
         $lines = array();
         foreach ($stats as $label => $value) {
             $lines[] = $label . ': ' . $value;
         }
-        $body = 'Amazon Marketplace Pro — ' . $subject . ' report' . "\n"
+        $title = 'Amazon Marketplace Pro — ' . $subject . ' report';
+        if (AmzproShop::isMultistore()) {
+            // Several shops can send the same report to one address, and
+            // their store names (PS_SHOP_NAME) are often the same: use the
+            // name the shop has in the shop list.
+            $title .= ' — ' . AmzproShop::name($idShop);
+        }
+        $body = $title . "\n"
             . date('Y-m-d H:i:s') . "\n\n" . implode("\n", $lines);
 
         try {
+            // The shop id (13th argument, PrestaShop 1.6 to 9) gives the
+            // e-mail that shop's name, sender, logo and theme templates.
             Mail::send(
-                (int) Configuration::get('PS_LANG_DEFAULT'),
+                (int) $this->shopConfig('PS_LANG_DEFAULT'),
                 'contact', // stock PS template: {message} in a plain wrapper
                 'Amazon Marketplace Pro: ' . $subject,
                 array('{message}' => $body,
-                      '{email}' => (string) Configuration::get('PS_SHOP_EMAIL'),
+                      '{email}' => (string) $this->shopConfig('PS_SHOP_EMAIL'),
                       '{attached_file}' => ''),
-                $to
+                $to,
+                null,
+                null,
+                null,
+                null,
+                null,
+                _PS_MAIL_DIR_,
+                false,
+                $idShop
             );
         } catch (Exception $e) {
             // Reporting must never fail the cron run itself.

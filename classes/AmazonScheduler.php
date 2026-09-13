@@ -37,6 +37,10 @@
  * compares a PHP 'now' against a MySQL-written 'next run' fires either
  * constantly or never.
  *
+ * With multistore, each shop has its own schedule, its own cron URL and token,
+ * and its own lock: everything here works on the shop the request acts for
+ * (AmzproShop::actingId()), so one shop's run never waits for another's.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -45,6 +49,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonScheduler
 {
@@ -245,7 +250,10 @@ class AmazonScheduler
      */
     public function runDue($budgetSeconds = self::DEFAULT_BUDGET)
     {
-        if (!self::acquireLock()) {
+        // Taken once: the lock released at the end is this shop's, whatever
+        // a task does to the context in between.
+        $idShop = self::shopId();
+        if (!self::acquireLock($idShop)) {
             return array('success' => true, 'skipped' => 'another run is in progress');
         }
 
@@ -275,7 +283,7 @@ class AmazonScheduler
             );
         }
 
-        self::releaseLock();
+        self::releaseLock($idShop);
 
         return array('success' => true, 'ran' => count($ran), 'tasks' => $ran);
     }
@@ -301,7 +309,8 @@ class AmazonScheduler
                 `run_count` = `run_count` + 1,
                 `fail_count` = `fail_count` + ' . ($ok ? 0 : 1) . ',
                 `date_upd` = \'' . pSQL(date('Y-m-d H:i:s', $now)) . '\'
-             WHERE `id_task` = ' . (int) $task['id_task']
+             WHERE `id_task` = ' . (int) $task['id_task'] . '
+               AND `id_shop` = ' . (int) $task['id_shop']
         );
     }
 
@@ -349,30 +358,38 @@ class AmazonScheduler
 
     /* ─────────────────────────── Plumbing ─────────────────────────── */
 
+    /**
+     * The shop whose schedule this is: the cron URL's shop, or the shop
+     * selected in the back office. Never 0: schedule actions are refused in
+     * "All shops" before they get here, and should one arrive anyway it works
+     * on the default shop, as the module did before it knew about shops.
+     */
     protected static function shopId()
     {
-        return (int) Context::getContext()->shop->id;
+        return (int) AmzproShop::actingId();
     }
 
     /**
-     * A lock that expires. Stored globally rather than per shop because the
-     * point is to stop two PHP processes overlapping, whichever shop they
-     * think they are serving.
+     * A lock that expires, one per shop. It stops two runs of the same shop's
+     * schedule overlapping (a crontab and the relay arriving together); two
+     * shops run different schedules, so they do not wait for each other.
      */
-    protected static function acquireLock()
+    protected static function acquireLock($idShop = null)
     {
-        $held = (int) Configuration::getGlobalValue('AMZPRO_CRON_LOCK');
+        $idShop = ($idShop === null) ? self::shopId() : (int) $idShop;
+        $held = (int) AmzproShop::get('AMZPRO_CRON_LOCK', $idShop);
         if ($held && (time() - $held) < self::LOCK_TIMEOUT) {
             return false;
         }
-        Configuration::updateGlobalValue('AMZPRO_CRON_LOCK', time());
+        AmzproShop::set('AMZPRO_CRON_LOCK', time(), $idShop);
 
         return true;
     }
 
-    protected static function releaseLock()
+    protected static function releaseLock($idShop = null)
     {
-        Configuration::updateGlobalValue('AMZPRO_CRON_LOCK', 0);
+        $idShop = ($idShop === null) ? self::shopId() : (int) $idShop;
+        AmzproShop::set('AMZPRO_CRON_LOCK', 0, $idShop);
     }
 
     /** Seed the schedule with the defaults the manual used to describe. */

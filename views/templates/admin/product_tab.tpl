@@ -7,6 +7,21 @@
     <h3><i class="icon-amazon"></i> {l s='Amazon Marketplace Pro' mod='amazonmarketplacepro'}</h3>
 
     <input type="hidden" name="amzpro_tab_present" value="1" />
+    <input type="hidden" name="amzpro_id_shop" value="{$amzpro_id_shop|intval}" />
+
+    {if $amzpro_multistore}
+        <div class="alert alert-warning">
+            {if $amzpro_scope_all}
+                {l s='These settings apply to:' mod='amazonmarketplacepro'} <strong>{l s='all shops' mod='amazonmarketplacepro'}</strong>.
+                {l s='A shop that saved its own settings for this product keeps them.' mod='amazonmarketplacepro'}
+            {else}
+                {l s='These settings apply to:' mod='amazonmarketplacepro'} <strong>{$amzpro_scope_shop|escape:'htmlall':'UTF-8'}</strong>.
+                {if !$amzpro_scope_own}
+                    {l s='This shop uses the settings saved for all shops until you save the product here.' mod='amazonmarketplacepro'}
+                {/if}
+            {/if}
+        </div>
+    {/if}
 
     <div class="alert alert-info">
         {l s='These settings apply to this product only and take precedence over the listing profile, the category/manufacturer/supplier rules and the global settings. Leave a field empty to inherit.' mod='amazonmarketplacepro'}

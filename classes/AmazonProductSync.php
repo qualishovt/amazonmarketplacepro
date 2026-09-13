@@ -24,6 +24,12 @@
  * category mapping, EAN, manufacturer. Pushes complete listings (not just
  * offer-only) when a category mapping exists.
  *
+ * Multistore: every staged row belongs to one shop. Syncs, pushes and
+ * deletions work on the shop the request acts for (AmzproShop::actingId()),
+ * read that shop's catalogue (product_shop, product_attribute_shop,
+ * image_shop, its stock and its URL), and resolve category mappings,
+ * profiles and product overrides as the shop's own row over the shared one.
+ *
  * PHP 5.6+ compatible (no scalar type hints, no ?? operator, no enums).
  */
 
@@ -32,6 +38,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonProductSync
 {
@@ -102,6 +109,81 @@ class AmazonProductSync
         return $this->notices;
     }
 
+    /**
+     * The shop this sync works for. Actions are refused in "All shops" by the
+     * callers; should one run anyway it works on the default shop, which is
+     * also the shop whose connection the client was built with.
+     *
+     * @return int
+     */
+    private function shopId()
+    {
+        return AmzproShop::actingId();
+    }
+
+    /**
+     * Join condition for a shared table keyed per shop: the row of the staged
+     * row's shop when it has one, else the row for all shops.
+     *
+     * @param string $table    table name without prefix
+     * @param string $alias    alias used in the outer query
+     * @param array  $match    column => SQL expression identifying the row
+     * @param string $shopExpr SQL expression of the shop id (e.g. p.`id_shop`)
+     *
+     * @return string
+     */
+    private static function preferShopJoin($table, $alias, array $match, $shopExpr)
+    {
+        $outer = array();
+        $inner = array();
+        foreach ($match as $column => $expr) {
+            $outer[] = '`' . bqSQL($alias) . '`.`' . bqSQL($column) . '` = ' . $expr;
+            $inner[] = 'x.`' . bqSQL($column) . '` = ' . $expr;
+        }
+        $inner[] = 'x.`id_shop` IN (0, ' . $shopExpr . ')';
+
+        return implode(' AND ', $outer)
+            . ' AND `' . bqSQL($alias) . '`.`id_shop` = (SELECT MAX(x.`id_shop`) FROM `'
+            . _DB_PREFIX_ . bqSQL($table) . '` x WHERE ' . implode(' AND ', $inner) . ')';
+    }
+
+    /**
+     * The joins every push/feed query shares: category mapping, listing
+     * profile and per-product overrides, each resolved for the row's shop.
+     *
+     * @param string $p alias of the staged product table
+     *
+     * @return string
+     */
+    private function listingJoins($p)
+    {
+        $shopExpr = '`' . bqSQL($p) . '`.`id_shop`';
+        $category = '`' . bqSQL($p) . '`.`ps_id_category_default`';
+        $marketplace = '\'' . pSQL($this->marketplaceId) . '\'';
+
+        return ' LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
+                 ON (' . self::preferShopJoin(
+                    'amazonmarketplacepro_category_map', 'cm',
+                    array('id_category' => $category, 'marketplace_id' => $marketplace),
+                    $shopExpr
+                ) . ')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
+                 ON (' . self::preferShopJoin(
+                    'amazonmarketplacepro_profile_category', 'pc',
+                    array('id_category' => $category, 'marketplace_id' => $marketplace),
+                    $shopExpr
+                ) . ')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
+                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1
+                     AND pr.`id_shop` IN (0, ' . $shopExpr . '))
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
+                 ON (' . self::preferShopJoin(
+                    'amazonmarketplacepro_product_setting', 'ov',
+                    array('id_product' => '`' . bqSQL($p) . '`.`id_product`'),
+                    $shopExpr
+                ) . ')';
+    }
+
     public function ensureTables()
     {
         $engine = defined('_MYSQL_ENGINE_') ? _MYSQL_ENGINE_ : 'InnoDB';
@@ -147,11 +229,13 @@ class AmazonProductSync
             `raw_amazon_json` LONGTEXT NULL,
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             PRIMARY KEY (`id_amazonmarketplacepro_product`),
-            UNIQUE KEY `seller_sku` (`seller_sku`)
+            UNIQUE KEY `seller_sku` (`id_shop`, `seller_sku`)
         ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;';
 
         Db::getInstance()->execute($sql);
+        AmzproShop::ensureTableShop('amazonmarketplacepro_product');
 
         // Older installs: add the variation-family columns if they're missing.
         $cols = Db::getInstance()->executeS(
@@ -167,6 +251,10 @@ class AmazonProductSync
                  ADD KEY `parent_sku` (`parent_sku`)'
             );
         }
+
+        // The condition, availability and sale-price columns the PrestaShop
+        // side writes; without them every staging insert fails.
+        $this->ensureStagedColumns();
     }
 
     /**
@@ -304,7 +392,8 @@ class AmazonProductSync
                 WHEN `is_parent` = 1 THEN \'in_sync\'
                 WHEN `ps_price` <> `amazon_price` OR `ps_quantity` <> `amazon_quantity` THEN \'conflict\'
                 ELSE \'in_sync\'
-            END'
+            END
+            WHERE `id_shop` = ' . (int) $this->shopId()
         );
     }
 
@@ -452,12 +541,13 @@ class AmazonProductSync
     }
 
     /**
-     * @return array All SKUs currently in the staging table.
+     * @return array All SKUs the shop has in the staging table.
      */
     private function stagedSkus()
     {
         $rows = Db::getInstance()->executeS(
-            'SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`'
+            'SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE `id_shop` = ' . (int) $this->shopId()
         );
 
         $out = array();
@@ -471,17 +561,19 @@ class AmazonProductSync
     }
 
     /**
-     * @return array Staged rows (capped), newest activity first.
+     * @return array Staged rows (capped), newest activity first: the shop's,
+     *               or every shop's in "All shops" (id_shop tells them apart).
      */
     public function listStaged($limit = 500)
     {
         $limit = (int) $limit;
-        $sql = 'SELECT `seller_sku`, `id_product`, `ps_exists`, `ps_name`, `ps_price`, `ps_quantity`,
+        $sql = 'SELECT `id_shop`, `seller_sku`, `id_product`, `ps_exists`, `ps_name`, `ps_price`, `ps_quantity`,
                        `ps_manufacturer`, `ps_ean13`,
                        `amazon_exists`, `amazon_asin`, `amazon_title`, `amazon_price`, `amazon_quantity`,
                        `amazon_status`, `amazon_brand`, `amazon_product_type`,
                        `sync_direction`, `parent_sku`, `is_parent`, `variation_theme`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `sync_direction` ASC, `seller_sku` ASC
                 LIMIT ' . $limit;
         $rows = Db::getInstance()->executeS($sql);
@@ -506,8 +598,9 @@ class AmazonProductSync
      */
     public function resolveListingLanguage()
     {
-        $default = (int) Configuration::get('PS_LANG_DEFAULT');
-        $mode = trim((string) Configuration::get('AMZPRO_LISTING_LANG'));
+        $idShop = $this->shopId();
+        $default = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
+        $mode = trim((string) AmzproShop::get('AMZPRO_LISTING_LANG', $idShop));
 
         if ($mode === '' || $mode === '0') {
             return $default;
@@ -534,29 +627,26 @@ class AmazonProductSync
     private function collectPrestashopProducts()
     {
         $idLang = $this->resolveListingLanguage();
-        $idShop = (int) Context::getContext()->shop->id;
-        if (!$idShop) {
-            $idShop = (int) Configuration::get('PS_SHOP_DEFAULT');
-        }
+        $idShop = (int) $this->shopId();
         if (!$idShop) {
             $idShop = 1;
         }
 
-        $shopUrl = $this->getShopBaseUrl();
+        $shopUrl = $this->getShopBaseUrl($idShop);
 
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         require_once dirname(__FILE__) . '/AmazonProductOverride.php';
         $overrides = AmazonProductOverride::all();
 
         // Export filters & delta-sync context.
-        $priceMin = (float) Configuration::get('AMZPRO_PRICE_MIN');
-        $priceMax = (float) Configuration::get('AMZPRO_PRICE_MAX');
-        $qtyMin = (int) Configuration::get('AMZPRO_QTY_MIN');
-        $deltaHours = (int) Configuration::get('AMZPRO_DELTA_HOURS');
+        $priceMin = (float) AmzproShop::get('AMZPRO_PRICE_MIN', $idShop);
+        $priceMax = (float) AmzproShop::get('AMZPRO_PRICE_MAX', $idShop);
+        $qtyMin = (int) AmzproShop::get('AMZPRO_QTY_MIN', $idShop);
+        $deltaHours = (int) AmzproShop::get('AMZPRO_DELTA_HOURS', $idShop);
         // "Send entire catalogue" wins over the delta window — the escape
         // hatch for a first push, or after a settings change that affects
         // every listing.
-        if (Configuration::get('AMZPRO_FULL_CATALOG')) {
+        if (AmzproShop::get('AMZPRO_FULL_CATALOG', $idShop)) {
             $deltaHours = 0;
         }
         $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : array();
@@ -569,19 +659,24 @@ class AmazonProductSync
         $comboRowIndexes = array(); // id_product => list of indexes in $out (combination rows)
         $familyAttrKeys = array(); // id_product => array('color' => true, 'size' => true, ...)
 
-        // Base products. The SKU is built from the configured source field
-        // (reference / EAN / supplier reference) plus the optional prefix,
-        // so rows are pre-filtered only on being active.
-        $sql = 'SELECT p.`id_product`, p.`reference`, p.`supplier_reference`, p.`price`, p.`ean13`,
-                       p.`weight`, p.`date_upd`, p.`id_category_default`,
-                       p.`condition` AS ps_condition, p.`available_date`,
+        // Base products of this shop. The SKU is built from the configured
+        // source field (reference / EAN / supplier reference) plus the
+        // optional prefix, so rows are pre-filtered only on being active.
+        // Price, status, default category, condition and availability are
+        // the shop's own (product_shop); the later of the two update dates
+        // drives the delta window.
+        $sql = 'SELECT p.`id_product`, p.`reference`, p.`supplier_reference`, ps.`price`, p.`ean13`,
+                       p.`weight`, GREATEST(p.`date_upd`, ps.`date_upd`) AS date_upd, ps.`id_category_default`,
+                       ps.`condition` AS ps_condition, ps.`available_date`,
                        pl.`name`, pl.`description`, pl.`description_short`,
                        m.`name` AS manufacturer_name
                 FROM `' . _DB_PREFIX_ . 'product` p
+                INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                    ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ' AND pl.`id_shop` = ' . $idShop . ')
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
-                WHERE p.`active` = 1
+                WHERE ps.`active` = 1
                 ORDER BY p.`id_product`
                 LIMIT ' . (int) self::MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
@@ -616,7 +711,7 @@ class AmazonProductSync
                 }
 
                 $seen[$sku] = true;
-                $images = $this->getProductImageUrls($idProduct, 0, $shopUrl);
+                $images = $this->getProductImageUrls($idProduct, 0, $shopUrl, $idShop);
 
                 $sale = AmazonListingSettings::resolveSaleSchedule($price, $idProduct, 0);
 
@@ -644,21 +739,27 @@ class AmazonProductSync
             }
         }
 
-        // Combinations (their own reference / EAN / supplier reference).
+        // Combinations of this shop (their own reference / EAN / supplier
+        // reference); the price impact is the shop's (product_attribute_shop).
         $sql = 'SELECT pa.`id_product`, pa.`id_product_attribute`, pa.`reference`,
                        pa.`supplier_reference`, pa.`ean13` AS combo_ean,
-                       (p.`price` + pa.`price`) AS price, pl.`name`,
-                       pl.`description`, pl.`description_short`, p.`date_upd`,
-                       p.`condition` AS ps_condition, p.`available_date`,
+                       (ps.`price` + pas.`price`) AS price, pl.`name`,
+                       pl.`description`, pl.`description_short`,
+                       GREATEST(p.`date_upd`, ps.`date_upd`) AS date_upd,
+                       ps.`condition` AS ps_condition, ps.`available_date`,
                        p.`ean13` AS product_ean, p.`supplier_reference` AS product_supplier_ref,
-                       p.`id_category_default`,
+                       ps.`id_category_default`,
                        m.`name` AS manufacturer_name
                 FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+                INNER JOIN `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                    ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')
                 INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = pa.`id_product`)
+                INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                    ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ' AND pl.`id_shop` = ' . $idShop . ')
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
-                WHERE p.`active` = 1
+                WHERE ps.`active` = 1
                 ORDER BY pa.`id_product_attribute`
                 LIMIT ' . (int) self::MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
@@ -713,7 +814,7 @@ class AmazonProductSync
                     $ean = trim((string) $r['product_ean']);
                 }
 
-                $images = $this->getProductImageUrls($idProduct, $idPa, $shopUrl);
+                $images = $this->getProductImageUrls($idProduct, $idPa, $shopUrl, $idShop);
 
                 // Amazon-mappable variation attributes (color / size) for this combination
                 $amzAttrs = $this->getCombinationAmazonAttributes($idPa, $idLang);
@@ -938,41 +1039,47 @@ class AmazonProductSync
     }
 
     /**
-     * Get public image URLs for a product (or specific combination).
+     * Get public image URLs for a product (or specific combination), limited
+     * to the images the shop shows (image_shop).
      *
      * @return array List of image URLs
      */
-    private function getProductImageUrls($idProduct, $idProductAttribute, $shopBaseUrl)
+    private function getProductImageUrls($idProduct, $idProductAttribute, $shopBaseUrl, $idShop)
     {
         $urls = array();
+        $idShop = (int) $idShop;
 
         if ($idProductAttribute > 0) {
             // Combination-specific images
             $sql = 'SELECT i.`id_image`
                     FROM `' . _DB_PREFIX_ . 'product_attribute_image` pai
                     INNER JOIN `' . _DB_PREFIX_ . 'image` i ON (i.`id_image` = pai.`id_image`)
+                    INNER JOIN `' . _DB_PREFIX_ . 'image_shop` ims
+                        ON (ims.`id_image` = i.`id_image` AND ims.`id_shop` = ' . $idShop . ')
                     WHERE pai.`id_product_attribute` = ' . (int) $idProductAttribute . '
                     ORDER BY i.`position` ASC
                     LIMIT 5';
             $rows = Db::getInstance()->executeS($sql);
             if (is_array($rows) && !empty($rows)) {
                 foreach ($rows as $r) {
-                    $urls[] = $shopBaseUrl . $idProduct . '-' . $r['id_image'] . '-large_default.jpg';
+                    $urls[] = $shopBaseUrl . $this->imagePath($idProduct, $r['id_image']);
                 }
                 return $urls;
             }
         }
 
         // Base product images
-        $sql = 'SELECT `id_image`
-                FROM `' . _DB_PREFIX_ . 'image`
-                WHERE `id_product` = ' . (int) $idProduct . '
-                ORDER BY `position` ASC
+        $sql = 'SELECT i.`id_image`
+                FROM `' . _DB_PREFIX_ . 'image` i
+                INNER JOIN `' . _DB_PREFIX_ . 'image_shop` ims
+                    ON (ims.`id_image` = i.`id_image` AND ims.`id_shop` = ' . $idShop . ')
+                WHERE i.`id_product` = ' . (int) $idProduct . '
+                ORDER BY i.`position` ASC
                 LIMIT 5';
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $urls[] = $shopBaseUrl . $idProduct . '-' . $r['id_image'] . '-large_default.jpg';
+                $urls[] = $shopBaseUrl . $this->imagePath($idProduct, $r['id_image']);
             }
         }
 
@@ -980,17 +1087,52 @@ class AmazonProductSync
     }
 
     /**
-     * Get the shop base URL for product images.
+     * Path of a product image's large file below img/p/. PrestaShop keeps
+     * images in one folder per digit ("1/2/3/123-large_default.jpg"); only
+     * installs still on the legacy layout have "5-123-large_default.jpg".
      */
-    private function getShopBaseUrl()
+    private function imagePath($idProduct, $idImage)
     {
-        $ssl = (int) Configuration::get('PS_SSL_ENABLED');
-        $domain = $ssl ? Configuration::get('PS_SHOP_DOMAIN_SSL') : Configuration::get('PS_SHOP_DOMAIN');
+        $idProduct = (int) $idProduct;
+        $idImage = (int) $idImage;
+        if (Configuration::get('PS_LEGACY_IMAGES')
+            && file_exists(_PS_PROD_IMG_DIR_ . $idProduct . '-' . $idImage . '.jpg')) {
+            return $idProduct . '-' . $idImage . '-large_default.jpg';
+        }
+
+        return Image::getImgFolderStatic($idImage) . $idImage . '-large_default.jpg';
+    }
+
+    /**
+     * Base URL of the shop's product images: the shop's own domain and the
+     * folder PrestaShop is installed in. The shop's virtual URI is left out:
+     * image files live under the physical folder for every shop.
+     */
+    private function getShopBaseUrl($idShop)
+    {
+        $idShop = (int) $idShop;
+        $idGroup = AmzproShop::groupId($idShop);
+        $ssl = (int) Configuration::get('PS_SSL_ENABLED', null, $idGroup, $idShop);
+
+        $domain = '';
+        $uri = '/';
+        $shop = new Shop($idShop);
+        if (Validate::isLoadedObject($shop)) {
+            $domain = $ssl ? (string) $shop->domain_ssl : (string) $shop->domain;
+            $uri = (string) $shop->physical_uri;
+        }
+        if (!$domain) {
+            $domain = $ssl
+                ? Configuration::get('PS_SHOP_DOMAIN_SSL', null, $idGroup, $idShop)
+                : Configuration::get('PS_SHOP_DOMAIN', null, $idGroup, $idShop);
+        }
         if (!$domain) {
             $domain = Tools::getHttpHost(false);
         }
+        $uri = trim($uri, '/');
         $protocol = $ssl ? 'https://' : 'http://';
-        return $protocol . $domain . '/img/p/';
+
+        return $protocol . $domain . '/' . ($uri !== '' ? $uri . '/' : '') . 'img/p/';
     }
 
     private function getQuantity($idProduct, $idProductAttribute, $idShop)
@@ -1016,7 +1158,7 @@ class AmazonProductSync
         );
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-            (`seller_sku`, `id_product`, `id_product_attribute`, `ps_exists`, `ps_name`, `ps_price`,
+            (`id_shop`, `seller_sku`, `id_product`, `id_product_attribute`, `ps_exists`, `ps_name`, `ps_price`,
              `ps_quantity`, `ps_description`, `ps_description_short`, `ps_manufacturer`,
              `ps_ean13`, `ps_id_category_default`, `ps_images`,
              `parent_sku`, `is_parent`, `variation_theme`, `variation_attributes`,
@@ -1024,6 +1166,7 @@ class AmazonProductSync
              `sale_price`, `sale_from`, `sale_to`,
              `amazon_exists`, `sync_direction`, `date_add`, `date_upd`)
             VALUES (
+                ' . (int) $this->shopId() . ',
                 \'' . pSQL($row['sku']) . '\',
                 ' . (int) $row['id_product'] . ',
                 ' . (int) $row['id_product_attribute'] . ',
@@ -1200,7 +1343,8 @@ class AmazonProductSync
                     `amazon_browse_node` = \'' . pSQL(isset($listing['browse_node']) ? $listing['browse_node'] : '') . '\',
                     `raw_amazon_json` = \'' . pSQL(isset($listing['raw']) ? $listing['raw'] : '', true) . '\',
                     `date_upd` = \'' . pSQL($now) . '\'
-                WHERE `seller_sku` = \'' . pSQL($sku) . '\'';
+                WHERE `seller_sku` = \'' . pSQL($sku) . '\'
+                  AND `id_shop` = ' . (int) $this->shopId();
         Db::getInstance()->execute($sql);
     }
 
@@ -1213,12 +1357,13 @@ class AmazonProductSync
         $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : array());
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-            (`seller_sku`, `ps_exists`, `amazon_exists`, `amazon_asin`, `amazon_title`,
+            (`id_shop`, `seller_sku`, `ps_exists`, `amazon_exists`, `amazon_asin`, `amazon_title`,
              `amazon_price`, `amazon_quantity`, `amazon_status`,
              `amazon_description`, `amazon_bullet_points`, `amazon_brand`, `amazon_images`,
              `amazon_product_type`, `amazon_browse_node`,
              `raw_amazon_json`, `sync_direction`, `date_add`, `date_upd`)
             VALUES (
+                ' . (int) $this->shopId() . ',
                 \'' . pSQL($sku) . '\', 0, 1,
                 \'' . pSQL($listing['asin']) . '\',
                 \'' . pSQL($listing['title']) . '\',
@@ -1264,7 +1409,7 @@ class AmazonProductSync
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `ps_name`, `ps_price`, `ps_quantity`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `ps_exists` = 1
+             WHERE `ps_exists` = 1 AND `id_shop` = ' . (int) $this->shopId() . '
              ORDER BY `seller_sku` ASC
              LIMIT 3'
         );
@@ -1341,11 +1486,12 @@ class AmazonProductSync
     public function countPending()
     {
         $this->ensureTables();
-        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
+        $onlyWithAsin = (bool) AmzproShop::get('AMZPRO_ONLY_WITH_ASIN', $this->shopId());
 
         return (int) Db::getInstance()->getValue(
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             WHERE p.`id_shop` = ' . (int) $this->shopId() . '
+               AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '')
         );
     }
@@ -1358,12 +1504,12 @@ class AmazonProductSync
 
         $limit = (int) $limit;
         // A configured export line limit caps every push batch.
-        $exportLimit = (int) Configuration::get('AMZPRO_EXPORT_LIMIT');
+        $exportLimit = (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT', $this->shopId());
         if ($exportLimit > 0 && $exportLimit < $limit) {
             $limit = $exportLimit;
         }
 
-        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
+        $onlyWithAsin = (bool) AmzproShop::get('AMZPRO_ONLY_WITH_ASIN', $this->shopId());
 
         $rows = Db::getInstance()->executeS(
             'SELECT p.`seller_sku`, p.`id_product`, p.`id_product_attribute`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
@@ -1390,18 +1536,10 @@ class AmazonProductSync
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
-             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
-                 ON (cm.`id_category` = p.`ps_id_category_default`
-                     AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
-                 ON (pc.`id_category` = p.`ps_id_category_default`
-                     AND pc.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
-                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1)
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
-                 ON (ov.`id_product` = p.`id_product`)
-             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
+             . $this->listingJoins('p') . '
+             WHERE p.`id_shop` = ' . (int) $this->shopId() . '
+               AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . $limit
@@ -1472,7 +1610,7 @@ class AmazonProductSync
 
         // Price-only / quantity-only modes send a partial PATCH instead of a
         // full listing replace.
-        $syncMode = (string) Configuration::get('AMZPRO_SYNC_MODE');
+        $syncMode = (string) AmzproShop::get('AMZPRO_SYNC_MODE', $this->shopId());
         if (($syncMode === 'price' || $syncMode === 'quantity') && empty($r['is_parent'])) {
             $body = $this->buildPatchBody($r, $syncMode);
             $resp = $this->client->request(
@@ -1495,8 +1633,8 @@ class AmazonProductSync
         // (instead of publishing quantity 0). Parents are never deleted.
         // Skipped while "force all quantities to zero" is on — that mode means
         // "publish 0 everywhere", not "delist the whole catalog".
-        if (Configuration::get('AMZPRO_DELETE_WHEN_OOS')
-            && !Configuration::get('AMZPRO_FORCE_ZERO_QTY')
+        if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $this->shopId())
+            && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $this->shopId())
             && empty($r['is_parent'])
             && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
             $resp = $this->client->request(
@@ -1551,15 +1689,23 @@ class AmazonProductSync
     {
         $this->ensureTables();
 
+        // Each row is judged in its own shop: a product that is not in the
+        // shop, or is disabled there, has nothing to sell on that account.
         $rows = Db::getInstance()->executeS(
-            'SELECT ap.`seller_sku`, ap.`amazon_asin`, ap.`ps_name`, ap.`id_product`,
+            'SELECT ap.`id_shop`, ap.`seller_sku`, ap.`amazon_asin`, ap.`ps_name`, ap.`id_product`,
                     ap.`ps_exists`, ap.`ps_quantity`, p.`active`,
                     ov.`sync` AS ov_sync
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
-             LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` p
+                 ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ap.`id_shop`)
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
-                 ON (ov.`id_product` = ap.`id_product`)
-             WHERE ap.`amazon_exists` = 1
+                 ON (' . self::preferShopJoin(
+                    'amazonmarketplacepro_product_setting', 'ov',
+                    array('id_product' => 'ap.`id_product`'),
+                    'ap.`id_shop`'
+                ) . ')
+             WHERE ' . AmzproShop::sqlWhere('ap') . '
+               AND ap.`amazon_exists` = 1
                AND (ap.`ps_exists` = 0
                     OR p.`id_product` IS NULL
                     OR p.`active` = 0
@@ -1642,7 +1788,8 @@ class AmazonProductSync
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
                      SET `amazon_exists` = 0, `sync_direction` = \'\',
                          `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-                     WHERE `seller_sku` = \'' . pSQL($sku) . '\''
+                     WHERE `seller_sku` = \'' . pSQL($sku) . '\'
+                       AND `id_shop` = ' . (int) $this->shopId()
                 );
             } else {
                 $summary['failed']++;
@@ -1672,12 +1819,13 @@ class AmazonProductSync
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $this->ensureTables();
 
-        $exportLimit = (int) Configuration::get('AMZPRO_EXPORT_LIMIT');
+        $idShop = (int) $this->shopId();
+        $exportLimit = (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT', $idShop);
         if ($exportLimit > 0 && $exportLimit < (int) $limit) {
             $limit = $exportLimit;
         }
-        $onlyWithAsin = (bool) Configuration::get('AMZPRO_ONLY_WITH_ASIN');
-        $syncMode = (string) Configuration::get('AMZPRO_SYNC_MODE');
+        $onlyWithAsin = (bool) AmzproShop::get('AMZPRO_ONLY_WITH_ASIN', $idShop);
+        $syncMode = (string) AmzproShop::get('AMZPRO_SYNC_MODE', $idShop);
 
         $rows = Db::getInstance()->executeS(
             'SELECT p.`seller_sku`, p.`id_product`, p.`id_product_attribute`, p.`ps_name`, p.`ps_price`, p.`ps_quantity`,
@@ -1704,18 +1852,10 @@ class AmazonProductSync
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
-             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
-                 ON (cm.`id_category` = p.`ps_id_category_default`
-                     AND cm.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
-                 ON (pc.`id_category` = p.`ps_id_category_default`
-                     AND pc.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
-                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1)
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
-                 ON (ov.`id_product` = p.`id_product`)
-             WHERE p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
+             . $this->listingJoins('p') . '
+             WHERE p.`id_shop` = ' . $idShop . '
+               AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . (int) $limit
@@ -1750,8 +1890,8 @@ class AmazonProductSync
                 continue;
             }
 
-            if (Configuration::get('AMZPRO_DELETE_WHEN_OOS')
-                && !Configuration::get('AMZPRO_FORCE_ZERO_QTY')
+            if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop)
+                && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)
                 && empty($r['is_parent'])
                 && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
                 $messages[] = array(
@@ -1934,7 +2074,7 @@ class AmazonProductSync
                     'marketplace_id' => $this->marketplaceId,
                 ));
             }
-        } elseif ($hasProductType && Configuration::get('AMZPRO_EXTENDED_DATA') !== '0') {
+        } elseif ($hasProductType && AmzproShop::get('AMZPRO_EXTENDED_DATA', $this->shopId()) !== '0') {
             // Standalone full listing with all attributes
             $body = $this->buildFullListingBody($r, $bulletPoints, $images);
         } else {
@@ -2072,7 +2212,7 @@ class AmazonProductSync
         // treated as UPC (US barcodes stored in the EAN-13 field).
         $ean = isset($r['ps_ean13']) ? trim((string) $r['ps_ean13']) : '';
         if ($ean !== '' && strlen($ean) >= 8) {
-            if (Configuration::get('AMZPRO_EAN_AS') === 'UPC') {
+            if (AmzproShop::get('AMZPRO_EAN_AS', $this->shopId()) === 'UPC') {
                 $idType = 'UPC';
             } else {
                 $idType = (strlen($ean) === 13) ? 'EAN' : 'UPC';
@@ -2086,7 +2226,7 @@ class AmazonProductSync
 
         // Images are optional: hosting them costs Amazon a fetch per SKU, so
         // large catalogues often push them once and then sync offers only.
-        if (Configuration::get('AMZPRO_SEND_IMAGES') !== '0') {
+        if (AmzproShop::get('AMZPRO_SEND_IMAGES', $this->shopId()) !== '0') {
             if (!empty($images) && isset($images[0])) {
                 $attributes['main_product_image_locator'] = array(array(
                     'media_location' => $images[0],
@@ -2107,7 +2247,7 @@ class AmazonProductSync
         $this->applyPricingExtras($attributes, $r);
 
         // Preorder: a future availability date becomes Amazon's restock date.
-        if (Configuration::get('AMZPRO_PREORDER') && !empty($r['ps_available_date'])
+        if (AmzproShop::get('AMZPRO_PREORDER', $this->shopId()) && !empty($r['ps_available_date'])
             && isset($attributes['fulfillment_availability'][0])
             && strtotime($r['ps_available_date']) > time()) {
             $attributes['fulfillment_availability'][0]['restock_date'] =
@@ -2263,7 +2403,7 @@ class AmazonProductSync
     private function composeTitle($r)
     {
         $name = trim((string) $r['ps_name']);
-        if (Configuration::get('AMZPRO_TITLE_FORMAT') !== 'brand_name_attrs') {
+        if (AmzproShop::get('AMZPRO_TITLE_FORMAT', $this->shopId()) !== 'brand_name_attrs') {
             return $name;
         }
 
@@ -2300,7 +2440,7 @@ class AmazonProductSync
         }
 
         // The pre-discount shop price becomes Amazon's crossed-out list price.
-        if (Configuration::get('AMZPRO_SEND_LIST_PRICE') && (float) $r['ps_list_price'] > 0
+        if (AmzproShop::get('AMZPRO_SEND_LIST_PRICE', $this->shopId()) && (float) $r['ps_list_price'] > 0
             && (float) $r['ps_list_price'] > (float) $r['ps_price']) {
             $attributes['list_price'] = array(array(
                 'value' => AmazonListingSettings::applyRounding($r['ps_list_price']),
@@ -2317,10 +2457,10 @@ class AmazonProductSync
             $condition = AmazonSpApiClient::listingCondition();
         }
         if (strpos($condition, 'used') === 0 || strpos($condition, 'collectible') === 0) {
-            return trim((string) Configuration::get('AMZPRO_COND_NOTE_USED'));
+            return trim((string) AmzproShop::get('AMZPRO_COND_NOTE_USED', $this->shopId()));
         }
         if (strpos($condition, 'refurbished') === 0) {
-            return trim((string) Configuration::get('AMZPRO_COND_NOTE_REFURB'));
+            return trim((string) AmzproShop::get('AMZPRO_COND_NOTE_REFURB', $this->shopId()));
         }
 
         return '';
@@ -2339,9 +2479,14 @@ class AmazonProductSync
             'SELECT `weight` FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . $idProduct
         );
         if ($idPa) {
+            // The combination's weight impact as the shop has it.
             $weight += (float) Db::getInstance()->getValue(
-                'SELECT `weight` FROM `' . _DB_PREFIX_ . 'product_attribute`
-                 WHERE `id_product_attribute` = ' . $idPa
+                'SELECT IFNULL(pas.`weight`, pa.`weight`)
+                 FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+                 LEFT JOIN `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                     ON (pas.`id_product_attribute` = pa.`id_product_attribute`
+                         AND pas.`id_shop` = ' . (int) $this->shopId() . ')
+                 WHERE pa.`id_product_attribute` = ' . $idPa
             );
         }
 
@@ -2527,19 +2672,25 @@ class AmazonProductSync
     }
 
     /**
-     * Get category mappings for admin UI.
+     * Get category mappings for admin UI: the mappings for all shops, with
+     * the shop's own mapping replacing the shared one for the same category
+     * and marketplace. Each row carries id_shop (0 = applies to all shops).
      */
     public function getCategoryMappings()
     {
+        $idShop = (int) AmzproShop::actingId();
+        $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
         $sql = 'SELECT cm.*, cl.`name` AS category_name
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                 LEFT JOIN `' . _DB_PREFIX_ . 'category_lang` cl
                     ON (cl.`id_category` = cm.`id_category`
-                        AND cl.`id_lang` = ' . (int) Configuration::get('PS_LANG_DEFAULT') . '
-                        AND cl.`id_shop` = ' . (int) Context::getContext()->shop->id . ')
-                ORDER BY cl.`name` ASC';
+                        AND cl.`id_lang` = ' . $idLang . '
+                        AND cl.`id_shop` = ' . $idShop . ')
+                WHERE ' . AmzproShop::sqlShared('cm') . '
+                ORDER BY cl.`name` ASC, cm.`id_shop` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? AmzproShop::preferShopRows($rows, array('id_category', 'marketplace_id')) : array();
     }
 
     /**
@@ -2553,10 +2704,14 @@ class AmazonProductSync
             return false;
         }
 
+        // In a shop this saves the shop's own mapping (created on first save,
+        // leaving the mapping for all shops untouched); in "All shops" the
+        // shared one.
         $now = date('Y-m-d H:i:s');
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map`
-                (`id_category`, `amazon_product_type`, `amazon_browse_node`, `marketplace_id`, `attributes_json`, `date_add`, `date_upd`)
+                (`id_shop`, `id_category`, `amazon_product_type`, `amazon_browse_node`, `marketplace_id`, `attributes_json`, `date_add`, `date_upd`)
                 VALUES (
+                    ' . (int) AmzproShop::sharedWriteId() . ',
                     ' . (int) $idCategory . ',
                     \'' . pSQL($amazonProductType) . '\',
                     \'' . pSQL($amazonBrowseNode) . '\',
@@ -2574,13 +2729,33 @@ class AmazonProductSync
     }
 
     /**
-     * Delete a category mapping.
+     * Delete a category mapping. A shop deletes only its own mapping, after
+     * which the mapping for all shops applies again; the shared mapping is
+     * deleted from "All shops". Returns false with getLastError() set when
+     * the mapping belongs to another scope.
      */
     public function deleteCategoryMapping($idCategoryMap)
     {
+        $this->lastError = null;
+        $owner = Db::getInstance()->getValue(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map`
+             WHERE `id_amazonmarketplacepro_category_map` = ' . (int) $idCategoryMap
+        );
+        if ($owner === false) {
+            return true;
+        }
+        if ((int) $owner !== (int) AmzproShop::sharedWriteId()) {
+            $this->lastError = ((int) $owner === 0)
+                ? AmazonI18n::get()->l('This mapping applies to all shops. Select "All shops" at the top of the page to delete it.', 'amazonproductsync')
+                : AmazonI18n::get()->l('This mapping belongs to another shop. Select that shop at the top of the page to delete it.', 'amazonproductsync');
+
+            return false;
+        }
+
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map`
-             WHERE `id_amazonmarketplacepro_category_map` = ' . (int) $idCategoryMap
+             WHERE `id_amazonmarketplacepro_category_map` = ' . (int) $idCategoryMap . '
+               AND `id_shop` = ' . (int) AmzproShop::sharedWriteId()
         );
     }
 
@@ -2599,6 +2774,7 @@ class AmazonProductSync
         $rows = Db::getInstance()->executeS(
             'SELECT `sync_direction`, COUNT(*) AS c
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE `id_shop` = ' . (int) $this->shopId() . '
              GROUP BY `sync_direction`'
         );
         if (is_array($rows)) {

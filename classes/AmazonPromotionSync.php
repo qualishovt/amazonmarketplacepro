@@ -25,6 +25,10 @@
  * in Seller Central. This class primarily imports promotion data from orders
  * and creates matching PS cart rules for reporting/tracking.
  *
+ * Shops: promotions belong to the shop of the order (or cart rule) they come
+ * from. Each shop imports from its own orders, exports its own cart rules,
+ * and the cart rules created here are limited to that shop.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -33,6 +37,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonPromotionSync
 {
@@ -82,11 +87,12 @@ class AmazonPromotionSync
         $items = Db::getInstance()->executeS(
             'SELECT oi.`amazon_order_id`, oi.`order_item_id`, oi.`seller_sku`,
                     oi.`asin`, oi.`title`, oi.`promotion_discount`, oi.`currency`,
-                    o.`marketplace_id`
+                    o.`marketplace_id`, o.`id_shop`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` oi
              INNER JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
                  ON (o.`id_amazonmarketplacepro_order` = oi.`id_amazonmarketplacepro_order`)
-             WHERE oi.`promotion_discount` > 0
+             WHERE ' . AmzproShop::sqlWhere('o') . '
+               AND oi.`promotion_discount` > 0
              ORDER BY o.`date_add` DESC
              LIMIT 200'
         );
@@ -108,6 +114,12 @@ class AmazonPromotionSync
 
             $summary['promotions_found']++;
 
+            // The promotion belongs to the order's shop.
+            $idShop = (int) $item['id_shop'];
+            if (!$idShop) {
+                $idShop = AmzproShop::actingId();
+            }
+
             // Fetch detailed promotion info from order items API
             $promotionIds = $this->fetchPromotionIds($amazonOrderId, $item['order_item_id']);
 
@@ -115,7 +127,8 @@ class AmazonPromotionSync
                 $exists = (bool) Db::getInstance()->getValue(
                     'SELECT `id_amazonmarketplacepro_promotion`
                      FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
-                     WHERE `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
+                     WHERE `id_shop` = ' . $idShop . '
+                       AND `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
                        AND `seller_sku` = \'' . pSQL($item['seller_sku']) . '\''
                 );
 
@@ -125,7 +138,8 @@ class AmazonPromotionSync
                         'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion` SET
                             `discount_value` = `discount_value` + ' . (float) $item['promotion_discount'] . ',
                             `date_upd` = \'' . pSQL($now) . '\'
-                         WHERE `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
+                         WHERE `id_shop` = ' . $idShop . '
+                           AND `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
                            AND `seller_sku` = \'' . pSQL($item['seller_sku']) . '\''
                     );
                     $summary['promotions_updated']++;
@@ -135,7 +149,7 @@ class AmazonPromotionSync
                          (`amazon_promotion_id`, `promotion_type`, `description`,
                           `discount_type`, `discount_value`, `status`,
                           `marketplace_id`, `seller_sku`, `asin`,
-                          `sync_direction`, `date_add`, `date_upd`)
+                          `sync_direction`, `date_add`, `date_upd`, `id_shop`)
                          VALUES (
                             \'' . pSQL($promoId) . '\',
                             \'OrderDiscount\',
@@ -148,7 +162,8 @@ class AmazonPromotionSync
                             \'' . pSQL($item['asin']) . '\',
                             \'amazon_to_ps\',
                             \'' . pSQL($now) . '\',
-                            \'' . pSQL($now) . '\'
+                            \'' . pSQL($now) . '\',
+                            ' . $idShop . '
                          )'
                     );
                     $summary['promotions_new']++;
@@ -161,7 +176,8 @@ class AmazonPromotionSync
                 $exists = (bool) Db::getInstance()->getValue(
                     'SELECT `id_amazonmarketplacepro_promotion`
                      FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
-                     WHERE `amazon_promotion_id` = \'' . pSQL($genericId) . '\''
+                     WHERE `id_shop` = ' . $idShop . '
+                       AND `amazon_promotion_id` = \'' . pSQL($genericId) . '\''
                 );
 
                 if (!$exists) {
@@ -170,7 +186,7 @@ class AmazonPromotionSync
                          (`amazon_promotion_id`, `promotion_type`, `description`,
                           `discount_type`, `discount_value`, `status`,
                           `marketplace_id`, `seller_sku`, `asin`,
-                          `sync_direction`, `date_add`, `date_upd`)
+                          `sync_direction`, `date_add`, `date_upd`, `id_shop`)
                          VALUES (
                             \'' . pSQL($genericId) . '\',
                             \'OrderDiscount\',
@@ -183,7 +199,8 @@ class AmazonPromotionSync
                             \'' . pSQL($item['asin']) . '\',
                             \'amazon_to_ps\',
                             \'' . pSQL($now) . '\',
-                            \'' . pSQL($now) . '\'
+                            \'' . pSQL($now) . '\',
+                            ' . $idShop . '
                          )'
                     );
                     $summary['promotions_new']++;
@@ -217,7 +234,8 @@ class AmazonPromotionSync
         // Get promotions without PS cart rules
         $promos = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
-             WHERE `id_cart_rule` = 0
+             WHERE ' . AmzproShop::sqlWhere() . '
+               AND `id_cart_rule` = 0
                AND `discount_value` > 0
                AND `sync_direction` = \'amazon_to_ps\'
              ORDER BY `date_add` DESC
@@ -229,45 +247,27 @@ class AmazonPromotionSync
         }
 
         $summary['total'] = count($promos);
-        $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
         $now = date('Y-m-d H:i:s');
 
         foreach ($promos as $promo) {
             $idPromo = (int) $promo['id_amazonmarketplacepro_promotion'];
-
-            // Create a cart rule
-            $cartRule = new CartRule();
-            $cartRule->name = array($idLang => 'Amazon: ' . Tools::substr($promo['description'], 0, 200));
-            $cartRule->code = 'AMZPROMO_' . $idPromo;
-            $cartRule->description = 'Imported from Amazon promotion: ' . $promo['amazon_promotion_id'];
-            $cartRule->quantity = 0;
-            $cartRule->quantity_per_user = 0;
-            $cartRule->active = 0; // Inactive by default — informational only
-            $cartRule->date_from = $promo['date_add'];
-            $cartRule->date_to = date('Y-m-d H:i:s', strtotime('+1 year'));
-
-            if ($promo['discount_type'] === 'percentage') {
-                $cartRule->reduction_percent = (float) $promo['discount_value'];
-                $cartRule->reduction_amount = 0;
-            } else {
-                $cartRule->reduction_percent = 0;
-                $cartRule->reduction_amount = (float) $promo['discount_value'];
-                $cartRule->reduction_tax = 1;
-
-                // Resolve currency
-                $idCurrency = (int) Currency::getIdByIsoCode('EUR');
-                if (!$idCurrency) {
-                    $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
-                }
-                $cartRule->reduction_currency = $idCurrency;
+            $idShop = (int) $promo['id_shop'];
+            if (!$idShop) {
+                $idShop = AmzproShop::actingId();
             }
 
-            if ($cartRule->add()) {
+            // Built as the promotion's shop: its default language and currency.
+            $idCartRule = AmzproShop::runInShop($idShop, function ($idShop) use ($promo) {
+                return $this->addCartRule($promo, $idShop);
+            });
+
+            if ($idCartRule) {
                 Db::getInstance()->execute(
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion` SET
-                        `id_cart_rule` = ' . (int) $cartRule->id . ',
+                        `id_cart_rule` = ' . (int) $idCartRule . ',
                         `date_upd` = \'' . pSQL($now) . '\'
-                     WHERE `id_amazonmarketplacepro_promotion` = ' . $idPromo
+                     WHERE `id_amazonmarketplacepro_promotion` = ' . $idPromo . '
+                       AND `id_shop` = ' . (int) $promo['id_shop']
                 );
                 $summary['created']++;
             } else {
@@ -276,6 +276,69 @@ class AmazonPromotionSync
         }
 
         return $summary;
+    }
+
+    /**
+     * Create the cart rule for one imported promotion.
+     *
+     * With several shops the rule is limited to the promotion's shop
+     * (shop_restriction plus a cart_rule_shop row, as the Cart Rules page
+     * saves it). PrestaShop 1.6 to 9 only honour that restriction while
+     * multistore is on, and hide a restricted rule otherwise, so a single
+     * shop keeps unrestricted rules as before.
+     *
+     * @param array $promo promotion row
+     * @param int $idShop
+     * @return int the new cart rule id, or 0
+     */
+    private function addCartRule(array $promo, $idShop)
+    {
+        $idShop = (int) $idShop;
+        $idGroup = AmzproShop::groupId($idShop);
+        $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, $idGroup, $idShop);
+        $idPromo = (int) $promo['id_amazonmarketplacepro_promotion'];
+        $restrict = AmzproShop::isMultistore();
+
+        // Create a cart rule
+        $cartRule = new CartRule();
+        $cartRule->name = array($idLang => 'Amazon: ' . Tools::substr($promo['description'], 0, 200));
+        $cartRule->code = 'AMZPROMO_' . $idPromo;
+        $cartRule->description = 'Imported from Amazon promotion: ' . $promo['amazon_promotion_id'];
+        $cartRule->quantity = 0;
+        $cartRule->quantity_per_user = 0;
+        $cartRule->active = 0; // Inactive by default — informational only
+        $cartRule->date_from = $promo['date_add'];
+        $cartRule->date_to = date('Y-m-d H:i:s', strtotime('+1 year'));
+        $cartRule->shop_restriction = $restrict ? 1 : 0;
+
+        if ($promo['discount_type'] === 'percentage') {
+            $cartRule->reduction_percent = (float) $promo['discount_value'];
+            $cartRule->reduction_amount = 0;
+        } else {
+            $cartRule->reduction_percent = 0;
+            $cartRule->reduction_amount = (float) $promo['discount_value'];
+            $cartRule->reduction_tax = 1;
+
+            // Resolve currency
+            $idCurrency = (int) Currency::getIdByIsoCode('EUR', $idShop);
+            if (!$idCurrency) {
+                $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT', null, $idGroup, $idShop);
+            }
+            $cartRule->reduction_currency = $idCurrency;
+        }
+
+        if (!$cartRule->add()) {
+            return 0;
+        }
+
+        if ($restrict) {
+            Db::getInstance()->execute(
+                'INSERT IGNORE INTO `' . _DB_PREFIX_ . 'cart_rule_shop` (`id_cart_rule`, `id_shop`)
+                 VALUES (' . (int) $cartRule->id . ', ' . $idShop . ')'
+            );
+        }
+
+        return (int) $cartRule->id;
     }
 
     /**
@@ -298,7 +361,18 @@ class AmazonPromotionSync
             'already' => 0,
         );
 
-        $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
+        $idShop = AmzproShop::actingId();
+        $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
+
+        // The shop's cart rules: those for every shop and those limited to
+        // it. PrestaShop only applies shop limits while multistore is on.
+        $shopRules = '';
+        if (AmzproShop::isMultistore() && !AmzproShop::isAllShops()) {
+            $shopRules = ' AND (cr.`shop_restriction` = 0 OR EXISTS (
+                   SELECT 1 FROM `' . _DB_PREFIX_ . 'cart_rule_shop` crs
+                   WHERE crs.`id_cart_rule` = cr.`id_cart_rule` AND crs.`id_shop` = ' . (int) AmzproShop::id() . '
+               ))';
+        }
 
         // Get active PS cart rules not yet synced
         $cartRules = Db::getInstance()->executeS(
@@ -310,10 +384,11 @@ class AmazonPromotionSync
              LEFT JOIN `' . _DB_PREFIX_ . 'cart_rule_lang` crl
                  ON (crl.`id_cart_rule` = cr.`id_cart_rule` AND crl.`id_lang` = ' . $idLang . ')
              WHERE cr.`active` = 1
-               AND cr.`date_to` >= NOW()
+               AND cr.`date_to` >= \'' . pSQL(date('Y-m-d H:i:s')) . '\'' . $shopRules . '
                AND cr.`id_cart_rule` NOT IN (
                    SELECT `id_cart_rule` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
                    WHERE `id_cart_rule` > 0
+                     AND ' . AmzproShop::sqlWhere() . '
                )
              ORDER BY cr.`id_cart_rule` DESC
              LIMIT 50'
@@ -348,7 +423,7 @@ class AmazonPromotionSync
                  (`amazon_promotion_id`, `promotion_type`, `description`,
                   `discount_type`, `discount_value`, `start_date`, `end_date`,
                   `status`, `marketplace_id`, `id_cart_rule`,
-                  `sync_direction`, `date_add`, `date_upd`)
+                  `sync_direction`, `date_add`, `date_upd`, `id_shop`)
                  VALUES (
                     \'' . pSQL($promotionId) . '\',
                     \'CartRule\',
@@ -362,7 +437,8 @@ class AmazonPromotionSync
                     ' . (int) $cr['id_cart_rule'] . ',
                     \'ps_to_amazon\',
                     \'' . pSQL($now) . '\',
-                    \'' . pSQL($now) . '\'
+                    \'' . pSQL($now) . '\',
+                    ' . (int) $idShop . '
                  )'
             );
 
@@ -421,7 +497,8 @@ class AmazonPromotionSync
     }
 
     /**
-     * List promotions for admin display.
+     * List the current shop's promotions for admin display (every shop's in
+     * "All shops"; each row carries its id_shop).
      *
      * @param int $limit
      * @return array
@@ -429,6 +506,7 @@ class AmazonPromotionSync
     public function listPromotions($limit = 100)
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
@@ -456,7 +534,8 @@ class AmazonPromotionSync
                     SUM(CASE WHEN `sync_direction` = \'ps_to_amazon\' THEN 1 ELSE 0 END) AS from_ps,
                     SUM(`discount_value`) AS total_discount,
                     SUM(CASE WHEN `id_cart_rule` > 0 THEN 1 ELSE 0 END) AS with_cart_rule
-             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`'
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
+             WHERE ' . AmzproShop::sqlWhere()
         );
 
         if ($row) {

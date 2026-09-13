@@ -41,8 +41,16 @@ if (!defined('_PS_VERSION_')) {
  * NOTHING IS KEPT. The report is parsed in memory and dropped; the caller logs
  * counts only.
  *
+ * ONE SHOP. An upload fills the orders of the shop it is made in. A report
+ * line for an order another shop imported is counted and left alone: each
+ * shop has its own seller account, so the file most likely came from the
+ * wrong one.
+ *
  * PHP 5.6+ compatible (no scalar type hints, no ?? operator).
  */
+
+require_once dirname(__FILE__) . '/AmzproShop.php';
+
 class AmazonOrderReportImporter
 {
     /** Largest file accepted, in bytes. */
@@ -178,13 +186,16 @@ class AmazonOrderReportImporter
      * Put the report's names and addresses on the orders they belong to.
      *
      * @param array $orders Output of parse(): order id => fields
+     * @param int   $idShop The shop whose orders are filled (0 = the shop the
+     *                      request acts for)
      * @return array Counts: in_report, updated, addresses, customers, already,
-     *               kept, not_imported, purged
+     *               kept, not_imported, purged, other_shop
      */
-    public function apply(array $orders)
+    public function apply(array $orders, $idShop = 0)
     {
         require_once dirname(__FILE__) . '/AmazonOrderCreator.php';
         $this->ensureSchema();
+        $idShop = (int) $idShop ? (int) $idShop : AmzproShop::actingId();
 
         $summary = array(
             'in_report' => count($orders),
@@ -195,19 +206,28 @@ class AmazonOrderReportImporter
             'kept' => 0,
             'not_imported' => 0,
             'purged' => 0,
+            'other_shop' => 0,
         );
 
         foreach ($orders as $orderId => $fields) {
             // No LIMIT: getRow() appends its own, and two make the query fail.
+            // Looked up in every shop (the order number is unique across
+            // them) so that another shop's order is told apart from one that
+            // is not imported at all.
             $row = Db::getInstance()->getRow(
                 'SELECT `id_amazonmarketplacepro_order`, `id_order`, `buyer_name`, `ship_name`,
                         `ship_address1`, `ship_address2`, `ship_city`, `ship_state`,
-                        `ship_postal_code`, `ship_country_code`, `ship_phone`, `pii_purged_at`
+                        `ship_postal_code`, `ship_country_code`, `ship_phone`, `pii_purged_at`,
+                        `id_shop`
                  FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                  WHERE `amazon_order_id` = \'' . pSQL($orderId) . '\''
             );
             if (!$row) {
                 $summary['not_imported']++;
+                continue;
+            }
+            if ((int) $row['id_shop'] !== $idShop) {
+                $summary['other_shop']++;
                 continue;
             }
             if (!empty($row['pii_purged_at'])) {
@@ -221,7 +241,7 @@ class AmazonOrderReportImporter
 
             $shopChanged = false;
             if ((int) $row['id_order'] > 0) {
-                $shop = $this->fillShopOrder((int) $row['id_order'], $clean);
+                $shop = $this->fillShopOrder((int) $row['id_order'], $clean, $idShop);
                 $summary['addresses'] += $shop['addresses'];
                 $summary['customers'] += $shop['customers'];
                 $shopChanged = ($shop['addresses'] + $shop['customers']) > 0;
@@ -291,7 +311,8 @@ class AmazonOrderReportImporter
         return (bool) Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              SET ' . implode(', ', $sets) . '
-             WHERE `id_amazonmarketplacepro_order` = ' . (int) $row['id_amazonmarketplacepro_order']
+             WHERE `id_amazonmarketplacepro_order` = ' . (int) $row['id_amazonmarketplacepro_order'] . '
+               AND `id_shop` = ' . (int) $row['id_shop']
         );
     }
 
@@ -301,12 +322,12 @@ class AmazonOrderReportImporter
      *
      * @return array Counts: addresses, customers, kept
      */
-    private function fillShopOrder($idOrder, array $clean)
+    private function fillShopOrder($idOrder, array $clean, $idShop)
     {
         $result = array('addresses' => 0, 'customers' => 0, 'kept' => 0);
 
         $order = new Order((int) $idOrder);
-        if (!Validate::isLoadedObject($order)) {
+        if (!Validate::isLoadedObject($order) || (int) $order->id_shop !== (int) $idShop) {
             return $result;
         }
 

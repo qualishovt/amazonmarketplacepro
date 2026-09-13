@@ -23,6 +23,9 @@
  *
  * Uses SP-API FBA Inventory API and Fulfillment Outbound API.
  *
+ * Multistore: everything works for the current shop - its FBA inventory
+ * rows, its products' stock and its PrestaShop orders.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -31,6 +34,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonFbaManager
 {
@@ -106,6 +110,7 @@ class AmazonFbaManager
 
         $summary['fetched'] = count($inventories);
         $now = date('Y-m-d H:i:s');
+        $idShop = (int) AmzproShop::actingId();
 
         foreach ($inventories as $inv) {
             $sku = isset($inv['sellerSku']) ? $inv['sellerSku'] : '';
@@ -133,12 +138,13 @@ class AmazonFbaManager
             $totalQty = $fulfillable + $inboundWorking + $inboundShipped + $inboundReceiving + $reserved + $unfulfillable;
 
             // Resolve PS product
-            $psProduct = $this->resolveProduct($sku);
+            $psProduct = $this->resolveProduct($sku, $idShop);
 
             $exists = (bool) Db::getInstance()->getValue(
                 'SELECT `id_amazonmarketplacepro_fba` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
                  WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                   AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+                   AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                   AND `id_shop` = ' . $idShop
             );
 
             if ($exists) {
@@ -159,18 +165,20 @@ class AmazonFbaManager
                         `last_synced` = \'' . pSQL($now) . '\',
                         `date_upd` = \'' . pSQL($now) . '\'
                      WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                       AND `id_shop` = ' . $idShop
                 );
                 $summary['updated']++;
             } else {
                 Db::getInstance()->execute(
                     'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
-                     (`seller_sku`, `asin`, `fn_sku`, `product_name`,
+                     (`id_shop`, `seller_sku`, `asin`, `fn_sku`, `product_name`,
                       `fulfillable_qty`, `inbound_working_qty`, `inbound_shipped_qty`,
                       `inbound_receiving_qty`, `reserved_qty`, `unfulfillable_qty`, `total_qty`,
                       `marketplace_id`, `id_product`, `id_product_attribute`,
                       `last_synced`, `date_add`, `date_upd`)
                      VALUES (
+                        ' . $idShop . ',
                         \'' . pSQL($sku) . '\',
                         \'' . pSQL($asin) . '\',
                         \'' . pSQL($fnSku) . '\',
@@ -224,6 +232,17 @@ class AmazonFbaManager
             return array('success' => false, 'error' => $this->lastError);
         }
 
+        // Amazon ships it from the stock of the seller account this shop is
+        // connected to, so the order must belong to this shop.
+        $idShop = (int) AmzproShop::actingId();
+        if ((int) $order->id_shop !== $idShop) {
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('PrestaShop order #%d belongs to another shop. Select that shop at the top of the page and try again.', 'amazonfbamanager'),
+                (int) $idOrder
+            );
+            return array('success' => false, 'error' => $this->lastError);
+        }
+
         // Get delivery address
         $address = new Address((int) $order->id_address_delivery);
         if (!Validate::isLoadedObject($address)) {
@@ -265,7 +284,8 @@ class AmazonFbaManager
             $fbaQty = (int) Db::getInstance()->getValue(
                 'SELECT `fulfillable_qty` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
                  WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                   AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+                   AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                   AND `id_shop` = ' . $idShop
             );
 
             if ($fbaQty < (int) $detail['product_quantity']) {
@@ -399,23 +419,21 @@ class AmazonFbaManager
     public function syncFbaStockToPs()
     {
         $summary = array('updated' => 0, 'skipped' => 0);
+        $idShop = (int) AmzproShop::actingId();
 
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `fulfillable_qty`, `id_product`, `id_product_attribute`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
              WHERE `id_product` > 0
-               AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+               AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+               AND `id_shop` = ' . $idShop
         );
 
         if (!is_array($rows)) {
             return $summary;
         }
 
-        $idShop = (int) Context::getContext()->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
-
+        // StockAvailable resolves the shop to its group when the group shares stock.
         foreach ($rows as $row) {
             $idProduct = (int) $row['id_product'];
             $idPa = (int) $row['id_product_attribute'];
@@ -442,18 +460,21 @@ class AmazonFbaManager
      */
     public function listFbaInventory($limit = 100)
     {
-        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
-                WHERE `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
-                ORDER BY `seller_sku` ASC
+        $sql = 'SELECT f.*, s.`name` AS shop_name
+                FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory` f
+                LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = f.`id_shop`)
+                WHERE f.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                  AND ' . AmzproShop::sqlWhere('f') . '
+                ORDER BY f.`seller_sku` ASC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
         return is_array($rows) ? $rows : array();
     }
 
     /**
-     * Resolve a SKU to a PS product (same logic as OrderImporter).
+     * Resolve a SKU to a product of the shop (same logic as OrderImporter).
      */
-    private function resolveProduct($sku)
+    private function resolveProduct($sku, $idShop)
     {
         $res = array('id_product' => 0, 'id_product_attribute' => 0);
         $sku = trim((string) $sku);
@@ -461,11 +482,14 @@ class AmazonFbaManager
             return $res;
         }
         $ref = pSQL($sku);
+        $idShop = (int) $idShop;
 
         $row = Db::getInstance()->getRow(
-            'SELECT `id_product`, `id_product_attribute`
-             FROM `' . _DB_PREFIX_ . 'product_attribute`
-             WHERE `reference` = \'' . $ref . '\''
+            'SELECT pa.`id_product`, pa.`id_product_attribute`
+             FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+             INNER JOIN `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                 ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')
+             WHERE pa.`reference` = \'' . $ref . '\''
         );
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
@@ -474,8 +498,10 @@ class AmazonFbaManager
         }
 
         $idProduct = (int) Db::getInstance()->getValue(
-            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `reference` = \'' . $ref . '\''
+            'SELECT p.`id_product` FROM `' . _DB_PREFIX_ . 'product` p
+             INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
+             WHERE p.`reference` = \'' . $ref . '\''
         );
         if ($idProduct) {
             $res['id_product'] = $idProduct;

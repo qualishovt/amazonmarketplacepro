@@ -24,6 +24,10 @@
  *
  * Uses SP-API Product Pricing API v0.
  *
+ * Multistore: fetching, rule application and pushes work on the current
+ * shop's listings and write that shop's prices. Pricing rules are shared by
+ * every shop (id_shop 0) and a shop can add rules of its own.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -32,6 +36,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonRepricingEngine
 {
@@ -87,12 +92,13 @@ class AmazonRepricingEngine
             'errors' => 0,
         );
 
-        // Get products with ASINs
+        // Get the shop's products with ASINs
         $products = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `amazon_asin`, `ps_price`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
              WHERE `amazon_asin` <> \'\'
                AND `amazon_exists` = 1
+               AND `id_shop` = ' . (int) AmzproShop::actingId() . '
              ORDER BY `seller_sku` ASC
              LIMIT 200'
         );
@@ -233,12 +239,16 @@ class AmazonRepricingEngine
             'prices_capped' => 0,
         );
 
-        // Get active rules
+        $idShop = (int) AmzproShop::actingId();
+
+        // Get active rules: the shared ones, then the shop's own (which run
+        // last, so they have the final word on a product both cover).
         $rules = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
              WHERE `active` = 1
                AND (`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' OR `marketplace_id` = \'\')
-             ORDER BY `id_amazonmarketplacepro_pricing_rule` ASC'
+               AND ' . AmzproShop::sqlShared('', $idShop) . '
+             ORDER BY `id_shop` ASC, `id_amazonmarketplacepro_pricing_rule` ASC'
         );
 
         if (!is_array($rules) || empty($rules)) {
@@ -251,12 +261,13 @@ class AmazonRepricingEngine
         foreach ($rules as $rule) {
             $summary['rules_applied']++;
 
-            // Get products matching this rule
-            $where = '`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'';
+            // Get the shop's products matching this rule
+            $where = '`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' AND `id_shop` = ' . $idShop;
             if ((int) $rule['id_category'] > 0) {
                 $where .= ' AND `seller_sku` IN (
                     SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-                    WHERE `ps_id_category_default` = ' . (int) $rule['id_category'] . ')';
+                    WHERE `ps_id_category_default` = ' . (int) $rule['id_category'] . '
+                      AND `id_shop` = ' . $idShop . ')';
             }
 
             $prices = Db::getInstance()->executeS(
@@ -296,7 +307,8 @@ class AmazonRepricingEngine
                         `suggested_price` = ' . (float) $suggested . ',
                         `date_upd` = \'' . pSQL($now) . '\'
                      WHERE `seller_sku` = \'' . pSQL($cp['seller_sku']) . '\'
-                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                       AND `id_shop` = ' . $idShop
                 );
                 $summary['prices_suggested']++;
             }
@@ -323,7 +335,13 @@ class AmazonRepricingEngine
             'skipped' => 0,
         );
 
-        if ($this->sellerId === '') {
+        $idShop = (int) AmzproShop::actingId();
+        // The listings belong to the seller account this shop is connected to.
+        $sellerId = AmzproShop::isMultistore()
+            ? trim((string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop))
+            : $this->sellerId;
+
+        if ($sellerId === '') {
             $this->notices[] = AmazonI18n::get()->l('Cannot push prices: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonrepricingengine');
             return $summary;
         }
@@ -334,6 +352,7 @@ class AmazonRepricingEngine
              WHERE cp.`suggested_price` > 0
                AND cp.`suggested_price` <> cp.`our_price`
                AND cp.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+               AND cp.`id_shop` = ' . $idShop . '
              ORDER BY cp.`seller_sku` ASC
              LIMIT ' . (int) $limit
         );
@@ -367,7 +386,7 @@ class AmazonRepricingEngine
 
             $resp = $this->client->request(
                 'PUT',
-                '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
+                '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
                 array('marketplaceIds' => $this->marketplaceId),
                 $body
             );
@@ -380,11 +399,12 @@ class AmazonRepricingEngine
                         `last_repriced` = \'' . pSQL($now) . '\',
                         `date_upd` = \'' . pSQL($now) . '\'
                      WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\''
+                       AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                       AND `id_shop` = ' . $idShop
                 );
 
                 // Also update PS product price
-                $this->updatePsPrice($sku, $newPrice);
+                $this->updatePsPrice($sku, $newPrice, $idShop);
 
                 $summary['pushed']++;
             } else {
@@ -481,40 +501,76 @@ class AmazonRepricingEngine
     }
 
     /**
-     * Update PS product price when repricing.
+     * Update the PrestaShop price of the product or combination with this
+     * reference in one shop. The shop's price (product_shop /
+     * product_attribute_shop) always changes; the product's own row, which
+     * PrestaShop keeps in step with the product's default shop, only when
+     * this is that shop (always with multistore off).
      */
-    private function updatePsPrice($sku, $newPrice)
+    private function updatePsPrice($sku, $newPrice, $idShop)
     {
+        $db = Db::getInstance();
+        $p = _DB_PREFIX_;
         $ref = pSQL(trim($sku));
+        $idShop = (int) $idShop;
+        $oneShop = !AmzproShop::isMultistore();
 
         // Try combination first
-        $row = Db::getInstance()->getRow(
-            'SELECT `id_product`, `id_product_attribute`
-             FROM `' . _DB_PREFIX_ . 'product_attribute`
-             WHERE `reference` = \'' . $ref . '\''
+        $row = $db->getRow(
+            'SELECT pa.`id_product`, pa.`id_product_attribute`, pr.`id_shop_default`
+             FROM `' . $p . 'product_attribute` pa
+             INNER JOIN `' . $p . 'product_attribute_shop` pas
+                 ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')
+             INNER JOIN `' . $p . 'product` pr ON (pr.`id_product` = pa.`id_product`)
+             WHERE pa.`reference` = \'' . $ref . '\''
         );
 
         if ($row && (int) $row['id_product_attribute']) {
-            // Update combination price impact (delta from base)
-            $basePrice = (float) Db::getInstance()->getValue(
-                'SELECT `price` FROM `' . _DB_PREFIX_ . 'product`
-                 WHERE `id_product` = ' . (int) $row['id_product']
+            $idProduct = (int) $row['id_product'];
+            $idPa = (int) $row['id_product_attribute'];
+            // Update combination price impact (delta from the shop's base price)
+            $basePrice = (float) $db->getValue(
+                'SELECT `price` FROM `' . $p . 'product_shop`
+                 WHERE `id_product` = ' . $idProduct . ' AND `id_shop` = ' . $idShop
             );
-            $impact = $newPrice - $basePrice;
-            Db::getInstance()->execute(
-                'UPDATE `' . _DB_PREFIX_ . 'product_attribute` SET
-                    `price` = ' . (float) $impact . '
-                 WHERE `id_product_attribute` = ' . (int) $row['id_product_attribute']
+            $impact = (float) ($newPrice - $basePrice);
+            $db->execute(
+                'UPDATE `' . $p . 'product_attribute_shop` SET `price` = ' . $impact . '
+                 WHERE `id_product_attribute` = ' . $idPa . ' AND `id_shop` = ' . $idShop
             );
+            if ($oneShop || (int) $row['id_shop_default'] === $idShop) {
+                $db->execute(
+                    'UPDATE `' . $p . 'product_attribute` SET `price` = ' . $impact . '
+                     WHERE `id_product_attribute` = ' . $idPa
+                );
+            }
+            Product::flushPriceCache();
+
             return;
         }
 
         // Try base product
-        Db::getInstance()->execute(
-            'UPDATE `' . _DB_PREFIX_ . 'product` SET
-                `price` = ' . (float) $newPrice . '
-             WHERE `reference` = \'' . $ref . '\''
+        $products = $db->executeS(
+            'SELECT pr.`id_product`, pr.`id_shop_default`
+             FROM `' . $p . 'product` pr
+             INNER JOIN `' . $p . 'product_shop` ps
+                 ON (ps.`id_product` = pr.`id_product` AND ps.`id_shop` = ' . $idShop . ')
+             WHERE pr.`reference` = \'' . $ref . '\''
         );
+        foreach ((is_array($products) ? $products : array()) as $product) {
+            $idProduct = (int) $product['id_product'];
+            $db->execute(
+                'UPDATE `' . $p . 'product_shop` SET `price` = ' . (float) $newPrice . '
+                 WHERE `id_product` = ' . $idProduct . ' AND `id_shop` = ' . $idShop
+            );
+            if ($oneShop || (int) $product['id_shop_default'] === $idShop) {
+                $db->execute(
+                    'UPDATE `' . $p . 'product` SET `price` = ' . (float) $newPrice . '
+                     WHERE `id_product` = ' . $idProduct
+                );
+            }
+        }
+        Product::flushPriceCache();
     }
 
     /**
@@ -526,11 +582,12 @@ class AmazonRepricingEngine
         $lowestLanded, $numberOfOffers, $ourPrice, $now
     ) {
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price`
-            (`seller_sku`, `asin`, `buybox_price`, `buybox_shipping`, `buybox_landed`,
+            (`id_shop`, `seller_sku`, `asin`, `buybox_price`, `buybox_shipping`, `buybox_landed`,
              `buybox_seller`, `is_buybox_winner`, `lowest_price`, `lowest_shipping`,
              `lowest_landed`, `number_of_offers`, `our_price`, `marketplace_id`,
              `date_add`, `date_upd`)
             VALUES (
+                ' . (int) AmzproShop::actingId() . ',
                 \'' . pSQL($sku) . '\',
                 \'' . pSQL($asin) . '\',
                 ' . (float) $buyboxPrice . ',
@@ -564,20 +621,35 @@ class AmazonRepricingEngine
 
     /* ─────────────────── Pricing Rules CRUD ─────────────────── */
 
+    /**
+     * The rules for all shops plus the current shop's own (only the shared
+     * ones in "All shops"). Each row carries its id_shop.
+     */
     public function listPricingRules()
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
+                WHERE ' . AmzproShop::sqlShared() . '
                 ORDER BY `name` ASC';
         $rows = Db::getInstance()->executeS($sql);
         return is_array($rows) ? $rows : array();
     }
 
+    /**
+     * Add a rule for the scope being edited (a shop's own, or shared in "All
+     * shops"), or change one. A shop may change only its own rules. Returns
+     * false with getLastError() set when refused.
+     */
     public function savePricingRule($data)
     {
+        $this->lastError = null;
         $now = date('Y-m-d H:i:s');
         $id = isset($data['id']) ? (int) $data['id'] : 0;
 
         if ($id > 0) {
+            if (!$this->checkRuleChange($id)) {
+                return false;
+            }
+
             return Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule` SET
                     `name` = \'' . pSQL($data['name']) . '\',
@@ -597,10 +669,11 @@ class AmazonRepricingEngine
 
         return Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
-             (`name`, `rule_type`, `price_adjustment`, `adjustment_type`,
+             (`id_shop`, `name`, `rule_type`, `price_adjustment`, `adjustment_type`,
               `min_price`, `max_price`, `target_buybox`, `id_category`,
               `marketplace_id`, `active`, `date_add`, `date_upd`)
              VALUES (
+                ' . (int) AmzproShop::sharedWriteId() . ',
                 \'' . pSQL($data['name']) . '\',
                 \'' . pSQL($data['rule_type']) . '\',
                 ' . (float) $data['price_adjustment'] . ',
@@ -617,8 +690,14 @@ class AmazonRepricingEngine
         );
     }
 
+    /** Delete a rule, with the same rule as savePricingRule(). */
     public function deletePricingRule($id)
     {
+        $this->lastError = null;
+        if (!$this->checkRuleChange((int) $id)) {
+            return false;
+        }
+
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
              WHERE `id_amazonmarketplacepro_pricing_rule` = ' . (int) $id
@@ -626,15 +705,44 @@ class AmazonRepricingEngine
     }
 
     /**
-     * List competitive pricing data for admin display.
+     * True when the current context may change this rule: a shop its own
+     * rules, "All shops" the shared ones (with multistore off, every rule).
+     * Sets the error otherwise.
+     */
+    private function checkRuleChange($id)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
+             WHERE `id_amazonmarketplacepro_pricing_rule` = ' . (int) $id . '
+               AND ' . AmzproShop::sqlShared()
+        );
+        if (!$row) {
+            $this->lastError = AmazonI18n::get()->l('This pricing rule was not found. Reload the page and try again.', 'amazonrepricingengine');
+
+            return false;
+        }
+        if (AmzproShop::isMultistore() && (int) $row['id_shop'] !== (int) AmzproShop::sharedWriteId()) {
+            $this->lastError = AmazonI18n::get()->l('This pricing rule is shared by all shops. Select "All shops" at the top of the page to change it.', 'amazonrepricingengine');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * List competitive pricing data for admin display: the current shop's,
+     * or every shop's in "All shops" (with shop_name).
      */
     public function listCompetitivePrices($limit = 100)
     {
-        $sql = 'SELECT cp.*, p.`ps_name`
+        $sql = 'SELECT cp.*, p.`ps_name`, s.`name` AS shop_name
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-                    ON (p.`seller_sku` = cp.`seller_sku`)
+                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop`)
+                LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = cp.`id_shop`)
                 WHERE cp.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
+                  AND ' . AmzproShop::sqlWhere('cp') . '
                 ORDER BY cp.`is_buybox_winner` ASC, cp.`seller_sku` ASC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);

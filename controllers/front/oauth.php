@@ -24,6 +24,10 @@
  * The nonce must match the one generated when the merchant clicked
  * "Connect to Amazon" — it is single-use and cleared after storing the token.
  *
+ * Multistore: this page runs in the front office of the shop in its URL, and
+ * that shop is the one being connected. The nonce is "<id_shop>.<random>",
+ * stored for that shop, so a link issued for one shop cannot connect another.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -40,17 +44,19 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
 
     public function initContent()
     {
+        require_once _PS_MODULE_DIR_ . 'amazonmarketplacepro/classes/AmzproShop.php';
         require_once _PS_MODULE_DIR_ . 'amazonmarketplacepro/classes/AmazonSpApiClient.php';
 
-        // Connection state lives in GLOBAL configuration rows. This front
-        // controller runs in shop context, where plain get()/updateValue()
-        // would read/create shop-scoped rows that shadow what the admin
-        // wrote — the nonce would never match and the token would be
-        // invisible to the back office.
-        $nonce = (string) Tools::getValue('nonce');
-        $expected = (string) Configuration::getGlobalValue('AMZPRO_OAUTH_NONCE');
+        // The shop in the URL is the shop being connected. Its connection
+        // state is read and written through AmzproShop for exactly that shop,
+        // so the back office of that shop sees what this page stores.
+        $idShop = AmzproShop::id();
 
-        if ($expected === '' || $nonce === '' || !hash_equals($expected, $nonce)) {
+        $nonce = (string) Tools::getValue('nonce');
+        $expected = (string) AmzproShop::get('AMZPRO_OAUTH_NONCE', $idShop);
+
+        if ($expected === '' || $nonce === '' || !hash_equals($expected, $nonce)
+            || !$this->nonceIsForShop($nonce, $idShop)) {
             $this->htmlPage(
                 $this->text($this->module->l('Connection failed', 'oauth')),
                 $this->text($this->module->l('This connection link is invalid or has expired. Please go back to your PrestaShop admin and click "Connect to Amazon" again.', 'oauth'))
@@ -59,7 +65,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         }
 
         // Nonce is single-use.
-        Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', '');
+        AmzproShop::set('AMZPRO_OAUTH_NONCE', '', $idShop);
 
         $error = (string) Tools::getValue('mkpro_oauth_error');
         if ($error !== '') {
@@ -79,30 +85,53 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
             return;
         }
 
-        // Sandbox and production tokens are stored apart — see refreshTokenKey().
-        Configuration::updateGlobalValue(AmazonSpApiClient::refreshTokenKey(), $refreshToken);
-        Configuration::updateGlobalValue('AMZPRO_AUTH_MODE', 'connect');
-
         // Amazon tells us the seller's id — that's the Merchant Token the
         // Listings API needs, so the merchant never has to look it up.
         $sellingPartnerId = (string) Tools::getValue('selling_partner_id');
+
+        // One seller account on one marketplace belongs to one shop: two shops
+        // importing the same Amazon orders would fight over them. Refuse
+        // before anything is stored.
         if ($sellingPartnerId !== '') {
-            Configuration::updateGlobalValue('AMZPRO_SELLING_PARTNER_ID', $sellingPartnerId);
-            Configuration::updateGlobalValue('AMZPRO_SELLER_ID', $sellingPartnerId);
+            $otherShop = AmzproShop::shopUsingSeller(
+                $sellingPartnerId,
+                AmzproShop::get('AMZPRO_MARKETPLACE_ID', $idShop),
+                $idShop
+            );
+            if ($otherShop) {
+                $this->htmlPage(
+                    $this->text($this->module->l('Connection failed', 'oauth')),
+                    sprintf(
+                        $this->text($this->module->l('This Amazon seller account is already connected to the shop "%s" for the same marketplace. Disconnect it in that shop first, or choose another marketplace for this shop, then click "Connect to Amazon" again.', 'oauth')),
+                        AmzproShop::name($otherShop)
+                    )
+                );
+                return;
+            }
+        }
+
+        // Sandbox and production tokens are stored apart — see refreshTokenKey().
+        AmzproShop::set(AmazonSpApiClient::refreshTokenKey(), $refreshToken, $idShop);
+        AmzproShop::set('AMZPRO_AUTH_MODE', 'connect', $idShop);
+
+        if ($sellingPartnerId !== '') {
+            AmzproShop::set('AMZPRO_SELLING_PARTNER_ID', $sellingPartnerId, $idShop);
+            AmzproShop::set('AMZPRO_SELLER_ID', $sellingPartnerId, $idShop);
         }
 
         // A connected customer shop talks to the real API. Dev shops keep
         // their selected environment — the token was just stored in that
         // environment's slot, so forcing production would orphan a sandbox
-        // token and break the sandbox connection state.
-        if (!Configuration::get('AMZPRO_DEV_MODE')) {
-            Configuration::updateGlobalValue('AMZPRO_ENVIRONMENT', 'production');
-            Configuration::updateGlobalValue('AMZPRO_USE_MOCK', '0');
+        // token and break the sandbox connection state. The environment is
+        // the same for every shop (AmzproShop::$globalKeys).
+        if (!AmzproShop::get('AMZPRO_DEV_MODE')) {
+            AmzproShop::set('AMZPRO_ENVIRONMENT', 'production');
+            AmzproShop::set('AMZPRO_USE_MOCK', '0');
         }
 
         // Send the merchant back to the admin page they clicked Connect on.
-        $returnUrl = (string) Configuration::getGlobalValue('AMZPRO_OAUTH_RETURN_URL');
-        Configuration::updateGlobalValue('AMZPRO_OAUTH_RETURN_URL', '');
+        $returnUrl = (string) AmzproShop::get('AMZPRO_OAUTH_RETURN_URL', $idShop);
+        AmzproShop::set('AMZPRO_OAUTH_RETURN_URL', '', $idShop);
         if ($returnUrl !== '' && preg_match('#^https?://#i', $returnUrl)) {
             $sep = (strpos($returnUrl, '?') !== false) ? '&' : '?';
             Tools::redirect($returnUrl . $sep . 'mkpro_connected=1');
@@ -118,6 +147,16 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
             $message = $this->text($this->module->l('Your shop is now connected to Amazon. You can close this tab and return to the Amazon Marketplace Pro settings in your shop admin.', 'oauth'));
         }
         $this->htmlPage($this->text($this->module->l('Connected to Amazon', 'oauth')) . ' ✓', $message);
+    }
+
+    /**
+     * The nonce names the shop it was issued for ("<id_shop>.<random>"). A
+     * link issued in one shop's back office must not connect another shop,
+     * even if both happen to hold a nonce.
+     */
+    private function nonceIsForShop($nonce, $idShop)
+    {
+        return (bool) preg_match('/^([0-9]+)\./', $nonce, $m) && (int) $m[1] === (int) $idShop;
     }
 
     /**

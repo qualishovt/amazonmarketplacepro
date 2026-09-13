@@ -28,6 +28,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
+
 class AmazonVcsInvoiceUploader
 {
     /** @var AmazonSpApiClient */
@@ -77,7 +80,8 @@ class AmazonVcsInvoiceUploader
     }
 
     /**
-     * Upload invoices for all created orders that don't have one on Amazon yet.
+     * Upload invoices for the current shop's created orders that don't have
+     * one on Amazon yet.
      *
      * @param int $limit
      * @return array Summary counts
@@ -93,7 +97,8 @@ class AmazonVcsInvoiceUploader
         $rows = Db::getInstance()->executeS(
             'SELECT `amazon_order_id`, `id_order`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` > 0
+             WHERE ' . AmzproShop::sqlWhere() . '
+               AND `id_order` > 0
                AND `vcs_uploaded` = 0
                AND `order_status` NOT IN (\'Canceled\', \'Cancelled\')
              ORDER BY `id_amazonmarketplacepro_order` ASC
@@ -135,6 +140,14 @@ class AmazonVcsInvoiceUploader
             $this->lastError = 'PrestaShop order #' . (int) $idOrder . ' not found.';
             return false;
         }
+        // The upload goes to this shop's seller account, so an order of
+        // another shop is never sent with it.
+        if (AmzproShop::isMultistore() && !AmzproShop::isAllShops()
+            && (int) $order->id_shop !== AmzproShop::id()) {
+            $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Its invoice is uploaded when that shop runs the task.', 'amazonvcsinvoiceuploader');
+            return false;
+        }
+        $idShop = (int) $order->id_shop;
 
         $invoices = $order->getInvoicesCollection();
         if (!count($invoices)) {
@@ -146,15 +159,19 @@ class AmazonVcsInvoiceUploader
             $invoice = $inv; // most recent wins
         }
         $invoiceNumber = $invoice->getInvoiceNumberFormatted(
-            (int) Configuration::get('PS_LANG_DEFAULT'),
-            (int) $order->id_shop
+            (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop),
+            $idShop
         );
 
         if ($this->useMock) {
             $pdfContent = '%PDF-MOCK';
         } else {
-            $pdf = new PDF($invoices, PDF::TEMPLATE_INVOICE, Context::getContext()->smarty);
-            $pdfContent = $pdf->render(false);
+            // Rendered as the order's shop: its address, logo and settings.
+            $pdfContent = AmzproShop::runInShop($idShop, function () use ($invoices) {
+                $pdf = new PDF($invoices, PDF::TEMPLATE_INVOICE, Context::getContext()->smarty);
+
+                return $pdf->render(false);
+            });
             if (!$pdfContent) {
                 $this->lastError = 'Could not render the invoice PDF.';
                 return false;
@@ -185,7 +202,8 @@ class AmazonVcsInvoiceUploader
         Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              SET `vcs_uploaded` = 1, `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-             WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\''
+             WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
 
         return true;

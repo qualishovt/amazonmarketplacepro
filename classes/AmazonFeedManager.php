@@ -22,6 +22,10 @@
  *   poll:    check processingStatus until DONE -> download result -> parse
  * Every submitted feed is tracked in amazonmarketplacepro_feed.
  *
+ * Multistore: each feed row belongs to the shop that submitted it, with that
+ * shop's seller account (the caller passes its client and seller id). Polling
+ * and payload downloads only touch the shop's own feeds.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -30,6 +34,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonFeedManager
 {
@@ -81,10 +86,13 @@ class AmazonFeedManager
                 `error_message` TEXT NULL,
                 `date_add` DATETIME NOT NULL,
                 `date_upd` DATETIME NOT NULL,
+                `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
                 PRIMARY KEY (`id_amazonmarketplacepro_feed`),
-                KEY `processing_status` (`processing_status`)
+                KEY `processing_status` (`processing_status`),
+                KEY `shop_status` (`id_shop`, `processing_status`)
             ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;'
         );
+        AmzproShop::ensureTableShop('amazonmarketplacepro_feed');
 
         // Retaining the submitted payload is what makes an Amazon support
         // ticket answerable; added after the original table shipped.
@@ -211,7 +219,8 @@ class AmazonFeedManager
 
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
-             WHERE `processing_status` NOT IN (\'DONE\', \'CANCELLED\', \'FATAL\')
+             WHERE `id_shop` = ' . (int) AmzproShop::actingId() . '
+               AND `processing_status` NOT IN (\'DONE\', \'CANCELLED\', \'FATAL\')
              ORDER BY `id_amazonmarketplacepro_feed` ASC
              LIMIT 20'
         );
@@ -268,15 +277,17 @@ class AmazonFeedManager
     }
 
     /**
-     * Recent feeds for the admin UI.
+     * Recent feeds for the admin UI: the shop's, or every shop's in "All
+     * shops" (id_shop tells them apart).
      */
     public function listFeeds($limit = 20)
     {
         $this->ensureTable();
         $rows = Db::getInstance()->executeS(
-            'SELECT `feed_id`, `processing_status`, `messages_count`, `accepted`,
+            'SELECT `id_shop`, `feed_id`, `processing_status`, `messages_count`, `accepted`,
                     `errors`, `warnings`, `error_message`, `date_add`, `date_upd`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
+             WHERE ' . AmzproShop::sqlWhere() . '
              ORDER BY `id_amazonmarketplacepro_feed` DESC
              LIMIT ' . (int) $limit
         );
@@ -332,9 +343,10 @@ class AmazonFeedManager
         $now = date('Y-m-d H:i:s');
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
-             (`feed_id`, `feed_type`, `marketplace_id`, `processing_status`, `messages_count`,
+             (`id_shop`, `feed_id`, `feed_type`, `marketplace_id`, `processing_status`, `messages_count`,
               `accepted`, `errors`, `warnings`, `issues_json`, `feed_content`, `date_add`, `date_upd`)
              VALUES (
+                ' . (int) AmzproShop::actingId() . ',
                 \'' . pSQL($feedId) . '\',
                 \'' . pSQL($feedType) . '\',
                 \'' . pSQL($this->marketplaceId) . '\',
@@ -351,14 +363,18 @@ class AmazonFeedManager
         );
     }
 
-    /** The exact JSON submitted for a feed, for support tickets. */
+    /**
+     * The exact JSON submitted for a feed, for support tickets. Only a feed
+     * of the shop (of any shop in "All shops") is returned.
+     */
     public function getFeedPayload($feedId)
     {
         $this->ensureTable();
 
         return (string) Db::getInstance()->getValue(
             'SELECT `feed_content` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
-             WHERE `feed_id` = \'' . pSQL($feedId) . '\''
+             WHERE `feed_id` = \'' . pSQL($feedId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
     }
 
@@ -373,7 +389,8 @@ class AmazonFeedManager
         Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
              SET ' . implode(', ', $sets) . '
-             WHERE `feed_id` = \'' . pSQL($feedId) . '\''
+             WHERE `feed_id` = \'' . pSQL($feedId) . '\'
+               AND `id_shop` = ' . (int) AmzproShop::actingId()
         );
     }
 

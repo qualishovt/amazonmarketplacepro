@@ -210,6 +210,7 @@ function stage($amazonId, array $over, $idProduct)
     $db = Db::getInstance();
     $now = date('Y-m-d H:i:s');
     $row = array_merge(array(
+        'id_shop' => (int) Context::getContext()->shop->id,
         'amazon_order_id' => $amazonId,
         'purchase_date' => $now,
         'order_status' => 'Unshipped',
@@ -279,7 +280,8 @@ function createPsOrder($amazonId, $idCarrier)
     $creator = new AmazonOrderCreator($idCarrier, (int) Configuration::get('PS_OS_BANKWIRE'));
     $method = new ReflectionMethod('AmazonOrderCreator', 'createAddress');
     $method->setAccessible(true);
-    $address = $method->invoke($creator, new Customer($idCustomer), staged($amazonId));
+    $address = $method->invoke($creator, new Customer($idCustomer), staged($amazonId),
+        AmazonOrderCreator::shopEnvironment((int) $ctx->shop->id));
     if (!$address || !$address->id) {
         echo "  (createAddress failed for $amazonId)\n";
 
@@ -487,7 +489,7 @@ try {
     echo "apply\n";
     $s = $importer->apply($parsed['orders']);
     $want = array('in_report' => 5, 'updated' => 3, 'addresses' => 1, 'customers' => 2,
-        'already' => 0, 'kept' => 1, 'not_imported' => 1, 'purged' => 1);
+        'already' => 0, 'kept' => 1, 'not_imported' => 1, 'purged' => 1, 'other_shop' => 0);
     check($s === $want, 'summary: A, B and C filled; C kept; D purged; E not imported', $s);
 
     $sA = staged($ids['A']);
@@ -524,7 +526,7 @@ try {
     // ----------------------------------------------------------- second apply
     $s = $importer->apply($parsed['orders']);
     $want = array('in_report' => 5, 'updated' => 0, 'addresses' => 0, 'customers' => 0,
-        'already' => 3, 'kept' => 0, 'not_imported' => 1, 'purged' => 1);
+        'already' => 3, 'kept' => 0, 'not_imported' => 1, 'purged' => 1, 'other_shop' => 0);
     check($s === $want, 'uploading the same report again changes nothing', $s);
 
     // ------------------------------------------- order created after upload

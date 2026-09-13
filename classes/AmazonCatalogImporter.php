@@ -8,6 +8,11 @@
  * before they appear in the shop. Title, description, bullet points,
  * brand (manufacturer), price, stock and images are carried over.
  *
+ * Multistore: works on one shop (the one the request acts for, or the one
+ * passed in). It reads that shop's staged rows, only touches products
+ * associated with that shop, and saves products, images and stock for that
+ * shop alone (id_shop_list), so the other shops' prices and statuses stay.
+ *
  * PHP 5.6+ compatible.
  *
  *  @author    IntelliPresta
@@ -20,6 +25,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonCatalogImporter
 {
@@ -30,11 +36,13 @@ class AmazonCatalogImporter
 
     public function __construct($idLang = 0, $idShop = 0)
     {
-        $this->idLang = $idLang ? (int) $idLang : (int) Configuration::get('PS_LANG_DEFAULT');
-        $this->idShop = $idShop ? (int) $idShop : (int) Context::getContext()->shop->id;
+        $this->idShop = $idShop ? (int) $idShop : (int) AmzproShop::actingId();
         if (!$this->idShop) {
             $this->idShop = 1;
         }
+        $this->idLang = $idLang ? (int) $idLang : (int) Configuration::get(
+            'PS_LANG_DEFAULT', null, AmzproShop::groupId($this->idShop), $this->idShop
+        );
     }
 
     public function getLastError()
@@ -80,8 +88,10 @@ class AmazonCatalogImporter
         $rows = Db::getInstance()->executeS(
             'SELECT ap.*, p.`id_product` AS ps_id
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
-             INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
-             WHERE ap.`amazon_exists` = 1 AND ap.`id_product` > 0
+             INNER JOIN `' . _DB_PREFIX_ . 'product_shop` p
+                 ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ' . (int) $this->idShop . ')
+             WHERE ap.`id_shop` = ' . (int) $this->idShop . '
+               AND ap.`amazon_exists` = 1 AND ap.`id_product` > 0
              ORDER BY ap.`seller_sku` ASC
              LIMIT ' . (int) $limit
         );
@@ -100,6 +110,8 @@ class AmazonCatalogImporter
                     $summary['failed']++;
                     continue;
                 }
+                // Saves change this shop only, never the others.
+                $product->id_shop_list = array($this->idShop);
 
                 if (in_array('content', $operations)) {
                     $summary['content'] += $this->applyContent($product, $r) ? 1 : 0;
@@ -165,6 +177,7 @@ class AmazonCatalogImporter
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = $brand;
                 $manufacturer->active = 1;
+                $manufacturer->id_shop_list = array($this->idShop);
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;
                 }
@@ -211,6 +224,7 @@ class AmazonCatalogImporter
             if (!$idFeature) {
                 $feature = new Feature();
                 $feature->name = array($this->idLang => $featureName);
+                $feature->id_shop_list = array($this->idShop);
                 if (!$feature->add()) {
                     continue;
                 }
@@ -254,11 +268,15 @@ class AmazonCatalogImporter
      */
     private function hideUnavailable($limit = 500)
     {
+        // Only products still active in this shop; they are switched off in
+        // this shop alone.
         $rows = Db::getInstance()->executeS(
             'SELECT ap.`id_product`, ap.`seller_sku`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
-             INNER JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
-             WHERE ap.`id_product` > 0 AND p.`active` = 1
+             INNER JOIN `' . _DB_PREFIX_ . 'product_shop` p
+                 ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ' . (int) $this->idShop . ')
+             WHERE ap.`id_shop` = ' . (int) $this->idShop . '
+               AND ap.`id_product` > 0 AND p.`active` = 1
                AND (ap.`amazon_exists` = 0 OR ap.`amazon_quantity` <= 0)
              LIMIT ' . (int) $limit
         );
@@ -268,10 +286,11 @@ class AmazonCatalogImporter
 
         $count = 0;
         foreach ($rows as $r) {
-            $product = new Product((int) $r['id_product']);
+            $product = new Product((int) $r['id_product'], false, null, $this->idShop);
             if (!Validate::isLoadedObject($product)) {
                 continue;
             }
+            $product->id_shop_list = array($this->idShop);
             $product->active = 0;
             if ($product->update()) {
                 $count++;
@@ -302,7 +321,9 @@ class AmazonCatalogImporter
         $summary = array('candidates' => 0, 'created' => 0, 'skipped' => 0, 'failed' => 0, 'images_failed' => 0);
 
         if (!$idCategory) {
-            $idCategory = (int) Configuration::get('PS_HOME_CATEGORY');
+            $idCategory = (int) Configuration::get(
+                'PS_HOME_CATEGORY', null, AmzproShop::groupId($this->idShop), $this->idShop
+            );
             if (!$idCategory) {
                 $idCategory = 2;
             }
@@ -310,7 +331,8 @@ class AmazonCatalogImporter
 
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `sync_direction` = \'amazon_only\'
+             WHERE `id_shop` = ' . (int) $this->idShop . '
+               AND `sync_direction` = \'amazon_only\'
                AND `ps_exists` = 0 AND `id_product` = 0
              ORDER BY `seller_sku` ASC
              LIMIT ' . (int) $limit
@@ -321,11 +343,30 @@ class AmazonCatalogImporter
         $summary['candidates'] = count($rows);
 
         foreach ($rows as $row) {
-            // The SKU may exist in PS already (reference match not yet staged)
+            // The SKU may exist in this shop already (reference match not yet staged)
             $existing = (int) Db::getInstance()->getValue(
-                'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-                 WHERE `reference` = \'' . pSQL($row['seller_sku']) . '\''
+                'SELECT p.`id_product` FROM `' . _DB_PREFIX_ . 'product` p
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                     ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . (int) $this->idShop . ')
+                 WHERE p.`reference` = \'' . pSQL($row['seller_sku']) . '\''
             );
+            if (!$existing) {
+                // A product of another shop carries the reference: creating a
+                // second one would give the catalogue a duplicate reference.
+                $elsewhere = (int) Db::getInstance()->getValue(
+                    'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
+                     WHERE `reference` = \'' . pSQL($row['seller_sku']) . '\''
+                );
+                if ($elsewhere) {
+                    $summary['skipped']++;
+                    $this->notices[] = sprintf(
+                        AmazonI18n::get()->l('SKU %1$s: product #%2$d already has this reference but is not in this shop. Add it to this shop, then sync again.', 'amazoncatalogimporter'),
+                        $row['seller_sku'],
+                        $elsewhere
+                    );
+                    continue;
+                }
+            }
             if ($existing) {
                 $this->linkStagedRow($row['seller_sku'], $existing);
                 $summary['skipped']++;
@@ -377,6 +418,8 @@ class AmazonCatalogImporter
         $product->reference = $row['seller_sku'];
         $product->id_category_default = (int) $idCategory;
         $product->id_shop_default = $this->idShop;
+        // Created in this shop only.
+        $product->id_shop_list = array($this->idShop);
         // Amazon prices are tax-inclusive; PS stores tax-exclusive. We import
         // the amount as-is with no tax group and flag it for review.
         $product->price = (float) $row['amazon_price'];
@@ -409,6 +452,7 @@ class AmazonCatalogImporter
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = Tools::substr($brand, 0, 64);
                 $manufacturer->active = 1;
+                $manufacturer->id_shop_list = array($this->idShop);
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;
                 }
@@ -474,6 +518,7 @@ class AmazonCatalogImporter
         $image->id_product = $idProduct;
         $image->position = Image::getHighestPosition($idProduct) + 1;
         $image->cover = $isCover;
+        $image->id_shop_list = array($this->idShop);
         if (!$image->add()) {
             @unlink($tmpFile);
             return false;
@@ -512,16 +557,19 @@ class AmazonCatalogImporter
         Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
              INNER JOIN `' . _DB_PREFIX_ . 'product` pr ON (pr.`id_product` = ' . (int) $idProduct . ')
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = pr.`id_product` AND ps.`id_shop` = ' . (int) $this->idShop . ')
              LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                  ON (pl.`id_product` = pr.`id_product` AND pl.`id_lang` = ' . (int) $idLang . '
                      AND pl.`id_shop` = ' . (int) $this->idShop . ')
              SET p.`id_product` = ' . (int) $idProduct . ',
                  p.`ps_exists` = 1,
                  p.`ps_name` = IFNULL(pl.`name`, \'\'),
-                 p.`ps_price` = pr.`price`,
+                 p.`ps_price` = IFNULL(ps.`price`, pr.`price`),
                  p.`sync_direction` = \'in_sync\',
                  p.`date_upd` = \'' . pSQL($now) . '\'
-             WHERE p.`seller_sku` = \'' . pSQL($sku) . '\''
+             WHERE p.`seller_sku` = \'' . pSQL($sku) . '\'
+               AND p.`id_shop` = ' . (int) $this->idShop
         );
     }
 }

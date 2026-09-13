@@ -14,6 +14,12 @@
  * this CSV round-trip.
  *
  * Nothing here talks to Amazon — it only edits PrestaShop.
+ *
+ * Multistore: with a shop selected, export, import and audit cover the
+ * products and combinations associated with that shop; in "All shops" the
+ * whole catalogue. References and barcodes themselves are not per shop in
+ * PrestaShop, so a change made from one shop shows in every shop that sells
+ * the product.
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -21,6 +27,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonReferenceTool
 {
@@ -42,24 +49,49 @@ class AmazonReferenceTool
      */
     public static function exportCsv()
     {
-        $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
+        $idShop = (int) AmzproShop::id();
 
-        $rows = Db::getInstance()->executeS(
-            'SELECT p.`id_product`, 0 AS id_product_attribute, pl.`name`,
-                    p.`reference`, p.`ean13`, p.`upc`, p.`supplier_reference`
-             FROM `' . _DB_PREFIX_ . 'product` p
-             INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
-                 ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ')
-             GROUP BY p.`id_product`
-             UNION ALL
-             SELECT pa.`id_product`, pa.`id_product_attribute`, pl.`name`,
-                    pa.`reference`, pa.`ean13`, pa.`upc`, pa.`supplier_reference`
-             FROM `' . _DB_PREFIX_ . 'product_attribute` pa
-             INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
-                 ON (pl.`id_product` = pa.`id_product` AND pl.`id_lang` = ' . $idLang . ')
-             GROUP BY pa.`id_product_attribute`
-             ORDER BY 1, 2'
-        );
+        if ($idShop) {
+            $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
+            $rows = Db::getInstance()->executeS(
+                'SELECT p.`id_product`, 0 AS id_product_attribute, pl.`name`,
+                        p.`reference`, p.`ean13`, p.`upc`, p.`supplier_reference`
+                 FROM `' . _DB_PREFIX_ . 'product` p
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                     ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . '
+                         AND pl.`id_shop` = ' . $idShop . ')
+                 UNION ALL
+                 SELECT pa.`id_product`, pa.`id_product_attribute`, pl.`name`,
+                        pa.`reference`, pa.`ean13`, pa.`upc`, pa.`supplier_reference`
+                 FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                     ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                     ON (pl.`id_product` = pa.`id_product` AND pl.`id_lang` = ' . $idLang . '
+                         AND pl.`id_shop` = ' . $idShop . ')
+                 ORDER BY 1, 2'
+            );
+        } else {
+            $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
+            $rows = Db::getInstance()->executeS(
+                'SELECT p.`id_product`, 0 AS id_product_attribute, pl.`name`,
+                        p.`reference`, p.`ean13`, p.`upc`, p.`supplier_reference`
+                 FROM `' . _DB_PREFIX_ . 'product` p
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                     ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ')
+                 GROUP BY p.`id_product`
+                 UNION ALL
+                 SELECT pa.`id_product`, pa.`id_product_attribute`, pl.`name`,
+                        pa.`reference`, pa.`ean13`, pa.`upc`, pa.`supplier_reference`
+                 FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                     ON (pl.`id_product` = pa.`id_product` AND pl.`id_lang` = ' . $idLang . ')
+                 GROUP BY pa.`id_product_attribute`
+                 ORDER BY 1, 2'
+            );
+        }
         if (!is_array($rows)) {
             $rows = array();
         }
@@ -110,6 +142,9 @@ class AmazonReferenceTool
             return $summary;
         }
 
+        // With a shop selected only its products are written.
+        $idShop = (int) AmzproShop::id();
+
         $seenReferences = array();
         foreach ($lines as $lineNo => $line) {
             if (trim($line) === '') {
@@ -123,6 +158,16 @@ class AmazonReferenceTool
             }
             $idProduct = (int) $m[1];
             $idPa = (int) $m[2];
+
+            if ($idShop && !self::inShop($idProduct, $idPa, $idShop)) {
+                $summary['errors'][] = sprintf(
+                    AmazonI18n::get()->l('Line %1$d: %2$s is not a product of this shop, so it was left unchanged.', 'amazonreferencetool'),
+                    $lineNo + 2,
+                    $key
+                );
+                $summary['skipped']++;
+                continue;
+            }
 
             $values = array();
             foreach (array('reference', 'ean13', 'upc', 'supplier_reference') as $field) {
@@ -184,25 +229,65 @@ class AmazonReferenceTool
         return $summary;
     }
 
-    /** Catalogue problems that will stop a sync, for a pre-flight panel. */
+    /**
+     * Whether a product (or one of its combinations) is associated with the
+     * shop.
+     */
+    private static function inShop($idProduct, $idProductAttribute, $idShop)
+    {
+        if ($idProductAttribute > 0) {
+            return (bool) Db::getInstance()->getValue(
+                'SELECT pas.`id_product_attribute`
+                 FROM `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                 INNER JOIN `' . _DB_PREFIX_ . 'product_attribute` pa
+                     ON (pa.`id_product_attribute` = pas.`id_product_attribute`)
+                 WHERE pas.`id_product_attribute` = ' . (int) $idProductAttribute . '
+                   AND pa.`id_product` = ' . (int) $idProduct . '
+                   AND pas.`id_shop` = ' . (int) $idShop
+            );
+        }
+
+        return (bool) Db::getInstance()->getValue(
+            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product_shop`
+             WHERE `id_product` = ' . (int) $idProduct . ' AND `id_shop` = ' . (int) $idShop
+        );
+    }
+
+    /**
+     * Catalogue problems that will stop a sync, for a pre-flight panel: the
+     * selected shop's products, or the whole catalogue in "All shops".
+     */
     public static function auditCatalogue()
     {
+        $idShop = (int) AmzproShop::id();
+        $p = '`' . _DB_PREFIX_ . 'product` p';
+        $active = 'p.`active` = 1';
+        $pa = '`' . _DB_PREFIX_ . 'product_attribute` pa';
+        if ($idShop) {
+            // Active is the shop's own status.
+            $p .= ' INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                     ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')';
+            $active = 'ps.`active` = 1';
+            $pa .= ' INNER JOIN `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+                      ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')';
+        }
+
         $noReference = (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `active` = 1 AND (`reference` IS NULL OR `reference` = \'\')'
+            'SELECT COUNT(*) FROM ' . $p . '
+             WHERE ' . $active . ' AND (p.`reference` IS NULL OR p.`reference` = \'\')'
         );
         $noBarcode = (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `active` = 1 AND (`ean13` IS NULL OR `ean13` = \'\')
-               AND (`upc` IS NULL OR `upc` = \'\')'
+            'SELECT COUNT(*) FROM ' . $p . '
+             WHERE ' . $active . ' AND (p.`ean13` IS NULL OR p.`ean13` = \'\')
+               AND (p.`upc` IS NULL OR p.`upc` = \'\')'
         );
         $duplicates = Db::getInstance()->executeS(
-            'SELECT `reference`, COUNT(*) AS c FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `reference` <> \'\' GROUP BY `reference` HAVING c > 1'
+            'SELECT p.`reference`, COUNT(*) AS c FROM ' . $p . '
+             WHERE p.`reference` <> \'\' GROUP BY p.`reference` HAVING c > 1'
         );
         $comboNoReference = (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product_attribute`
-             WHERE `reference` IS NULL OR `reference` = \'\''
+            'SELECT COUNT(*) FROM ' . $pa . '
+             WHERE pa.`reference` IS NULL OR pa.`reference` = \'\''
         );
 
         return array(

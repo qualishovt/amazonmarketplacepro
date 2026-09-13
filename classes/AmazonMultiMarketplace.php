@@ -23,6 +23,10 @@
  * Enables running syncs across all active marketplaces in a single cron run
  * or triggering per-marketplace operations from the admin UI.
  *
+ * Multistore: marketplace configurations belong to one shop each (a shop
+ * connects its own seller account). Lists in the back office's "All shops"
+ * view show every shop's rows; everything else works on one shop.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -31,6 +35,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonMultiMarketplace
 {
@@ -88,47 +93,80 @@ class AmazonMultiMarketplace
     }
 
     /**
-     * Get all configured marketplace configs.
+     * Get all configured marketplace configs (each row carries its id_shop).
      *
      * @param bool $activeOnly Only return active marketplaces
+     * @param int|null $idShop Null = the current shop, or every shop in the
+     *                         back office's "All shops" view
      * @return array
      */
-    public function getMarketplaceConfigs($activeOnly = false)
+    public function getMarketplaceConfigs($activeOnly = false, $idShop = null)
     {
-        $where = $activeOnly ? 'WHERE `active` = 1' : '';
+        $where = 'WHERE ' . AmzproShop::sqlWhere('', $idShop) . ($activeOnly ? ' AND `active` = 1' : '');
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
                 ' . $where . '
-                ORDER BY `marketplace_name` ASC';
+                ORDER BY `id_shop` ASC, `marketplace_name` ASC';
         $rows = Db::getInstance()->executeS($sql);
         return is_array($rows) ? $rows : array();
     }
 
     /**
-     * Get a single marketplace config.
+     * Get a single marketplace config of one shop.
      *
      * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for (the
+     *                         default shop in "All shops")
      * @return array|false
      */
-    public function getMarketplaceConfig($marketplaceId)
+    public function getMarketplaceConfig($marketplaceId, $idShop = null)
     {
+        $idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
+
         return Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
-             WHERE `marketplace_id` = \'' . pSQL($marketplaceId) . '\''
+             WHERE ' . AmzproShop::sqlWhere('', $idShop) . '
+               AND `marketplace_id` = \'' . pSQL($marketplaceId) . '\''
         );
     }
 
     /**
-     * Save or update a marketplace configuration.
+     * Save or update a marketplace configuration of the current shop.
+     *
+     * Refused in the back office's "All shops" view: a configuration belongs
+     * to one shop's seller account.
      *
      * @param array $data Marketplace config fields
      * @return bool
      */
     public function saveMarketplaceConfig($data)
     {
+        $shopError = AmzproShop::requireShop();
+        if ($shopError !== null) {
+            $this->lastError = $shopError;
+            return false;
+        }
+        $idShop = AmzproShop::actingId();
+
         $marketplaceId = isset($data['marketplace_id']) ? $data['marketplace_id'] : '';
         if ($marketplaceId === '') {
             $this->lastError = AmazonI18n::get()->l('Marketplace ID is required.', 'amazonmultimarketplace');
             return false;
+        }
+
+        $active = (int) (isset($data['active']) ? $data['active'] : 1);
+        if ($active) {
+            $sellerId = isset($data['seller_id']) ? trim((string) $data['seller_id']) : '';
+            if ($sellerId === '') {
+                $sellerId = (string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop);
+            }
+            $otherShop = $this->shopUsingSellerOnMarketplace($sellerId, $marketplaceId, $idShop);
+            if ($otherShop) {
+                $this->lastError = sprintf(
+                    AmazonI18n::get()->l('This Amazon seller account already sells on this marketplace from the shop "%s". Each seller account and marketplace can be used by one shop only.', 'amazonmultimarketplace'),
+                    AmzproShop::name($otherShop)
+                );
+                return false;
+            }
         }
 
         $name = isset(self::$marketplaceNames[$marketplaceId])
@@ -138,18 +176,19 @@ class AmazonMultiMarketplace
         $now = date('Y-m-d H:i:s');
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
-            (`marketplace_id`, `marketplace_name`, `client_id`, `client_secret`,
+            (`id_shop`, `marketplace_id`, `marketplace_name`, `client_id`, `client_secret`,
              `refresh_token`, `seller_id`, `active`, `default_carrier`,
              `default_order_state`, `sync_orders`, `sync_products`, `sync_stock`,
              `date_add`, `date_upd`)
             VALUES (
+                ' . (int) $idShop . ',
                 \'' . pSQL($marketplaceId) . '\',
                 \'' . pSQL($name) . '\',
                 \'' . pSQL(isset($data['client_id']) ? $data['client_id'] : '') . '\',
                 \'' . pSQL(isset($data['client_secret']) ? $data['client_secret'] : '') . '\',
                 \'' . pSQL(isset($data['refresh_token']) ? $data['refresh_token'] : '') . '\',
                 \'' . pSQL(isset($data['seller_id']) ? $data['seller_id'] : '') . '\',
-                ' . (int) (isset($data['active']) ? $data['active'] : 1) . ',
+                ' . $active . ',
                 ' . (int) (isset($data['default_carrier']) ? $data['default_carrier'] : 0) . ',
                 ' . (int) (isset($data['default_order_state']) ? $data['default_order_state'] : 0) . ',
                 ' . (int) (isset($data['sync_orders']) ? $data['sync_orders'] : 1) . ',
@@ -176,33 +215,87 @@ class AmazonMultiMarketplace
     }
 
     /**
-     * Delete a marketplace configuration.
+     * Delete a marketplace configuration of the current shop.
+     *
+     * Refused in the back office's "All shops" view (see getLastError()), so
+     * a click there cannot remove another shop's configuration.
      *
      * @param string $marketplaceId
      * @return bool
      */
     public function deleteMarketplaceConfig($marketplaceId)
     {
+        $shopError = AmzproShop::requireShop();
+        if ($shopError !== null) {
+            $this->lastError = $shopError;
+            return false;
+        }
+
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
-             WHERE `marketplace_id` = \'' . pSQL($marketplaceId) . '\''
+             WHERE ' . AmzproShop::sqlWhere('', AmzproShop::actingId()) . '
+               AND `marketplace_id` = \'' . pSQL($marketplaceId) . '\''
         );
     }
 
     /**
-     * Build an SP-API client for a specific marketplace.
+     * The shop, other than $exceptShop, that already uses this seller account
+     * on this marketplace: as its main connection, or through an active
+     * marketplace configuration. 0 when none.
+     *
+     * @param string $sellerId
+     * @param string $marketplaceId
+     * @param int $exceptShop
+     * @return int
+     */
+    public function shopUsingSellerOnMarketplace($sellerId, $marketplaceId, $exceptShop)
+    {
+        $sellerId = (string) $sellerId;
+        if ($sellerId === '' || !AmzproShop::isMultistore()) {
+            return 0;
+        }
+
+        $idShop = AmzproShop::shopUsingSeller($sellerId, $marketplaceId, $exceptShop);
+        if ($idShop) {
+            return $idShop;
+        }
+
+        $rows = Db::getInstance()->executeS(
+            'SELECT `id_shop`, `seller_id` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
+             WHERE `id_shop` <> ' . (int) $exceptShop . '
+               AND `active` = 1
+               AND `marketplace_id` = \'' . pSQL($marketplaceId) . '\'
+             ORDER BY `id_shop` ASC'
+        );
+        foreach ((is_array($rows) ? $rows : array()) as $row) {
+            // A configuration without its own seller id uses its shop's.
+            $rowSeller = (string) $row['seller_id'] !== ''
+                ? (string) $row['seller_id']
+                : (string) AmzproShop::get('AMZPRO_SELLER_ID', (int) $row['id_shop']);
+            if ($rowSeller === $sellerId) {
+                return (int) $row['id_shop'];
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Build an SP-API client for a specific marketplace of one shop.
      *
      * Uses per-marketplace credentials if configured, otherwise falls back
-     * to the primary (global) credentials.
+     * to the shop's primary credentials.
      *
      * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for
      * @return AmazonSpApiClient
      */
-    public function buildClientForMarketplace($marketplaceId)
+    public function buildClientForMarketplace($marketplaceId, $idShop = null)
     {
         require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
 
-        $config = $this->getMarketplaceConfig($marketplaceId);
+        $idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
+        $config = $this->getMarketplaceConfig($marketplaceId, $idShop);
 
         $usingPrimary = !($config && !empty($config['client_id']));
         if (!$usingPrimary) {
@@ -211,18 +304,18 @@ class AmazonMultiMarketplace
             $clientSecret = $config['client_secret'];
             $refreshToken = $config['refresh_token'];
         } else {
-            // Fall back to primary credentials
-            $clientId = Configuration::get('AMZPRO_CLIENT_ID');
-            $clientSecret = Configuration::get('AMZPRO_CLIENT_SECRET');
-            $refreshToken = AmazonSpApiClient::storedRefreshToken();
+            // Fall back to the shop's primary credentials
+            $clientId = AmzproShop::get('AMZPRO_CLIENT_ID', $idShop);
+            $clientSecret = AmzproShop::get('AMZPRO_CLIENT_SECRET', $idShop);
+            $refreshToken = AmazonSpApiClient::storedRefreshToken(null, $idShop);
         }
 
         $endpoint = $this->resolveEndpoint($marketplaceId);
 
-        $client = new AmazonSpApiClient($clientId, $clientSecret, $refreshToken, $endpoint);
+        $client = new AmazonSpApiClient($clientId, $clientSecret, $refreshToken, $endpoint, null, $idShop);
 
         // Primary credentials in "Connect with Amazon" mode use the token relay.
-        if ($usingPrimary && AmazonSpApiClient::authMode() !== 'manual') {
+        if ($usingPrimary && AmazonSpApiClient::authMode($idShop) !== 'manual') {
             $client->setTokenRelay(AmazonSpApiClient::relayUrl());
         }
 
@@ -256,62 +349,97 @@ class AmazonMultiMarketplace
     }
 
     /**
-     * Get the seller ID for a marketplace.
+     * Get the seller ID for a marketplace of one shop.
      *
      * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for
      * @return string
      */
-    public function getSellerIdForMarketplace($marketplaceId)
+    public function getSellerIdForMarketplace($marketplaceId, $idShop = null)
     {
-        $config = $this->getMarketplaceConfig($marketplaceId);
+        $idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
+        $config = $this->getMarketplaceConfig($marketplaceId, $idShop);
         if ($config && !empty($config['seller_id'])) {
             return $config['seller_id'];
         }
-        return (string) Configuration::get('AMZPRO_SELLER_ID');
+        return (string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop);
     }
 
     /**
-     * Get carrier for a marketplace.
+     * Get carrier for a marketplace of one shop.
      *
      * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for
      * @return int
      */
-    public function getCarrierForMarketplace($marketplaceId)
+    public function getCarrierForMarketplace($marketplaceId, $idShop = null)
     {
-        $config = $this->getMarketplaceConfig($marketplaceId);
+        $idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
+        $config = $this->getMarketplaceConfig($marketplaceId, $idShop);
         if ($config && (int) $config['default_carrier'] > 0) {
             return (int) $config['default_carrier'];
         }
-        return (int) Configuration::get('AMZPRO_DEFAULT_CARRIER');
+        return (int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER', $idShop);
     }
 
     /**
-     * Get order state for a marketplace.
+     * Get order state for a marketplace of one shop.
      *
      * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for
      * @return int
      */
-    public function getOrderStateForMarketplace($marketplaceId)
+    public function getOrderStateForMarketplace($marketplaceId, $idShop = null)
     {
-        $config = $this->getMarketplaceConfig($marketplaceId);
+        $idShop = $idShop ? (int) $idShop : AmzproShop::actingId();
+        $config = $this->getMarketplaceConfig($marketplaceId, $idShop);
         if ($config && (int) $config['default_order_state'] > 0) {
             return (int) $config['default_order_state'];
         }
-        $state = (int) Configuration::get('AMZPRO_DEFAULT_ORDER_STATE');
-        return $state ? $state : (int) Configuration::get('PS_OS_PAYMENT');
+        $state = (int) AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE', $idShop);
+        return $state ? $state : (int) Configuration::get('PS_OS_PAYMENT', null, AmzproShop::groupId($idShop), $idShop);
     }
 
     /**
-     * Run order import across all active marketplaces.
+     * Run a job over the marketplaces of one concrete shop.
+     *
+     * Cron and the scheduler always run for one shop, which is then simply
+     * the current one. Should the back office start a job in "All shops"
+     * anyway, it works for the default shop, as the module did before it knew
+     * about shops, and inside that shop's context so the importers it calls
+     * read and write that shop's rows as well.
+     *
+     * @param callable $job receives the shop id
+     * @return mixed what $job returns
+     */
+    private function forOneShop($job)
+    {
+        $idShop = AmzproShop::actingId();
+        if (AmzproShop::isAllShops()) {
+            return AmzproShop::runInShop($idShop, $job);
+        }
+
+        return call_user_func($job, $idShop);
+    }
+
+    /**
+     * Run order import across the current shop's active marketplaces.
      *
      * @return array Per-marketplace results
      */
     public function importOrdersAllMarketplaces()
     {
+        return $this->forOneShop(function ($idShop) {
+            return $this->importOrdersForShop($idShop);
+        });
+    }
+
+    private function importOrdersForShop($idShop)
+    {
         $this->notices = array();
         $results = array();
 
-        $configs = $this->getMarketplaceConfigs(true);
+        $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
             $this->notices[] = 'No active marketplace configurations found.';
             return $results;
@@ -330,7 +458,7 @@ class AmazonMultiMarketplace
                 continue;
             }
 
-            $client = $this->buildClientForMarketplace($mpId);
+            $client = $this->buildClientForMarketplace($mpId, $idShop);
             $importer = new AmazonOrderImporter($client, $mpId);
 
             $createdAfter = ($env === 'production')
@@ -352,16 +480,23 @@ class AmazonMultiMarketplace
     }
 
     /**
-     * Run product sync across all active marketplaces.
+     * Run product sync across the current shop's active marketplaces.
      *
      * @return array Per-marketplace results
      */
     public function syncProductsAllMarketplaces()
     {
+        return $this->forOneShop(function ($idShop) {
+            return $this->syncProductsForShop($idShop);
+        });
+    }
+
+    private function syncProductsForShop($idShop)
+    {
         $this->notices = array();
         $results = array();
 
-        $configs = $this->getMarketplaceConfigs(true);
+        $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
             return $results;
         }
@@ -376,12 +511,12 @@ class AmazonMultiMarketplace
                 continue;
             }
 
-            $client = $this->buildClientForMarketplace($mpId);
-            $sellerId = $this->getSellerIdForMarketplace($mpId);
+            $client = $this->buildClientForMarketplace($mpId, $idShop);
+            $sellerId = $this->getSellerIdForMarketplace($mpId, $idShop);
             $sync = new AmazonProductSync($client, $mpId, $sellerId);
 
             $env = AmazonSpApiClient::environment();
-            $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
+            $useMock = AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production';
             $sync->setMock($useMock);
 
             $psSummary = $sync->syncPrestashopSide();
@@ -399,16 +534,23 @@ class AmazonMultiMarketplace
     }
 
     /**
-     * Run stock sync across all active marketplaces.
+     * Run stock sync across the current shop's active marketplaces.
      *
      * @return array Per-marketplace results
      */
     public function syncStockAllMarketplaces()
     {
+        return $this->forOneShop(function ($idShop) {
+            return $this->syncStockForShop($idShop);
+        });
+    }
+
+    private function syncStockForShop($idShop)
+    {
         $this->notices = array();
         $results = array();
 
-        $configs = $this->getMarketplaceConfigs(true);
+        $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
             return $results;
         }
@@ -423,12 +565,12 @@ class AmazonMultiMarketplace
                 continue;
             }
 
-            $client = $this->buildClientForMarketplace($mpId);
-            $sellerId = $this->getSellerIdForMarketplace($mpId);
+            $client = $this->buildClientForMarketplace($mpId, $idShop);
+            $sellerId = $this->getSellerIdForMarketplace($mpId, $idShop);
             $sync = new AmazonProductSync($client, $mpId, $sellerId);
 
             $env = AmazonSpApiClient::environment();
-            $useMock = Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production';
+            $useMock = AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production';
             $sync->setMock($useMock);
 
             $sync->syncPrestashopSide();

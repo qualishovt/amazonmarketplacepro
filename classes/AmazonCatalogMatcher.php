@@ -7,6 +7,9 @@
  * merchant_suggested_asin so Amazon attaches the offer to the right
  * product page instead of creating a duplicate.
  *
+ * Multistore: only the staged rows of the shop the request acts for are
+ * matched, with that shop's client.
+ *
  * PHP 5.6+ compatible.
  *
  *  @author    IntelliPresta
@@ -17,6 +20,8 @@
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonCatalogMatcher
 {
@@ -58,7 +63,8 @@ class AmazonCatalogMatcher
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `ps_ean13`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `ps_exists` = 1
+             WHERE `id_shop` = ' . (int) AmzproShop::actingId() . '
+               AND `ps_exists` = 1
                AND `is_parent` = 0
                AND `amazon_asin` = \'\'
                AND `ps_ean13` != \'\'
@@ -179,7 +185,8 @@ class AmazonCatalogMatcher
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
              SET `amazon_asin` = \'' . pSQL($asin) . '\',
                  `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-             WHERE `seller_sku` = \'' . pSQL($sku) . '\''
+             WHERE `seller_sku` = \'' . pSQL($sku) . '\'
+               AND `id_shop` = ' . (int) AmzproShop::actingId()
         );
     }
 }

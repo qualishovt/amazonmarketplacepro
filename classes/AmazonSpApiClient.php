@@ -30,6 +30,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonSpApiClient
 {
@@ -79,13 +80,18 @@ class AmazonSpApiClient
      * the one Create Token issues. Sandbox is therefore always manual,
      * whatever is stored. The stored value is kept untouched so that
      * switching back to production restores the merchant's real choice.
+     *
+     * Each shop connects its own seller account, so the stored mode is the
+     * shop's own.
+     *
+     * @param int|null $idShop Null = the shop the request acts for
      */
-    public static function authMode()
+    public static function authMode($idShop = null)
     {
         if (self::isSandboxEnv()) {
             return 'manual';
         }
-        $stored = Configuration::get('AMZPRO_AUTH_MODE');
+        $stored = AmzproShop::get('AMZPRO_AUTH_MODE', $idShop);
 
         return $stored === 'manual' ? 'manual' : 'connect';
     }
@@ -106,11 +112,9 @@ class AmazonSpApiClient
             return true;
         }
 
-        if (Configuration::get('AMZPRO_DEV_MODE')) {
-            $override = Configuration::getGlobalValue('AMZPRO_OAUTH_BETA');
-            if ($override === false || $override === null || $override === '') {
-                $override = Configuration::get('AMZPRO_OAUTH_BETA');
-            }
+        // Both are install-wide settings (see AmzproShop::$globalKeys).
+        if (AmzproShop::get('AMZPRO_DEV_MODE')) {
+            $override = AmzproShop::get('AMZPRO_OAUTH_BETA');
             if ($override !== false && $override !== null && $override !== '') {
                 return (bool) $override;
             }
@@ -120,28 +124,20 @@ class AmazonSpApiClient
     }
 
     /**
-     * The active environment, read from global scope.
+     * The active environment, the same for the whole installation.
      *
-     * Read globally for the same reason the refresh tokens and the OAuth
-     * nonce are: this value decides WHICH token slot and WHICH app client are
-     * in play, so it has to give the same answer in every context - the admin
-     * in an all-shops context, the front controller in a shop context, and
-     * cron with no shop context at all. Configuration::get() is shop-scoped,
-     * so a shop-level row silently shadows the global one and the module
-     * connects in one environment while believing it is in the other.
-     *
-     * The fallback to the shop-scoped value keeps installations working that
-     * were saved before this became global.
+     * This value decides WHICH token slot and WHICH app client are in play,
+     * so it has to give the same answer in every context - the admin in an
+     * all-shops context, the front controller in a shop context, and cron.
+     * AmzproShop keeps it install-wide (AmzproShop::$globalKeys); a shop-level
+     * row would otherwise shadow it and the module would connect in one
+     * environment while believing it is in the other.
      *
      * @return string 'production' or 'sandbox'
      */
     public static function environment()
     {
-        $env = (string) Configuration::getGlobalValue('AMZPRO_ENVIRONMENT');
-
-        if ($env === '') {
-            $env = (string) Configuration::get('AMZPRO_ENVIRONMENT');
-        }
+        $env = (string) AmzproShop::get('AMZPRO_ENVIRONMENT');
 
         return ($env === 'sandbox') ? 'sandbox' : 'production';
     }
@@ -162,7 +158,7 @@ class AmazonSpApiClient
         // sent to the consent page while the relay is redeeming the resulting
         // code with the sandbox app's secret (Amazon returns invalid_grant).
         $key = $sandbox ? 'AMZPRO_LWA_APP_ID_SANDBOX' : 'AMZPRO_LWA_APP_ID';
-        $v = trim((string) Configuration::get($key));
+        $v = trim((string) AmzproShop::get($key));
         if ($v !== '') {
             return $v;
         }
@@ -186,13 +182,16 @@ class AmazonSpApiClient
     }
 
     /**
+     * @param bool|null $sandbox Null = read the configured environment
+     * @param int|null $idShop Null = the shop the request acts for
      * @return string The refresh token for the active environment ('' if not connected).
      */
-    public static function storedRefreshToken($sandbox = null)
+    public static function storedRefreshToken($sandbox = null, $idShop = null)
     {
-        // Connection state is stored globally: the admin (any shop context)
-        // and the front/cron controllers must all see the same token.
-        $token = (string) Configuration::getGlobalValue(self::refreshTokenKey($sandbox));
+        // Each shop holds its own connection, never inherited from another
+        // shop (AmzproShop::$ownKeys), so the admin, the front controllers
+        // and cron all see the token of the shop they act for.
+        $token = (string) AmzproShop::get(self::refreshTokenKey($sandbox), $idShop);
 
         if ($token !== '') {
             return $token;
@@ -211,7 +210,7 @@ class AmazonSpApiClient
         // app cannot complete the OAuth consent flow at all, which would
         // otherwise leave the sandbox permanently unreachable.
         if ($sandbox) {
-            return (string) Configuration::getGlobalValue('AMZPRO_REFRESH_TOKEN');
+            return (string) AmzproShop::get('AMZPRO_REFRESH_TOKEN', $idShop);
         }
 
         return '';
@@ -226,9 +225,10 @@ class AmazonSpApiClient
      * because refresh tokens are app-scoped - presenting one to the other
      * app's secret is rejected as invalid_grant.
      *
+     * @param int|null $idShop Null = the shop the request acts for
      * @return bool True when the sandbox app's credentials should be used
      */
-    public static function tokenIsSandbox()
+    public static function tokenIsSandbox($idShop = null)
     {
         if (!self::isSandboxEnv()) {
             return false;
@@ -236,15 +236,18 @@ class AmazonSpApiClient
 
         // Sandbox environment, but only sandbox-app credentials if a token
         // minted by that app actually exists.
-        return (string) Configuration::getGlobalValue('AMZPRO_REFRESH_TOKEN_SANDBOX') !== '';
+        return (string) AmzproShop::get('AMZPRO_REFRESH_TOKEN_SANDBOX', $idShop) !== '';
     }
 
     /**
+     * The token relay base, the same for every shop. Not the shop's cron
+     * address for the IntelliPresta scheduler: that is AMZPRO_RELAY_CRON_URL.
+     *
      * @return string The configured relay base URL, falling back to the built-in default.
      */
     public static function relayUrl()
     {
-        $v = trim((string) Configuration::get('AMZPRO_RELAY_URL'));
+        $v = trim((string) AmzproShop::get('AMZPRO_RELAY_URL'));
         return ($v !== '') ? rtrim($v, '/') : self::DEFAULT_RELAY_URL;
     }
 
@@ -253,15 +256,16 @@ class AmazonSpApiClient
      * buffer (security margin kept out of Amazon sales). Never negative.
      *
      * @param int $rawQuantity Real PrestaShop stock
+     * @param int|null $idShop Null = the shop the request acts for
      * @return int
      */
-    public static function effectiveQuantity($rawQuantity)
+    public static function effectiveQuantity($rawQuantity, $idShop = null)
     {
         // Panic switch: publish 0 for everything (e.g. before holidays).
-        if (Configuration::get('AMZPRO_FORCE_ZERO_QTY')) {
+        if (AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)) {
             return 0;
         }
-        $buffer = (int) Configuration::get('AMZPRO_STOCK_BUFFER');
+        $buffer = (int) AmzproShop::get('AMZPRO_STOCK_BUFFER', $idShop);
         $qty = (int) $rawQuantity - max(0, $buffer);
         return ($qty > 0) ? $qty : 0;
     }
@@ -271,11 +275,12 @@ class AmazonSpApiClient
      * vocabulary: new_new, used_like_new, used_very_good, used_good,
      * used_acceptable, refurbished_refurbished, collectible_*).
      *
+     * @param int|null $idShop Null = the shop the request acts for
      * @return string
      */
-    public static function listingCondition()
+    public static function listingCondition($idShop = null)
     {
-        $v = trim((string) Configuration::get('AMZPRO_CONDITION_TYPE'));
+        $v = trim((string) AmzproShop::get('AMZPRO_CONDITION_TYPE', $idShop));
         return ($v !== '') ? $v : 'new_new';
     }
 
@@ -291,14 +296,15 @@ class AmazonSpApiClient
      * @param float  $priceTaxIncl  The B2C price the B2B discount applies to
      * @param string|null $templateOverride Resolved shipping template name (e.g. from
      *                                      price/weight ranges); null = use the static config
+     * @param int|null $idShop Null = the shop the request acts for
      * @return array
      */
-    public static function enrichOfferAttributes($attributes, $marketplaceId, $priceTaxIncl, $templateOverride = null)
+    public static function enrichOfferAttributes($attributes, $marketplaceId, $priceTaxIncl, $templateOverride = null, $idShop = null)
     {
         // Shipping template assignment
         $template = ($templateOverride !== null)
             ? trim((string) $templateOverride)
-            : trim((string) Configuration::get('AMZPRO_SHIPPING_TEMPLATE'));
+            : trim((string) AmzproShop::get('AMZPRO_SHIPPING_TEMPLATE', $idShop));
         if ($template !== '' && !isset($attributes['merchant_shipping_group'])) {
             $attributes['merchant_shipping_group'] = array(array(
                 'value' => $template,
@@ -357,11 +363,13 @@ class AmazonSpApiClient
      * publishes the exact values a seller may use in their Product Type
      * Definitions schema, so a merchant whose account differs can pin it.
      *
+     * @param string $marketplaceId
+     * @param int|null $idShop Null = the shop the request acts for
      * @return string
      */
-    public static function fbaChannelCode($marketplaceId)
+    public static function fbaChannelCode($marketplaceId, $idShop = null)
     {
-        $override = trim((string) Configuration::get('AMZPRO_FBA_CHANNEL_CODE'));
+        $override = trim((string) AmzproShop::get('AMZPRO_FBA_CHANNEL_CODE', $idShop));
         if ($override !== '') {
             return $override;
         }
@@ -410,18 +418,29 @@ class AmazonSpApiClient
     private $credentialSetIsSandbox = null;
 
     /**
+     * The shop whose connection this client uses.
+     *
+     * @var int
+     */
+    private $idShop;
+
+    /**
      * @param string $clientId     LWA client id
      * @param string $clientSecret LWA client secret
      * @param string $refreshToken LWA refresh token
      * @param string $endpoint     SP-API base host (use an ENDPOINT_* constant)
      * @param string|null $caBundle Optional absolute path to a cacert.pem for SSL verification
+     * @param int|null $idShop     The shop the credentials belong to; null = the
+     *                             shop the request acts for (callers read the
+     *                             credentials for that shop at the same moment)
      */
-    public function __construct($clientId, $clientSecret, $refreshToken, $endpoint, $caBundle = null)
+    public function __construct($clientId, $clientSecret, $refreshToken, $endpoint, $caBundle = null, $idShop = null)
     {
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->refreshToken = $refreshToken;
         $this->endpoint = rtrim($endpoint, '/');
+        $this->idShop = ($idShop === null) ? AmzproShop::actingId() : (int) $idShop;
 
         // Fall back to a cacert.pem shipped next to this class, if present.
         if ($caBundle === null) {
@@ -443,6 +462,14 @@ class AmazonSpApiClient
     public function setCredentialSet($isSandbox)
     {
         $this->credentialSetIsSandbox = (bool) $isSandbox;
+    }
+
+    /**
+     * @return int The shop whose connection this client uses.
+     */
+    public function getShopId()
+    {
+        return $this->idShop;
     }
 
     /**
@@ -531,11 +558,11 @@ class AmazonSpApiClient
         // secret is rejected as invalid_grant.
         //
         // setCredentialSet() overrides this for callers that build the client
-        // directly; otherwise ask the configuration.
+        // directly; otherwise ask the configuration of the client's shop.
         if ($this->credentialSetIsSandbox !== null) {
             $sandbox = $this->credentialSetIsSandbox;
         } else {
-            $sandbox = self::tokenIsSandbox();
+            $sandbox = self::tokenIsSandbox($this->idShop);
         }
 
         $res = $this->httpRaw(

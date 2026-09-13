@@ -18,6 +18,12 @@
  *
  * Many categories may share a profile; a category has at most one, so a
  * product's profile is unambiguous.
+ *
+ * Multistore: profiles with id_shop 0 are shared by every shop and a shop can
+ * add profiles of its own. A category's profile binding is shared too, and a
+ * shop's own binding for the same category and marketplace replaces it in
+ * that shop. A shop changes only its own profiles; shared ones are changed in
+ * "All shops".
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -25,9 +31,13 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonProfile
 {
+    /** @var string|null Why the last save or delete was refused */
+    private static $lastError = null;
+
     /**
      * PrestaShop fields offerable as an attribute source. The labels here are
      * the English originals; use getPsFields() to show them to the merchant.
@@ -81,8 +91,9 @@ class AmazonProfile
     public static function ensureTables()
     {
         $sql = array();
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` (
+        $sql['amazonmarketplacepro_profile'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` (
             `id_amazonmarketplacepro_profile` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `name` VARCHAR(128) NOT NULL DEFAULT \'\',
             `product_type` VARCHAR(128) NOT NULL DEFAULT \'\',
             `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
@@ -99,47 +110,92 @@ class AmazonProfile
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_profile`),
-            KEY `marketplace_id` (`marketplace_id`)
+            KEY `marketplace_id` (`marketplace_id`),
+            KEY `id_shop` (`id_shop`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
 
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` (
+        $sql['amazonmarketplacepro_profile_category'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` (
             `id_amazonmarketplacepro_profile_category` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `id_profile` INT(11) NOT NULL,
             `id_category` INT(11) NOT NULL,
             `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
             PRIMARY KEY (`id_amazonmarketplacepro_profile_category`),
-            UNIQUE KEY `cat_marketplace` (`id_category`, `marketplace_id`),
+            UNIQUE KEY `cat_marketplace` (`id_shop`, `id_category`, `marketplace_id`),
             KEY `id_profile` (`id_profile`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
 
-        foreach ($sql as $q) {
+        foreach ($sql as $table => $q) {
             Db::getInstance()->execute($q);
+            // A table created before multistore support gets its shop column.
+            AmzproShop::ensureTableShop($table);
         }
+    }
+
+    /** Why the last save() or delete() was refused, or null. */
+    public static function getLastError()
+    {
+        return self::$lastError;
+    }
+
+    /** @return int[] the id_shop values a change made in this context may touch */
+    private static function writableShops()
+    {
+        $id = (int) AmzproShop::sharedWriteId();
+        if (!AmzproShop::isMultistore()) {
+            // One shop: every row it sees is its own, as before shops were known.
+            return array_values(array_unique(array(0, $id)));
+        }
+
+        return array($id);
+    }
+
+    /**
+     * The category bindings (alias pc) the current shop uses: its own binding
+     * for a category and marketplace over the shared one.
+     */
+    private static function sqlEffectiveBinding()
+    {
+        return AmzproShop::sqlShared('pc') . '
+            AND NOT EXISTS (SELECT 1 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc2
+                WHERE pc2.`id_category` = pc.`id_category`
+                  AND pc2.`marketplace_id` = pc.`marketplace_id`
+                  AND ' . AmzproShop::sqlShared('pc2') . '
+                  AND pc2.`id_shop` > pc.`id_shop`)';
     }
 
     /* ─────────────────── CRUD ─────────────────── */
 
+    /**
+     * The profiles for all shops plus the current shop's own (only the shared
+     * ones in "All shops"). Rows carry id_shop; category_count counts the
+     * categories that use the profile in the current shop.
+     */
     public static function getAll($marketplaceId)
     {
         self::ensureTables();
         $rows = Db::getInstance()->executeS(
             'SELECT p.*,
                     (SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
-                      WHERE pc.`id_profile` = p.`id_amazonmarketplacepro_profile`) AS category_count
+                      WHERE pc.`id_profile` = p.`id_amazonmarketplacepro_profile`
+                        AND ' . self::sqlEffectiveBinding() . ') AS category_count
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` p
              WHERE p.`marketplace_id` = \'' . pSQL($marketplaceId) . '\'
+               AND ' . AmzproShop::sqlShared('p') . '
              ORDER BY p.`name` ASC'
         );
 
         return is_array($rows) ? $rows : array();
     }
 
+    /** A profile the current shop can see, or false. */
     public static function get($idProfile)
     {
         self::ensureTables();
         $row = Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile`
-             WHERE `id_amazonmarketplacepro_profile` = ' . (int) $idProfile
+             WHERE `id_amazonmarketplacepro_profile` = ' . (int) $idProfile . '
+               AND ' . AmzproShop::sqlShared()
         );
         if (!$row) {
             return false;
@@ -153,11 +209,13 @@ class AmazonProfile
         return $row;
     }
 
+    /** Categories that use this profile in the current shop. */
     public static function getCategoryIds($idProfile)
     {
         $rows = Db::getInstance()->executeS(
-            'SELECT `id_category` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
-             WHERE `id_profile` = ' . (int) $idProfile
+            'SELECT pc.`id_category` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
+             WHERE pc.`id_profile` = ' . (int) $idProfile . '
+               AND ' . self::sqlEffectiveBinding()
         );
         $out = array();
         if (is_array($rows)) {
@@ -176,13 +234,21 @@ class AmazonProfile
      *                    is_variation, variation_attributes, attributes (array),
      *                    raw_attributes_json, latency, shipping_template,
      *                    price_markup, gtin_exemption, categories (array of ids)
+     * In a shop a new profile belongs to that shop, in "All shops" to every
+     * shop. Returns false with getLastError() set when the profile cannot be
+     * changed here.
+     *
      * @return int|false Profile id
      */
     public static function save($data)
     {
         self::ensureTables();
+        self::$lastError = null;
         $now = date('Y-m-d H:i:s');
         $id = isset($data['id']) ? (int) $data['id'] : 0;
+        if ($id && !self::checkChange($id)) {
+            return false;
+        }
 
         $attributes = isset($data['attributes']) && is_array($data['attributes'])
             ? $data['attributes'] : array();
@@ -210,7 +276,8 @@ class AmazonProfile
         } else {
             Db::getInstance()->execute(
                 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile`
-                 SET ' . $fields . ', `date_add` = \'' . pSQL($now) . '\''
+                 SET ' . $fields . ', `id_shop` = ' . (int) AmzproShop::sharedWriteId() . ',
+                     `date_add` = \'' . pSQL($now) . '\''
             );
             $id = (int) Db::getInstance()->Insert_ID();
         }
@@ -220,10 +287,13 @@ class AmazonProfile
 
         // Category bindings: a category belongs to at most one profile, so
         // claiming it here detaches it from whichever profile held it before.
+        // Bindings are saved for the scope being edited: a shop's binding
+        // replaces the shared one in that shop only.
         $marketplaceId = pSQL((string) $data['marketplace_id']);
+        $shops = implode(', ', self::writableShops());
         Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
-             WHERE `id_profile` = ' . $id
+             WHERE `id_profile` = ' . $id . ' AND `id_shop` IN (' . $shops . ')'
         );
         if (!empty($data['categories']) && is_array($data['categories'])) {
             foreach ($data['categories'] as $idCategory) {
@@ -232,9 +302,15 @@ class AmazonProfile
                     continue;
                 }
                 Db::getInstance()->execute(
-                    'REPLACE INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
-                        (`id_profile`, `id_category`, `marketplace_id`)
-                     VALUES (' . $id . ', ' . $idCategory . ', \'' . $marketplaceId . '\')'
+                    'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
+                     WHERE `id_category` = ' . $idCategory . '
+                       AND `marketplace_id` = \'' . $marketplaceId . '\'
+                       AND `id_shop` IN (' . $shops . ')'
+                );
+                Db::getInstance()->execute(
+                    'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
+                        (`id_shop`, `id_profile`, `id_category`, `marketplace_id`)
+                     VALUES (' . (int) AmzproShop::sharedWriteId() . ', ' . $id . ', ' . $idCategory . ', \'' . $marketplaceId . '\')'
                 );
             }
         }
@@ -242,9 +318,40 @@ class AmazonProfile
         return $id;
     }
 
+    /**
+     * True when the current context may change this profile: a shop its own
+     * profiles, "All shops" the shared ones. Sets the error otherwise.
+     */
+    private static function checkChange($idProfile)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile`
+             WHERE `id_amazonmarketplacepro_profile` = ' . (int) $idProfile . '
+               AND ' . AmzproShop::sqlShared()
+        );
+        if (!$row) {
+            self::$lastError = AmazonI18n::get()->l('This profile was not found. Reload the page and try again.', 'amazonprofile');
+
+            return false;
+        }
+        if (!in_array((int) $row['id_shop'], self::writableShops(), true)) {
+            self::$lastError = AmazonI18n::get()->l('This profile is shared by all shops. Select "All shops" at the top of the page to change it, or create a profile for this shop.', 'amazonprofile');
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Delete a profile, with the same rule as save(). */
     public static function delete($idProfile)
     {
+        self::ensureTables();
+        self::$lastError = null;
         $idProfile = (int) $idProfile;
+        if (!self::checkChange($idProfile)) {
+            return false;
+        }
         Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category`
              WHERE `id_profile` = ' . $idProfile
@@ -377,11 +484,18 @@ class AmazonProfile
             );
         }
         if ($source === 'category') {
+            // The staged row's shop: its default category and category name.
+            $idShop = !empty($row['id_shop']) ? (int) $row['id_shop'] : (int) AmzproShop::actingId();
+            $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
+
             return (string) Db::getInstance()->getValue(
                 'SELECT cl.`name` FROM `' . _DB_PREFIX_ . 'product` p
+                 LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                     ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
                  LEFT JOIN `' . _DB_PREFIX_ . 'category_lang` cl
-                     ON (cl.`id_category` = p.`id_category_default`
-                         AND cl.`id_lang` = ' . (int) Configuration::get('PS_LANG_DEFAULT') . ')
+                     ON (cl.`id_category` = IFNULL(ps.`id_category_default`, p.`id_category_default`)
+                         AND cl.`id_shop` = ' . $idShop . '
+                         AND cl.`id_lang` = ' . $idLang . ')
                  WHERE p.`id_product` = ' . $idProduct
             );
         }

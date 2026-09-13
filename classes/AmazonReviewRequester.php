@@ -20,6 +20,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonReviewRequester
 {
@@ -129,6 +130,10 @@ class AmazonReviewRequester
             $this->lastError = AmazonI18n::get()->l('Order id is required.', 'amazonreviewrequester');
             return false;
         }
+        if ($this->isOtherShopsOrder($amazonOrderId)) {
+            $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Select that shop at the top of the page to work on it.', 'amazonreviewrequester');
+            return false;
+        }
 
         $available = $this->isReviewRequestAvailable($amazonOrderId);
         if ($available === null) {
@@ -173,8 +178,8 @@ class AmazonReviewRequester
     }
 
     /**
-     * Cron: request reviews for all staged orders in the eligible window
-     * that have not been solicited yet.
+     * Cron: request reviews for the current shop's staged orders in the
+     * eligible window that have not been solicited yet.
      *
      * @param int $limit Max orders to process this run (API is rate-limited)
      * @return array Summary counts
@@ -191,7 +196,8 @@ class AmazonReviewRequester
         $rows = Db::getInstance()->executeS(
             'SELECT `amazon_order_id`, `purchase_date`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `review_requested` = ' . (int) self::STATE_PENDING . '
+             WHERE ' . AmzproShop::sqlWhere() . '
+               AND `review_requested` = ' . (int) self::STATE_PENDING . '
                AND `order_status` NOT IN (\'Canceled\', \'Cancelled\')
                AND `purchase_date` IS NOT NULL
                AND `purchase_date` < \'' . pSQL(date('Y-m-d H:i:s', time() - 5 * 86400)) . '\'
@@ -232,20 +238,43 @@ class AmazonReviewRequester
         Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              SET `review_requested` = ' . (int) $state . '
+             WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\'
+               AND ' . AmzproShop::sqlWhere()
+        );
+    }
+
+    /**
+     * True when the order was imported by a shop other than the one this
+     * request works for. An order id that was never imported is not refused:
+     * Amazon itself checks that it belongs to this shop's seller account.
+     *
+     * @param string $amazonOrderId
+     * @return bool
+     */
+    private function isOtherShopsOrder($amazonOrderId)
+    {
+        if (!AmzproShop::isMultistore() || AmzproShop::isAllShops()) {
+            return false;
+        }
+        $idShop = Db::getInstance()->getValue(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\''
         );
+
+        return $idShop !== false && (int) $idShop !== AmzproShop::id();
     }
 
     private function log($level, $message)
     {
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`
-             (`level`, `source`, `message`, `date_add`)
+             (`level`, `source`, `message`, `date_add`, `id_shop`)
              VALUES (
                 \'' . pSQL($level) . '\',
                 \'review_request\',
                 \'' . pSQL(Tools::substr($message, 0, 1000)) . '\',
-                \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+                \'' . pSQL(date('Y-m-d H:i:s')) . '\',
+                ' . (int) AmzproShop::id() . '
              )'
         );
     }

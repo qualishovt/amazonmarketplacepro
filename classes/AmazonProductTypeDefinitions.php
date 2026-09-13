@@ -23,6 +23,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonProductTypeDefinitions
 {
@@ -146,7 +147,7 @@ class AmazonProductTypeDefinitions
             'requirements' => 'LISTING',
             'locale' => 'DEFAULT',
         );
-        $sellerId = trim((string) Configuration::get('AMZPRO_SELLER_ID'));
+        $sellerId = trim((string) AmzproShop::get('AMZPRO_SELLER_ID'));
         if ($sellerId !== '') {
             $query['sellerId'] = $sellerId;
         }

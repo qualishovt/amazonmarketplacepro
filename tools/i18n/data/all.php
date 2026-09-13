@@ -37,6 +37,7 @@ $amzproI18nChunks = array(
     require __DIR__ . '/chunk11.php',
     require __DIR__ . '/chunk12.php',
     require __DIR__ . '/chunk13.php',
+    require __DIR__ . '/chunk14.php',
 );
 
 $amzproI18nAll = array();

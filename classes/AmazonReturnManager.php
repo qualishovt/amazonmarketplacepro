@@ -22,6 +22,10 @@
  * - Pushing cancellations from PrestaShop to Amazon
  * - Pushing refunds from PrestaShop to Amazon
  *
+ * Multistore: a manager works for one shop (the shop whose Amazon account the
+ * client is connected to). A return belongs to the shop of its staged order;
+ * imports, credit slips and cancellations only touch that shop's orders.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -30,6 +34,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
 
 class AmazonReturnManager
@@ -40,12 +45,24 @@ class AmazonReturnManager
     private $sellerId;
     private $lastError = null;
     private $notices = array();
+    /** The shop returns are imported and processed for. */
+    private $idShop;
+    /** The shop the caller named, or 0 for "the request's shop". */
+    private $shopGiven;
 
-    public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '')
+    /**
+     * @param AmazonSpApiClient $client
+     * @param string            $marketplaceId
+     * @param string            $sellerId
+     * @param int               $idShop 0 = the shop the request acts for
+     */
+    public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '', $idShop = 0)
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;
         $this->sellerId = trim((string) $sellerId);
+        $this->shopGiven = (int) $idShop;
+        $this->idShop = $this->shopGiven ? $this->shopGiven : AmzproShop::actingId();
     }
 
     public function getLastError()
@@ -82,13 +99,16 @@ class AmazonReturnManager
                 `id_order` INT(11) NOT NULL DEFAULT 0,
                 `id_order_slip` INT(11) NOT NULL DEFAULT 0,
                 `return_status` VARCHAR(32) NOT NULL DEFAULT \'imported\',
+                `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
                 `date_add` DATETIME NOT NULL,
                 `date_upd` DATETIME NOT NULL,
                 PRIMARY KEY (`id_amazonmarketplacepro_return`),
                 KEY `amazon_order_id` (`amazon_order_id`),
-                KEY `return_status` (`return_status`)
+                KEY `return_status` (`return_status`),
+                KEY `shop_status` (`id_shop`, `return_status`)
             ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;'
         );
+        AmzproShop::ensureTableShop('amazonmarketplacepro_return');
     }
 
     /**
@@ -170,19 +190,25 @@ class AmazonReturnManager
             $exists = (bool) Db::getInstance()->getValue(
                 'SELECT `id_amazonmarketplacepro_return` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
                  WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\'
-                   AND `status` = \'Canceled\''
+                   AND `status` = \'Canceled\'
+                   AND `id_shop` = ' . (int) $this->idShop
             );
             if ($exists) {
                 $summary['already']++;
                 continue;
             }
 
-            // Find our staged order
+            // Find our staged order. Looked up in every shop (the order number
+            // is unique across them): an order another shop imported is that
+            // shop's return to record, not this one's.
             $stagedOrder = Db::getInstance()->getRow(
-                'SELECT `id_amazonmarketplacepro_order`, `id_order`, `order_total`, `currency`
+                'SELECT `id_amazonmarketplacepro_order`, `id_order`, `order_total`, `currency`, `id_shop`
                  FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                  WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\''
             );
+            if ($stagedOrder && (int) $stagedOrder['id_shop'] !== (int) $this->idShop) {
+                continue;
+            }
 
             $idOrder = ($stagedOrder && isset($stagedOrder['id_order'])) ? (int) $stagedOrder['id_order'] : 0;
             $total = ($stagedOrder && isset($stagedOrder['order_total'])) ? (float) $stagedOrder['order_total'] : 0;
@@ -194,7 +220,7 @@ class AmazonReturnManager
                  (`amazon_order_id`, `amazon_return_id`, `order_item_id`, `seller_sku`,
                   `asin`, `title`, `quantity`, `reason`, `status`,
                   `refund_amount`, `currency`, `id_order`, `id_order_slip`,
-                  `return_status`, `date_add`, `date_upd`)
+                  `return_status`, `id_shop`, `date_add`, `date_upd`)
                  VALUES (
                     \'' . pSQL($amazonId) . '\',
                     \'\',
@@ -210,6 +236,7 @@ class AmazonReturnManager
                     ' . $idOrder . ',
                     0,
                     \'imported\',
+                    ' . (int) $this->idShop . ',
                     \'' . pSQL($now) . '\',
                     \'' . pSQL($now) . '\'
                  )'
@@ -224,7 +251,8 @@ class AmazonReturnManager
                         `order_status` = \'Canceled\',
                         `import_status` = \'cancelled\',
                         `date_upd` = \'' . pSQL($now) . '\'
-                     WHERE `id_amazonmarketplacepro_order` = ' . (int) $stagedOrder['id_amazonmarketplacepro_order']
+                     WHERE `id_amazonmarketplacepro_order` = ' . (int) $stagedOrder['id_amazonmarketplacepro_order'] . '
+                       AND `id_shop` = ' . (int) $this->idShop
                 );
             }
         }
@@ -245,6 +273,7 @@ class AmazonReturnManager
         $stagedOrders = Db::getInstance()->executeS(
             'SELECT `amazon_order_id`, `id_order` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `id_order` > 0 AND `import_status` = \'created\'
+               AND `id_shop` = ' . (int) $this->idShop . '
              ORDER BY `date_add` DESC
              LIMIT 100'
         );
@@ -284,7 +313,8 @@ class AmazonReturnManager
                 $exists = (bool) Db::getInstance()->getValue(
                     'SELECT `id_amazonmarketplacepro_return` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
                      WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\'
-                       AND `order_item_id` = \'' . pSQL($orderItemId) . '\''
+                       AND `order_item_id` = \'' . pSQL($orderItemId) . '\'
+                       AND `id_shop` = ' . (int) $this->idShop
                 );
                 if ($exists) {
                     continue;
@@ -306,7 +336,7 @@ class AmazonReturnManager
                      (`amazon_order_id`, `amazon_return_id`, `order_item_id`, `seller_sku`,
                       `asin`, `title`, `quantity`, `reason`, `status`,
                       `refund_amount`, `currency`, `id_order`, `id_order_slip`,
-                      `return_status`, `date_add`, `date_upd`)
+                      `return_status`, `id_shop`, `date_add`, `date_upd`)
                      VALUES (
                         \'' . pSQL($amazonId) . '\',
                         \'\',
@@ -322,6 +352,7 @@ class AmazonReturnManager
                         ' . (int) $so['id_order'] . ',
                         0,
                         \'imported\',
+                        ' . (int) $this->idShop . ',
                         \'' . pSQL($now) . '\',
                         \'' . pSQL($now) . '\'
                      )'
@@ -334,7 +365,8 @@ class AmazonReturnManager
 
     /**
      * Process imported returns: create PS credit slips for returns that
-     * haven't been processed yet.
+     * haven't been processed yet. Only the manager's shop's returns, with the
+     * order state changes made inside that shop.
      *
      * @return array Summary
      */
@@ -343,6 +375,19 @@ class AmazonReturnManager
         $this->ensureTables();
         $this->notices = array();
 
+        return AmzproShop::runInShop($this->idShop, function () {
+            return $this->processShopReturns();
+        });
+    }
+
+    /**
+     * processReturns() inside the manager's shop.
+     *
+     * @return array Summary
+     */
+    private function processShopReturns()
+    {
+        $idShop = (int) $this->idShop;
         $summary = array(
             'total' => 0,
             'processed' => 0,
@@ -355,6 +400,7 @@ class AmazonReturnManager
         $returns = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
              WHERE `return_status` = \'imported\' AND `id_order` > 0
+               AND `id_shop` = ' . $idShop . '
              ORDER BY `date_add` ASC
              LIMIT 50'
         );
@@ -379,12 +425,19 @@ class AmazonReturnManager
                 );
                 continue;
             }
+            if ((int) $order->id_shop !== $idShop) {
+                // Never change another shop's order from here.
+                $summary['skipped']++;
+                continue;
+            }
 
             $now = date('Y-m-d H:i:s');
 
             if ($ret['status'] === 'Canceled') {
                 // Full cancellation — cancel the PS order
-                $cancelledStateId = (int) Configuration::get('PS_OS_CANCELED');
+                $cancelledStateId = (int) Configuration::get(
+                    'PS_OS_CANCELED', null, (int) $order->id_shop_group, $idShop
+                );
                 if ($cancelledStateId && (int) $order->current_state !== $cancelledStateId) {
                     $history = new OrderHistory();
                     $history->id_order = $idOrder;
@@ -403,7 +456,8 @@ class AmazonReturnManager
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_return` SET
                         `return_status` = \'processed\',
                         `date_upd` = \'' . pSQL($now) . '\'
-                     WHERE `id_amazonmarketplacepro_return` = ' . $idReturn
+                     WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
+                       AND `id_shop` = ' . $idShop
                 );
                 $summary['processed']++;
 
@@ -417,7 +471,8 @@ class AmazonReturnManager
                             `return_status` = \'refunded\',
                             `id_order_slip` = ' . (int) $slipId . ',
                             `date_upd` = \'' . pSQL($now) . '\'
-                         WHERE `id_amazonmarketplacepro_return` = ' . $idReturn
+                         WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
+                           AND `id_shop` = ' . $idShop
                     );
                     $summary['processed']++;
                     $this->notices[] = sprintf(
@@ -430,7 +485,8 @@ class AmazonReturnManager
                         'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_return` SET
                             `return_status` = \'processed\',
                             `date_upd` = \'' . pSQL($now) . '\'
-                         WHERE `id_amazonmarketplacepro_return` = ' . $idReturn
+                         WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
+                           AND `id_shop` = ' . $idShop
                     );
                     $summary['processed']++;
                     $this->notices[] = sprintf(
@@ -468,8 +524,7 @@ class AmazonReturnManager
                     `unit_price_tax_incl`, `unit_price_tax_excl`
              FROM `' . _DB_PREFIX_ . 'order_detail`
              WHERE `id_order` = ' . (int) $order->id . '
-               AND `product_reference` = \'' . pSQL($sku) . '\'
-             LIMIT 1'
+               AND `product_reference` = \'' . pSQL($sku) . '\''
         );
 
         if (!$orderDetail) {
@@ -538,7 +593,8 @@ class AmazonReturnManager
         // feed. FBA orders cannot be cancelled this way (Amazon fulfills them).
         require_once dirname(__FILE__) . '/AmazonFeedManager.php';
 
-        $sellerId = (string) Configuration::get('AMZPRO_SELLER_ID');
+        // The seller of the manager's shop: the one the client is connected to.
+        $sellerId = (string) AmzproShop::get('AMZPRO_SELLER_ID', $this->idShop);
         if ($sellerId === '') {
             $this->lastError = 'No seller id configured — cannot submit the cancellation feed.';
             return false;
@@ -563,7 +619,7 @@ class AmazonReturnManager
 
         $feeds = new AmazonFeedManager($this->client, $this->marketplaceId, $sellerId);
         $env = AmazonSpApiClient::environment();
-        $feeds->setMock(Configuration::get('AMZPRO_USE_MOCK') && $env !== 'production');
+        $feeds->setMock(AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
         $feedId = $feeds->submitFeed(
             'POST_ORDER_ACKNOWLEDGEMENT_DATA',
@@ -586,7 +642,8 @@ class AmazonReturnManager
     }
 
     /**
-     * List staged returns (for admin UI).
+     * List staged returns (for admin UI): the manager's shop's, or every
+     * shop's in "All shops" (each row carries its id_shop).
      *
      * @param int $limit
      * @return array
@@ -594,6 +651,7 @@ class AmazonReturnManager
     public function listReturns($limit = 50)
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
+                WHERE ' . AmzproShop::sqlWhere('', $this->shopGiven ? $this->shopGiven : null) . '
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);

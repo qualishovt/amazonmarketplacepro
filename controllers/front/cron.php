@@ -26,9 +26,14 @@
  *                                 existing installs already have in crontab,
  *                                 and because it is useful when testing
  *
- * A shop with no crontab at all is still automated: see
- * AmazonScheduler::triggerFromTraffic(), which runs due work after a page has
- * already been sent to the visitor.
+ * A shop with no crontab at all can still be automated: it registers with the
+ * IntelliPresta scheduler (see AmazonRelaySchedule), which calls run_due on
+ * this same URL every five minutes.
+ *
+ * With multistore, every shop has its own URL (the shop's own address) and
+ * its own token. The request runs in the front office of the shop in the URL,
+ * so everything it does - the token check, the schedule, the tasks - is for
+ * that shop alone.
  *
  * PHP 5.6+ compatible.
  */
@@ -47,18 +52,20 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
 
     public function initContent()
     {
+        require_once dirname(__FILE__) . '/../../classes/AmzproShop.php';
+
+        // The shop in the URL, and its own token: another shop's token does
+        // not open this shop's schedule.
+        $idShop = AmzproShop::id();
         $token = Tools::getValue('token');
-        $expectedToken = Configuration::get('AMZPRO_CRON_TOKEN');
+        $expectedToken = AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop);
 
         if (!$expectedToken || !hash_equals((string) $expectedToken, (string) $token)) {
             $this->jsonResponse(array('success' => false, 'error' => 'Invalid or missing cron token.'), 403);
             return;
         }
 
-        require_once dirname(__FILE__) . '/../../classes/AmazonScheduler.php';
-        require_once dirname(__FILE__) . '/../../classes/AmazonTaskRunner.php';
-
-        $action = Tools::getValue('action');
+        $action = (string) Tools::getValue('action');
 
         // The relay proving a registration. Answered before anything else
         // runs, because its whole purpose is to confirm the token without
@@ -67,10 +74,18 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
             $this->jsonResponse(array(
                 'success' => true,
                 'nonce' => (string) Tools::getValue('nonce'),
-                'shop' => Configuration::get('PS_SHOP_NAME'),
+                'shop' => Configuration::get('PS_SHOP_NAME', null, AmzproShop::groupId($idShop), $idShop),
+                'id_shop' => $idShop,
             ));
             return;
         }
+
+        // A cron call can reach new code before anyone opens the back office,
+        // which is where upgrades run. Free once the tables are up to date.
+        AmzproShop::ensureSchema();
+
+        require_once dirname(__FILE__) . '/../../classes/AmazonScheduler.php';
+        require_once dirname(__FILE__) . '/../../classes/AmazonTaskRunner.php';
 
         // The whole schedule in one call. This is the only line a merchant
         // needs in crontab, and running it more often than any task's interval

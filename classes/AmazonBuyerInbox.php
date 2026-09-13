@@ -24,7 +24,14 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
+/**
+ * Each shop reads its own mailbox (settings per shop) and files only the
+ * messages about orders it imported. Two shops may share one mailbox: a
+ * message for the other shop's order stays unread until that shop's run
+ * files it.
+ */
 class AmazonBuyerInbox
 {
     /** Amazon order ids look like 123-1234567-1234567. */
@@ -49,31 +56,36 @@ class AmazonBuyerInbox
         return function_exists('imap_open');
     }
 
-    public static function isEnabled()
+    /**
+     * @param int|null $idShop default: the current shop
+     * @return bool
+     */
+    public static function isEnabled($idShop = null)
     {
-        return (bool) Configuration::get('AMZPRO_IMAP_ENABLED');
+        return (bool) AmzproShop::get('AMZPRO_IMAP_ENABLED', $idShop);
     }
 
     /**
      * The IMAP mailbox string, e.g. {imap.gmail.com:993/imap/ssl}INBOX
      *
+     * @param int|null $idShop default: the current shop
      * @return string '' when the settings are incomplete
      */
-    public static function mailboxString()
+    public static function mailboxString($idShop = null)
     {
-        $host = trim((string) Configuration::get('AMZPRO_IMAP_HOST'));
+        $host = trim((string) AmzproShop::get('AMZPRO_IMAP_HOST', $idShop));
         if ($host === '') {
             return '';
         }
-        $port = (int) Configuration::get('AMZPRO_IMAP_PORT');
+        $port = (int) AmzproShop::get('AMZPRO_IMAP_PORT', $idShop);
         if (!$port) {
             $port = 993;
         }
-        $folder = trim((string) Configuration::get('AMZPRO_IMAP_FOLDER'));
+        $folder = trim((string) AmzproShop::get('AMZPRO_IMAP_FOLDER', $idShop));
         if ($folder === '') {
             $folder = 'INBOX';
         }
-        $flags = Configuration::get('AMZPRO_IMAP_SSL') ? '/imap/ssl' : '/imap/notls';
+        $flags = AmzproShop::get('AMZPRO_IMAP_SSL', $idShop) ? '/imap/ssl' : '/imap/notls';
 
         return '{' . $host . ':' . $port . $flags . '}' . $folder;
     }
@@ -98,8 +110,8 @@ class AmazonBuyerInbox
         }
 
         $mailbox = self::mailboxString();
-        $user = trim((string) Configuration::get('AMZPRO_IMAP_USER'));
-        $password = (string) Configuration::get('AMZPRO_IMAP_PASSWORD');
+        $user = trim((string) AmzproShop::get('AMZPRO_IMAP_USER'));
+        $password = (string) AmzproShop::get('AMZPRO_IMAP_PASSWORD');
         if ($mailbox === '' || $user === '') {
             $this->lastError = AmazonI18n::get()->l('The mailbox host and user must be configured first.', 'amazonbuyerinbox');
             return false;
@@ -162,9 +174,10 @@ class AmazonBuyerInbox
         }
 
         $staged = Db::getInstance()->getRow(
-            'SELECT `id_order`, `buyer_email`, `buyer_name`
+            'SELECT `id_order`, `buyer_email`, `buyer_name`, `id_shop`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\''
+             WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
         if (!$staged) {
             $this->notices[] = sprintf(
@@ -179,7 +192,8 @@ class AmazonBuyerInbox
             (int) $staged['id_order'],
             $from !== '' ? $from : $staged['buyer_email'],
             $subject,
-            $body
+            $body,
+            (int) $staged['id_shop']
         );
 
         if ($filed) {
@@ -191,21 +205,32 @@ class AmazonBuyerInbox
         return 'matched';
     }
 
-    /** Create or extend the Customer Service thread for an Amazon order. */
-    private function fileIntoCustomerService($amazonOrderId, $idOrder, $email, $subject, $body)
+    /**
+     * Create or extend the Customer Service thread for an Amazon order, in
+     * the shop the order belongs to, so it shows up in that shop's Customer
+     * Service.
+     *
+     * @param int $idShop the staged order's shop
+     */
+    private function fileIntoCustomerService($amazonOrderId, $idOrder, $email, $subject, $body, $idShop)
     {
-        $idShop = (int) Context::getContext()->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
-        $idLang = (int) Configuration::get('PS_LANG_DEFAULT');
-
+        $idShop = (int) $idShop;
         $idCustomer = 0;
         if ($idOrder > 0) {
-            $idCustomer = (int) Db::getInstance()->getValue(
-                'SELECT `id_customer` FROM `' . _DB_PREFIX_ . 'orders` WHERE `id_order` = ' . $idOrder
+            $order = Db::getInstance()->getRow(
+                'SELECT `id_customer`, `id_shop` FROM `' . _DB_PREFIX_ . 'orders` WHERE `id_order` = ' . $idOrder
             );
+            if ($order) {
+                $idCustomer = (int) $order['id_customer'];
+                if ((int) $order['id_shop']) {
+                    $idShop = (int) $order['id_shop'];
+                }
+            }
         }
+        if (!$idShop) {
+            $idShop = AmzproShop::actingId();
+        }
+        $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
 
         // One thread per Amazon order keeps a conversation together.
         $idThread = (int) Db::getInstance()->getValue(
@@ -218,7 +243,7 @@ class AmazonBuyerInbox
             $thread = new CustomerThread();
             $thread->id_shop = $idShop;
             $thread->id_lang = $idLang;
-            $thread->id_contact = 0;
+            $thread->id_contact = $this->shopContactId($idShop);
             $thread->id_customer = $idCustomer;
             $thread->id_order = $idOrder;
             $thread->email = Validate::isEmail($email) ? $email : 'buyer@marketplace.amazon';
@@ -246,6 +271,30 @@ class AmazonBuyerInbox
         $message->read = 0;
 
         return (bool) $message->add();
+    }
+
+    /**
+     * The contact a new thread is filed under when several shops run: one of
+     * the order's shop's own contacts, the customer service one first, so the
+     * thread never points at a contact of another shop. A single shop keeps
+     * filing threads without a contact, as it always has.
+     *
+     * @param int $idShop
+     * @return int 0 when the shop has no contact
+     */
+    private function shopContactId($idShop)
+    {
+        if (!AmzproShop::isMultistore()) {
+            return 0;
+        }
+
+        return (int) Db::getInstance()->getValue(
+            'SELECT c.`id_contact`
+             FROM `' . _DB_PREFIX_ . 'contact` c
+             INNER JOIN `' . _DB_PREFIX_ . 'contact_shop` cs
+                ON (cs.`id_contact` = c.`id_contact` AND cs.`id_shop` = ' . (int) $idShop . ')
+             ORDER BY c.`customer_service` DESC, c.`position` ASC, c.`id_contact` ASC'
+        );
     }
 
     /** Plain-text body of a message, preferring text/plain over HTML. */

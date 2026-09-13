@@ -13,6 +13,10 @@
  *
  * Markups and delays cascade: category -> manufacturer -> supplier ->
  * module default. Each source can be switched off in the settings.
+ *
+ * Multistore: entity rules, product rules and shipping templates are shared
+ * by every shop (id_shop 0) and a shop can override them with rows of its
+ * own; the change queue holds one row per shop and product. See AmzproShop.
  */
 
 if (!defined('_PS_VERSION_')) {
@@ -20,6 +24,8 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
+require_once dirname(__FILE__) . '/AmazonProductOverride.php';
 
 class AmazonListingSettings
 {
@@ -27,14 +33,14 @@ class AmazonListingSettings
     const ENTITY_MANUFACTURER = 'manufacturer';
     const ENTITY_SUPPLIER = 'supplier';
 
-    /** Cache: entity_type => array(id_entity => row) */
+    /** Cache: id_shop => entity_type => array(id_entity => row) */
     private static $entityCache = array();
-
-    /** Cache: id_product => product_setting row */
-    private static $productCache = null;
 
     /** @var bool Tables checked this request */
     private static $tablesEnsured = false;
+
+    /** @var string|null Why the last shipping template change was refused */
+    private static $lastError = null;
 
     /**
      * Create the rules/queue tables when they don't exist yet (e.g. module
@@ -48,8 +54,9 @@ class AmazonListingSettings
         self::$tablesEnsured = true;
 
         $sql = array();
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting` (
+        $sql['amazonmarketplacepro_entity_setting'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting` (
             `id_amazonmarketplacepro_entity_setting` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `entity_type` VARCHAR(16) NOT NULL,
             `id_entity` INT(11) NOT NULL,
             `price_markup` VARCHAR(16) NOT NULL DEFAULT \'\',
@@ -60,31 +67,34 @@ class AmazonListingSettings
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_entity_setting`),
-            UNIQUE KEY `entity` (`entity_type`, `id_entity`)
+            UNIQUE KEY `entity` (`id_shop`, `entity_type`, `id_entity`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` (
+        $sql['amazonmarketplacepro_product_setting'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` (
             `id_amazonmarketplacepro_product_setting` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `id_product` INT(11) NOT NULL,
             `sync` TINYINT(1) NOT NULL DEFAULT 1,
             `gpsr_contact` VARCHAR(255) NOT NULL DEFAULT \'\',
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_product_setting`),
-            UNIQUE KEY `id_product` (`id_product`)
+            UNIQUE KEY `id_product` (`id_shop`, `id_product`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` (
+        $sql['amazonmarketplacepro_queue'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` (
             `id_amazonmarketplacepro_queue` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `id_product` INT(11) NOT NULL,
             `reason` VARCHAR(128) NOT NULL DEFAULT \'\',
             `active` TINYINT(1) NOT NULL DEFAULT 1,
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_queue`),
-            UNIQUE KEY `id_product` (`id_product`),
+            UNIQUE KEY `id_product` (`id_shop`, `id_product`),
             KEY `active` (`active`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
-        $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template` (
+        $sql['amazonmarketplacepro_shipping_template'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template` (
             `id_amazonmarketplacepro_shipping_template` INT(11) NOT NULL AUTO_INCREMENT,
+            `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
             `basis` VARCHAR(16) NOT NULL DEFAULT \'price\',
             `min_value` DECIMAL(20,6) NOT NULL DEFAULT 0,
             `max_value` DECIMAL(20,6) NOT NULL DEFAULT 0,
@@ -92,52 +102,132 @@ class AmazonListingSettings
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             PRIMARY KEY (`id_amazonmarketplacepro_shipping_template`),
-            KEY `basis` (`basis`)
+            KEY `basis` (`basis`),
+            KEY `id_shop` (`id_shop`)
         ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8';
 
-        foreach ($sql as $query) {
+        foreach ($sql as $table => $query) {
             Db::getInstance()->execute($query);
+            // A table created before multistore support gets its shop column.
+            AmzproShop::ensureTableShop($table);
         }
+    }
+
+    /** Why the last shipping template save or delete was refused, or null. */
+    public static function getLastError()
+    {
+        return self::$lastError;
+    }
+
+    /**
+     * A shop changes its own rows of a shared table and "All shops" changes
+     * the shared ones. With multistore off every row the shop sees is its own,
+     * as it was before the module knew about shops.
+     */
+    private static function canChange($rowShop)
+    {
+        return in_array((int) $rowShop, self::writableShops(), true);
+    }
+
+    /** @return int[] the id_shop values a change made in this context may touch */
+    private static function writableShops()
+    {
+        $id = (int) AmzproShop::sharedWriteId();
+        if (!AmzproShop::isMultistore()) {
+            return array_values(array_unique(array(0, $id)));
+        }
+
+        return array($id);
     }
 
     /* ─────────────────── Entity settings (category / manufacturer / supplier) ─────────────────── */
 
     /**
+     * The rules the current shop uses: its own row where it has one, else the
+     * row shared by all shops. In "All shops" only the shared rows.
+     *
      * @param string $type One of the ENTITY_* constants
-     * @return array id_entity => setting row
+     * @return array id_entity => setting row (includes id_shop)
      */
     public static function getEntitySettings($type)
     {
         self::ensureTables();
-        if (isset(self::$entityCache[$type])) {
-            return self::$entityCache[$type];
+        $idShop = AmzproShop::id();
+        if (isset(self::$entityCache[$idShop][$type])) {
+            return self::$entityCache[$idShop][$type];
         }
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting`
-             WHERE `entity_type` = \'' . pSQL($type) . '\''
+             WHERE `entity_type` = \'' . pSQL($type) . '\'
+               AND ' . AmzproShop::sqlShared()
         );
         $out = array();
         if (is_array($rows)) {
-            foreach ($rows as $r) {
+            foreach (AmzproShop::preferShopRows($rows, array('id_entity')) as $r) {
                 $out[(int) $r['id_entity']] = $r;
             }
         }
-        self::$entityCache[$type] = $out;
+        self::$entityCache[$idShop][$type] = $out;
 
         return $out;
     }
 
+    /**
+     * Save an entity rule for the scope being edited: in "All shops" the rule
+     * every shop inherits, in a shop that shop's own rule. A shop saving the
+     * values it already inherits gets no row of its own, so it keeps
+     * following the shared rule.
+     */
     public static function saveEntitySetting($type, $idEntity, $markup, $delay, $gpsr, $coo, $sync)
     {
         self::ensureTables();
+        $db = Db::getInstance();
+        $table = _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting';
+        $values = array(
+            'price_markup' => trim((string) $markup),
+            'shipping_delay' => (int) $delay,
+            'gpsr_contact' => trim((string) $gpsr),
+            'country_of_origin' => Tools::strtoupper(trim((string) $coo)),
+            'sync' => $sync ? 1 : 0,
+        );
+        $key = '`entity_type` = \'' . pSQL($type) . '\' AND `id_entity` = ' . (int) $idEntity;
+        self::$entityCache = array();
+
+        $existing = $db->executeS('SELECT * FROM `' . $table . '` WHERE ' . $key . ' AND ' . AmzproShop::sqlShared());
+        $byShop = array();
+        foreach ((is_array($existing) ? $existing : array()) as $r) {
+            $byShop[(int) $r['id_shop']] = $r;
+        }
+
+        if (AmzproShop::isMultistore()) {
+            $idShop = (int) AmzproShop::sharedWriteId();
+            if ($idShop > 0 && !isset($byShop[$idShop])) {
+                $inherited = isset($byShop[0]) ? $byShop[0] : array(
+                    'price_markup' => '', 'shipping_delay' => -1, 'gpsr_contact' => '',
+                    'country_of_origin' => '', 'sync' => 1,
+                );
+                if ((string) $inherited['price_markup'] === $values['price_markup']
+                    && (int) $inherited['shipping_delay'] === $values['shipping_delay']
+                    && (string) $inherited['gpsr_contact'] === $values['gpsr_contact']
+                    && (string) $inherited['country_of_origin'] === $values['country_of_origin']
+                    && (int) $inherited['sync'] === $values['sync']) {
+                    return true;
+                }
+            }
+        } else {
+            // One shop: update the row it already has, whichever scope it was saved in.
+            $idShop = $byShop ? max(array_keys($byShop)) : (int) AmzproShop::sharedWriteId();
+        }
+
         $now = date('Y-m-d H:i:s');
-        $ok = Db::getInstance()->execute(
-            'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting`
-                (`entity_type`, `id_entity`, `price_markup`, `shipping_delay`, `gpsr_contact`,
+
+        return $db->execute(
+            'INSERT INTO `' . $table . '`
+                (`id_shop`, `entity_type`, `id_entity`, `price_markup`, `shipping_delay`, `gpsr_contact`,
                  `country_of_origin`, `sync`, `date_add`, `date_upd`)
-             VALUES (\'' . pSQL($type) . '\', ' . (int) $idEntity . ', \'' . pSQL(trim((string) $markup)) . '\',
-                 ' . (int) $delay . ', \'' . pSQL(trim((string) $gpsr)) . '\',
-                 \'' . pSQL(Tools::strtoupper(trim((string) $coo))) . '\', ' . ($sync ? 1 : 0) . ',
+             VALUES (' . (int) $idShop . ', \'' . pSQL($type) . '\', ' . (int) $idEntity . ', \'' . pSQL($values['price_markup']) . '\',
+                 ' . $values['shipping_delay'] . ', \'' . pSQL($values['gpsr_contact']) . '\',
+                 \'' . pSQL($values['country_of_origin']) . '\', ' . $values['sync'] . ',
                  \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')
              ON DUPLICATE KEY UPDATE
                 `price_markup` = VALUES(`price_markup`),
@@ -147,57 +237,56 @@ class AmazonListingSettings
                 `sync` = VALUES(`sync`),
                 `date_upd` = VALUES(`date_upd`)'
         );
-        unset(self::$entityCache[$type]);
+    }
 
-        return $ok;
+    /**
+     * Remove an entity rule from the scope being edited. In a shop only the
+     * shop's own rule goes, and the shop follows the shared rule again; in
+     * "All shops" the shared rule goes and shop rules stay.
+     */
+    public static function deleteEntitySetting($type, $idEntity)
+    {
+        self::ensureTables();
+        self::$entityCache = array();
+
+        return Db::getInstance()->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting`
+             WHERE `entity_type` = \'' . pSQL($type) . '\' AND `id_entity` = ' . (int) $idEntity . '
+               AND `id_shop` IN (' . implode(', ', self::writableShops()) . ')'
+        );
     }
 
     /* ─────────────────── Per-product settings ─────────────────── */
 
-    /** @return array id_product => row */
+    /**
+     * The product rules the current shop uses (its own row over the shared
+     * one). Same rows as AmazonProductOverride::all().
+     *
+     * @return array id_product => row
+     */
     public static function getProductSettings()
     {
         self::ensureTables();
-        if (self::$productCache !== null) {
-            return self::$productCache;
-        }
-        $rows = Db::getInstance()->executeS(
-            'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`'
-        );
-        $out = array();
-        if (is_array($rows)) {
-            foreach ($rows as $r) {
-                $out[(int) $r['id_product']] = $r;
-            }
-        }
-        self::$productCache = $out;
 
-        return $out;
+        return AmazonProductOverride::all();
     }
 
+    /** Save a product's sync switch and GPSR contact for the scope being edited. */
     public static function saveProductSetting($idProduct, $sync, $gpsr)
     {
         self::ensureTables();
-        $now = date('Y-m-d H:i:s');
-        $ok = Db::getInstance()->execute(
-            'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`
-                (`id_product`, `sync`, `gpsr_contact`, `date_add`, `date_upd`)
-             VALUES (' . (int) $idProduct . ', ' . ($sync ? 1 : 0) . ',
-                 \'' . pSQL(trim((string) $gpsr)) . '\', \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')
-             ON DUPLICATE KEY UPDATE
-                `sync` = VALUES(`sync`),
-                `gpsr_contact` = VALUES(`gpsr_contact`),
-                `date_upd` = VALUES(`date_upd`)'
-        );
-        self::$productCache = null;
 
-        return $ok;
+        return AmazonProductOverride::save((int) $idProduct, array(
+            'sync' => $sync ? 1 : 0,
+            'gpsr_contact' => trim((string) $gpsr),
+        ));
     }
 
     /* ─────────────────── Product context lookup ─────────────────── */
 
     /**
-     * The ids the cascades need: default category, manufacturer, default supplier.
+     * The ids the cascades need: default category (the shop's own, which
+     * PrestaShop lets differ per shop), manufacturer, default supplier.
      *
      * @return array array('id_category' => int, 'id_manufacturer' => int, 'id_supplier' => int)
      */
@@ -205,26 +294,32 @@ class AmazonListingSettings
     {
         static $cache = array();
         $idProduct = (int) $idProduct;
-        if (isset($cache[$idProduct])) {
-            return $cache[$idProduct];
+        $idShop = AmzproShop::actingId();
+        $cacheKey = $idShop . '-' . $idProduct;
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
         }
         $row = Db::getInstance()->getRow(
-            'SELECT `id_category_default`, `id_manufacturer`, `id_supplier`
-             FROM `' . _DB_PREFIX_ . 'product` WHERE `id_product` = ' . $idProduct
+            'SELECT IFNULL(ps.`id_category_default`, p.`id_category_default`) AS id_category_default,
+                    p.`id_manufacturer`, p.`id_supplier`
+             FROM `' . _DB_PREFIX_ . 'product` p
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . (int) $idShop . ')
+             WHERE p.`id_product` = ' . $idProduct
         );
-        $cache[$idProduct] = array(
+        $cache[$cacheKey] = array(
             'id_category' => $row ? (int) $row['id_category_default'] : 0,
             'id_manufacturer' => $row ? (int) $row['id_manufacturer'] : 0,
             'id_supplier' => $row ? (int) $row['id_supplier'] : 0,
         );
 
-        return $cache[$idProduct];
+        return $cache[$cacheKey];
     }
 
     /** Enabled cascade sources for a config key (AMZPRO_MARKUP_SOURCES / AMZPRO_DELAY_SOURCES). */
     private static function enabledSources($configKey)
     {
-        $raw = (string) Configuration::get($configKey);
+        $raw = (string) AmzproShop::get($configKey);
         $list = array_filter(array_map('trim', explode(',', $raw)));
 
         return empty($list) ? array() : $list;
@@ -278,7 +373,7 @@ class AmazonListingSettings
             }
         );
         if ($markup === null) {
-            $markup = trim((string) Configuration::get('AMZPRO_DEFAULT_MARKUP'));
+            $markup = trim((string) AmzproShop::get('AMZPRO_DEFAULT_MARKUP'));
         }
 
         return self::applyMarkupString($price, $markup);
@@ -295,7 +390,7 @@ class AmazonListingSettings
     public static function applyRounding($price)
     {
         $price = (float) $price;
-        switch ((string) Configuration::get('AMZPRO_ROUNDING')) {
+        switch ((string) AmzproShop::get('AMZPRO_ROUNDING')) {
             case 'smart':
                 $rounded = floor($price) + 0.99;
                 if ($rounded < $price) {
@@ -320,17 +415,16 @@ class AmazonListingSettings
      */
     public static function resolveSaleSchedule($basePrice, $idProduct, $idProductAttribute)
     {
-        if (!Configuration::get('AMZPRO_SEND_SALE_PRICE')) {
+        if (!AmzproShop::get('AMZPRO_SEND_SALE_PRICE')) {
             return false;
         }
 
-        $idShop = (int) Context::getContext()->shop->id;
         $row = Db::getInstance()->getRow(
             'SELECT `price`, `reduction`, `reduction_type`, `from`, `to`
              FROM `' . _DB_PREFIX_ . 'specific_price`
              WHERE `id_product` = ' . (int) $idProduct . '
                AND (`id_product_attribute` = 0 OR `id_product_attribute` = ' . (int) $idProductAttribute . ')
-               AND (`id_shop` = 0 OR `id_shop` = ' . $idShop . ')
+               AND ' . self::sqlSpecificPriceScope() . '
                AND `from` <> \'0000-00-00 00:00:00\' AND `to` <> \'0000-00-00 00:00:00\'
                AND `to` >= \'' . pSQL(date('Y-m-d H:i:s')) . '\'
              ORDER BY `id_product_attribute` DESC, `from` ASC'
@@ -371,8 +465,8 @@ class AmazonListingSettings
      */
     public static function resolveBusinessPricing($basePrice, $idProduct, $idProductAttribute)
     {
-        $flat = (float) Configuration::get('AMZPRO_B2B_DISCOUNT');
-        $idGroup = (int) Configuration::get('AMZPRO_BUSINESS_GROUP');
+        $flat = (float) AmzproShop::get('AMZPRO_B2B_DISCOUNT');
+        $idGroup = (int) AmzproShop::get('AMZPRO_BUSINESS_GROUP');
         if ($flat <= 0 && $idGroup <= 0) {
             return false;
         }
@@ -384,7 +478,6 @@ class AmazonListingSettings
         $levels = array();
         $discountType = 'PERCENT_OFF';
         if ($idGroup > 0) {
-            $idShop = (int) Context::getContext()->shop->id;
             $rows = Db::getInstance()->executeS(
                 'SELECT `from_quantity`, `reduction`, `reduction_type`, `price`
                  FROM `' . _DB_PREFIX_ . 'specific_price`
@@ -392,7 +485,7 @@ class AmazonListingSettings
                    AND `id_group` = ' . $idGroup . '
                    AND `from_quantity` > 1
                    AND (`id_product_attribute` = 0 OR `id_product_attribute` = ' . (int) $idProductAttribute . ')
-                   AND (`id_shop` = 0 OR `id_shop` = ' . $idShop . ')
+                   AND ' . self::sqlSpecificPriceScope() . '
                  ORDER BY `from_quantity` ASC'
             );
             if (is_array($rows)) {
@@ -470,7 +563,7 @@ class AmazonListingSettings
     /** Amazon condition for a PrestaShop condition (new / used / refurbished). */
     public static function mapCondition($psCondition)
     {
-        $map = json_decode((string) Configuration::get('AMZPRO_CONDITION_MAP'), true);
+        $map = json_decode((string) AmzproShop::get('AMZPRO_CONDITION_MAP'), true);
         $psCondition = trim((string) $psCondition);
         if (is_array($map) && $psCondition !== '' && !empty($map[$psCondition])) {
             return (string) $map[$psCondition];
@@ -510,7 +603,7 @@ class AmazonListingSettings
             }
         );
         if ($delay === null) {
-            $delay = (int) Configuration::get('AMZPRO_DEFAULT_DELAY');
+            $delay = (int) AmzproShop::get('AMZPRO_DEFAULT_DELAY');
         }
 
         return max(0, (int) $delay);
@@ -535,7 +628,7 @@ class AmazonListingSettings
         }
 
         $ctx = self::productContext($idProduct);
-        $order = (Configuration::get('AMZPRO_GPSR_PRIORITY') === 'supplier')
+        $order = (AmzproShop::get('AMZPRO_GPSR_PRIORITY') === 'supplier')
             ? array(self::ENTITY_SUPPLIER => $ctx['id_supplier'], self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'])
             : array(self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'], self::ENTITY_SUPPLIER => $ctx['id_supplier']);
 
@@ -610,7 +703,7 @@ class AmazonListingSettings
      */
     public static function buildSku($row)
     {
-        $source = (string) Configuration::get('AMZPRO_SKU_SOURCE');
+        $source = (string) AmzproShop::get('AMZPRO_SKU_SOURCE');
         $value = '';
         if ($source === 'ean13') {
             $value = isset($row['ean13']) ? trim((string) $row['ean13']) : '';
@@ -622,7 +715,7 @@ class AmazonListingSettings
         if ($value === '') {
             return '';
         }
-        $prefix = trim((string) Configuration::get('AMZPRO_SKU_PREFIX'));
+        $prefix = trim((string) AmzproShop::get('AMZPRO_SKU_PREFIX'));
 
         return ($prefix !== '') ? $prefix . '-' . $value : $value;
     }
@@ -635,19 +728,22 @@ class AmazonListingSettings
      */
     public static function applySpecificPrice($price, $idProduct, $idProductAttribute)
     {
-        if (!Configuration::get('AMZPRO_USE_SPECIFIC_PRICES')) {
+        if (!AmzproShop::get('AMZPRO_USE_SPECIFIC_PRICES')) {
             return (float) $price;
         }
-        $idGroup = (int) Configuration::get('AMZPRO_SPECIFIC_PRICE_GROUP');
-        $idShop = (int) Context::getContext()->shop->id;
-        $idCurrency = (int) Configuration::get('PS_CURRENCY_DEFAULT');
-        $idCountry = (int) Configuration::get('PS_COUNTRY_DEFAULT');
+        $idGroup = (int) AmzproShop::get('AMZPRO_SPECIFIC_PRICE_GROUP');
+        $scope = self::specificPriceScope();
 
         $sp = SpecificPrice::getSpecificPrice(
-            (int) $idProduct, $idShop, $idCurrency, $idCountry, $idGroup,
+            (int) $idProduct, $scope['id_shop'], $scope['id_currency'], $scope['id_country'], $idGroup,
             1, (int) $idProductAttribute, 0, 0, 1
         );
         if (!is_array($sp) || empty($sp)) {
+            return (float) $price;
+        }
+        // PrestaShop does not filter on the shop group; a price saved for
+        // another group of shops does not apply here.
+        if (!empty($sp['id_shop_group']) && (int) $sp['id_shop_group'] !== $scope['id_shop_group']) {
             return (float) $price;
         }
 
@@ -666,14 +762,49 @@ class AmazonListingSettings
         return max(0, round((float) $price, 6));
     }
 
+    /**
+     * The shop, shop group, currency and country specific prices are looked
+     * up for: the shop being worked for and its own defaults.
+     *
+     * @return array
+     */
+    private static function specificPriceScope()
+    {
+        $idShop = (int) AmzproShop::actingId();
+        $idGroup = (int) AmzproShop::groupId($idShop);
+
+        return array(
+            'id_shop' => $idShop,
+            'id_shop_group' => $idGroup,
+            'id_currency' => (int) Configuration::get('PS_CURRENCY_DEFAULT', null, $idGroup, $idShop),
+            'id_country' => (int) Configuration::get('PS_COUNTRY_DEFAULT', null, $idGroup, $idShop),
+        );
+    }
+
+    /** SQL condition on ps_specific_price (no alias) for specificPriceScope(). */
+    private static function sqlSpecificPriceScope()
+    {
+        $scope = self::specificPriceScope();
+
+        return '`id_shop` IN (0, ' . $scope['id_shop'] . ')
+               AND `id_shop_group` IN (0, ' . $scope['id_shop_group'] . ')
+               AND `id_currency` IN (0, ' . $scope['id_currency'] . ')
+               AND `id_country` IN (0, ' . $scope['id_country'] . ')';
+    }
+
     /* ─────────────────── Shipping template ranges ─────────────────── */
 
+    /**
+     * The templates for all shops plus the current shop's own (only the
+     * shared ones in "All shops"). Each row carries its id_shop.
+     */
     public static function getShippingTemplates()
     {
         self::ensureTables();
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template`
-             ORDER BY `min_value` ASC'
+             WHERE ' . AmzproShop::sqlShared() . '
+             ORDER BY `min_value` ASC, `id_shop` ASC'
         );
 
         return is_array($rows) ? $rows : array();
@@ -682,14 +813,28 @@ class AmazonListingSettings
     /**
      * Template name for a price/weight, per the configured basis. Ranges are
      * min-inclusive / max-exclusive (max 0 = open-ended). Falls back to the
-     * static AMZPRO_SHIPPING_TEMPLATE, then ''.
+     * static AMZPRO_SHIPPING_TEMPLATE, then ''. A shop's own ranges are tried
+     * before the ones shared by all shops.
      */
     public static function resolveShippingTemplate($priceTaxIncl, $weight)
     {
-        if (Configuration::get('AMZPRO_SHIP_TPL_ENABLED')) {
-            $basis = (Configuration::get('AMZPRO_SHIP_TPL_BASIS') === 'weight') ? 'weight' : 'price';
+        if (AmzproShop::get('AMZPRO_SHIP_TPL_ENABLED')) {
+            $basis = (AmzproShop::get('AMZPRO_SHIP_TPL_BASIS') === 'weight') ? 'weight' : 'price';
             $value = ($basis === 'weight') ? (float) $weight : (float) $priceTaxIncl;
-            foreach (self::getShippingTemplates() as $tpl) {
+            $templates = self::getShippingTemplates();
+            if (AmzproShop::isMultistore()) {
+                $own = array();
+                $shared = array();
+                foreach ($templates as $tpl) {
+                    if ((int) $tpl['id_shop'] > 0) {
+                        $own[] = $tpl;
+                    } else {
+                        $shared[] = $tpl;
+                    }
+                }
+                $templates = array_merge($own, $shared);
+            }
+            foreach ($templates as $tpl) {
                 if ($tpl['basis'] !== $basis) {
                     continue;
                 }
@@ -701,14 +846,25 @@ class AmazonListingSettings
             }
         }
 
-        return trim((string) Configuration::get('AMZPRO_SHIPPING_TEMPLATE'));
+        return trim((string) AmzproShop::get('AMZPRO_SHIPPING_TEMPLATE'));
     }
 
+    /**
+     * Add a template range for the scope being edited, or change one. A shop
+     * may change only its own templates; shared ones are changed in "All
+     * shops". Returns false with getLastError() set when refused.
+     */
     public static function saveShippingTemplate($basis, $min, $max, $name, $id = 0)
     {
+        self::ensureTables();
+        self::$lastError = null;
         $now = date('Y-m-d H:i:s');
         $basis = ($basis === 'weight') ? 'weight' : 'price';
         if ((int) $id) {
+            if (!self::checkTemplateChange((int) $id)) {
+                return false;
+            }
+
             return Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template` SET
                     `basis` = \'' . pSQL($basis) . '\', `min_value` = ' . (float) $min . ',
@@ -720,50 +876,113 @@ class AmazonListingSettings
 
         return Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template`
-                (`basis`, `min_value`, `max_value`, `template_name`, `date_add`, `date_upd`)
-             VALUES (\'' . pSQL($basis) . '\', ' . (float) $min . ', ' . (float) $max . ',
+                (`id_shop`, `basis`, `min_value`, `max_value`, `template_name`, `date_add`, `date_upd`)
+             VALUES (' . (int) AmzproShop::sharedWriteId() . ', \'' . pSQL($basis) . '\', ' . (float) $min . ', ' . (float) $max . ',
                  \'' . pSQL($name) . '\', \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')'
         );
     }
 
+    /** Delete a template range, with the same rule as saveShippingTemplate(). */
     public static function deleteShippingTemplate($id)
     {
+        self::ensureTables();
+        self::$lastError = null;
+        if (!self::checkTemplateChange((int) $id)) {
+            return false;
+        }
+
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template`
              WHERE `id_amazonmarketplacepro_shipping_template` = ' . (int) $id
         );
     }
 
+    /** True when the current context may change this template; else sets the error. */
+    private static function checkTemplateChange($id)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_shipping_template`
+             WHERE `id_amazonmarketplacepro_shipping_template` = ' . (int) $id . '
+               AND ' . AmzproShop::sqlShared()
+        );
+        if (!$row) {
+            self::$lastError = AmazonI18n::get()->l('This shipping template was not found. Reload the page and try again.', 'amazonlistingsettings');
+
+            return false;
+        }
+        if (!self::canChange($row['id_shop'])) {
+            self::$lastError = AmazonI18n::get()->l('This shipping template is shared by all shops. Select "All shops" at the top of the page to change it.', 'amazonlistingsettings');
+
+            return false;
+        }
+
+        return true;
+    }
+
     /* ─────────────────── Change queue (delta export) ─────────────────── */
 
+    /**
+     * Queue a product for the current shop's next delta export. In "All
+     * shops" it is queued for every shop the product belongs to.
+     */
     public static function enqueueProduct($idProduct, $reason)
     {
         self::ensureTables();
+        $idProduct = (int) $idProduct;
+        $idShop = AmzproShop::id();
+        $shops = array();
+        if ($idShop) {
+            $shops[] = $idShop;
+        } else {
+            $rows = Db::getInstance()->executeS(
+                'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'product_shop` WHERE `id_product` = ' . $idProduct
+            );
+            foreach ((is_array($rows) ? $rows : array()) as $r) {
+                $shops[] = (int) $r['id_shop'];
+            }
+        }
+        if (!$shops) {
+            return true;
+        }
+
         $now = date('Y-m-d H:i:s');
+        $values = array();
+        foreach ($shops as $s) {
+            $values[] = '(' . (int) $s . ', ' . $idProduct . ', \'' . pSQL(Tools::substr($reason, 0, 128)) . '\', 1,
+                 \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')';
+        }
 
         return Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
-                (`id_product`, `reason`, `active`, `date_add`, `date_upd`)
-             VALUES (' . (int) $idProduct . ', \'' . pSQL(Tools::substr($reason, 0, 128)) . '\', 1,
-                 \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')
+                (`id_shop`, `id_product`, `reason`, `active`, `date_add`, `date_upd`)
+             VALUES ' . implode(', ', $values) . '
              ON DUPLICATE KEY UPDATE
                 `reason` = VALUES(`reason`), `active` = 1, `date_upd` = VALUES(`date_upd`)'
         );
     }
 
-    /** Queue every product belonging to an entity whose module rules changed. */
+    /**
+     * Queue every product belonging to an entity whose module rules changed:
+     * the current shop's products, or in "All shops" every product (each
+     * queued for the shops it is in).
+     */
     public static function enqueueEntityProducts($type, $idEntity, $reason)
     {
         $idEntity = (int) $idEntity;
+        $idShop = AmzproShop::id();
+        $inShop = $idShop
+            ? ' INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                    ON (ps.`id_product` = x.`id_product` AND ps.`id_shop` = ' . (int) $idShop . ')'
+            : '';
         if ($type === self::ENTITY_CATEGORY) {
-            $sql = 'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'category_product`
-                    WHERE `id_category` = ' . $idEntity;
+            $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'category_product` x' . $inShop . '
+                    WHERE x.`id_category` = ' . $idEntity;
         } elseif ($type === self::ENTITY_MANUFACTURER) {
-            $sql = 'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-                    WHERE `id_manufacturer` = ' . $idEntity;
+            $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'product` x' . $inShop . '
+                    WHERE x.`id_manufacturer` = ' . $idEntity;
         } elseif ($type === self::ENTITY_SUPPLIER) {
-            $sql = 'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'product`
-                    WHERE `id_supplier` = ' . $idEntity;
+            $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'product` x' . $inShop . '
+                    WHERE x.`id_supplier` = ' . $idEntity;
         } else {
             return 0;
         }
@@ -780,16 +999,20 @@ class AmazonListingSettings
         return $count;
     }
 
+    /** The current shop's queue, or every shop's in "All shops" (with shop_name). */
     public static function getQueue($limit = 500)
     {
         self::ensureTables();
         $rows = Db::getInstance()->executeS(
-            'SELECT q.*, p.`reference`, pl.`name`
+            'SELECT q.*, p.`reference`, pl.`name`, s.`name` AS shop_name
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` q
              LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = q.`id_product`)
              LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                  ON (pl.`id_product` = q.`id_product`
+                     AND pl.`id_shop` = q.`id_shop`
                      AND pl.`id_lang` = ' . (int) Configuration::get('PS_LANG_DEFAULT') . ')
+             LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = q.`id_shop`)
+             WHERE ' . AmzproShop::sqlWhere('q') . '
              GROUP BY q.`id_amazonmarketplacepro_queue`
              ORDER BY q.`date_upd` DESC
              LIMIT ' . (int) $limit
@@ -798,12 +1021,13 @@ class AmazonListingSettings
         return is_array($rows) ? $rows : array();
     }
 
-    /** Active queued product ids (for delta export). */
+    /** Active queued product ids of the current shop (for delta export). */
     public static function getQueuedProductIds()
     {
         self::ensureTables();
         $rows = Db::getInstance()->executeS(
-            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` WHERE `active` = 1'
+            'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
+             WHERE `active` = 1 AND ' . AmzproShop::sqlWhere()
         );
         $out = array();
         if (is_array($rows)) {
@@ -815,7 +1039,7 @@ class AmazonListingSettings
         return $out;
     }
 
-    /** After a sync, queued entries are disabled (AmazonSync behaviour). */
+    /** After a sync, the current shop's queued entries are disabled (AmazonSync behaviour). */
     public static function deactivateQueued($idProducts)
     {
         if (empty($idProducts)) {
@@ -826,55 +1050,81 @@ class AmazonListingSettings
         return Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
              SET `active` = 0, `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-             WHERE `id_product` IN (' . implode(',', $ids) . ')'
+             WHERE `id_product` IN (' . implode(',', $ids) . ')
+               AND ' . AmzproShop::sqlWhere()
         );
     }
 
-    /** @param string $action enable | disable | clear */
+    /**
+     * Acts on the current shop's queue, or on every shop's in "All shops".
+     *
+     * @param string $action enable | disable | clear
+     */
     public static function queueAction($action)
     {
         if ($action === 'clear') {
-            return Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`');
+            return Db::getInstance()->execute(
+                'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue` WHERE ' . AmzproShop::sqlWhere()
+            );
         }
         $active = ($action === 'enable') ? 1 : 0;
 
         return Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
-             SET `active` = ' . $active . ', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\''
+             SET `active` = ' . $active . ', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+             WHERE ' . AmzproShop::sqlWhere()
         );
     }
 
-    /** Drop entries older than the configured retention. */
+    /**
+     * Drop entries older than the configured retention: the current shop's,
+     * or in "All shops" each shop's with its own retention.
+     */
     public static function purgeQueue()
     {
-        $days = max(1, (int) Configuration::get('AMZPRO_QUEUE_TTL_DAYS'));
-        // PHP-computed cutoff: date_upd is written with PHP's clock, which
-        // may not share MySQL's timezone.
-        $cutoff = date('Y-m-d H:i:s', time() - $days * 86400);
+        $idShop = AmzproShop::id();
+        $shops = $idShop ? array($idShop) : AmzproShop::shopIds();
+        $ok = true;
+        foreach ($shops as $s) {
+            $days = max(1, (int) AmzproShop::get('AMZPRO_QUEUE_TTL_DAYS', $s));
+            // PHP-computed cutoff: date_upd is written with PHP's clock, which
+            // may not share MySQL's timezone.
+            $cutoff = date('Y-m-d H:i:s', time() - $days * 86400);
 
-        return Db::getInstance()->execute(
-            'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
-             WHERE `date_upd` < \'' . pSQL($cutoff) . '\''
-        );
+            $ok = Db::getInstance()->execute(
+                'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
+                 WHERE `date_upd` < \'' . pSQL($cutoff) . '\'
+                   AND ' . AmzproShop::sqlWhere('', $s)
+            ) && $ok;
+        }
+
+        return $ok;
     }
 
     /* ─────────────────── Orphans ─────────────────── */
 
     /**
      * Amazon listings that no longer map to a sellable PrestaShop product:
-     * either the SKU has no PS product at all, or the PS product is inactive.
-     * Reads the staged product table, so run an Amazon-side sync first.
+     * either the SKU has no PS product at all, or the PS product is inactive
+     * or missing in the listing's shop. Reads the staged product table, so run
+     * an Amazon-side sync first. The current shop's listings, or every shop's
+     * in "All shops" (with shop_name).
      */
     public static function getOrphanedProducts($limit = 500)
     {
         self::ensureTables();
         $rows = Db::getInstance()->executeS(
             'SELECT ap.`seller_sku`, ap.`amazon_asin`, ap.`amazon_title`, ap.`id_product`,
-                    ap.`id_product_attribute`, ap.`ps_exists`, p.`active`
+                    ap.`id_product_attribute`, ap.`ps_exists`, ap.`id_shop`, ps.`active`,
+                    IF(p.`id_product` IS NULL, 0, 1) AS product_found, s.`name` AS shop_name
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
              LEFT JOIN `' . _DB_PREFIX_ . 'product` p ON (p.`id_product` = ap.`id_product`)
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = ap.`id_product` AND ps.`id_shop` = ap.`id_shop`)
+             LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = ap.`id_shop`)
              WHERE ap.`amazon_exists` = 1
-               AND (ap.`ps_exists` = 0 OR p.`id_product` IS NULL OR p.`active` = 0)
+               AND ' . AmzproShop::sqlWhere('ap') . '
+               AND (ap.`ps_exists` = 0 OR p.`id_product` IS NULL OR ps.`id_product` IS NULL OR ps.`active` = 0)
              ORDER BY ap.`seller_sku` ASC
              LIMIT ' . (int) $limit
         );
@@ -882,10 +1132,12 @@ class AmazonListingSettings
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $reason = AmazonI18n::get()->l('No PrestaShop product with this SKU', 'amazonlistingsettings');
-                if ((int) $r['id_product'] > 0 && $r['active'] !== null && !(int) $r['active']) {
-                    $reason = AmazonI18n::get()->l('PrestaShop product is inactive', 'amazonlistingsettings');
-                } elseif ((int) $r['id_product'] > 0 && $r['active'] === null) {
+                if ((int) $r['id_product'] > 0 && !(int) $r['product_found']) {
                     $reason = AmazonI18n::get()->l('PrestaShop product was deleted', 'amazonlistingsettings');
+                } elseif ((int) $r['id_product'] > 0 && $r['active'] === null) {
+                    $reason = AmazonI18n::get()->l('The PrestaShop product is not in this shop', 'amazonlistingsettings');
+                } elseif ((int) $r['id_product'] > 0 && !(int) $r['active']) {
+                    $reason = AmazonI18n::get()->l('PrestaShop product is inactive', 'amazonlistingsettings');
                 }
                 $r['reason'] = $reason;
                 $out[] = $r;

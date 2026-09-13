@@ -6,6 +6,34 @@
 
 {if $confirm_msg}{$confirm_msg}{/if}
 
+{* ── Which shop this page is for (multistore only) ──
+   With "All shops" or a group selected the settings are the defaults every
+   shop follows unless it saved its own, and one-shop actions are switched
+   off (the script at the bottom disables their buttons). *}
+{if $mkpro_multistore}
+    {if $mkpro_all_shops}
+        <div class="alert alert-warning" id="mkpro-shop-scope">
+            <p>
+                <strong>{if $mkpro_group_name}{l s='You are editing the settings for a shop group:' mod='amazonmarketplacepro'} {$mkpro_group_name|escape:'htmlall':'UTF-8'}.{else}{l s='You are editing the settings for all shops.' mod='amazonmarketplacepro'}{/if}</strong>
+                {l s='A shop that saved its own value keeps it.' mod='amazonmarketplacepro'}
+                {l s='To connect Amazon, import orders or send products, choose a shop at the top of the page.' mod='amazonmarketplacepro'}
+            </p>
+            {if $mkpro_override_shops}
+                <p style="margin-top:6px;">{l s='These shops saved their own value for some settings. Each such setting is marked below.' mod='amazonmarketplacepro'}</p>
+                <ul style="margin-bottom:0;">
+                    {foreach from=$mkpro_override_shops key=ovShop item=ovCount}
+                        <li>{$ovShop|escape:'htmlall':'UTF-8'}: {l s='own settings:' mod='amazonmarketplacepro'} {$ovCount|intval}</li>
+                    {/foreach}
+                </ul>
+            {/if}
+        </div>
+    {else}
+        <p class="text-muted" id="mkpro-shop-scope" style="margin:0 0 10px;">
+            <i class="icon-home"></i> {l s='Shop:' mod='amazonmarketplacepro'} <strong>{$mkpro_shop_name|escape:'htmlall':'UTF-8'}</strong>
+        </p>
+    {/if}
+{/if}
+
 {* ────────────────── Sidebar navigation (marketplaces first) ────────────────── *}
 <style>
     #mkpro-sidebar { background: #fff; border: 1px solid #d6d4d4; border-radius: 3px; padding: 0; }
@@ -132,6 +160,7 @@
 <div class="tab-pane active" id="grp-settings">
 
     <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
+        <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
 
     {* Sub-tabs. One form still wraps every pane, so Save writes all of
        them at once regardless of which is on screen - hidden inputs are
@@ -164,7 +193,12 @@
             </div>
         {/if}
 
-        {if $mkpro_connected && $mkpro_auth_mode != 'manual'}
+        {if $mkpro_all_shops}
+            <div class="alert alert-info">
+                <i class="icon-info-circle"></i>
+                {l s='Each shop connects its own Amazon seller account. Choose a shop at the top of the page to connect it or to see its connection.' mod='amazonmarketplacepro'}
+            </div>
+        {elseif $mkpro_connected && $mkpro_auth_mode != 'manual'}
             <div class="alert alert-success">
                 <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;">
                     <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
@@ -252,7 +286,7 @@
         </div>
         {/if}
 
-        {if $mkpro_dev_mode}
+        {if $mkpro_dev_mode && !$mkpro_all_shops}
         {* Hidden in sandbox: manual is the only mode that can work there, so
            there is nothing to choose. The stored choice is what the select
            shows, so a save in sandbox does not overwrite it. *}
@@ -286,7 +320,7 @@
        field for a secret invites someone to paste one. Still shown to an
        install already on manual mode, which would otherwise lose access to
        its own working configuration. *}
-    {if $mkpro_dev_mode || $mkpro_auth_mode == 'manual'}
+    {if !$mkpro_all_shops && ($mkpro_dev_mode || $mkpro_auth_mode == 'manual')}
     <div class="panel">
         <div class="panel-heading"><i class="icon-key"></i> {l s='Manual SP-API Credentials (advanced — not needed with Connect)' mod='amazonmarketplacepro'}</div>
         <div class="alert alert-warning">
@@ -781,7 +815,7 @@
                 {if $shipping_templates}
                     {foreach from=$shipping_templates item=tpl}
                     <tr>
-                        <td>{$tpl.basis|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$tpl.basis|escape:'htmlall':'UTF-8'}{if $mkpro_multistore && !$mkpro_all_shops && isset($tpl.id_shop) && !$tpl.id_shop} <span class="label label-default">{l s='All shops' mod='amazonmarketplacepro'}</span>{/if}</td>
                         <td>{$tpl.min_value|escape:'htmlall':'UTF-8'}</td>
                         <td>{$tpl.max_value|escape:'htmlall':'UTF-8'}</td>
                         <td>{$tpl.template_name|escape:'htmlall':'UTF-8'}</td>
@@ -1239,6 +1273,15 @@
 {* ═══════════════════════ CRON TAB ═══════════════════════ *}
 <div class="tab-pane active" id="tab-cron">
 
+    {if $mkpro_all_shops}
+    <div class="panel">
+        <div class="panel-heading"><i class="icon-clock-o"></i> {l s='How automation runs' mod='amazonmarketplacepro'}</div>
+        <div class="alert alert-info" style="margin-bottom:0;">
+            <i class="icon-info-circle"></i>
+            {l s='Each shop has its own schedule, cron address and cron token. Choose a shop at the top of the page to see and change them.' mod='amazonmarketplacepro'}
+        </div>
+    </div>
+    {else}
     <div class="panel">
         <div class="panel-heading"><i class="icon-clock-o"></i> {l s='How automation runs' mod='amazonmarketplacepro'}</div>
 
@@ -1251,6 +1294,7 @@
         </p>
 
         <form method="post" class="form-horizontal">
+            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
             <div class="form-group">
                 <label class="control-label col-lg-3">{l s='Run the schedule' mod='amazonmarketplacepro'}</label>
                 <div class="col-lg-9">
@@ -1296,6 +1340,7 @@
                             {if $schedule_relay.since}<small class="text-muted">{l s='since' mod='amazonmarketplacepro'} {$schedule_relay.since|escape:'htmlall':'UTF-8'}</small>{/if}
                         </p>
                         <form method="post">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <button type="submit" name="mkproRelayUnregister" class="btn btn-default btn-sm">
                                 <i class="icon-times"></i> {l s='Stop using the scheduler' mod='amazonmarketplacepro'}
                             </button>
@@ -1307,6 +1352,7 @@
                             </div>
                         {/if}
                         <form method="post">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <button type="submit" name="mkproRelayRegister" class="btn btn-primary btn-sm">
                                 <i class="icon-cloud-upload"></i> {l s='Register this shop' mod='amazonmarketplacepro'}
                             </button>
@@ -1346,6 +1392,7 @@
                     </td>
                     <td>
                         <form method="post" class="form-inline">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
                             <input type="hidden" name="task_key" value="{$t.task_key|escape:'htmlall':'UTF-8'}" />
                             <input type="hidden" name="active" value="{$t.active|intval}" />
@@ -1385,6 +1432,7 @@
                     </td>
                     <td>
                         <form method="post" style="display:inline;">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
                             <button type="submit" name="mkproScheduleToggle" class="btn btn-sm {if $t.active}btn-success{else}btn-default{/if}">
                                 {if $t.active}<i class="icon-check"></i> {l s='On' mod='amazonmarketplacepro'}
@@ -1392,12 +1440,14 @@
                             </button>
                         </form>
                         <form method="post" style="display:inline;">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
                             <button type="submit" name="mkproScheduleRunNow" class="btn btn-default btn-sm" title="{l s='Run this task now' mod='amazonmarketplacepro'}">
                                 <i class="icon-play"></i> {l s='Run now' mod='amazonmarketplacepro'}
                             </button>
                         </form>
                         <form method="post" style="display:inline;" onsubmit="return confirm('{l s='Remove this task from the schedule?' mod='amazonmarketplacepro' js=1}');">
+                            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
                             <input type="hidden" name="id_task" value="{$t.id_task|intval}" />
                             <button type="submit" name="mkproScheduleDelete" class="btn btn-default btn-sm" title="{l s='Remove' mod='amazonmarketplacepro'}">
                                 <i class="icon-trash"></i>
@@ -1412,6 +1462,7 @@
         </table>
 
         <form method="post" class="form-inline" style="margin-top:10px;">
+            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
             <select name="task_key" class="form-control">
                 {foreach from=$schedule_catalogue key=k item=meta}
                     <option value="{$k|escape:'htmlall':'UTF-8'}">{$meta[0]|escape:'htmlall':'UTF-8'} &mdash; {$meta[2]|escape:'htmlall':'UTF-8'}</option>
@@ -1430,6 +1481,7 @@
             <code>{$mkpro_cron_token|escape:'htmlall':'UTF-8'}</code>
         </p>
     </div>
+    {/if}
 
 </div>
 
@@ -1511,11 +1563,12 @@
         {if $log_entries && count($log_entries) > 0}
             <table class="table">
                 <thead>
-                    <tr><th>{l s='Date' mod='amazonmarketplacepro'}</th><th>{l s='Level' mod='amazonmarketplacepro'}</th><th>{l s='Source' mod='amazonmarketplacepro'}</th><th>{l s='Message' mod='amazonmarketplacepro'}</th></tr>
+                    <tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Date' mod='amazonmarketplacepro'}</th><th>{l s='Level' mod='amazonmarketplacepro'}</th><th>{l s='Source' mod='amazonmarketplacepro'}</th><th>{l s='Message' mod='amazonmarketplacepro'}</th></tr>
                 </thead>
                 <tbody>
                     {foreach from=$log_entries item=entry}
                         <tr class="{if $entry.level == 'error'}danger{elseif $entry.level == 'warning'}warning{/if}">
+                            {if $mkpro_all_shops}<td>{if isset($entry.shop_name)}{$entry.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                             <td style="white-space:nowrap;">{$entry.date_add|escape:'htmlall':'UTF-8'}</td>
                             <td><span class="badge {if $entry.level == 'error'}badge-danger{elseif $entry.level == 'warning'}badge-warning{else}badge-info{/if}">{$entry.level|escape:'htmlall':'UTF-8'}</span></td>
                             <td>{$entry.source|escape:'htmlall':'UTF-8'}</td>
@@ -1706,7 +1759,7 @@
                 {if $category_mappings}
                     {foreach from=$category_mappings item=map}
                         <tr data-id="{$map.id_amazonmarketplacepro_category_map|escape:'htmlall':'UTF-8'}">
-                            <td>{$map.category_name|escape:'htmlall':'UTF-8'}</td>
+                            <td>{$map.category_name|escape:'htmlall':'UTF-8'}{if $mkpro_multistore && !$mkpro_all_shops && isset($map.id_shop) && !$map.id_shop} <span class="label label-default">{l s='All shops' mod='amazonmarketplacepro'}</span>{/if}</td>
                             <td>{$map.amazon_product_type|escape:'htmlall':'UTF-8'}</td>
                             <td>{$map.amazon_browse_node|escape:'htmlall':'UTF-8'}</td>
                             <td><button type="button" class="btn btn-xs btn-danger catmap-delete" data-id="{$map.id_amazonmarketplacepro_category_map|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
@@ -1756,7 +1809,7 @@
                 {if $profiles}
                     {foreach from=$profiles item=prof}
                     <tr data-id="{$prof.id_amazonmarketplacepro_profile|escape:'htmlall':'UTF-8'}">
-                        <td><strong>{$prof.name|escape:'htmlall':'UTF-8'}</strong></td>
+                        <td><strong>{$prof.name|escape:'htmlall':'UTF-8'}</strong>{if $mkpro_multistore && !$mkpro_all_shops && isset($prof.id_shop) && !$prof.id_shop} <span class="label label-default">{l s='All shops' mod='amazonmarketplacepro'}</span>{/if}</td>
                         <td><code>{$prof.product_type|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{if $prof.is_variation}<span class="label label-info">{$prof.variation_attributes|escape:'htmlall':'UTF-8'}</span>{else}<span class="text-muted">&mdash;</span>{/if}</td>
                         <td>{$prof.category_count|escape:'htmlall':'UTF-8'}</td>
@@ -1921,6 +1974,7 @@
             {l s='Markups are fixed values ("5.99") or percentages ("10%"), applied to the exported price. Rules cascade per product: category, then manufacturer, then supplier — the first source with a value wins; the defaults below apply when none matches.' mod='amazonmarketplacepro'}
         </p>
         <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
+            <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
             <input type="hidden" name="mkpro_markup_sources_present" value="1" />
             <input type="hidden" name="mkpro_delay_sources_present" value="1" />
             <div class="form-group">
@@ -2089,6 +2143,7 @@
         </div>
         <table class="table" id="queue-table">
             <thead><tr>
+                {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                 <th>{l s='Product ID' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Reference' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Name' mod='amazonmarketplacepro'}</th>
@@ -2101,6 +2156,7 @@
                 {if $queue_rows}
                     {foreach from=$queue_rows item=q}
                     <tr>
+                        {if $mkpro_all_shops}<td>{if isset($q.shop_name)}{$q.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td>{$q.id_product|escape:'htmlall':'UTF-8'}</td>
                         <td><code>{$q.reference|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$q.name|escape:'htmlall':'UTF-8'}</td>
@@ -2111,7 +2167,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="7" class="text-center text-muted">{l s='Queue is empty.' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}8{else}7{/if}" class="text-center text-muted">{l s='Queue is empty.' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
             </tbody>
         </table>
@@ -2130,6 +2186,7 @@
         <div id="orphans-result" style="display:none; margin-top:10px;"></div>
         <table class="table" id="orphans-table" style="margin-top:10px;">
             <thead><tr>
+                {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                 <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
                 <th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Amazon title' mod='amazonmarketplacepro'}</th>
@@ -2140,6 +2197,7 @@
                 {if $orphan_rows}
                     {foreach from=$orphan_rows item=orp}
                     <tr>
+                        {if $mkpro_all_shops}<td>{if isset($orp.shop_name)}{$orp.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td><code>{$orp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$orp.amazon_asin|escape:'htmlall':'UTF-8'}</td>
                         <td>{$orp.amazon_title|truncate:60:'...':true|escape:'htmlall':'UTF-8'}</td>
@@ -2148,7 +2206,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="5" class="text-center text-muted">{l s='No orphaned listings found. Run an Amazon-side sync to refresh.' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}6{else}5{/if}" class="text-center text-muted">{l s='No orphaned listings found. Run an Amazon-side sync to refresh.' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
             </tbody>
         </table>
@@ -2254,6 +2312,7 @@
         <div id="pending-result" style="display:none; margin-bottom:10px;"></div>
         <table class="table" id="pending-table">
             <thead><tr>
+                {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                 <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Order date' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Items' mod='amazonmarketplacepro'}</th>
@@ -2265,6 +2324,7 @@
                 {if $pending_orders}
                     {foreach from=$pending_orders item=po}
                     <tr data-id="{$po.id_amazonmarketplacepro_order|escape:'htmlall':'UTF-8'}">
+                        {if $mkpro_all_shops}<td>{if isset($po.shop_name)}{$po.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td>{$po.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
                         <td>{$po.purchase_date|escape:'htmlall':'UTF-8'}</td>
                         <td><small>{$po.item_list|escape:'htmlall':'UTF-8'}</small></td>
@@ -2277,7 +2337,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="6" class="text-center text-muted">{l s='No pending orders.' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}7{else}6{/if}" class="text-center text-muted">{l s='No pending orders.' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
             </tbody>
         </table>
@@ -2292,6 +2352,7 @@
         {/if}
         <table class="table">
             <thead><tr>
+                {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                 <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
                 <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
                 <th>{l s='Product' mod='amazonmarketplacepro'}</th>
@@ -2303,6 +2364,7 @@
                 {if $reservations}
                     {foreach from=$reservations item=res}
                     <tr>
+                        {if $mkpro_all_shops}<td>{if isset($res.shop_name)}{$res.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td>{$res.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
                         <td><code>{$res.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$res.product_name|escape:'htmlall':'UTF-8'}</td>
@@ -2312,7 +2374,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="6" class="text-center text-muted">{l s='No stock is currently reserved.' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}7{else}6{/if}" class="text-center text-muted">{l s='No stock is currently reserved.' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
             </tbody>
         </table>
@@ -2341,6 +2403,7 @@
             <table class="table" id="returns-table">
                 <thead>
                     <tr>
+                        {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                         <th>{l s='Amazon Order' mod='amazonmarketplacepro'}</th>
                         <th>{l s='Type' mod='amazonmarketplacepro'}</th>
                         <th>{l s='SKU' mod='amazonmarketplacepro'}</th>
@@ -2356,6 +2419,7 @@
                 <tbody>
                     {foreach from=$returns item=ret}
                         <tr class="{if $ret.return_status == 'imported'}warning{elseif $ret.return_status == 'refunded'}success{/if}">
+                            {if $mkpro_all_shops}<td>{if isset($ret.shop_name)}{$ret.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                             <td>{$ret.amazon_order_id|escape:'htmlall':'UTF-8'}</td>
                             <td>
                                 {if $ret.status == 'Canceled'}
@@ -2435,6 +2499,7 @@
         <div class="table-responsive">
             <table class="table" id="fba-table">
                 <thead><tr>
+                    {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                     <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='ASIN' mod='amazonmarketplacepro'}</th>
                     <th>{l s='FN SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
                     <th>{l s='Fulfillable' mod='amazonmarketplacepro'}</th><th>{l s='Reserved' mod='amazonmarketplacepro'}</th>
@@ -2445,6 +2510,7 @@
                 {if $fba_inventory}
                     {foreach from=$fba_inventory item=inv}
                     <tr>
+                        {if $mkpro_all_shops}<td>{if isset($inv.shop_name)}{$inv.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td><code>{$inv.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$inv.asin|escape:'htmlall':'UTF-8'}</td>
                         <td><small>{$inv.fn_sku|escape:'htmlall':'UTF-8'}</small></td>
@@ -2458,7 +2524,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="10" class="text-center text-muted">{l s='No FBA inventory data yet. Click "Sync FBA Inventory" to fetch.' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}11{else}10{/if}" class="text-center text-muted">{l s='No FBA inventory data yet. Click "Sync FBA Inventory" to fetch.' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
                 </tbody>
             </table>
@@ -2501,11 +2567,12 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-list"></i> {l s='Active Marketplaces' mod='amazonmarketplacepro'}</div>
         <table class="table" id="mp-table">
-            <thead><tr><th>{l s='Marketplace' mod='amazonmarketplacepro'}</th><th>{l s='Seller ID' mod='amazonmarketplacepro'}</th><th>{l s='Orders' mod='amazonmarketplacepro'}</th><th>{l s='Products' mod='amazonmarketplacepro'}</th><th>{l s='Stock' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
+            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Marketplace' mod='amazonmarketplacepro'}</th><th>{l s='Seller ID' mod='amazonmarketplacepro'}</th><th>{l s='Orders' mod='amazonmarketplacepro'}</th><th>{l s='Products' mod='amazonmarketplacepro'}</th><th>{l s='Stock' mod='amazonmarketplacepro'}</th><th>{l s='Active' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
             <tbody>
             {if $marketplace_configs}
                 {foreach from=$marketplace_configs item=mp}
                 <tr>
+                    {if $mkpro_all_shops}<td>{if isset($mp.shop_name)}{$mp.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                     <td><strong>{$mp.marketplace_name|escape:'htmlall':'UTF-8'}</strong><br><small class="text-muted">{$mp.marketplace_id|escape:'htmlall':'UTF-8'}</small></td>
                     <td>{$mp.seller_id|escape:'htmlall':'UTF-8'}</td>
                     <td>{if $mp.sync_orders}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
@@ -2516,7 +2583,7 @@
                 </tr>
                 {/foreach}
             {else}
-                <tr><td colspan="7" class="text-muted text-center">{l s='No additional marketplaces configured. The primary marketplace from Settings tab is always active.' mod='amazonmarketplacepro'}</td></tr>
+                <tr><td colspan="{if $mkpro_all_shops}8{else}7{/if}" class="text-muted text-center">{l s='No additional marketplaces configured. The primary marketplace from Settings tab is always active.' mod='amazonmarketplacepro'}</td></tr>
             {/if}
             </tbody>
         </table>
@@ -2574,7 +2641,7 @@
             {if $pricing_rules}
                 {foreach from=$pricing_rules item=rule}
                 <tr>
-                    <td>{$rule.name|escape:'htmlall':'UTF-8'}</td>
+                    <td>{$rule.name|escape:'htmlall':'UTF-8'}{if $mkpro_multistore && !$mkpro_all_shops && isset($rule.id_shop) && !$rule.id_shop} <span class="label label-default">{l s='All shops' mod='amazonmarketplacepro'}</span>{/if}</td>
                     <td><span class="label label-info">{$rule.rule_type|escape:'htmlall':'UTF-8'}</span></td>
                     <td>{$rule.price_adjustment|escape:'htmlall':'UTF-8'} {if $rule.adjustment_type == 'percentage'}%{else}{l s='fixed' mod='amazonmarketplacepro'}{/if}</td>
                     <td>{$rule.min_price|escape:'htmlall':'UTF-8'} / {$rule.max_price|escape:'htmlall':'UTF-8'}</td>
@@ -2594,6 +2661,7 @@
         <div class="table-responsive">
             <table class="table" id="buybox-table">
                 <thead><tr>
+                    {if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}
                     <th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Product' mod='amazonmarketplacepro'}</th>
                     <th>{l s='Our Price' mod='amazonmarketplacepro'}</th><th>{l s='Buy Box' mod='amazonmarketplacepro'}</th>
                     <th>{l s='Lowest' mod='amazonmarketplacepro'}</th><th>{l s='Winner?' mod='amazonmarketplacepro'}</th>
@@ -2604,6 +2672,7 @@
                 {if $competitive_prices}
                     {foreach from=$competitive_prices item=cp}
                     <tr>
+                        {if $mkpro_all_shops}<td>{if isset($cp.shop_name)}{$cp.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td><code>{$cp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$cp.ps_name|truncate:30|escape:'htmlall':'UTF-8'}</td>
                         <td>{$cp.our_price|escape:'htmlall':'UTF-8'}</td>
@@ -2616,7 +2685,7 @@
                     </tr>
                     {/foreach}
                 {else}
-                    <tr><td colspan="9" class="text-muted text-center">{l s='No competitive pricing data yet. Click "Fetch Competitive Pricing".' mod='amazonmarketplacepro'}</td></tr>
+                    <tr><td colspan="{if $mkpro_all_shops}10{else}9{/if}" class="text-muted text-center">{l s='No competitive pricing data yet. Click "Fetch Competitive Pricing".' mod='amazonmarketplacepro'}</td></tr>
                 {/if}
                 </tbody>
             </table>
@@ -2637,11 +2706,12 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-list"></i> {l s='Fee Summary by Type' mod='amazonmarketplacepro'}</div>
         <table class="table" id="fees-table">
-            <thead><tr><th>{l s='Fee Type' mod='amazonmarketplacepro'}</th><th>{l s='Total Amount' mod='amazonmarketplacepro'}</th><th>{l s='Count' mod='amazonmarketplacepro'}</th><th>{l s='Currency' mod='amazonmarketplacepro'}</th></tr></thead>
+            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Fee Type' mod='amazonmarketplacepro'}</th><th>{l s='Total Amount' mod='amazonmarketplacepro'}</th><th>{l s='Count' mod='amazonmarketplacepro'}</th><th>{l s='Currency' mod='amazonmarketplacepro'}</th></tr></thead>
             <tbody>
             {if $fee_summary}
                 {foreach from=$fee_summary item=fee}
                 <tr>
+                    {if $mkpro_all_shops}<td>{if isset($fee.shop_name)}{$fee.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                     <td>{$fee.fee_type|escape:'htmlall':'UTF-8'}</td>
                     <td><strong>{$fee.total_amount|string_format:"%.2f"|escape:'htmlall':'UTF-8'}</strong></td>
                     <td>{$fee.count|escape:'htmlall':'UTF-8'}</td>
@@ -2649,7 +2719,7 @@
                 </tr>
                 {/foreach}
             {else}
-                <tr><td colspan="4" class="text-muted text-center">{l s='No fee data yet. Click "Fetch Order Fees" to pull from Amazon Finances API.' mod='amazonmarketplacepro'}</td></tr>
+                <tr><td colspan="{if $mkpro_all_shops}5{else}4{/if}" class="text-muted text-center">{l s='No fee data yet. Click "Fetch Order Fees" to pull from Amazon Finances API.' mod='amazonmarketplacepro'}</td></tr>
             {/if}
             </tbody>
         </table>
@@ -2683,11 +2753,12 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-list"></i> {l s='Promotion History' mod='amazonmarketplacepro'}</div>
         <table class="table">
-            <thead><tr><th>{l s='Promo ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Discount' mod='amazonmarketplacepro'}</th><th>{l s='Direction' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Date' mod='amazonmarketplacepro'}</th></tr></thead>
+            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Promo ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='SKU' mod='amazonmarketplacepro'}</th><th>{l s='Discount' mod='amazonmarketplacepro'}</th><th>{l s='Direction' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Date' mod='amazonmarketplacepro'}</th></tr></thead>
             <tbody>
             {if $promotions}
                 {foreach from=$promotions item=promo}
                 <tr>
+                    {if $mkpro_all_shops}<td>{if isset($promo.shop_name)}{$promo.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                     <td><small><code>{$promo.amazon_promotion_id|truncate:25|escape:'htmlall':'UTF-8'}</code></small></td>
                     <td>{$promo.promotion_type|escape:'htmlall':'UTF-8'}</td>
                     <td>{$promo.seller_sku|escape:'htmlall':'UTF-8'}</td>
@@ -2698,7 +2769,7 @@
                 </tr>
                 {/foreach}
             {else}
-                <tr><td colspan="7" class="text-muted text-center">{l s='No promotions synced yet.' mod='amazonmarketplacepro'}</td></tr>
+                <tr><td colspan="{if $mkpro_all_shops}8{else}7{/if}" class="text-muted text-center">{l s='No promotions synced yet.' mod='amazonmarketplacepro'}</td></tr>
             {/if}
             </tbody>
         </table>
@@ -2734,11 +2805,12 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-list"></i> {l s='Report History' mod='amazonmarketplacepro'}</div>
         <table class="table" id="reports-table">
-            <thead><tr><th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th></tr></thead>
+            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th></tr></thead>
             <tbody>
             {if $reports}
                 {foreach from=$reports item=rpt}
                 <tr>
+                    {if $mkpro_all_shops}<td>{if isset($rpt.shop_name)}{$rpt.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                     <td><small><code>{$rpt.report_id|truncate:20|escape:'htmlall':'UTF-8'}</code></small></td>
                     <td><span class="label label-info">{$rpt.report_type|escape:'htmlall':'UTF-8'}</span></td>
                     <td>{if $rpt.status == 'DONE'}<span class="label label-success">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{elseif $rpt.status == 'FATAL'}<span class="label label-danger">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{else}<span class="label label-warning">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{/if}</td>
@@ -2747,7 +2819,7 @@
                 </tr>
                 {/foreach}
             {else}
-                <tr><td colspan="5" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
+                <tr><td colspan="{if $mkpro_all_shops}6{else}5{/if}" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
             {/if}
             </tbody>
         </table>
@@ -2978,8 +3050,34 @@
         confirmDelete: '{l s='Delete %1$s listing(s) from Amazon? The offers and their history go with them.' mod='amazonmarketplacepro' js=1}',
         deletingAmazon: '{l s='Deleting from Amazon...' mod='amazonmarketplacepro' js=1}',
         deletionSummary: '{l s='%1$s requested · %2$s deleted · %3$s failed' mod='amazonmarketplacepro' js=1}',
-        enterFeedId: '{l s='Enter a feed ID. You will find it on the Products tab after submitting a bulk feed.' mod='amazonmarketplacepro' js=1}'
+        enterFeedId: '{l s='Enter a feed ID. You will find it on the Products tab after submitting a bulk feed.' mod='amazonmarketplacepro' js=1}',
+        thShop: '{l s='Shop' mod='amazonmarketplacepro' js=1}',
+        allShopsLabel: '{l s='All shops' mod='amazonmarketplacepro' js=1}',
+        chooseShop: '{l s='Choose a shop at the top of the page to use this.' mod='amazonmarketplacepro' js=1}',
+        ownValueIn: '{l s='These shops keep their own value: %1$s' mod='amazonmarketplacepro' js=1}',
+        deleteFailed: '{l s='Delete failed' mod='amazonmarketplacepro' js=1}'
     };
+
+    /* ── The shop this page was opened for. Every request sends it, and the
+       module refuses one whose shop is no longer the one selected. allShops
+       is true for All shops or a shop group. ── */
+    var MKPRO = {
+        idShop: {$mkpro_shop_id|intval},
+        multistore: {if $mkpro_multistore}true{else}false{/if},
+        allShops: {if $mkpro_all_shops}true{else}false{/if},
+        overrideNotes: JSON.parse('{$mkpro_override_notes_json|escape:'javascript':'UTF-8'}')
+    };
+
+    /* ── Helper: the Shop cell of a row, for the lists of All shops ── */
+    function shopCell(row) {
+        return MKPRO.allShops ? '<td>' + esc(row && row.shop_name ? row.shop_name : '') + '</td>' : '';
+    }
+
+    /* ── Helper: marks a rule shared by all shops while one shop is selected ── */
+    function sharedLabel(row) {
+        return (MKPRO.multistore && !MKPRO.allShops && row && parseInt(row.id_shop, 10) === 0)
+            ? ' <span class="label label-default">' + esc(T.allShopsLabel) + '</span>' : '';
+    }
 
     /* ── Helper: AJAX POST returning parsed JSON ── */
     /* ── Sidebar accordion: one open marketplace group, single active item.
@@ -3024,12 +3122,8 @@
             catch (e) { data = null; }
             onDone(data, xhr);
         };
-        if (extraData) {
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(extraData);
-        } else {
-            xhr.send();
-        }
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.send('mkpro_id_shop=' + encodeURIComponent(MKPRO.idShop) + (extraData ? '&' + extraData : ''));
     }
 
     /* ── Helper: Direction badge ── */
@@ -3151,7 +3245,13 @@
                         summary.className = 'alert alert-danger';
                         summary.innerHTML = esc(fmt(T.error, data.error));
                     }
-                    out.innerHTML = renderOrders(data.orders);
+                    var importNotices = '';
+                    if (data.notices && data.notices.length) {
+                        for (var n = 0; n < data.notices.length; n++) {
+                            importNotices += '<div class="alert alert-warning">' + esc(data.notices[n]) + '</div>';
+                        }
+                    }
+                    out.innerHTML = importNotices + renderOrders(data.orders);
                 });
             });
         }
@@ -3580,7 +3680,10 @@
             if (!id) return;
 
             ajaxPost('{$ajax_delete_category_map_url|escape:'javascript':'UTF-8'}', function (data) {
-                if (data && data.success && data.mappings) renderCatmapTable(data.mappings);
+                if (data && data.success && data.mappings) { renderCatmapTable(data.mappings); return; }
+                result.style.display = 'block';
+                result.className = 'alert alert-danger';
+                result.textContent = (data && data.error) ? data.error : T.deleteFailed;
             }, 'id_category_map='+encodeURIComponent(id));
         });
 
@@ -3595,7 +3698,7 @@
             for (var i=0; i<mappings.length; i++) {
                 var m = mappings[i];
                 h += '<tr data-id="'+esc(m.id_amazonmarketplacepro_category_map)+'">'
-                    +'<td>'+esc(m.category_name)+'</td>'
+                    +'<td>'+esc(m.category_name)+sharedLabel(m)+'</td>'
                     +'<td>'+esc(m.amazon_product_type)+'</td>'
                     +'<td>'+esc(m.amazon_browse_node)+'</td>'
                     +'<td><button type="button" class="btn btn-xs btn-danger catmap-delete" data-id="'+esc(m.id_amazonmarketplacepro_category_map)+'"><i class="icon-trash"></i></button></td>'
@@ -3853,6 +3956,8 @@
                 if (data && data.success) {
                     var row = btn.closest('tr');
                     if (row) row.remove();
+                } else {
+                    alert((data && data.error) ? data.error : T.deleteFailed);
                 }
             }, 'id_pricing_rule='+encodeURIComponent(id));
         });
@@ -4331,6 +4436,8 @@
                 if (data && data.success) {
                     var row = btn.closest('tr');
                     if (row) row.remove();
+                } else {
+                    alert((data && data.error) ? data.error : T.deleteFailed);
                 }
             }, 'id_profile=' + encodeURIComponent(btn.getAttribute('data-id')));
         });
@@ -4476,12 +4583,12 @@
                 var h = '';
                 for (var i = 0; i < rows.length; i++) {
                     var q = rows[i];
-                    h += '<tr><td>' + esc(q.id_product) + '</td><td><code>' + esc(q.reference || '') + '</code></td>'
+                    h += '<tr>' + shopCell(q) + '<td>' + esc(q.id_product) + '</td><td><code>' + esc(q.reference || '') + '</code></td>'
                         + '<td>' + esc(q.name || '') + '</td><td>' + esc(q.reason) + '</td>'
                         + '<td>' + (parseInt(q.active, 10) ? '<span class="badge badge-success">' + esc(T.yes) + '</span>' : '<span class="badge badge-default">' + esc(T.no) + '</span>') + '</td>'
                         + '<td><small>' + esc(q.date_add) + '</small></td><td><small>' + esc(q.date_upd) + '</small></td></tr>';
                 }
-                tbody.innerHTML = h || '<tr><td colspan="7" class="text-center text-muted">' + esc(T.queueEmpty) + '</td></tr>';
+                tbody.innerHTML = h || '<tr><td colspan="' + (MKPRO.allShops ? 8 : 7) + '" class="text-center text-muted">' + esc(T.queueEmpty) + '</td></tr>';
                 result.innerHTML = '<span class="text-success">' + esc(T.done) + '</span>';
             }, 'queue_op=' + encodeURIComponent(op));
         });
@@ -4511,12 +4618,12 @@
                 var h = '';
                 for (var i = 0; i < rows.length; i++) {
                     var o = rows[i];
-                    h += '<tr><td><code>' + esc(o.seller_sku) + '</code></td><td>' + esc(o.amazon_asin) + '</td>'
+                    h += '<tr>' + shopCell(o) + '<td><code>' + esc(o.seller_sku) + '</code></td><td>' + esc(o.amazon_asin) + '</td>'
                         + '<td>' + esc((o.amazon_title || '').substring(0, 60)) + '</td>'
                         + '<td>' + (parseInt(o.id_product, 10) > 0 ? '#' + esc(o.id_product) : '-') + '</td>'
                         + '<td>' + esc(o.reason) + '</td></tr>';
                 }
-                tbody.innerHTML = h || '<tr><td colspan="5" class="text-center text-muted">' + esc(T.noOrphans) + '</td></tr>';
+                tbody.innerHTML = h || '<tr><td colspan="' + (MKPRO.allShops ? 6 : 5) + '" class="text-center text-muted">' + esc(T.noOrphans) + '</td></tr>';
             });
         });
     })();
@@ -4538,7 +4645,7 @@
                 if (row) row.remove();
                 var tbody = document.querySelector('#pending-table tbody');
                 if (tbody && !tbody.querySelector('tr[data-id]')) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + esc(T.noPendingOrders) + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="' + (MKPRO.allShops ? 7 : 6) + '" class="text-center text-muted">' + esc(T.noPendingOrders) + '</td></tr>';
                 }
             }, 'pending_op=' + encodeURIComponent(op) + '&id_staged=' + encodeURIComponent(id));
         }
@@ -4569,7 +4676,7 @@
             var h = '';
             for (var i = 0; i < templates.length; i++) {
                 var t = templates[i];
-                h += '<tr><td>' + esc(t.basis) + '</td><td>' + esc(t.min_value) + '</td><td>' + esc(t.max_value) + '</td>'
+                h += '<tr><td>' + esc(t.basis) + sharedLabel(t) + '</td><td>' + esc(t.min_value) + '</td><td>' + esc(t.max_value) + '</td>'
                     + '<td>' + esc(t.template_name) + '</td>'
                     + '<td><button type="button" class="btn btn-xs btn-danger shiptpl-delete" data-id="' + esc(t.id_amazonmarketplacepro_shipping_template) + '"><i class="icon-trash"></i></button></td></tr>';
             }
@@ -4601,7 +4708,8 @@
             var del = e.target.closest('.shiptpl-delete');
             if (!del) return;
             ajaxPost('{$ajax_delete_shipping_template_url|escape:'javascript':'UTF-8'}', function (data) {
-                if (data && data.success) renderRows(data.templates || []);
+                if (data && data.success) { renderRows(data.templates || []); return; }
+                show('danger', (data && data.error) ? data.error : T.deleteFailed);
             }, 'id_template=' + encodeURIComponent(del.getAttribute('data-id')));
         });
     })();
@@ -4704,7 +4812,7 @@
             out.innerHTML = '<div class="alert alert-info">' + esc(T.checking) + '</div>';
             ajaxPost('{$ajax_audit_catalogue_url|escape:'javascript':'UTF-8'}', function (data) {
                 auditBtn.disabled = false;
-                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc(T.checkFailed) + '</div>'; return; }
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.checkFailed) + '</div>'; return; }
                 var a = data.audit;
                 var problems = a.no_reference + a.duplicate_references + a.combinations_no_reference;
                 var h = '<table class="table" style="max-width:560px;"><tbody>'
@@ -4742,6 +4850,7 @@
             out.innerHTML = '<div class="alert alert-info">' + esc(T.importing) + '</div>';
 
             var fd = new FormData();
+            fd.append('mkpro_id_shop', MKPRO.idShop);
             fd.append('reference_file', input.files[0]);
             var xhr = new XMLHttpRequest();
             xhr.open('POST', '{$ajax_import_references_url|escape:'javascript':'UTF-8'}', true);
@@ -4786,6 +4895,7 @@
                 out.innerHTML = '<div class="alert alert-info">' + esc('{l s='Reading the report...' mod='amazonmarketplacepro' js=1}') + '</div>';
 
                 var fd = new FormData();
+                fd.append('mkpro_id_shop', MKPRO.idShop);
                 fd.append('order_report', input.files[0]);
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '{$ajax_import_order_addresses_url|escape:'javascript':'UTF-8'}', true);
@@ -4823,7 +4933,7 @@
             out.innerHTML = '<div class="alert alert-info">' + esc(T.lookingDeletions) + '</div>';
             ajaxPost('{$ajax_list_deletions_url|escape:'javascript':'UTF-8'}', function (data) {
                 listBtn.disabled = false;
-                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc(T.lookupFailed) + '</div>'; return; }
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.lookupFailed) + '</div>'; return; }
                 var rows = data.candidates || [];
                 var tbody = table.querySelector('tbody');
                 var h = '';
@@ -4981,6 +5091,89 @@
                     this.setAttribute('action', action + hash);
                 }
             });
+        }
+    })();
+
+    /* ──────── All shops: one-shop actions off, own values marked ────────
+       With All shops (or a group) selected, anything that connects to Amazon
+       or changes one shop's orders, stock or listings needs a shop, so its
+       button is switched off and its panel says why. The module refuses
+       those requests there anyway; this only saves the merchant the click.
+       Settings some shops keep their own value for get a note naming them. */
+    (function () {
+        if (!MKPRO.allShops) return;
+
+        function upTo(node, test) {
+            while (node && node !== document) {
+                if (test(node)) return node;
+                node = node.parentNode;
+            }
+            return null;
+        }
+        function hasClass(node, cls) {
+            return node.className && (' ' + node.className + ' ').indexOf(' ' + cls + ' ') !== -1;
+        }
+
+        var ids = ['test-amazon-connection', 'import-amazon-orders', 'create-ps-orders', 'order-report-import',
+            'msg-load-actions', 'msg-send', 'msg-request-review', 'inbox-fetch',
+            'sync-products-ps', 'match-catalog', 'send-pending', 'sync-products-amazon', 'import-catalog',
+            'amz-update-run', 'feed-poll', 'list-amazon-products', 'pt-search-btn', 'pt-load', 'pt-refresh',
+            'queue-run', 'import-returns', 'process-returns', 'btn-sync-fba', 'btn-fba-stock-ps', 'btn-create-mcf',
+            'btn-save-mp', 'btn-fetch-pricing', 'btn-apply-rules', 'btn-push-prices', 'btn-fetch-fees',
+            'btn-report-listings', 'btn-report-settlement', 'btn-report-fba-inv', 'btn-poll-reports',
+            'btn-import-promos', 'btn-export-promos', 'btn-create-cart-rules', 'deletions-list', 'deletions-send'];
+        var buttons = [];
+        for (var i = 0; i < ids.length; i++) {
+            var b = document.getElementById(ids[i]);
+            if (b) buttons.push(b);
+        }
+        var byClass = document.querySelectorAll('.pending-create, .pending-delete, .btn-delete-mp');
+        for (var c = 0; c < byClass.length; c++) buttons.push(byClass[c]);
+
+        for (var k = 0; k < buttons.length; k++) {
+            buttons[k].disabled = true;
+            buttons[k].setAttribute('title', T.chooseShop);
+            // In the settings the panel also holds settings, which work here:
+            // the hint goes under the button instead.
+            if (upTo(buttons[k], function (n) { return n.id === 'grp-settings'; })) {
+                var small = document.createElement('p');
+                small.className = 'help-block';
+                small.textContent = T.chooseShop;
+                buttons[k].parentNode.insertBefore(small, buttons[k].nextSibling);
+                continue;
+            }
+            var panel = upTo(buttons[k], function (n) { return hasClass(n, 'panel'); });
+            if (panel && !panel.getAttribute('data-mkpro-hint')) {
+                panel.setAttribute('data-mkpro-hint', '1');
+                var hint = document.createElement('div');
+                hint.className = 'alert alert-info';
+                hint.textContent = T.chooseShop;
+                var heading = null;
+                for (var ch = panel.firstChild; ch; ch = ch.nextSibling) {
+                    if (ch.nodeType === 1 && hasClass(ch, 'panel-heading')) { heading = ch; break; }
+                }
+                panel.insertBefore(hint, heading ? heading.nextSibling : panel.firstChild);
+            }
+        }
+
+        var notes = MKPRO.overrideNotes;
+        for (var name in notes) {
+            if (!Object.prototype.hasOwnProperty.call(notes, name)) continue;
+            var field = document.querySelector('#grp-settings [name="' + name + '"], #tab-markup [name="' + name + '"]')
+                || document.querySelector('#grp-settings [name^="' + name + '["], #tab-markup [name^="' + name + '["]');
+            if (!field) continue;
+            var note = document.createElement('p');
+            note.className = 'help-block mkpro-override-note';
+            note.textContent = fmt(T.ownValueIn, notes[name]);
+            var group = upTo(field, function (n) { return hasClass(n, 'form-group'); });
+            var table = upTo(field, function (n) { return n.nodeName === 'TABLE'; });
+            if (table) {
+                table.parentNode.insertBefore(note, table);
+            } else if (group && group.lastElementChild) {
+                group.lastElementChild.appendChild(note);
+            } else {
+                field.parentNode.appendChild(note);
+            }
         }
     })();
 })();

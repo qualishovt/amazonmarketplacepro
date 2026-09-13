@@ -24,6 +24,10 @@
  *
  * Uses SP-API Finances API v0.
  *
+ * Multistore: a tracker works for one shop (the shop whose Amazon account the
+ * client is connected to) and only fetches fees for that shop's orders. Fee
+ * rows carry the shop of their order.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -32,6 +36,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonFeesTracker
 {
@@ -40,11 +45,22 @@ class AmazonFeesTracker
     private $marketplaceId;
     private $lastError = null;
     private $notices = array();
+    /** The shop whose orders are tracked. */
+    private $idShop;
+    /** The shop the caller named, or 0 for "the request's shop". */
+    private $shopGiven;
 
-    public function __construct(AmazonSpApiClient $client, $marketplaceId)
+    /**
+     * @param AmazonSpApiClient $client
+     * @param string            $marketplaceId
+     * @param int               $idShop 0 = the shop the request acts for
+     */
+    public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;
+        $this->shopGiven = (int) $idShop;
+        $this->idShop = $this->shopGiven ? $this->shopGiven : AmzproShop::actingId();
     }
 
     public function getLastError()
@@ -79,10 +95,11 @@ class AmazonFeesTracker
 
         // Get orders with no fees tracked yet
         $orders = Db::getInstance()->executeS(
-            'SELECT `amazon_order_id`, `id_amazonmarketplacepro_order`
+            'SELECT `amazon_order_id`, `id_amazonmarketplacepro_order`, `id_shop`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `amazon_fees` = 0
                AND `import_status` IN (\'imported\', \'created\')
+               AND `id_shop` = ' . (int) $this->idShop . '
              ORDER BY `date_add` DESC
              LIMIT ' . (int) $limit
         );
@@ -118,7 +135,7 @@ class AmazonFeesTracker
                 Db::getInstance()->execute(
                     'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_fee`
                      (`amazon_order_id`, `fee_type`, `fee_amount`, `currency`,
-                      `order_item_id`, `seller_sku`, `date_add`)
+                      `order_item_id`, `seller_sku`, `id_shop`, `date_add`)
                      VALUES (
                         \'' . pSQL($amazonId) . '\',
                         \'' . pSQL($fee['type']) . '\',
@@ -126,6 +143,7 @@ class AmazonFeesTracker
                         \'' . pSQL($fee['currency']) . '\',
                         \'' . pSQL($fee['order_item_id']) . '\',
                         \'' . pSQL($fee['seller_sku']) . '\',
+                        ' . (int) $order['id_shop'] . ',
                         \'' . pSQL($now) . '\'
                      )'
                 );
@@ -136,7 +154,8 @@ class AmazonFeesTracker
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` SET
                     `amazon_fees` = ' . abs($totalFees) . ',
                     `date_upd` = \'' . pSQL($now) . '\'
-                 WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\''
+                 WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\'
+                   AND `id_shop` = ' . (int) $order['id_shop']
             );
 
             $summary['updated']++;
@@ -278,7 +297,8 @@ class AmazonFeesTracker
     }
 
     /**
-     * Get fee summary for display (grouped by fee type).
+     * Get fee summary for display (grouped by fee type): the tracker's shop,
+     * or every shop in "All shops".
      *
      * @return array
      */
@@ -287,6 +307,7 @@ class AmazonFeesTracker
         $sql = 'SELECT `fee_type`, SUM(ABS(`fee_amount`)) AS total_amount, COUNT(*) AS count,
                        `currency`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_fee`
+                WHERE ' . $this->listScope() . '
                 GROUP BY `fee_type`, `currency`
                 ORDER BY total_amount DESC';
         $rows = Db::getInstance()->executeS($sql);
@@ -303,6 +324,7 @@ class AmazonFeesTracker
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_fee`
                 WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\'
+                  AND ' . $this->listScope() . '
                 ORDER BY `fee_type` ASC';
         $rows = Db::getInstance()->executeS($sql);
         return is_array($rows) ? $rows : array();
@@ -358,5 +380,11 @@ class AmazonFeesTracker
         }
 
         return $summary;
+    }
+
+    /** Rows shown: the shop named by the caller, else the request's shop (all in "All shops"). */
+    private function listScope()
+    {
+        return AmzproShop::sqlWhere('', $this->shopGiven ? $this->shopGiven : null);
     }
 }

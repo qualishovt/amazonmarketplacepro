@@ -34,6 +34,13 @@
  * with a nonce before storing anything. That stops anyone registering someone
  * else's shop, and stops the relay being talked into calling arbitrary hosts.
  *
+ * With multistore, a registration belongs to one shop: each shop registers
+ * its own address and token, and keeps its own registration state (the
+ * AMZPRO_RELAY_* keys are its own, see AmzproShop::$ownKeys). The relay tells
+ * registrations apart by address, so it needs to know nothing about shops.
+ * The registered address lives under AMZPRO_RELAY_CRON_URL; AMZPRO_RELAY_URL
+ * is the Amazon token relay and is never written here.
+ *
  * PHP 5.6+ compatible.
  */
 
@@ -42,6 +49,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmazonI18n.php';
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonRelaySchedule
 {
@@ -52,12 +60,29 @@ class AmazonRelaySchedule
      *  back office if the relay is down. */
     const TIMEOUT = 15;
 
-    /** @return string 'cron' or 'relay' */
-    public static function mode()
+    /**
+     * @param int|null $idShop default: the shop the request acts for
+     *
+     * @return string 'cron' or 'relay'
+     */
+    public static function mode($idShop = null)
     {
-        $mode = Configuration::get('AMZPRO_CRON_MODE');
+        $mode = AmzproShop::get('AMZPRO_CRON_MODE', $idShop);
 
         return $mode === 'relay' ? 'relay' : 'cron';
+    }
+
+    /**
+     * Save which of the two drives the schedule.
+     *
+     * @param string $mode 'cron' or 'relay'
+     * @param int|null $idShop default: the shop the request acts for
+     *
+     * @return bool
+     */
+    public static function setMode($mode, $idShop = null)
+    {
+        return AmzproShop::set('AMZPRO_CRON_MODE', $mode === 'relay' ? 'relay' : 'cron', $idShop);
     }
 
     /**
@@ -66,23 +91,36 @@ class AmazonRelaySchedule
      * Read from local configuration rather than asked of the relay: this is
      * called on every render of the Automation screen, and a screen that
      * cannot draw when the relay is unreachable would be a poor trade.
+     *
+     * @param int|null $idShop default: the shop the request acts for
      */
-    public static function status()
+    public static function status($idShop = null)
     {
+        $idShop = self::shopId($idShop);
+
         return array(
-            'registered' => (bool) Configuration::get('AMZPRO_RELAY_REGISTERED'),
-            'since' => Configuration::get('AMZPRO_RELAY_SINCE'),
-            'url' => Configuration::get('AMZPRO_RELAY_URL'),
-            'last_error' => Configuration::get('AMZPRO_RELAY_ERROR'),
+            'registered' => (bool) AmzproShop::get('AMZPRO_RELAY_REGISTERED', $idShop),
+            'since' => AmzproShop::get('AMZPRO_RELAY_SINCE', $idShop),
+            'url' => AmzproShop::get('AMZPRO_RELAY_CRON_URL', $idShop),
+            'last_error' => AmzproShop::get('AMZPRO_RELAY_ERROR', $idShop),
         );
     }
 
-    /** The address the relay will call. */
-    public static function cronUrl()
+    /**
+     * The address the relay will call: the shop's own, so that each shop of
+     * a multistore install registers its own URL with its own token.
+     *
+     * @param int|null $idShop default: the shop the request acts for
+     */
+    public static function cronUrl($idShop = null)
     {
+        $idShop = self::shopId($idShop);
         $link = Context::getContext()->link;
+        if (!$link) {
+            $link = new Link();
+        }
 
-        return $link->getModuleLink('amazonmarketplacepro', 'cron', array(), true);
+        return $link->getModuleLink('amazonmarketplacepro', 'cron', array(), true, null, $idShop);
     }
 
     /**
@@ -92,40 +130,43 @@ class AmazonRelaySchedule
      */
     public static function register()
     {
-        $token = Configuration::get('AMZPRO_CRON_TOKEN');
+        $idShop = self::shopId();
+        $token = AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop);
         if (!$token) {
-            return self::refuse(AmazonI18n::get()->l('This shop has no cron token yet. Save the settings once and try again.', 'amazonrelayschedule'));
+            return self::refuse(AmazonI18n::get()->l('This shop has no cron token yet. Save the settings once and try again.', 'amazonrelayschedule'), $idShop);
         }
 
-        $url = self::cronUrl();
+        $url = self::cronUrl($idShop);
         if (Tools::substr($url, 0, 8) !== 'https://') {
             // The token would otherwise cross the network in clear text on
             // every call, several hundred times a day.
             return self::refuse(sprintf(
                 AmazonI18n::get()->l('The scheduler needs the shop to be reachable over HTTPS, and this shop\'s address is %s. Enable SSL in Shop Parameters > General, then register again.', 'amazonrelayschedule'),
                 $url
-            ));
+            ), $idShop);
         }
+
+        $module = Module::getInstanceByName('amazonmarketplacepro');
 
         $reply = self::call(array(
             'action' => 'register',
             'cron_url' => $url,
             'token' => $token,
-            'shop_name' => Configuration::get('PS_SHOP_NAME'),
-            'seller_id' => Configuration::get('AMZPRO_SELLER_ID'),
-            'module_version' => '1.5.0',
+            'shop_name' => Configuration::get('PS_SHOP_NAME', null, AmzproShop::groupId($idShop), $idShop),
+            'seller_id' => AmzproShop::get('AMZPRO_SELLER_ID', $idShop),
+            'module_version' => $module ? (string) $module->version : '',
         ));
 
         if (empty($reply['success'])) {
-            Configuration::updateValue('AMZPRO_RELAY_ERROR', isset($reply['error']) ? $reply['error'] : AmazonI18n::get()->l('Unknown error', 'amazonrelayschedule'));
+            AmzproShop::set('AMZPRO_RELAY_ERROR', isset($reply['error']) ? $reply['error'] : AmazonI18n::get()->l('Unknown error', 'amazonrelayschedule'), $idShop);
 
             return $reply;
         }
 
-        Configuration::updateValue('AMZPRO_RELAY_REGISTERED', 1);
-        Configuration::updateValue('AMZPRO_RELAY_SINCE', date('Y-m-d H:i:s'));
-        Configuration::updateValue('AMZPRO_RELAY_URL', $url);
-        Configuration::updateValue('AMZPRO_RELAY_ERROR', '');
+        AmzproShop::set('AMZPRO_RELAY_REGISTERED', 1, $idShop);
+        AmzproShop::set('AMZPRO_RELAY_SINCE', date('Y-m-d H:i:s'), $idShop);
+        AmzproShop::set('AMZPRO_RELAY_CRON_URL', $url, $idShop);
+        AmzproShop::set('AMZPRO_RELAY_ERROR', '', $idShop);
 
         return $reply;
     }
@@ -135,9 +176,9 @@ class AmazonRelaySchedule
      * that did, so the reason stays on the screen next to the button rather
      * than only in a notice the merchant may not be looking at.
      */
-    private static function refuse($why)
+    private static function refuse($why, $idShop)
     {
-        Configuration::updateValue('AMZPRO_RELAY_ERROR', $why);
+        AmzproShop::set('AMZPRO_RELAY_ERROR', $why, $idShop);
 
         return array('success' => false, 'error' => $why);
     }
@@ -145,21 +186,39 @@ class AmazonRelaySchedule
     /** Ask the relay to stop, and forget the registration locally either way. */
     public static function unregister()
     {
+        $idShop = self::shopId();
+
+        // The address that was registered, which is what the relay knows the
+        // shop by. Rebuilt only when none was stored.
+        $url = (string) AmzproShop::get('AMZPRO_RELAY_CRON_URL', $idShop);
+        if ($url === '') {
+            $url = self::cronUrl($idShop);
+        }
+
         $reply = self::call(array(
             'action' => 'unregister',
-            'cron_url' => self::cronUrl(),
-            'token' => Configuration::get('AMZPRO_CRON_TOKEN'),
+            'cron_url' => $url,
+            'token' => AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop),
         ));
 
         // Local state is cleared even if the relay could not be reached. A
         // merchant who has switched away should not be left looking at a screen
         // that still says they are registered; the relay drops shops that stop
         // answering anyway.
-        Configuration::updateValue('AMZPRO_RELAY_REGISTERED', 0);
-        Configuration::updateValue('AMZPRO_RELAY_SINCE', '');
-        Configuration::updateValue('AMZPRO_RELAY_URL', '');
+        AmzproShop::set('AMZPRO_RELAY_REGISTERED', 0, $idShop);
+        AmzproShop::set('AMZPRO_RELAY_SINCE', '', $idShop);
+        AmzproShop::set('AMZPRO_RELAY_CRON_URL', '', $idShop);
 
         return $reply;
+    }
+
+    /**
+     * The shop a registration belongs to. Never 0: relay changes are refused
+     * in "All shops" before they get here.
+     */
+    protected static function shopId($idShop = null)
+    {
+        return ($idShop === null) ? (int) AmzproShop::actingId() : (int) $idShop;
     }
 
     /** One POST to the relay, returning its decoded reply. */

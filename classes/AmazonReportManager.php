@@ -24,12 +24,17 @@
  *
  * Uses SP-API Reports API 2021-06-30.
  *
+ * Reports belong to the shop that requested them, with that shop's seller
+ * account; each shop polls and reads only its own.
+ *
  * PHP 5.6+ compatible.
  */
 
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+
+require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonReportManager
 {
@@ -113,7 +118,7 @@ class AmazonReportManager
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
              (`report_id`, `report_type`, `status`, `marketplace_id`,
-              `data_start_time`, `data_end_time`, `date_add`, `date_upd`)
+              `data_start_time`, `data_end_time`, `date_add`, `date_upd`, `id_shop`)
              VALUES (
                 \'' . pSQL($reportId) . '\',
                 \'' . pSQL($reportType) . '\',
@@ -122,7 +127,8 @@ class AmazonReportManager
                 ' . ($startDate ? '\'' . pSQL($startDate) . '\'' : 'NULL') . ',
                 ' . ($endDate ? '\'' . pSQL($endDate) . '\'' : 'NULL') . ',
                 \'' . pSQL($now) . '\',
-                \'' . pSQL($now) . '\'
+                \'' . pSQL($now) . '\',
+                ' . (int) AmzproShop::actingId() . '
              )'
         );
 
@@ -165,7 +171,8 @@ class AmazonReportManager
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_report` SET
                 `status` = \'' . pSQL($status) . '\',
                 `date_upd` = \'' . pSQL($now) . '\'
-             WHERE `report_id` = \'' . pSQL($reportId) . '\''
+             WHERE `report_id` = \'' . pSQL($reportId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
 
         if ($status === 'DONE') {
@@ -176,7 +183,8 @@ class AmazonReportManager
                 Db::getInstance()->execute(
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_report` SET
                         `report_document_id` = \'' . pSQL($documentId) . '\'
-                     WHERE `report_id` = \'' . pSQL($reportId) . '\''
+                     WHERE `report_id` = \'' . pSQL($reportId) . '\'
+                       AND ' . AmzproShop::sqlWhere()
                 );
 
                 // Download the report
@@ -191,7 +199,8 @@ class AmazonReportManager
                             `file_path` = \'' . pSQL($filePath) . '\',
                             `row_count` = ' . (int) $rowCount . ',
                             `date_upd` = \'' . pSQL($now) . '\'
-                         WHERE `report_id` = \'' . pSQL($reportId) . '\''
+                         WHERE `report_id` = \'' . pSQL($reportId) . '\'
+                           AND ' . AmzproShop::sqlWhere()
                     );
 
                     return array(
@@ -210,7 +219,8 @@ class AmazonReportManager
             Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_report` SET
                     `error_message` = \'' . pSQL($errorMsg) . '\'
-                 WHERE `report_id` = \'' . pSQL($reportId) . '\''
+                 WHERE `report_id` = \'' . pSQL($reportId) . '\'
+                   AND ' . AmzproShop::sqlWhere()
             );
 
             return array('success' => false, 'status' => $status, 'error' => $errorMsg);
@@ -356,7 +366,8 @@ class AmazonReportManager
         $pending = Db::getInstance()->executeS(
             'SELECT `report_id`, `report_type`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
-             WHERE `status` IN (\'IN_QUEUE\', \'IN_PROGRESS\')
+             WHERE ' . AmzproShop::sqlWhere() . '
+               AND `status` IN (\'IN_QUEUE\', \'IN_PROGRESS\')
              ORDER BY `date_add` ASC
              LIMIT 20'
         );
@@ -400,7 +411,8 @@ class AmazonReportManager
     {
         $filePath = Db::getInstance()->getValue(
             'SELECT `file_path` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
-             WHERE `report_id` = \'' . pSQL($reportId) . '\''
+             WHERE `report_id` = \'' . pSQL($reportId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
 
         if (!$filePath || !file_exists($filePath)) {
@@ -444,7 +456,8 @@ class AmazonReportManager
     {
         $filePath = Db::getInstance()->getValue(
             'SELECT `file_path` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
-             WHERE `report_id` = \'' . pSQL($reportId) . '\''
+             WHERE `report_id` = \'' . pSQL($reportId) . '\'
+               AND ' . AmzproShop::sqlWhere()
         );
 
         if (!$filePath || !file_exists($filePath)) {
@@ -510,7 +523,8 @@ class AmazonReportManager
     }
 
     /**
-     * List tracked reports for admin display.
+     * List the current shop's tracked reports for admin display (every
+     * shop's in "All shops"; each row carries its id_shop).
      *
      * @param int $limit
      * @return array
@@ -518,6 +532,7 @@ class AmazonReportManager
     public function listReports($limit = 50)
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);

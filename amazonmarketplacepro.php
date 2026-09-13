@@ -17,6 +17,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/classes/AmzproShop.php';
+
 class AmazonMarketplacePro extends Module
 {
     /** Amazon marketplace directory (id => label). */
@@ -89,11 +91,34 @@ class AmazonMarketplacePro extends Module
     /** @var string feedback from the schedule screen, shown on the next render */
     protected $scheduleNotice = '';
 
+    /**
+     * AJAX actions that also work with "All shops" selected: they edit the
+     * rules shared by every shop, or only read. Every other action works on
+     * one shop's connection or data and is refused there.
+     */
+    private static $allShopsAjax = array(
+        'runSaveCategoryMap', 'runDeleteCategoryMap',
+        'runSavePricingRule', 'runDeletePricingRule',
+        'runSaveShippingTemplate', 'runDeleteShippingTemplate',
+        'runSaveProfile', 'runGetProfile', 'runDeleteProfile',
+        'runSaveEntitySettings', 'runSaveProductRules',
+        'runRefreshOrphans', 'runAuditCatalogue', 'runImportReferences',
+    );
+
+    /** Settings saved with the Amazon connection: one shop at a time. */
+    private static $connectionKeys = array(
+        'AMZPRO_CLIENT_ID', 'AMZPRO_CLIENT_SECRET', 'AMZPRO_REFRESH_TOKEN',
+        'AMZPRO_REFRESH_TOKEN_SANDBOX', 'AMZPRO_SELLER_ID', 'AMZPRO_AUTH_MODE',
+    );
+
+    /** @var string[] shop names by id, for the lists and notices of one request */
+    private $shopNames = array();
+
     public function __construct()
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.5.0';
+        $this->version = '1.6.0';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->bootstrap = true;
@@ -119,7 +144,15 @@ class AmazonMarketplacePro extends Module
 
     public function install()
     {
+        // Installed for every shop at once, with the defaults saved for all
+        // shops, as PrestaShop's own modules do.
+        if (Shop::isFeatureActive()) {
+            Shop::setContext(Shop::CONTEXT_ALL);
+        }
+
         include(dirname(__FILE__) . '/sql/install.php');
+        require_once dirname(__FILE__) . '/classes/AmzproShop.php';
+        AmzproShop::ensureSchema();
 
         // Generate cron token
         $cronToken = Tools::substr(md5(uniqid((string) rand(), true)), 0, 24);
@@ -251,14 +284,21 @@ class AmazonMarketplacePro extends Module
             && $this->registerHook('actionProductUpdate')
             && $this->registerHook('actionUpdateQuantity')
             && $this->registerHook('actionOrderStatusUpdate')
-            && $this->registerHook('displayAdminProductsExtra');
+            && $this->registerHook('displayAdminProductsExtra')
+            && $this->registerHook('actionShopDataDuplication');
 
         if ($installed) {
             // The schedule exists from the first minute, so Automation is
             // never an empty screen. Every task is seeded switched off.
             require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
-        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
-            AmazonScheduler::seedDefaults();
+            require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
+            foreach (AmzproShop::shopIds() as $idShop) {
+                AmazonScheduler::seedDefaults($idShop);
+                // The default shop uses the token saved above for all shops.
+                if ($idShop !== AmzproShop::defaultShopId()) {
+                    AmzproShop::set('AMZPRO_CRON_TOKEN', self::newCronToken(), $idShop);
+                }
+            }
 
             // The merchant's own cron is the default. It is the only mode
             // with nothing between the shop and its schedule, so it is what
@@ -310,7 +350,10 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_BUSINESS_GROUP', 'AMZPRO_FBA_CHANNEL_CODE',
             'AMZPRO_IMAP_ENABLED', 'AMZPRO_IMAP_HOST', 'AMZPRO_IMAP_PORT',
             'AMZPRO_IMAP_USER', 'AMZPRO_IMAP_PASSWORD', 'AMZPRO_IMAP_FOLDER', 'AMZPRO_IMAP_SSL',
+            'AMZPRO_CRON_MODE', 'AMZPRO_CRON_LOCK', 'AMZPRO_RELAY_REGISTERED', 'AMZPRO_RELAY_SINCE',
+            'AMZPRO_RELAY_ERROR', 'AMZPRO_RELAY_CRON_URL', 'AMZPRO_SHOP_SCHEMA',
         );
+        // deleteByName() removes the value for all shops and every shop's own.
         foreach ($keys as $k) {
             Configuration::deleteByName($k);
         }
@@ -318,89 +361,143 @@ class AmazonMarketplacePro extends Module
         return parent::uninstall();
     }
 
+    /** A fresh cron token: 24 hex characters. */
+    public static function newCronToken()
+    {
+        return Tools::substr(md5(uniqid((string) rand(), true)), 0, 24);
+    }
+
+    /**
+     * A shop was added in Shop Parameters. Give it its schedule, switched off,
+     * and its own cron token, as install does for the shops that existed then.
+     */
+    public function hookActionShopDataDuplication($params)
+    {
+        $idShop = isset($params['new_id_shop']) ? (int) $params['new_id_shop'] : 0;
+        if ($idShop <= 0) {
+            return;
+        }
+        require_once dirname(__FILE__) . '/classes/AmzproShop.php';
+        require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
+        AmazonScheduler::seedDefaults($idShop);
+        if ((string) AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop) === '') {
+            AmzproShop::set('AMZPRO_CRON_TOKEN', self::newCronToken(), $idShop);
+        }
+    }
+
     /* ─────────────────── Configuration page (getContent) ─────────────────── */
 
     public function getContent()
     {
+        AmzproShop::ensureSchema();
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
+        // Messages from the shop checks below, shown at the top of the page.
+        $shopErrors = array();
+        // A form sent from a page that was opened for another shop is not
+        // applied: it would save or run for the shop selected since.
+        $formShopChanged = $this->formShopChanged();
+
         // ----------- Schedule -----------
-        if (Tools::isSubmit('mkproScheduleSave')
+        $scheduleSubmit = Tools::isSubmit('mkproScheduleSave')
             || Tools::isSubmit('mkproScheduleToggle')
             || Tools::isSubmit('mkproScheduleDelete')
             || Tools::isSubmit('mkproScheduleRunNow')
             || Tools::isSubmit('mkproScheduleMode')
             || Tools::isSubmit('mkproRelayRegister')
-            || Tools::isSubmit('mkproRelayUnregister')
-        ) {
+            || Tools::isSubmit('mkproRelayUnregister');
+        $scheduleRefusal = null;
+        if ($scheduleSubmit) {
             require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
-        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
-        }
-
-        if (Tools::isSubmit('mkproScheduleSave')) {
-            $saved = AmazonScheduler::save(array(
-                'id_task' => (int) Tools::getValue('id_task'),
-                'task_key' => Tools::getValue('task_key'),
-                'interval_minutes' => (int) Tools::getValue('interval_minutes'),
-                'active' => (int) Tools::getValue('active'),
-            ));
-            $this->scheduleNotice = $saved
-                ? $this->l('Task saved.')
-                : $this->l('That task could not be saved: unknown task type.');
-        }
-
-        if (Tools::isSubmit('mkproScheduleToggle')) {
-            $state = AmazonScheduler::toggle((int) Tools::getValue('id_task'));
-            $this->scheduleNotice = ($state === 1)
-                ? $this->l('Task switched on.')
-                : $this->l('Task switched off.');
-        }
-
-        if (Tools::isSubmit('mkproScheduleDelete')) {
-            AmazonScheduler::delete((int) Tools::getValue('id_task'));
-            $this->scheduleNotice = $this->l('Task removed.');
-        }
-
-        if (Tools::isSubmit('mkproScheduleRunNow')) {
-            $result = AmazonScheduler::runNow((int) Tools::getValue('id_task'));
-            $this->scheduleNotice = !empty($result['success'])
-                ? $this->l('Task ran.')
-                : $this->l('Task failed: ') . (isset($result['error']) ? $result['error'] : '');
-        }
-
-        if (Tools::isSubmit('mkproScheduleMode')) {
-            $this->scheduleNotice = $this->setScheduleMode(Tools::getValue('mode'));
-        }
-
-        if (Tools::isSubmit('mkproRelayRegister')) {
-            $r = AmazonRelaySchedule::register();
-            $this->scheduleNotice = !empty($r['success'])
-                ? $this->l('This shop is registered with the IntelliPresta scheduler.')
-                : $this->l('Could not register: ') . (!empty($r['error']) ? $r['error'] : $this->l('Unknown error'));
-            if (!empty($r['success'])) {
-                Configuration::updateValue('AMZPRO_CRON_MODE', 'relay');
+            require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
+            // The schedule, its cron address and the relay belong to one shop.
+            $scheduleRefusal = $this->oneShopRefusal($formShopChanged);
+            if ($scheduleRefusal !== null) {
+                $shopErrors[] = $scheduleRefusal;
             }
         }
 
-        if (Tools::isSubmit('mkproRelayUnregister')) {
-            AmazonRelaySchedule::unregister();
-            Configuration::updateValue('AMZPRO_CRON_MODE', 'cron');
-            $this->scheduleNotice = $this->l('Removed from the IntelliPresta scheduler. Your own cron now drives the schedule.');
-        }
+        if ($scheduleSubmit && $scheduleRefusal === null) {
+            if (Tools::isSubmit('mkproScheduleSave')) {
+                $saved = AmazonScheduler::save(array(
+                    'id_task' => (int) Tools::getValue('id_task'),
+                    'task_key' => Tools::getValue('task_key'),
+                    'interval_minutes' => (int) Tools::getValue('interval_minutes'),
+                    'active' => (int) Tools::getValue('active'),
+                ));
+                $this->scheduleNotice = $saved
+                    ? $this->l('Task saved.')
+                    : $this->l('That task could not be saved: unknown task type.');
+            }
 
+            if (Tools::isSubmit('mkproScheduleToggle')) {
+                $state = AmazonScheduler::toggle((int) Tools::getValue('id_task'));
+                $this->scheduleNotice = ($state === 1)
+                    ? $this->l('Task switched on.')
+                    : $this->l('Task switched off.');
+            }
+
+            if (Tools::isSubmit('mkproScheduleDelete')) {
+                AmazonScheduler::delete((int) Tools::getValue('id_task'));
+                $this->scheduleNotice = $this->l('Task removed.');
+            }
+
+            if (Tools::isSubmit('mkproScheduleRunNow')) {
+                $result = AmazonScheduler::runNow((int) Tools::getValue('id_task'));
+                $this->scheduleNotice = !empty($result['success'])
+                    ? $this->l('Task ran.')
+                    : $this->l('Task failed: ') . (isset($result['error']) ? $result['error'] : '');
+            }
+
+            if (Tools::isSubmit('mkproScheduleMode')) {
+                $this->scheduleNotice = $this->setScheduleMode(Tools::getValue('mode'));
+            }
+
+            if (Tools::isSubmit('mkproRelayRegister')) {
+                $r = AmazonRelaySchedule::register();
+                $this->scheduleNotice = !empty($r['success'])
+                    ? $this->l('This shop is registered with the IntelliPresta scheduler.')
+                    : $this->l('Could not register: ') . (!empty($r['error']) ? $r['error'] : $this->l('Unknown error'));
+                if (!empty($r['success'])) {
+                    AmazonRelaySchedule::setMode('relay');
+                }
+            }
+
+            if (Tools::isSubmit('mkproRelayUnregister')) {
+                AmazonRelaySchedule::unregister();
+                AmazonRelaySchedule::setMode('cron');
+                $this->scheduleNotice = $this->l('Removed from the IntelliPresta scheduler. Your own cron now drives the schedule.');
+            }
+        }
 
         // ── "Connect with Amazon" OAuth flow ──
         if (Tools::isSubmit('mkproConnectAmazon')) {
-            $this->saveSettings(); // persist marketplace choice etc. before leaving
-            $this->redirectToAmazonConsent();
-            // (redirectToAmazonConsent exits; if it returns, config is incomplete)
+            $refusal = $this->oneShopRefusal($formShopChanged);
+            if ($refusal !== null) {
+                $shopErrors[] = $refusal;
+            } else {
+                // Persist the marketplace choice etc. before leaving.
+                $saveError = $this->saveSettings();
+                if ($saveError !== '') {
+                    $shopErrors[] = $saveError;
+                } else {
+                    $this->redirectToAmazonConsent();
+                    // (redirectToAmazonConsent exits; if it returns, config is incomplete)
+                }
+            }
         }
         if (Tools::isSubmit('mkproDisconnectAmazon')) {
-            // Only the active environment's token — the other stays connected.
-            // Global scope, matching where the oauth controller stores them.
-            Configuration::updateGlobalValue(AmazonSpApiClient::refreshTokenKey(), '');
-            Configuration::updateGlobalValue('AMZPRO_SELLING_PARTNER_ID', '');
-            Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', '');
+            $refusal = $this->oneShopRefusal($formShopChanged);
+            if ($refusal !== null) {
+                $shopErrors[] = $refusal;
+            } else {
+                // Only the active environment's token — the other stays
+                // connected. The selected shop's own connection, which is
+                // where the oauth controller stores it.
+                AmzproShop::set(AmazonSpApiClient::refreshTokenKey(), '');
+                AmzproShop::set('AMZPRO_SELLING_PARTNER_ID', '');
+                AmzproShop::set('AMZPRO_OAUTH_NONCE', '');
+            }
         }
 
         // ── File downloads (CSV / feed payload): plain output, not JSON ──
@@ -417,7 +514,7 @@ class AmazonMarketplacePro extends Module
             require_once dirname(__FILE__) . '/classes/AmazonFeedManager.php';
             $feedId = trim((string) Tools::getValue('feed_id'));
             $feeds = new AmazonFeedManager($this->buildAmazonClient(), $this->getMarketplaceId(),
-                Configuration::get('AMZPRO_SELLER_ID'));
+                AmzproShop::get('AMZPRO_SELLER_ID'));
             $payload = $feeds->getFeedPayload($feedId);
             header('Content-Type: application/json; charset=utf-8');
             header('Content-Disposition: attachment; filename="feed-' . preg_replace('/[^A-Za-z0-9_.-]/', '', $feedId) . '.json"');
@@ -485,7 +582,10 @@ class AmazonMarketplacePro extends Module
         foreach ($ajaxActions as $submit => $method) {
             if (Tools::isSubmit($submit)) {
                 header('Content-Type: application/json');
-                if ($submit === 'ajaxSyncProductsPs') {
+                $refusal = $this->ajaxShopRefusal($method);
+                if ($refusal !== null) {
+                    echo json_encode(array('success' => false, 'error' => $refusal));
+                } elseif ($submit === 'ajaxSyncProductsPs') {
                     echo json_encode($this->runProductSync('ps'));
                 } elseif ($submit === 'ajaxSyncProductsAmazon') {
                     echo json_encode($this->runProductSync('amazon'));
@@ -499,36 +599,59 @@ class AmazonMarketplacePro extends Module
         // ── Save settings ──
         $confirmMsg = '';
         if (Tools::isSubmit('submitMkproSettings')) {
-            $this->saveSettings();
-            $confirmMsg = $this->displayConfirmation($this->l('Settings saved.'));
+            if ($formShopChanged) {
+                $shopErrors[] = $this->shopChangedMessage();
+            } else {
+                $saveError = $this->saveSettings();
+                $confirmMsg = $this->displayConfirmation($this->l('Settings saved.'));
+                if ($saveError !== '') {
+                    $confirmMsg .= $this->displayError($saveError);
+                }
 
-            // Runs after the save so it uses the window just entered.
-            if (Tools::getValue('submitMkproSettings') === 'purge_pii') {
-                require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
-                $purger = new AmazonPiiPurger();
-                $done = $purger->purge();
-                if ($done === false) {
-                    $confirmMsg .= $this->displayError($purger->getLastError());
-                } else {
-                    $confirmMsg .= $this->displayConfirmation(sprintf(
-                        $this->l('Buyer data cleared from %1$d order(s). %2$d still waiting.'),
-                        (int) $done['orders'],
-                        (int) $done['remaining']
-                    ));
+                // Runs after the save so it uses the window just entered.
+                if (Tools::getValue('submitMkproSettings') === 'purge_pii') {
+                    require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
+                    $purger = new AmazonPiiPurger();
+                    // The button clears what is due for the page's shop (or
+                    // every shop with "All shops"), whether or not the
+                    // automatic purge is switched on.
+                    $done = $purger->purge(AmazonPiiPurger::DEFAULT_BATCH, AmzproShop::id());
+                    if ($done === false) {
+                        $confirmMsg .= $this->displayError($purger->getLastError());
+                    } else {
+                        $confirmMsg .= $this->displayConfirmation(sprintf(
+                            $this->l('Buyer data cleared from %1$d order(s). %2$d still waiting.'),
+                            (int) $done['orders'],
+                            (int) $done['remaining']
+                        ));
+                    }
                 }
             }
         }
         if (Tools::getValue('mkpro_connected')) {
             $confirmMsg .= $this->displayConfirmation($this->l('Your shop is now connected to Amazon. You can start syncing.'));
         }
+        foreach (array_unique($shopErrors) as $shopError) {
+            $confirmMsg .= $this->displayError($shopError);
+        }
+
+        // ── Which shop the page is for ──
+        $idShop = AmzproShop::id();
+        $allShops = AmzproShop::isAllShops();
+        $groupName = '';
+        if ($allShops && Shop::getContext() == Shop::CONTEXT_GROUP) {
+            $group = new ShopGroup((int) Shop::getContextShopGroupID());
+            $groupName = Validate::isLoadedObject($group) ? (string) $group->name : '';
+        }
+        list($overrideNotes, $overrideShops) = $this->overrideNotes();
 
         // ── Build AJAX URLs ──
         $baseUrl = $this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name
             . '&token=' . Tools::getAdminTokenLite('AdminModules');
 
-        // ── Cron URLs ──
-        $cronBase = $this->getCronBaseUrl();
+        // ── Cron URLs ── (each shop has its own address and token)
+        $cronBase = $allShops ? '' : $this->getCronBaseUrl($idShop);
 
         // ── Get carriers and order states for settings form ──
         $carriers = Carrier::getCarriers($this->context->language->id, true);
@@ -569,11 +692,11 @@ class AmazonMarketplacePro extends Module
         $entityManufacturers = $this->getEntityRows('manufacturer');
         $entitySuppliers = $this->getEntityRows('supplier');
         $productRules = $this->getProductRules(500);
-        $queueRows = AmazonListingSettings::getQueue(200);
-        $orphanRows = AmazonListingSettings::getOrphanedProducts(200);
+        $queueRows = $this->withShopNames(AmazonListingSettings::getQueue(200));
+        $orphanRows = $this->withShopNames(AmazonListingSettings::getOrphanedProducts(200));
         $pendingOrders = $this->getPendingStockOrders();
         require_once dirname(__FILE__) . '/classes/AmazonRemoteCart.php';
-        $reservations = AmazonRemoteCart::listActive(200);
+        $reservations = $this->withShopNames(AmazonRemoteCart::listActive(200));
         $shippingTemplates = AmazonListingSettings::getShippingTemplates();
         $customerGroups = Group::getGroups($this->context->language->id);
 
@@ -581,10 +704,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonPiiPurger.php';
         $piiPurger = new AmazonPiiPurger();
         $piiDueCount = $piiPurger->dueCount();
-        $piiPurgedCount = (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `pii_purged_at` IS NOT NULL'
-        );
+        $piiPurgedCount = (int) $piiPurger->purgedCount();
 
         // ── Listing profiles ──
         require_once dirname(__FILE__) . '/classes/AmazonProfile.php';
@@ -602,41 +722,51 @@ class AmazonMarketplacePro extends Module
             'module_dir'  => $this->_path,
             'confirm_msg' => $confirmMsg,
 
-            // Current settings
-            'mkpro_client_id'       => Configuration::get('AMZPRO_CLIENT_ID'),
-            'mkpro_client_secret'   => Configuration::get('AMZPRO_CLIENT_SECRET'),
-            'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken(),
-            'mkpro_seller_id'       => Configuration::get('AMZPRO_SELLER_ID'),
-            'mkpro_marketplace_id'  => Configuration::get('AMZPRO_MARKETPLACE_ID'),
-            'mkpro_environment'     => AmazonSpApiClient::environment(),
-            'mkpro_use_mock'        => Configuration::get('AMZPRO_USE_MOCK'),
-            'mkpro_default_carrier' => Configuration::get('AMZPRO_DEFAULT_CARRIER'),
-            'mkpro_default_order_state' => Configuration::get('AMZPRO_DEFAULT_ORDER_STATE'),
-            'mkpro_sync_stock_hook' => Configuration::get('AMZPRO_SYNC_STOCK_HOOK'),
-            'mkpro_sync_order_hook' => Configuration::get('AMZPRO_SYNC_ORDER_STATUS_HOOK'),
-            'mkpro_sync_cancel_hook' => Configuration::get('AMZPRO_SYNC_CANCEL_HOOK'),
-            'mkpro_cron_token'      => Configuration::get('AMZPRO_CRON_TOKEN'),
-            'mkpro_auto_review_request' => Configuration::get('AMZPRO_AUTO_REVIEW_REQUEST'),
-            'mkpro_stock_buffer'    => (int) Configuration::get('AMZPRO_STOCK_BUFFER'),
-            'mkpro_delete_when_oos' => Configuration::get('AMZPRO_DELETE_WHEN_OOS'),
-            'mkpro_condition_type'  => Configuration::get('AMZPRO_CONDITION_TYPE'),
-            'mkpro_tax_mode'        => Configuration::get('AMZPRO_TAX_MODE'),
-            'mkpro_listing_lang'    => Configuration::get('AMZPRO_LISTING_LANG'),
-            'ps_languages'          => Language::getLanguages(true),
-            'mkpro_shipping_template' => Configuration::get('AMZPRO_SHIPPING_TEMPLATE'),
-            'mkpro_b2b_discount'    => (float) Configuration::get('AMZPRO_B2B_DISCOUNT'),
-            'mkpro_vcs_enabled'     => Configuration::get('AMZPRO_VCS_ENABLED'),
-            'mkpro_dev_mode'        => (bool) Configuration::get('AMZPRO_DEV_MODE'),
+            // The shop the page is for. 0 = "All shops" or a shop group,
+            // where settings are the defaults and one-shop actions are off.
+            'mkpro_multistore'      => AmzproShop::isMultistore(),
+            'mkpro_all_shops'       => $allShops,
+            'mkpro_shop_id'         => $idShop,
+            'mkpro_shop_name'       => $idShop ? $this->shopName($idShop) : '',
+            'mkpro_group_name'      => $groupName,
+            'mkpro_override_notes_json' => json_encode((object) $overrideNotes),
+            'mkpro_override_shops'  => $overrideShops,
 
-            'mkpro_carrier_map'     => (array) json_decode((string) Configuration::get('AMZPRO_CARRIER_MAP'), true),
+            // Current settings
+            'mkpro_client_id'       => AmzproShop::get('AMZPRO_CLIENT_ID'),
+            'mkpro_client_secret'   => AmzproShop::get('AMZPRO_CLIENT_SECRET'),
+            'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken(),
+            'mkpro_seller_id'       => AmzproShop::get('AMZPRO_SELLER_ID'),
+            'mkpro_marketplace_id'  => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
+            'mkpro_environment'     => AmazonSpApiClient::environment(),
+            'mkpro_use_mock'        => AmzproShop::get('AMZPRO_USE_MOCK'),
+            'mkpro_default_carrier' => AmzproShop::get('AMZPRO_DEFAULT_CARRIER'),
+            'mkpro_default_order_state' => AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE'),
+            'mkpro_sync_stock_hook' => AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK'),
+            'mkpro_sync_order_hook' => AmzproShop::get('AMZPRO_SYNC_ORDER_STATUS_HOOK'),
+            'mkpro_sync_cancel_hook' => AmzproShop::get('AMZPRO_SYNC_CANCEL_HOOK'),
+            'mkpro_cron_token'      => $allShops ? '' : AmzproShop::get('AMZPRO_CRON_TOKEN'),
+            'mkpro_auto_review_request' => AmzproShop::get('AMZPRO_AUTO_REVIEW_REQUEST'),
+            'mkpro_stock_buffer'    => (int) AmzproShop::get('AMZPRO_STOCK_BUFFER'),
+            'mkpro_delete_when_oos' => AmzproShop::get('AMZPRO_DELETE_WHEN_OOS'),
+            'mkpro_condition_type'  => AmzproShop::get('AMZPRO_CONDITION_TYPE'),
+            'mkpro_tax_mode'        => AmzproShop::get('AMZPRO_TAX_MODE'),
+            'mkpro_listing_lang'    => AmzproShop::get('AMZPRO_LISTING_LANG'),
+            'ps_languages'          => Language::getLanguages(true),
+            'mkpro_shipping_template' => AmzproShop::get('AMZPRO_SHIPPING_TEMPLATE'),
+            'mkpro_b2b_discount'    => (float) AmzproShop::get('AMZPRO_B2B_DISCOUNT'),
+            'mkpro_vcs_enabled'     => AmzproShop::get('AMZPRO_VCS_ENABLED'),
+            'mkpro_dev_mode'        => (bool) AmzproShop::get('AMZPRO_DEV_MODE'),
+
+            'mkpro_carrier_map'     => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true),
             'amazon_carrier_codes'  => self::$amazonCarrierCodes,
 
             // Connect with Amazon
             'mkpro_auth_mode'       => AmazonSpApiClient::authMode(),
             // What the select shows: the stored choice, not the sandbox override.
-            'mkpro_auth_mode_stored' => Configuration::get('AMZPRO_AUTH_MODE'),
+            'mkpro_auth_mode_stored' => AmzproShop::get('AMZPRO_AUTH_MODE'),
             'mkpro_lwa_app_id'      => AmazonSpApiClient::lwaAppId(),
-            'mkpro_relay_url'       => Configuration::get('AMZPRO_RELAY_URL'),
+            'mkpro_relay_url'       => AmzproShop::get('AMZPRO_RELAY_URL'),
             'mkpro_oauth_beta'      => AmazonSpApiClient::oauthBeta(),
             'mkpro_connected'       => (AmazonSpApiClient::storedRefreshToken() != ''),
             // Manual mode is "connected" as soon as a token is stored for the
@@ -648,7 +778,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_other_env_connected' => (AmazonSpApiClient::storedRefreshToken(
                 !AmazonSpApiClient::isSandboxEnv()
             ) != ''),
-            'mkpro_selling_partner_id' => Configuration::get('AMZPRO_SELLING_PARTNER_ID'),
+            'mkpro_selling_partner_id' => AmzproShop::get('AMZPRO_SELLING_PARTNER_ID'),
             'mkpro_oauth_error'     => Tools::getValue('mkpro_oauth_error', ''),
 
             // Select options
@@ -684,80 +814,80 @@ class AmazonMarketplacePro extends Module
             'promotion_stats' => $promotionStats,
 
             // SKU & export filters
-            'mkpro_sku_prefix'   => Configuration::get('AMZPRO_SKU_PREFIX'),
-            'mkpro_sku_source'   => Configuration::get('AMZPRO_SKU_SOURCE'),
-            'mkpro_price_min'    => (float) Configuration::get('AMZPRO_PRICE_MIN'),
-            'mkpro_price_max'    => (float) Configuration::get('AMZPRO_PRICE_MAX'),
-            'mkpro_qty_min'      => (int) Configuration::get('AMZPRO_QTY_MIN'),
-            'mkpro_use_specific_prices' => Configuration::get('AMZPRO_USE_SPECIFIC_PRICES'),
-            'mkpro_specific_price_group' => (int) Configuration::get('AMZPRO_SPECIFIC_PRICE_GROUP'),
-            'mkpro_report_email' => Configuration::get('AMZPRO_REPORT_EMAIL'),
+            'mkpro_sku_prefix'   => AmzproShop::get('AMZPRO_SKU_PREFIX'),
+            'mkpro_sku_source'   => AmzproShop::get('AMZPRO_SKU_SOURCE'),
+            'mkpro_price_min'    => (float) AmzproShop::get('AMZPRO_PRICE_MIN'),
+            'mkpro_price_max'    => (float) AmzproShop::get('AMZPRO_PRICE_MAX'),
+            'mkpro_qty_min'      => (int) AmzproShop::get('AMZPRO_QTY_MIN'),
+            'mkpro_use_specific_prices' => AmzproShop::get('AMZPRO_USE_SPECIFIC_PRICES'),
+            'mkpro_specific_price_group' => (int) AmzproShop::get('AMZPRO_SPECIFIC_PRICE_GROUP'),
+            'mkpro_report_email' => AmzproShop::get('AMZPRO_REPORT_EMAIL'),
 
             // Markup / delay / GPSR
-            'mkpro_default_markup' => Configuration::get('AMZPRO_DEFAULT_MARKUP'),
-            'mkpro_default_delay'  => (int) Configuration::get('AMZPRO_DEFAULT_DELAY'),
-            'mkpro_markup_sources' => explode(',', (string) Configuration::get('AMZPRO_MARKUP_SOURCES')),
-            'mkpro_delay_sources'  => explode(',', (string) Configuration::get('AMZPRO_DELAY_SOURCES')),
-            'mkpro_gpsr_priority'  => Configuration::get('AMZPRO_GPSR_PRIORITY'),
+            'mkpro_default_markup' => AmzproShop::get('AMZPRO_DEFAULT_MARKUP'),
+            'mkpro_default_delay'  => (int) AmzproShop::get('AMZPRO_DEFAULT_DELAY'),
+            'mkpro_markup_sources' => explode(',', (string) AmzproShop::get('AMZPRO_MARKUP_SOURCES')),
+            'mkpro_delay_sources'  => explode(',', (string) AmzproShop::get('AMZPRO_DELAY_SOURCES')),
+            'mkpro_gpsr_priority'  => AmzproShop::get('AMZPRO_GPSR_PRIORITY'),
 
             // Sync options
-            'mkpro_sync_mode'      => Configuration::get('AMZPRO_SYNC_MODE'),
-            'mkpro_force_zero_qty' => Configuration::get('AMZPRO_FORCE_ZERO_QTY'),
-            'mkpro_only_with_asin' => Configuration::get('AMZPRO_ONLY_WITH_ASIN'),
-            'mkpro_export_limit'   => (int) Configuration::get('AMZPRO_EXPORT_LIMIT'),
-            'mkpro_ean_as'         => Configuration::get('AMZPRO_EAN_AS'),
-            'mkpro_delta_hours'    => (int) Configuration::get('AMZPRO_DELTA_HOURS'),
-            'mkpro_cond_note_used'   => Configuration::get('AMZPRO_COND_NOTE_USED'),
-            'mkpro_cond_note_refurb' => Configuration::get('AMZPRO_COND_NOTE_REFURB'),
-            'mkpro_queue_ttl_days' => (int) Configuration::get('AMZPRO_QUEUE_TTL_DAYS'),
-            'mkpro_title_format'   => Configuration::get('AMZPRO_TITLE_FORMAT'),
+            'mkpro_sync_mode'      => AmzproShop::get('AMZPRO_SYNC_MODE'),
+            'mkpro_force_zero_qty' => AmzproShop::get('AMZPRO_FORCE_ZERO_QTY'),
+            'mkpro_only_with_asin' => AmzproShop::get('AMZPRO_ONLY_WITH_ASIN'),
+            'mkpro_export_limit'   => (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT'),
+            'mkpro_ean_as'         => AmzproShop::get('AMZPRO_EAN_AS'),
+            'mkpro_delta_hours'    => (int) AmzproShop::get('AMZPRO_DELTA_HOURS'),
+            'mkpro_cond_note_used'   => AmzproShop::get('AMZPRO_COND_NOTE_USED'),
+            'mkpro_cond_note_refurb' => AmzproShop::get('AMZPRO_COND_NOTE_REFURB'),
+            'mkpro_queue_ttl_days' => (int) AmzproShop::get('AMZPRO_QUEUE_TTL_DAYS'),
+            'mkpro_title_format'   => AmzproShop::get('AMZPRO_TITLE_FORMAT'),
 
             // Shipping template ranges
-            'mkpro_ship_tpl_enabled' => Configuration::get('AMZPRO_SHIP_TPL_ENABLED'),
-            'mkpro_ship_tpl_basis'   => Configuration::get('AMZPRO_SHIP_TPL_BASIS'),
+            'mkpro_ship_tpl_enabled' => AmzproShop::get('AMZPRO_SHIP_TPL_ENABLED'),
+            'mkpro_ship_tpl_basis'   => AmzproShop::get('AMZPRO_SHIP_TPL_BASIS'),
             'shipping_templates'     => $shippingTemplates,
 
             // Extended order import
-            'mkpro_order_lookback_value' => (int) Configuration::get('AMZPRO_ORDER_LOOKBACK_VALUE'),
-            'mkpro_order_lookback_unit'  => Configuration::get('AMZPRO_ORDER_LOOKBACK_UNIT'),
-            'mkpro_import_fba_orders'    => Configuration::get('AMZPRO_IMPORT_FBA_ORDERS'),
-            'mkpro_fba_order_state'      => (int) Configuration::get('AMZPRO_FBA_ORDER_STATE'),
-            'mkpro_order_state_shipped'  => (int) Configuration::get('AMZPRO_ORDER_STATE_SHIPPED'),
-            'mkpro_prioritize_asin'      => Configuration::get('AMZPRO_PRIORITIZE_ASIN'),
-            'mkpro_fake_email'           => Configuration::get('AMZPRO_FAKE_EMAIL'),
-            'mkpro_customer_group'       => (int) Configuration::get('AMZPRO_CUSTOMER_GROUP'),
-            'mkpro_skip_no_stock'        => Configuration::get('AMZPRO_SKIP_NO_STOCK'),
+            'mkpro_order_lookback_value' => (int) AmzproShop::get('AMZPRO_ORDER_LOOKBACK_VALUE'),
+            'mkpro_order_lookback_unit'  => AmzproShop::get('AMZPRO_ORDER_LOOKBACK_UNIT'),
+            'mkpro_import_fba_orders'    => AmzproShop::get('AMZPRO_IMPORT_FBA_ORDERS'),
+            'mkpro_fba_order_state'      => (int) AmzproShop::get('AMZPRO_FBA_ORDER_STATE'),
+            'mkpro_order_state_shipped'  => (int) AmzproShop::get('AMZPRO_ORDER_STATE_SHIPPED'),
+            'mkpro_prioritize_asin'      => AmzproShop::get('AMZPRO_PRIORITIZE_ASIN'),
+            'mkpro_fake_email'           => AmzproShop::get('AMZPRO_FAKE_EMAIL'),
+            'mkpro_customer_group'       => (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP'),
+            'mkpro_skip_no_stock'        => AmzproShop::get('AMZPRO_SKIP_NO_STOCK'),
             'mkpro_pii_purge'            => AmazonPiiPurger::isEnabled(),
             'mkpro_pii_retention_days'   => AmazonPiiPurger::retentionDays(),
-            'mkpro_pii_purge_ps'         => Configuration::get('AMZPRO_PII_PURGE_PS'),
+            'mkpro_pii_purge_ps'         => AmzproShop::get('AMZPRO_PII_PURGE_PS'),
             'pii_due_count'              => $piiDueCount,
             'pii_purged_count'           => $piiPurgedCount,
-            'mkpro_order_match'          => Configuration::get('AMZPRO_ORDER_MATCH'),
-            'mkpro_rounding'             => Configuration::get('AMZPRO_ROUNDING'),
-            'mkpro_send_images'          => Configuration::get('AMZPRO_SEND_IMAGES'),
-            'mkpro_extended_data'        => Configuration::get('AMZPRO_EXTENDED_DATA'),
-            'mkpro_full_catalog'         => Configuration::get('AMZPRO_FULL_CATALOG'),
-            'mkpro_business_group'       => (int) Configuration::get('AMZPRO_BUSINESS_GROUP'),
-            'mkpro_imap_enabled'         => Configuration::get('AMZPRO_IMAP_ENABLED'),
-            'mkpro_imap_host'            => Configuration::get('AMZPRO_IMAP_HOST'),
-            'mkpro_imap_port'            => (int) Configuration::get('AMZPRO_IMAP_PORT'),
-            'mkpro_imap_user'            => Configuration::get('AMZPRO_IMAP_USER'),
-            'mkpro_imap_password_set'    => (Configuration::get('AMZPRO_IMAP_PASSWORD') != ''),
-            'mkpro_imap_folder'          => Configuration::get('AMZPRO_IMAP_FOLDER'),
-            'mkpro_imap_ssl'             => Configuration::get('AMZPRO_IMAP_SSL'),
+            'mkpro_order_match'          => AmzproShop::get('AMZPRO_ORDER_MATCH'),
+            'mkpro_rounding'             => AmzproShop::get('AMZPRO_ROUNDING'),
+            'mkpro_send_images'          => AmzproShop::get('AMZPRO_SEND_IMAGES'),
+            'mkpro_extended_data'        => AmzproShop::get('AMZPRO_EXTENDED_DATA'),
+            'mkpro_full_catalog'         => AmzproShop::get('AMZPRO_FULL_CATALOG'),
+            'mkpro_business_group'       => (int) AmzproShop::get('AMZPRO_BUSINESS_GROUP'),
+            'mkpro_imap_enabled'         => AmzproShop::get('AMZPRO_IMAP_ENABLED'),
+            'mkpro_imap_host'            => AmzproShop::get('AMZPRO_IMAP_HOST'),
+            'mkpro_imap_port'            => (int) AmzproShop::get('AMZPRO_IMAP_PORT'),
+            'mkpro_imap_user'            => AmzproShop::get('AMZPRO_IMAP_USER'),
+            'mkpro_imap_password_set'    => (AmzproShop::get('AMZPRO_IMAP_PASSWORD') != ''),
+            'mkpro_imap_folder'          => AmzproShop::get('AMZPRO_IMAP_FOLDER'),
+            'mkpro_imap_ssl'             => AmzproShop::get('AMZPRO_IMAP_SSL'),
             'mkpro_imap_available'       => function_exists('imap_open'),
-            'mkpro_carrier_map_in'       => (array) json_decode((string) Configuration::get('AMZPRO_CARRIER_MAP_IN'), true),
+            'mkpro_carrier_map_in'       => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true),
             'amazon_ship_levels'         => array('Standard', 'Expedited', 'NextDay', 'SecondDay', 'Priority', 'SameDay', 'Scheduled'),
-            'mkpro_status_rules'         => (array) json_decode((string) Configuration::get('AMZPRO_STATUS_RULES'), true),
-            'mkpro_invoice_email'        => Configuration::get('AMZPRO_INVOICE_EMAIL'),
-            'mkpro_invoice_email_state'  => (int) Configuration::get('AMZPRO_INVOICE_EMAIL_STATE'),
-            'mkpro_invoice_attachment'   => Configuration::get('AMZPRO_INVOICE_ATTACHMENT'),
-            'mkpro_send_sale_price'      => Configuration::get('AMZPRO_SEND_SALE_PRICE'),
-            'mkpro_send_list_price'      => Configuration::get('AMZPRO_SEND_LIST_PRICE'),
-            'mkpro_preorder'             => Configuration::get('AMZPRO_PREORDER'),
+            'mkpro_status_rules'         => (array) json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES'), true),
+            'mkpro_invoice_email'        => AmzproShop::get('AMZPRO_INVOICE_EMAIL'),
+            'mkpro_invoice_email_state'  => (int) AmzproShop::get('AMZPRO_INVOICE_EMAIL_STATE'),
+            'mkpro_invoice_attachment'   => AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT'),
+            'mkpro_send_sale_price'      => AmzproShop::get('AMZPRO_SEND_SALE_PRICE'),
+            'mkpro_send_list_price'      => AmzproShop::get('AMZPRO_SEND_LIST_PRICE'),
+            'mkpro_preorder'             => AmzproShop::get('AMZPRO_PREORDER'),
             'mkpro_condition_map'        => array_merge(
                 array('new' => 'new_new', 'used' => 'used_good', 'refurbished' => 'refurbished_refurbished'),
-                (array) json_decode((string) Configuration::get('AMZPRO_CONDITION_MAP'), true)
+                (array) json_decode((string) AmzproShop::get('AMZPRO_CONDITION_MAP'), true)
             ),
             'amazon_conditions'          => array(
                 'new_new' => $this->l('New'),
@@ -784,8 +914,8 @@ class AmazonMarketplacePro extends Module
             'orphan_rows'          => $orphanRows,
             'pending_orders'       => $pendingOrders,
             'reservations'         => $reservations,
-            'mkpro_remote_cart'    => Configuration::get('AMZPRO_REMOTE_CART'),
-            'mkpro_remote_cart_ttl' => (int) Configuration::get('AMZPRO_REMOTE_CART_TTL'),
+            'mkpro_remote_cart'    => AmzproShop::get('AMZPRO_REMOTE_CART'),
+            'mkpro_remote_cart_ttl' => (int) AmzproShop::get('AMZPRO_REMOTE_CART_TTL'),
 
             // AJAX URLs
             'ajax_test_amazon_url'          => $baseUrl . '&ajaxTestAmazon=1',
@@ -868,7 +998,7 @@ class AmazonMarketplacePro extends Module
             // The schedule. One URL replaces the nineteen above; the old ones
             // stay assigned so an install that already uses them keeps working.
             'cron_run_due_url'   => $cronBase . '&action=run_due',
-            'schedule_tasks'     => $this->scheduleTasksForDisplay(),
+            'schedule_tasks'     => $allShops ? array() : $this->scheduleTasksForDisplay(),
             'schedule_catalogue' => $this->translatedScheduleCatalogue(),
             'schedule_mode'      => AmazonRelaySchedule::mode(),
             'schedule_relay'     => AmazonRelaySchedule::status(),
@@ -884,15 +1014,19 @@ class AmazonMarketplacePro extends Module
 
     /* ─────────────────── Settings persistence ─────────────────── */
 
-    private function saveSettings()
+    /**
+     * Setting => form field, for the single-value settings the forms save.
+     *
+     * @param string $tokenKey the refresh token slot the form shows
+     *
+     * @return array
+     */
+    protected function settingsFields($tokenKey)
     {
-        $fields = array(
+        return array(
             'AMZPRO_CLIENT_ID'       => 'mkpro_client_id',
             'AMZPRO_CLIENT_SECRET'    => 'mkpro_client_secret',
-            // Env-aware, matching what the form displayed. Resolved before the
-            // new environment is written below, so it targets the slot the
-            // merchant was actually looking at.
-            AmazonSpApiClient::refreshTokenKey() => 'mkpro_refresh_token',
+            $tokenKey                 => 'mkpro_refresh_token',
             'AMZPRO_SELLER_ID'        => 'mkpro_seller_id',
             'AMZPRO_MARKETPLACE_ID'   => 'mkpro_marketplace_id',
             'AMZPRO_ENVIRONMENT'      => 'mkpro_environment',
@@ -970,10 +1104,44 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_REMOTE_CART'             => 'mkpro_remote_cart',
             'AMZPRO_REMOTE_CART_TTL'         => 'mkpro_remote_cart_ttl',
         );
+    }
+
+    /** Settings saved as arrays or lists, with the form field each comes from. */
+    protected function settingsArrayFields()
+    {
+        return array(
+            'AMZPRO_CARRIER_MAP'     => 'mkpro_carrier_map',
+            'AMZPRO_CARRIER_MAP_IN'  => 'mkpro_carrier_map_in',
+            'AMZPRO_STATUS_RULES'    => 'mkpro_rule_state',
+            'AMZPRO_CONDITION_MAP'   => 'mkpro_cond_map_new',
+            'AMZPRO_MARKUP_SOURCES'  => 'mkpro_markup_sources',
+            'AMZPRO_DELAY_SOURCES'   => 'mkpro_delay_sources',
+        );
+    }
+
+    /**
+     * Save what the submitted settings form contains.
+     *
+     * With a shop selected the values are that shop's own; with "All shops"
+     * or a group they become the defaults, which every shop without a value
+     * of its own follows. The Amazon connection belongs to one shop, so it
+     * is not saved there.
+     *
+     * @return string a message for what was not saved, or ''
+     */
+    private function saveSettings()
+    {
+        // Env-aware, matching what the form displayed. Resolved before the
+        // new environment is written below, so it targets the slot the
+        // merchant was actually looking at.
+        $tokenKey = AmazonSpApiClient::refreshTokenKey();
+        $fields = $this->settingsFields($tokenKey);
+        $errors = array();
+        $needShop = AmzproShop::requireShop();
 
         // Developer-only fields are hidden from the customer form; without
         // this, their absent POST values would wipe the stored settings.
-        if (!Configuration::get('AMZPRO_DEV_MODE')) {
+        if (!AmzproShop::get('AMZPRO_DEV_MODE')) {
             unset(
                 $fields['AMZPRO_ENVIRONMENT'],
                 $fields['AMZPRO_USE_MOCK'],
@@ -982,9 +1150,21 @@ class AmazonMarketplacePro extends Module
             );
         }
 
+        // Each shop connects its own seller account, and one seller account
+        // on one marketplace belongs to one shop only.
+        $duplicate = $this->duplicateSellerShop($tokenKey);
+        if ($duplicate) {
+            unset($fields['AMZPRO_SELLER_ID'], $fields['AMZPRO_MARKETPLACE_ID'], $fields[$tokenKey]);
+            $errors[] = sprintf(
+                $this->l('The shop %s is already connected to this Amazon seller account on this marketplace. Each shop needs its own seller account or marketplace, so the seller ID and marketplace were not saved.'),
+                $this->shopName($duplicate)
+            );
+        }
+
         // Several forms on the page post the same submit name, so only write
         // back what the submitted form actually contained — otherwise saving
         // one panel blanks the settings that live in another.
+        $connectionSkipped = false;
         foreach ($fields as $configKey => $formName) {
             if (!Tools::getIsset($formName)) {
                 continue;
@@ -995,25 +1175,26 @@ class AmazonMarketplacePro extends Module
             // autofill loves to blank or overwrite password fields), so an
             // empty submit means "keep the stored value" — clearing a token
             // is what the Disconnect button is for.
-            if (($configKey === AmazonSpApiClient::refreshTokenKey()
+            if (($configKey === $tokenKey
                     || $configKey === 'AMZPRO_CLIENT_SECRET'
                     || $configKey === 'AMZPRO_IMAP_PASSWORD')
                 && trim($value) === '') {
                 continue;
             }
 
-            // Connection state is global — same rows the oauth controller
-            // and the connection status checks use, whatever the shop context.
-            if ($configKey === AmazonSpApiClient::refreshTokenKey()
-                || $configKey === 'AMZPRO_SELLER_ID'
-                // The environment decides which token slot and which app
-                // client are in play, so it has to be readable from every
-                // context for the same reason the tokens are.
-                || $configKey === 'AMZPRO_ENVIRONMENT') {
-                Configuration::updateGlobalValue($configKey, $value);
-            } else {
-                Configuration::updateValue($configKey, $value);
+            // The connection is saved for the selected shop only.
+            if ($needShop !== null && in_array($configKey, self::$connectionKeys, true)) {
+                $connectionSkipped = true;
+                continue;
             }
+
+            // AmzproShop knows each key's scope: the environment is the same
+            // for every shop, the connection is the shop's own, and the rest
+            // follows PrestaShop's shop / all shops inheritance.
+            AmzproShop::set($configKey, $value);
+        }
+        if ($connectionSkipped) {
+            $errors[] = $needShop;
         }
 
         // Carrier map arrives as an array: mkpro_carrier_map[id_carrier] = code
@@ -1026,7 +1207,7 @@ class AmazonMarketplacePro extends Module
                     $clean[(int) $idCarrier] = $code;
                 }
             }
-            Configuration::updateValue('AMZPRO_CARRIER_MAP', json_encode($clean));
+            AmzproShop::set('AMZPRO_CARRIER_MAP', json_encode($clean));
         }
 
         // Incoming carrier map: Amazon shipping speed -> PrestaShop carrier.
@@ -1038,7 +1219,7 @@ class AmazonMarketplacePro extends Module
                     $clean[(string) $level] = (int) $idCarrier;
                 }
             }
-            Configuration::updateValue('AMZPRO_CARRIER_MAP_IN', json_encode($clean));
+            AmzproShop::set('AMZPRO_CARRIER_MAP_IN', json_encode($clean));
         }
 
         // Advanced status rules: parallel arrays of conditions + target state.
@@ -1059,12 +1240,12 @@ class AmazonMarketplacePro extends Module
                     'state' => (int) $state,
                 );
             }
-            Configuration::updateValue('AMZPRO_STATUS_RULES', json_encode($rules));
+            AmzproShop::set('AMZPRO_STATUS_RULES', json_encode($rules));
         }
 
         // PrestaShop condition -> Amazon condition map (three selects).
         if (Tools::getIsset('mkpro_cond_map_new')) {
-            Configuration::updateValue('AMZPRO_CONDITION_MAP', json_encode(array(
+            AmzproShop::set('AMZPRO_CONDITION_MAP', json_encode(array(
                 'new' => (string) Tools::getValue('mkpro_cond_map_new'),
                 'used' => (string) Tools::getValue('mkpro_cond_map_used'),
                 'refurbished' => (string) Tools::getValue('mkpro_cond_map_refurbished'),
@@ -1086,15 +1267,183 @@ class AmazonMarketplacePro extends Module
                     }
                 }
             }
-            Configuration::updateValue($configKey, implode(',', $clean));
+            AmzproShop::set($configKey, implode(',', $clean));
         }
 
-        // Allow regenerating cron token
+        // Allow regenerating cron token: each shop has its own.
         if (Tools::isSubmit('mkpro_regenerate_cron_token')) {
-            $newToken = Tools::substr(md5(uniqid((string) rand(), true)), 0, 24);
-            Configuration::updateValue('AMZPRO_CRON_TOKEN', $newToken);
+            if ($needShop !== null) {
+                $errors[] = $needShop;
+            } else {
+                AmzproShop::set('AMZPRO_CRON_TOKEN', self::newCronToken());
+            }
         }
 
+        return implode(' ', array_unique($errors));
+    }
+
+    /**
+     * The other shop already connected to the seller account and marketplace
+     * this save would give the selected shop, or 0.
+     *
+     * @param string $tokenKey the refresh token slot the form shows
+     *
+     * @return int
+     */
+    private function duplicateSellerShop($tokenKey)
+    {
+        $idShop = AmzproShop::id();
+        if (!$idShop || !AmzproShop::isMultistore()) {
+            return 0;
+        }
+        $sellerId = Tools::getIsset('mkpro_seller_id')
+            ? trim((string) Tools::getValue('mkpro_seller_id'))
+            : (string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop);
+        $marketplaceId = Tools::getIsset('mkpro_marketplace_id')
+            ? (string) Tools::getValue('mkpro_marketplace_id')
+            : (string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $idShop);
+        // Only a shop that is, or is about to be, connected can clash.
+        $connected = AmazonSpApiClient::storedRefreshToken(null, $idShop) != ''
+            || trim((string) Tools::getValue('mkpro_refresh_token', '')) !== '';
+        if ($sellerId === '' || !$connected) {
+            return 0;
+        }
+
+        return (int) AmzproShop::shopUsingSeller($sellerId, $marketplaceId, $idShop);
+    }
+
+    /* ─────────────────── Shop checks ─────────────────── */
+
+    /** @return string */
+    protected function shopChangedMessage()
+    {
+        return $this->l('The shop selection changed since this page was opened. Reload the page.');
+    }
+
+    /**
+     * A settings or schedule form was sent from a page that was opened for
+     * another shop than the one selected now (changed in another tab).
+     *
+     * @return bool
+     */
+    protected function formShopChanged()
+    {
+        if (!AmzproShop::isMultistore() || !Tools::getIsset('mkpro_id_shop')) {
+            return false;
+        }
+
+        return (int) Tools::getValue('mkpro_id_shop') !== AmzproShop::id();
+    }
+
+    /**
+     * Why an action that works on one shop cannot run now, or null.
+     *
+     * @param bool $shopChanged the form came from a page opened for another shop
+     *
+     * @return string|null
+     */
+    protected function oneShopRefusal($shopChanged)
+    {
+        if ($shopChanged) {
+            return $this->shopChangedMessage();
+        }
+
+        return AmzproShop::requireShop();
+    }
+
+    /**
+     * Why an AJAX action cannot run now, or null. The page sends the shop it
+     * was opened for with every request.
+     *
+     * @param string $method the handler
+     *
+     * @return string|null
+     */
+    protected function ajaxShopRefusal($method)
+    {
+        if (AmzproShop::isMultistore()
+            && (!Tools::getIsset('mkpro_id_shop') || (int) Tools::getValue('mkpro_id_shop') !== AmzproShop::id())) {
+            return $this->shopChangedMessage();
+        }
+        if (in_array($method, self::$allShopsAjax, true)) {
+            return null;
+        }
+
+        return AmzproShop::requireShop();
+    }
+
+    /** @return string */
+    protected function shopName($idShop)
+    {
+        $idShop = (int) $idShop;
+        if (!isset($this->shopNames[$idShop])) {
+            $this->shopNames[$idShop] = AmzproShop::name($idShop);
+        }
+
+        return $this->shopNames[$idShop];
+    }
+
+    /**
+     * Give each row the name of its shop, for the Shop column the lists show
+     * with "All shops" selected. Rows of a shop list are left alone.
+     *
+     * @param array $rows rows with id_shop
+     *
+     * @return array
+     */
+    protected function withShopNames($rows)
+    {
+        if (!is_array($rows) || !AmzproShop::isAllShops()) {
+            return $rows;
+        }
+        foreach ($rows as $i => $row) {
+            if (is_array($row) && array_key_exists('id_shop', $row)) {
+                $rows[$i]['shop_name'] = (int) $row['id_shop'] > 0
+                    ? $this->shopName((int) $row['id_shop'])
+                    : $this->l('All shops');
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * For the "All shops" (or group) page: which shops keep their own value
+     * of each setting.
+     *
+     * @return array [form field => shop names, shop name => number of settings]
+     */
+    protected function overrideNotes()
+    {
+        $notes = array();
+        $perShop = array();
+        if (!AmzproShop::isAllShops()) {
+            return array($notes, $perShop);
+        }
+        $onlyGroup = (Shop::getContext() == Shop::CONTEXT_GROUP) ? (int) Shop::getContextShopGroupID() : 0;
+        $fields = array_merge(
+            $this->settingsFields('AMZPRO_REFRESH_TOKEN'),
+            $this->settingsArrayFields()
+        );
+        foreach ($fields as $key => $formName) {
+            if (in_array($key, AmzproShop::$globalKeys, true) || in_array($key, AmzproShop::$ownKeys, true)) {
+                continue;
+            }
+            $names = array();
+            foreach (AmzproShop::overridingShops($key) as $idShop) {
+                if ($onlyGroup && AmzproShop::groupId($idShop) !== $onlyGroup) {
+                    continue;
+                }
+                $name = $this->shopName($idShop);
+                $names[] = $name;
+                $perShop[$name] = isset($perShop[$name]) ? $perShop[$name] + 1 : 1;
+            }
+            if ($names) {
+                $notes[$formName] = implode(', ', $names);
+            }
+        }
+
+        return array($notes, $perShop);
     }
 
     /**
@@ -1111,15 +1460,16 @@ class AmazonMarketplacePro extends Module
     private function setScheduleMode($mode)
     {
         $mode = ($mode === 'relay') ? 'relay' : 'cron';
-        Configuration::updateValue('AMZPRO_CRON_MODE', $mode);
+        AmazonRelaySchedule::setMode($mode);
+        $status = AmazonRelaySchedule::status();
 
-        if ($mode === 'cron' && Configuration::get('AMZPRO_RELAY_REGISTERED')) {
+        if ($mode === 'cron' && !empty($status['registered'])) {
             AmazonRelaySchedule::unregister();
 
             return $this->l('Your own cron now drives the schedule, and this shop has been removed from the IntelliPresta scheduler.');
         }
 
-        if ($mode === 'relay' && !Configuration::get('AMZPRO_RELAY_REGISTERED')) {
+        if ($mode === 'relay' && empty($status['registered'])) {
             // The notice is escaped by the template, so undo PrestaShop's own escaping of the quotes.
             return html_entity_decode($this->l('Saved. Now press "Register this shop" to start the scheduler.'), ENT_QUOTES, 'UTF-8');
         }
@@ -1133,32 +1483,42 @@ class AmazonMarketplacePro extends Module
      * Send the merchant to the Seller Central consent page for our app.
      * The relay (intellipresta.com) receives the code, exchanges it, and
      * redirects back to this shop's oauth front controller with the token.
+     *
+     * The connection belongs to the selected shop: the nonce names it, and
+     * the relay is told to return to that shop's own address.
      */
     private function redirectToAmazonConsent()
     {
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
+        $idShop = AmzproShop::id();
+        if (!$idShop) {
+            return; // "All shops": getContent refuses before this
+        }
+
         $appId = AmazonSpApiClient::lwaAppId();
         $relayUrl = AmazonSpApiClient::relayUrl();
 
-        // One-time nonce so only this connect attempt can store a token.
-        // Global scope: the front oauth controller (shop context) must read
-        // the exact row this admin request (any shop context) writes.
-        $nonce = Tools::substr(md5(uniqid((string) rand(), true)), 0, 32);
-        Configuration::updateGlobalValue('AMZPRO_OAUTH_NONCE', $nonce);
+        // One-time nonce so only this connect attempt can store a token. It
+        // starts with the shop, which the oauth controller checks against
+        // the shop the relay returns to.
+        $nonce = $idShop . '.' . self::randomHex(32);
+        AmzproShop::set('AMZPRO_OAUTH_NONCE', $nonce, $idShop);
 
         // Remember the admin page the merchant clicked Connect on, so the
         // oauth controller can send them straight back after success. Stored
         // locally only — never sent to Amazon or the relay.
         if (isset($_SERVER['REQUEST_URI'])) {
-            Configuration::updateGlobalValue(
+            AmzproShop::set(
                 'AMZPRO_OAUTH_RETURN_URL',
-                Tools::getShopDomainSsl(true) . $_SERVER['REQUEST_URI']
+                Tools::getShopDomainSsl(true) . $_SERVER['REQUEST_URI'],
+                $idShop
             );
         }
 
-        // Where the relay should send the merchant (and token) back to.
-        $returnUrl = $this->context->link->getModuleLink($this->name, 'oauth', array(), true);
+        // Where the relay should send the merchant (and token) back to: the
+        // oauth controller of this shop.
+        $returnUrl = $this->context->link->getModuleLink($this->name, 'oauth', array(), true, null, $idShop);
 
         // 's' tells the relay which app client's secret to exchange the code with.
         $state = rtrim(strtr(base64_encode(json_encode(array(
@@ -1167,7 +1527,7 @@ class AmazonMarketplacePro extends Module
             's' => AmazonSpApiClient::isSandboxEnv() ? 1 : 0,
         ))), '+/', '-_'), '=');
 
-        $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
+        $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID', $idShop);
         $domain = isset(self::$sellerCentralDomains[$mp])
             ? self::$sellerCentralDomains[$mp]
             : 'sellercentral-europe.amazon.com';
@@ -1188,6 +1548,34 @@ class AmazonMarketplacePro extends Module
         Tools::redirect('https://' . $domain . '/apps/authorize/consent?' . http_build_query($params));
     }
 
+    /**
+     * Random lower-case hex characters.
+     *
+     * @param int $length even number of characters
+     *
+     * @return string
+     */
+    private static function randomHex($length)
+    {
+        $bytes = (int) ceil($length / 2);
+        $hex = '';
+        if (function_exists('random_bytes')) {
+            try {
+                $hex = bin2hex(random_bytes($bytes));
+            } catch (Exception $e) {
+                $hex = '';
+            }
+        }
+        if ($hex === '' && function_exists('openssl_random_pseudo_bytes')) {
+            $hex = bin2hex(openssl_random_pseudo_bytes($bytes));
+        }
+        while (Tools::strlen($hex) < $length) {
+            $hex .= md5(uniqid((string) mt_rand(), true));
+        }
+
+        return Tools::substr($hex, 0, $length);
+    }
+
     /* ─────────────────── Config helpers ─────────────────── */
 
     protected function isProduction()
@@ -1197,38 +1585,40 @@ class AmazonMarketplacePro extends Module
 
     protected function useMock()
     {
-        return Configuration::get('AMZPRO_USE_MOCK') && !$this->isProduction();
+        return AmzproShop::get('AMZPRO_USE_MOCK') && !$this->isProduction();
     }
 
     protected function getMarketplaceId()
     {
         if ($this->isProduction()) {
-            $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
+            $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
             return $mp ? $mp : 'A1PA6795UKMFR9';
         }
         return 'ATVPDKIKX0DER'; // US sandbox
     }
 
     /**
-     * Build a configured SP-API client from DB-stored credentials.
+     * Build a configured SP-API client from the stored connection of the
+     * shop the request acts for.
      *
      * @return AmazonSpApiClient
      */
     protected function buildAmazonClient()
     {
-        $clientId     = Configuration::get('AMZPRO_CLIENT_ID');
-        $clientSecret = Configuration::get('AMZPRO_CLIENT_SECRET');
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
-        $refreshToken = AmazonSpApiClient::storedRefreshToken();
+        $idShop = AmzproShop::actingId();
+        $clientId     = AmzproShop::get('AMZPRO_CLIENT_ID', $idShop);
+        $clientSecret = AmzproShop::get('AMZPRO_CLIENT_SECRET', $idShop);
+        $refreshToken = AmazonSpApiClient::storedRefreshToken(null, $idShop);
 
         $endpoint = $this->resolveEndpoint();
 
-        $client = new AmazonSpApiClient($clientId, $clientSecret, $refreshToken, $endpoint);
+        $client = new AmazonSpApiClient($clientId, $clientSecret, $refreshToken, $endpoint, null, $idShop);
 
         // "Connect with Amazon" mode: access tokens come from the IntelliPresta
         // relay instead of local LWA credentials.
-        if (AmazonSpApiClient::authMode() !== 'manual') {
+        if (AmazonSpApiClient::authMode($idShop) !== 'manual') {
             $client->setTokenRelay(AmazonSpApiClient::relayUrl());
         }
 
@@ -1244,7 +1634,7 @@ class AmazonMarketplacePro extends Module
             return AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
         }
 
-        $mp = Configuration::get('AMZPRO_MARKETPLACE_ID');
+        $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
         $region = isset(self::$marketplaceEndpoints[$mp]) ? self::$marketplaceEndpoints[$mp] : 'EU';
 
         switch ($region) {
@@ -1257,34 +1647,40 @@ class AmazonMarketplacePro extends Module
         }
     }
 
-    private function getCronBaseUrl()
+    /**
+     * The cron address of a shop, with its own token.
+     *
+     * @param int $idShop
+     *
+     * @return string
+     */
+    private function getCronBaseUrl($idShop)
     {
-        $token = Configuration::get('AMZPRO_CRON_TOKEN');
-        $link = $this->context->link;
-        if (method_exists($link, 'getModuleLink')) {
-            $base = $link->getModuleLink($this->name, 'cron', array(), true);
-            $separator = (strpos($base, '?') !== false) ? '&' : '?';
-            return $base . $separator . 'token=' . urlencode($token);
-        }
-        $shopUrl = Tools::getShopDomainSsl(true);
-        return $shopUrl . '/index.php?fc=module&module=' . $this->name . '&controller=cron&token=' . urlencode($token);
+        require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
+
+        $token = AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop);
+        $base = AmazonRelaySchedule::cronUrl($idShop);
+        $separator = (strpos($base, '?') !== false) ? '&' : '?';
+
+        return $base . $separator . 'token=' . urlencode($token);
     }
 
     /**
-     * Get PS categories for the category mapping dropdown.
+     * Get PS categories for the category mapping dropdown: the selected
+     * shop's categories with their names there. With "All shops", every
+     * category, named as in the shop it was created in.
      */
     private function getPsCategories()
     {
         $idLang = (int) $this->context->language->id;
-        $idShop = (int) $this->context->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
+        $idShop = AmzproShop::id();
 
         $sql = 'SELECT c.`id_category`, cl.`name`
                 FROM `' . _DB_PREFIX_ . 'category` c
+                ' . $this->categoryShopJoin('c', $idShop) . '
                 INNER JOIN `' . _DB_PREFIX_ . 'category_lang` cl
-                    ON (cl.`id_category` = c.`id_category` AND cl.`id_lang` = ' . $idLang . ' AND cl.`id_shop` = ' . $idShop . ')
+                    ON (cl.`id_category` = c.`id_category` AND cl.`id_lang` = ' . $idLang . '
+                        AND cl.`id_shop` = ' . ($idShop ? $idShop : 'c.`id_shop_default`') . ')
                 WHERE c.`id_category` > 1 AND c.`active` = 1
                 ORDER BY cl.`name` ASC';
         $rows = Db::getInstance()->executeS($sql);
@@ -1292,23 +1688,47 @@ class AmazonMarketplacePro extends Module
     }
 
     /**
-     * Get category mappings for admin UI.
+     * Restricts a category query to the categories of a shop; nothing with
+     * "All shops".
+     *
+     * @param string $alias alias of the category table
+     * @param int $idShop 0 = all shops
+     *
+     * @return string
+     */
+    private function categoryShopJoin($alias, $idShop)
+    {
+        if (!$idShop) {
+            return '';
+        }
+
+        return 'INNER JOIN `' . _DB_PREFIX_ . 'category_shop` cs
+                    ON (cs.`id_category` = `' . bqSQL($alias) . '`.`id_category` AND cs.`id_shop` = ' . (int) $idShop . ')';
+    }
+
+    /**
+     * Get category mappings for admin UI: the mappings for all shops, with
+     * the selected shop's own in place of the shared one for a category.
      */
     private function getCategoryMappings()
     {
         $idLang = (int) $this->context->language->id;
-        $idShop = (int) $this->context->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
+        $idShop = AmzproShop::id();
 
         $sql = 'SELECT cm.*, cl.`name` AS category_name
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
+                LEFT JOIN `' . _DB_PREFIX_ . 'category` c ON (c.`id_category` = cm.`id_category`)
                 LEFT JOIN `' . _DB_PREFIX_ . 'category_lang` cl
-                    ON (cl.`id_category` = cm.`id_category` AND cl.`id_lang` = ' . $idLang . ' AND cl.`id_shop` = ' . $idShop . ')
-                ORDER BY cl.`name` ASC';
+                    ON (cl.`id_category` = cm.`id_category` AND cl.`id_lang` = ' . $idLang . '
+                        AND cl.`id_shop` = ' . ($idShop ? $idShop : 'c.`id_shop_default`') . ')
+                WHERE ' . AmzproShop::sqlShared('cm') . '
+                ORDER BY cl.`name` ASC, cm.`id_shop` DESC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        if (!is_array($rows)) {
+            return array();
+        }
+
+        return AmzproShop::preferShopRows($rows, array('id_category', 'marketplace_id'));
     }
 
     /**
@@ -1317,42 +1737,48 @@ class AmazonMarketplacePro extends Module
     private function getRecentReturns($limit = 50)
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_return`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     /* ─────────────────── Markup / rules / queue helpers ─────────────────── */
 
     /**
      * Categories, manufacturers or suppliers joined with their module rules
-     * (markup, delay, GPSR contact, country of origin, sync switch).
+     * (markup, delay, GPSR contact, country of origin, sync switch). With a
+     * shop selected, only those of that shop.
      */
     private function getEntityRows($type)
     {
         require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
 
         $idLang = (int) $this->context->language->id;
-        $idShop = (int) $this->context->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
+        $idShop = AmzproShop::id();
 
         if ($type === 'category') {
             $sql = 'SELECT c.`id_category` AS id_entity, cl.`name`
                     FROM `' . _DB_PREFIX_ . 'category` c
+                    ' . $this->categoryShopJoin('c', $idShop) . '
                     INNER JOIN `' . _DB_PREFIX_ . 'category_lang` cl
                         ON (cl.`id_category` = c.`id_category` AND cl.`id_lang` = ' . $idLang . '
-                            AND cl.`id_shop` = ' . $idShop . ')
+                            AND cl.`id_shop` = ' . ($idShop ? $idShop : 'c.`id_shop_default`') . ')
                     WHERE c.`id_category` > 1 AND c.`active` = 1
                     ORDER BY cl.`name` ASC';
         } elseif ($type === 'manufacturer') {
-            $sql = 'SELECT `id_manufacturer` AS id_entity, `name`
-                    FROM `' . _DB_PREFIX_ . 'manufacturer` ORDER BY `name` ASC';
+            $sql = 'SELECT m.`id_manufacturer` AS id_entity, m.`name`
+                    FROM `' . _DB_PREFIX_ . 'manufacturer` m'
+                    . ($idShop ? ' INNER JOIN `' . _DB_PREFIX_ . 'manufacturer_shop` ms
+                        ON (ms.`id_manufacturer` = m.`id_manufacturer` AND ms.`id_shop` = ' . $idShop . ')' : '') . '
+                    ORDER BY m.`name` ASC';
         } else {
-            $sql = 'SELECT `id_supplier` AS id_entity, `name`
-                    FROM `' . _DB_PREFIX_ . 'supplier` ORDER BY `name` ASC';
+            $sql = 'SELECT s.`id_supplier` AS id_entity, s.`name`
+                    FROM `' . _DB_PREFIX_ . 'supplier` s'
+                    . ($idShop ? ' INNER JOIN `' . _DB_PREFIX_ . 'supplier_shop` ss
+                        ON (ss.`id_supplier` = s.`id_supplier` AND ss.`id_shop` = ' . $idShop . ')' : '') . '
+                    ORDER BY s.`name` ASC';
         }
 
         $rows = Db::getInstance()->executeS($sql);
@@ -1375,18 +1801,36 @@ class AmazonMarketplacePro extends Module
         return $rows;
     }
 
-    /** Products joined with their per-product module rules (sync, GPSR). */
+    /**
+     * Products joined with their per-product module rules (sync, GPSR). With
+     * a shop selected, the products active in that shop and their names
+     * there; with "All shops", active products named as in their default shop.
+     */
     private function getProductRules($limit = 500)
     {
         require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
 
         $idLang = (int) $this->context->language->id;
+        $idShop = AmzproShop::id();
+        if ($idShop) {
+            $sql = 'SELECT p.`id_product`, p.`reference`, pl.`name`
+                    FROM `' . _DB_PREFIX_ . 'product` p
+                    INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                        ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
+                    INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                        ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . '
+                            AND pl.`id_shop` = ' . $idShop . ')
+                    WHERE ps.`active` = 1';
+        } else {
+            $sql = 'SELECT p.`id_product`, p.`reference`, pl.`name`
+                    FROM `' . _DB_PREFIX_ . 'product` p
+                    INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
+                        ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . '
+                            AND pl.`id_shop` = p.`id_shop_default`)
+                    WHERE p.`active` = 1';
+        }
         $rows = Db::getInstance()->executeS(
-            'SELECT p.`id_product`, p.`reference`, pl.`name`
-             FROM `' . _DB_PREFIX_ . 'product` p
-             INNER JOIN `' . _DB_PREFIX_ . 'product_lang` pl
-                 ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $idLang . ')
-             WHERE p.`active` = 1
+            $sql . '
              GROUP BY p.`id_product`
              ORDER BY p.`id_product` ASC
              LIMIT ' . (int) $limit
@@ -1411,18 +1855,18 @@ class AmazonMarketplacePro extends Module
     private function getPendingStockOrders()
     {
         $rows = Db::getInstance()->executeS(
-            'SELECT o.`id_amazonmarketplacepro_order`, o.`amazon_order_id`, o.`purchase_date`,
+            'SELECT o.`id_amazonmarketplacepro_order`, o.`id_shop`, o.`amazon_order_id`, o.`purchase_date`,
                     o.`order_total`, o.`currency`, o.`date_upd`,
                     GROUP_CONCAT(CONCAT(i.`seller_sku`, \' x\', i.`quantity`) SEPARATOR \', \') AS item_list
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
                  ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
-             WHERE o.`import_status` = \'pending_stock\'
+             WHERE o.`import_status` = \'pending_stock\' AND ' . AmzproShop::sqlWhere('o') . '
              GROUP BY o.`id_amazonmarketplacepro_order`
              ORDER BY o.`purchase_date` ASC'
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     /**
@@ -1530,7 +1974,7 @@ class AmazonMarketplacePro extends Module
             return array('success' => false, 'error' => $this->l('Unknown queue action.'));
         }
 
-        return array('success' => true, 'queue' => AmazonListingSettings::getQueue(200));
+        return array('success' => true, 'queue' => $this->withShopNames(AmazonListingSettings::getQueue(200)));
     }
 
     protected function runRefreshOrphans()
@@ -1541,7 +1985,8 @@ class AmazonMarketplacePro extends Module
 
         return array(
             'success' => true,
-            'orphans' => $orphans,
+            'orphans' => $this->withShopNames($orphans),
+            'all_shops' => AmzproShop::isAllShops(),
             'notice' => $this->l('Orphans are computed from the last Amazon-side sync. Run the Amazon to PrestaShop sync on the Products tab first for an up-to-date list.'),
         );
     }
@@ -1691,20 +2136,24 @@ class AmazonMarketplacePro extends Module
         $idStaged = (int) Tools::getValue('id_staged');
         $op = trim((string) Tools::getValue('pending_op'));
 
+        // The staged order must belong to the selected shop.
         $row = Db::getInstance()->getRow(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
-               AND `import_status` = \'pending_stock\''
+               AND `import_status` = \'pending_stock\'
+               AND ' . AmzproShop::sqlWhere()
         );
         if (!$row) {
             return array('success' => false, 'error' => $this->l('Pending order not found.'));
         }
+        $idRowShop = (int) $row['id_shop'];
 
         if ($op === 'delete') {
             Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                  SET `import_status` = \'cancelled\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
-                 WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
+                 WHERE `id_amazonmarketplacepro_order` = ' . $idStaged . '
+                   AND `id_shop` = ' . $idRowShop
             );
             $this->logActivity('info', 'pending_orders', $row['amazon_order_id'] . ' removed from pending orders.');
 
@@ -1712,10 +2161,10 @@ class AmazonMarketplacePro extends Module
         }
 
         if ($op === 'create') {
-            $idCarrier = (int) Configuration::get('AMZPRO_DEFAULT_CARRIER');
-            $idOrderState = (int) Configuration::get('AMZPRO_DEFAULT_ORDER_STATE');
+            $idCarrier = (int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER', $idRowShop);
+            $idOrderState = (int) AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE', $idRowShop);
             if (!$idOrderState) {
-                $idOrderState = (int) Configuration::get('PS_OS_PAYMENT');
+                $idOrderState = (int) Configuration::get('PS_OS_PAYMENT', null, AmzproShop::groupId($idRowShop), $idRowShop);
             }
             $creator = new AmazonOrderCreator($idCarrier, $idOrderState);
             $result = $creator->createOneOrder($row, true);
@@ -1739,13 +2188,16 @@ class AmazonMarketplacePro extends Module
         if ($name === '') {
             return array('success' => false, 'error' => $this->l('Template name is required.'));
         }
-        AmazonListingSettings::saveShippingTemplate(
+        $saved = AmazonListingSettings::saveShippingTemplate(
             Tools::getValue('basis'),
             (float) Tools::getValue('min_value'),
             (float) Tools::getValue('max_value'),
             $name,
             (int) Tools::getValue('id_template')
         );
+        if ($saved === false && AmazonListingSettings::getLastError()) {
+            return array('success' => false, 'error' => AmazonListingSettings::getLastError());
+        }
 
         return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
     }
@@ -1754,7 +2206,11 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
 
-        AmazonListingSettings::deleteShippingTemplate((int) Tools::getValue('id_template'));
+        $deleted = AmazonListingSettings::deleteShippingTemplate((int) Tools::getValue('id_template'));
+        if ($deleted === false && AmazonListingSettings::getLastError()) {
+            return array('success' => false, 'error' => AmazonListingSettings::getLastError(),
+                'templates' => AmazonListingSettings::getShippingTemplates());
+        }
 
         return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
     }
@@ -1848,7 +2304,8 @@ class AmazonMarketplacePro extends Module
             'categories' => $categories,
         ));
         if (!$id) {
-            return array('success' => false, 'error' => $this->l('Could not save the profile.'));
+            return array('success' => false, 'error' => AmazonProfile::getLastError()
+                ? AmazonProfile::getLastError() : $this->l('Could not save the profile.'));
         }
 
         // Products in the bound categories need resending with the new shape.
@@ -1885,7 +2342,9 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonProfile.php';
 
-        AmazonProfile::delete((int) Tools::getValue('id_profile'));
+        if (AmazonProfile::delete((int) Tools::getValue('id_profile')) === false && AmazonProfile::getLastError()) {
+            return array('success' => false, 'error' => AmazonProfile::getLastError());
+        }
 
         return array('success' => true, 'profiles' => AmazonProfile::getAll($this->getMarketplaceId()));
     }
@@ -2001,7 +2460,7 @@ class AmazonMarketplacePro extends Module
             return array('success' => false, 'error' => $this->l('The report contains no orders.'));
         }
 
-        $s = $importer->apply($parsed['orders']);
+        $s = $importer->apply($parsed['orders'], AmzproShop::actingId());
 
         $messages = array(sprintf($this->l('%d order(s) filled in from the report.'), $s['updated']));
         if ($s['already'] > 0) {
@@ -2025,12 +2484,19 @@ class AmazonMarketplacePro extends Module
                 $s['purged']
             );
         }
+        if (!empty($s['other_shop'])) {
+            $messages[] = sprintf(
+                $this->l('Orders that belong to another shop, not changed (upload the report in that shop): %d'),
+                (int) $s['other_shop']
+            );
+        }
 
         $this->logActivity('info', 'order_addresses', sprintf(
             'Order report: %d order(s) in the file, %d filled in (%d address(es), %d customer(s)), '
-            . '%d already complete, %d address(es) kept as edited, %d not imported, %d purged.',
+            . '%d already complete, %d address(es) kept as edited, %d not imported, %d purged, %d in another shop.',
             $s['in_report'], $s['updated'], $s['addresses'], $s['customers'],
-            $s['already'], $s['kept'], $s['not_imported'], $s['purged']
+            $s['already'], $s['kept'], $s['not_imported'], $s['purged'],
+            isset($s['other_shop']) ? $s['other_shop'] : 0
         ));
 
         return array('success' => true, 'summary' => $s, 'messages' => $messages);
@@ -2041,7 +2507,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
         $sync = new AmazonProductSync(
-            $this->buildAmazonClient(), $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID')
+            $this->buildAmazonClient(), $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID')
         );
 
         return array('success' => true, 'candidates' => $sync->listDeletionCandidates(500));
@@ -2057,7 +2523,7 @@ class AmazonMarketplacePro extends Module
         }
 
         $sync = new AmazonProductSync(
-            $this->buildAmazonClient(), $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID')
+            $this->buildAmazonClient(), $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $sync->setMock($this->useMock());
         $summary = $sync->deleteFromAmazon($skus);
@@ -2097,7 +2563,7 @@ class AmazonMarketplacePro extends Module
         // refused every connected shop. Manual mode is the reverse.
         $manual = AmazonSpApiClient::authMode() === 'manual';
         $configured = $manual
-            ? (bool) Configuration::get('AMZPRO_CLIENT_ID')
+            ? (bool) AmzproShop::get('AMZPRO_CLIENT_ID')
             : (AmazonSpApiClient::storedRefreshToken() != '');
         if (!$configured) {
             $result['error'] = $manual
@@ -2203,10 +2669,10 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonOrderImporter.php';
 
         $client = $this->buildAmazonClient();
-        $importer = new AmazonOrderImporter($client, $this->getMarketplaceId());
+        $importer = new AmazonOrderImporter($client, $this->getMarketplaceId(), AmzproShop::actingId());
 
         $createdAfter = $this->isProduction()
-            ? AmazonOrderImporter::configuredCreatedAfter()
+            ? AmazonOrderImporter::configuredCreatedAfter(AmzproShop::actingId())
             : 'TEST_CASE_200';
         $summary = $importer->importNewOrders($createdAfter);
 
@@ -2221,6 +2687,13 @@ class AmazonMarketplacePro extends Module
             );
         }
 
+        $result['notices'] = $importer->getNotices();
+        if ($summary !== false && !empty($summary['other_shop'])) {
+            $result['notices'][] = sprintf(
+                $this->l('Orders that belong to another shop, left there: %d'),
+                (int) $summary['other_shop']
+            );
+        }
         $result['orders'] = $importer->listStagedOrders();
         return $result;
     }
@@ -2238,10 +2711,11 @@ class AmazonMarketplacePro extends Module
 
         require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
 
-        $idCarrier = (int) Configuration::get('AMZPRO_DEFAULT_CARRIER');
-        $idOrderState = (int) Configuration::get('AMZPRO_DEFAULT_ORDER_STATE');
+        $idShop = AmzproShop::actingId();
+        $idCarrier = (int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER', $idShop);
+        $idOrderState = (int) AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE', $idShop);
         if (!$idOrderState) {
-            $idOrderState = (int) Configuration::get('PS_OS_PAYMENT');
+            $idOrderState = (int) Configuration::get('PS_OS_PAYMENT', null, AmzproShop::groupId($idShop), $idShop);
         }
 
         $creator = new AmazonOrderCreator($idCarrier, $idOrderState);
@@ -2409,7 +2883,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonFeedManager.php';
 
         $client = $this->buildAmazonClient();
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
+        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
 
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), $sellerId);
         $sync->setMock($this->useMock());
@@ -2456,7 +2930,7 @@ class AmazonMarketplacePro extends Module
         $feeds = new AmazonFeedManager(
             $this->buildAmazonClient(),
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $feeds->setMock($this->useMock());
 
@@ -2484,7 +2958,7 @@ class AmazonMarketplacePro extends Module
         $sync = new AmazonProductSync(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $sync->setMock($this->useMock());
 
@@ -2523,7 +2997,7 @@ class AmazonMarketplacePro extends Module
         $sync = new AmazonProductSync(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $sync->setMock($this->useMock());
 
@@ -2548,7 +3022,7 @@ class AmazonMarketplacePro extends Module
         $sync = new AmazonProductSync(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $sync->setMock($this->useMock());
 
@@ -2582,7 +3056,7 @@ class AmazonMarketplacePro extends Module
         $sync = new AmazonProductSync(
             $this->buildAmazonClient(),
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID')
         );
         $pending = $sync->countPending();
 
@@ -2629,7 +3103,8 @@ class AmazonMarketplacePro extends Module
         $manager = new AmazonReturnManager(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID'),
+            AmzproShop::actingId()
         );
 
         $createdAfter = $this->isProduction()
@@ -2668,7 +3143,8 @@ class AmazonMarketplacePro extends Module
         $manager = new AmazonReturnManager(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID'),
+            AmzproShop::actingId()
         );
 
         $summary = $manager->processReturns();
@@ -2702,7 +3178,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
         $client = $this->buildAmazonClient();
-        $sync = new AmazonProductSync($client, $marketplaceId, Configuration::get('AMZPRO_SELLER_ID'));
+        $sync = new AmazonProductSync($client, $marketplaceId, AmzproShop::get('AMZPRO_SELLER_ID'));
         $attributesJson = trim((string) Tools::getValue('attributes_json', ''));
 
         if (!$sync->saveCategoryMapping($idCategory, $productType, $browseNode, $marketplaceId, $attributesJson)) {
@@ -2726,8 +3202,14 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
         $client = $this->buildAmazonClient();
-        $sync = new AmazonProductSync($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
-        $sync->deleteCategoryMapping($idMap);
+        $sync = new AmazonProductSync($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        if ($sync->deleteCategoryMapping($idMap) === false) {
+            return array(
+                'success' => false,
+                'error' => $sync->getLastError() ? $sync->getLastError() : $this->l('The category mapping could not be deleted.'),
+                'mappings' => $sync->getCategoryMappings(),
+            );
+        }
 
         return array(
             'success' => true,
@@ -2741,7 +3223,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $fba->syncFbaInventory();
         $this->logActivity('info', 'fba_inventory_sync',
             'Fetched: ' . $summary['fetched'] . ', updated: ' . $summary['updated'] . ', new: ' . $summary['new']
@@ -2755,7 +3237,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $idOrder = (int) Tools::getValue('id_order');
         $result = $fba->createMcfOrder($idOrder);
         $this->logActivity($result['success'] ? 'info' : 'error', 'mcf_order',
@@ -2768,7 +3250,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $fba->syncFbaStockToPs();
         $this->logActivity('info', 'fba_stock_to_ps', 'Updated: ' . $summary['updated']);
         return array('success' => true, 'summary' => $summary);
@@ -2780,7 +3262,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
-        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $engine->fetchCompetitivePricing();
         $this->logActivity('info', 'fetch_pricing',
             'Checked: ' . $summary['checked'] . ', BuyBox wins: ' . $summary['buybox_wins']
@@ -2794,7 +3276,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
-        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $engine->applyPricingRules();
         return array('success' => true, 'summary' => $summary, 'notices' => $engine->getNotices(),
             'prices' => $engine->listCompetitivePrices());
@@ -2804,7 +3286,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
-        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $engine->pushSuggestedPrices(25);
         $this->logActivity('info', 'push_prices', 'Pushed: ' . $summary['pushed'] . ', failed: ' . $summary['failed']);
         return array('success' => true, 'summary' => $summary, 'notices' => $engine->getNotices());
@@ -2814,7 +3296,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
-        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
+        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $data = array(
             'id' => (int) Tools::getValue('rule_id', 0),
             'name' => Tools::getValue('rule_name', ''),
@@ -2831,7 +3313,9 @@ class AmazonMarketplacePro extends Module
         if (!$data['name']) {
             return array('success' => false, 'error' => $this->l('Rule name is required.'));
         }
-        $engine->savePricingRule($data);
+        if ($engine->savePricingRule($data) === false && $engine->getLastError()) {
+            return array('success' => false, 'error' => $engine->getLastError());
+        }
         return array('success' => true, 'rules' => $engine->listPricingRules());
     }
 
@@ -2839,9 +3323,12 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
-        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), Configuration::get('AMZPRO_SELLER_ID'));
-        $id = (int) Tools::getValue('rule_id');
-        $engine->deletePricingRule($id);
+        $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        // The page has always posted id_pricing_rule; rule_id is kept for callers that send it.
+        $id = (int) Tools::getValue('rule_id', Tools::getValue('id_pricing_rule'));
+        if ($engine->deletePricingRule($id) === false && $engine->getLastError()) {
+            return array('success' => false, 'error' => $engine->getLastError());
+        }
         return array('success' => true, 'rules' => $engine->listPricingRules());
     }
 
@@ -2851,7 +3338,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFeesTracker.php';
         $client = $this->buildAmazonClient();
-        $tracker = new AmazonFeesTracker($client, $this->getMarketplaceId());
+        $tracker = new AmazonFeesTracker($client, $this->getMarketplaceId(), AmzproShop::actingId());
         $summary = $tracker->fetchOrderFees(50);
         $this->logActivity('info', 'fetch_fees',
             'Checked: ' . $summary['checked'] . ', updated: ' . $summary['updated']
@@ -2907,7 +3394,7 @@ class AmazonMarketplacePro extends Module
         );
         $success = $mm->saveMarketplaceConfig($data);
         return array('success' => $success, 'error' => $mm->getLastError(),
-            'configs' => $mm->getMarketplaceConfigs());
+            'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
     }
 
     protected function runDeleteMarketplace()
@@ -2915,8 +3402,12 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
         $mm = new AmazonMultiMarketplace();
         $mpId = Tools::getValue('mp_marketplace_id', '');
-        $mm->deleteMarketplaceConfig($mpId);
-        return array('success' => true, 'configs' => $mm->getMarketplaceConfigs());
+        $deleted = $mm->deleteMarketplaceConfig($mpId);
+        if ($deleted === false) {
+            return array('success' => false, 'error' => $mm->getLastError(),
+                'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
+        }
+        return array('success' => true, 'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
     }
 
     /* ─────────────────── Feature: Promotions ─────────────────── */
@@ -2956,62 +3447,79 @@ class AmazonMarketplacePro extends Module
 
     /* ─────────────────── Data getters for template ─────────────────── */
 
+    /*
+     * Each list is the selected shop's rows. With "All shops" selected it is
+     * every shop's rows, each with its shop's name for the Shop column.
+     */
+
     private function getFbaInventory()
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `seller_sku` ASC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     private function getCompetitivePrices()
     {
         $sql = 'SELECT cp.*, p.`ps_name`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
-                LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p ON (p.`seller_sku` = cp.`seller_sku`)
+                LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
+                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop`)
+                WHERE ' . AmzproShop::sqlWhere('cp') . '
                 ORDER BY cp.`is_buybox_winner` ASC, cp.`seller_sku` ASC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
+    /** Pricing rules for all shops, plus the selected shop's own. */
     private function getPricingRules()
     {
-        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule` ORDER BY `name` ASC';
+        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
+                WHERE ' . AmzproShop::sqlShared() . '
+                ORDER BY `name` ASC';
         $rows = Db::getInstance()->executeS($sql);
         return is_array($rows) ? $rows : array();
     }
 
     private function getFeeSummary()
     {
-        $sql = 'SELECT `fee_type`, SUM(ABS(`fee_amount`)) AS total_amount, COUNT(*) AS count, `currency`
+        // With "All shops", one line per shop: shops sell in different currencies.
+        $byShop = AmzproShop::isAllShops() ? '`id_shop`, ' : '';
+        $sql = 'SELECT ' . $byShop . '`fee_type`, SUM(ABS(`fee_amount`)) AS total_amount, COUNT(*) AS count, `currency`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_fee`
-                GROUP BY `fee_type`, `currency` ORDER BY total_amount DESC';
+                WHERE ' . AmzproShop::sqlWhere() . '
+                GROUP BY ' . $byShop . '`fee_type`, `currency` ORDER BY total_amount DESC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     private function getReports()
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC LIMIT 50';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     private function getMarketplaceConfigs()
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `marketplace_name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     private function getPromotions()
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
+                WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 
     private function getPromotionStats()
@@ -3022,7 +3530,8 @@ class AmazonMarketplacePro extends Module
                     SUM(CASE WHEN `sync_direction` = \'ps_to_amazon\' THEN 1 ELSE 0 END) AS from_ps,
                     SUM(`discount_value`) AS total_discount,
                     SUM(CASE WHEN `id_cart_rule` > 0 THEN 1 ELSE 0 END) AS with_cart_rule
-             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`'
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
+             WHERE ' . AmzproShop::sqlWhere()
         );
         if (!$row) {
             return array('total' => 0, 'from_amazon' => 0, 'from_ps' => 0, 'total_discount' => 0, 'with_cart_rule' => 0);
@@ -3051,13 +3560,15 @@ class AmazonMarketplacePro extends Module
      */
 
     /**
-     * When a product is saved in PrestaShop, push updated price/stock to Amazon.
-     */
-    /**
      * Amazon panel on the PrestaShop product page (1.6 and 1.7+).
+     *
+     * The overrides follow the shop selected in the back office: with a shop
+     * selected they are that shop's own, with "All shops" they are the ones
+     * every shop without its own uses. The panel says which.
      */
     public function hookDisplayAdminProductsExtra($params)
     {
+        AmzproShop::ensureSchema();
         require_once dirname(__FILE__) . '/classes/AmazonProductOverride.php';
 
         $idProduct = 0;
@@ -3073,9 +3584,20 @@ class AmazonMarketplacePro extends Module
             return '';
         }
 
+        $overrides = AmazonProductOverride::get($idProduct);
+        $multistore = AmzproShop::isMultistore();
+        $idShop = AmzproShop::id();
+
         $this->context->smarty->assign(array(
-            'amzpro' => AmazonProductOverride::get($idProduct),
+            'amzpro' => $overrides,
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
+            'amzpro_multistore' => $multistore,
+            'amzpro_id_shop' => $idShop,
+            'amzpro_scope_all' => $multistore && !$idShop,
+            'amzpro_scope_shop' => ($multistore && $idShop) ? $this->shopName($idShop) : '',
+            // The shop already saved its own settings for this product.
+            'amzpro_scope_own' => $multistore && $idShop
+                && isset($overrides['id_shop']) && (int) $overrides['id_shop'] === $idShop,
         ));
 
         return $this->display(__FILE__, 'views/templates/admin/product_tab.tpl');
@@ -3090,6 +3612,15 @@ class AmazonMarketplacePro extends Module
     private function saveProductOverrides($idProduct)
     {
         if (!Tools::getIsset('amzpro_tab_present')) {
+            return;
+        }
+        // Saved for the shop the panel was shown for. If the shop selection
+        // changed in another tab since, the values would land in another
+        // shop's settings, so they are not saved.
+        if (AmzproShop::isMultistore() && Tools::getIsset('amzpro_id_shop')
+            && (int) Tools::getValue('amzpro_id_shop') !== AmzproShop::id()) {
+            $this->logActivity('warning', 'product_overrides',
+                'Amazon settings of product #' . (int) $idProduct . ' not saved: the shop selection changed since the product page was opened.');
             return;
         }
         require_once dirname(__FILE__) . '/classes/AmazonProductOverride.php';
@@ -3128,21 +3659,20 @@ class AmazonMarketplacePro extends Module
         }
     }
 
+    /**
+     * When a product is saved in PrestaShop, push updated price/stock to Amazon.
+     */
     public function hookActionProductSave($params)
     {
         $idProduct = isset($params['id_product']) ? (int) $params['id_product'] : 0;
         if (!$idProduct) {
             return;
         }
+        AmzproShop::ensureSchema();
 
         $this->saveProductOverrides($idProduct);
         $this->enqueueForDeltaSync($idProduct, 'product saved');
-
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
-            return;
-        }
-
-        $this->pushProductStockToAmazon($idProduct);
+        $this->pushProductStockToShops($idProduct, $params);
     }
 
     public function hookActionProductUpdate($params)
@@ -3151,14 +3681,10 @@ class AmazonMarketplacePro extends Module
         if (!$idProduct) {
             return;
         }
+        AmzproShop::ensureSchema();
 
         $this->enqueueForDeltaSync($idProduct, 'product updated');
-
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
-            return;
-        }
-
-        $this->pushProductStockToAmazon($idProduct);
+        $this->pushProductStockToShops($idProduct, $params);
     }
 
     /**
@@ -3166,15 +3692,17 @@ class AmazonMarketplacePro extends Module
      *
      * Amazon expects sellers to make an invoice available; this is the
      * "invoice by e-mail" route (VCS upload is the other, see the settings).
+     * Runs in the order's shop (see hookActionOrderStatusUpdate).
      */
     private function sendBuyerInvoice($order)
     {
-        if (!Configuration::get('AMZPRO_INVOICE_EMAIL')) {
+        $idShop = (int) $order->id_shop;
+        if (!AmzproShop::get('AMZPRO_INVOICE_EMAIL', $idShop)) {
             return;
         }
         $amazonId = Db::getInstance()->getValue(
             'SELECT `amazon_order_id` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` = ' . (int) $order->id
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', $idShop)
         );
         if (!$amazonId) {
             return; // not one of ours
@@ -3216,7 +3744,7 @@ class AmazonMarketplacePro extends Module
             ));
 
             // Optional extra document (terms, returns policy) shipped by the merchant.
-            $extra = trim((string) Configuration::get('AMZPRO_INVOICE_ATTACHMENT'));
+            $extra = trim((string) AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT', $idShop));
             if ($extra !== '') {
                 $path = _PS_MODULE_DIR_ . $this->name . '/docs/' . basename($extra);
                 if (file_exists($path)) {
@@ -3228,6 +3756,7 @@ class AmazonMarketplacePro extends Module
                 }
             }
 
+            // Sent as the order's shop: its name, address and mail settings.
             Mail::send(
                 (int) $order->id_lang,
                 'contact',
@@ -3235,12 +3764,16 @@ class AmazonMarketplacePro extends Module
                 array(
                     '{message}' => $this->l('Please find your invoice attached.') . "\n"
                         . $this->l('Amazon order') . ': ' . $amazonId,
-                    '{email}' => (string) Configuration::get('PS_SHOP_EMAIL'),
+                    '{email}' => (string) Configuration::get('PS_SHOP_EMAIL', null, AmzproShop::groupId($idShop), $idShop),
                     '{attached_file}' => '',
                 ),
                 $customer->email,
                 null, null, null,
-                $attachments
+                $attachments,
+                null,
+                _PS_MAIL_DIR_,
+                false,
+                $idShop
             );
             $this->logActivity('info', 'invoice_email', $amazonId . ': invoice e-mailed to the buyer.');
         } catch (Exception $e) {
@@ -3250,20 +3783,87 @@ class AmazonMarketplacePro extends Module
 
     /**
      * Track a modified product in the change queue so delta exports
-     * ("only products updated in the last N hours") pick it up.
+     * ("only products updated in the last N hours") pick it up. Each shop
+     * that sells the product has its own queue and its own delta setting.
      */
     private function enqueueForDeltaSync($idProduct, $reason)
     {
-        // Only worth tracking when delta exports are in use.
-        if ((int) Configuration::get('AMZPRO_DELTA_HOURS') <= 0) {
-            return;
-        }
         try {
             require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
-            AmazonListingSettings::enqueueProduct($idProduct, $reason);
+            foreach ($this->productShopIds($idProduct) as $idShop) {
+                // Only worth tracking when delta exports are in use.
+                if ((int) AmzproShop::get('AMZPRO_DELTA_HOURS', $idShop) <= 0) {
+                    continue;
+                }
+                AmzproShop::runInShop($idShop, function () use ($idProduct, $reason) {
+                    AmazonListingSettings::enqueueProduct($idProduct, $reason);
+                });
+            }
         } catch (Exception $e) {
             // Queueing must never break product saves.
         }
+    }
+
+    /**
+     * The shops a product belongs to.
+     *
+     * @return int[]
+     */
+    private function productShopIds($idProduct)
+    {
+        if (!AmzproShop::isMultistore()) {
+            return array(AmzproShop::actingId());
+        }
+        $rows = Db::getInstance()->executeS(
+            'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'product_shop`
+             WHERE `id_product` = ' . (int) $idProduct
+        );
+        $ids = array();
+        foreach ((array) $rows as $row) {
+            $ids[] = (int) $row['id_shop'];
+        }
+
+        return $ids;
+    }
+
+    /**
+     * The shops whose Amazon offer a stock or product change affects.
+     *
+     * PrestaShop 9 names the shop in actionUpdateQuantity; 1.6 does not, so
+     * the change is taken to concern the shops of the back office (or front
+     * office) context that sell the product. A shop group that shares its
+     * stock changes the quantity of every shop in it at once.
+     *
+     * @param int $idProduct
+     * @param array $params the hook's parameters
+     *
+     * @return int[]
+     */
+    private function stockPushShopIds($idProduct, $params)
+    {
+        if (!AmzproShop::isMultistore()) {
+            return array(AmzproShop::actingId());
+        }
+        $productShops = $this->productShopIds($idProduct);
+        if (isset($params['id_shop']) && (int) $params['id_shop'] > 0) {
+            $seed = array((int) $params['id_shop']);
+        } else {
+            $seed = array_values(array_intersect(
+                $productShops,
+                array_map('intval', (array) Shop::getContextListShopID())
+            ));
+        }
+
+        $ids = array();
+        foreach ($seed as $idShop) {
+            foreach (Shop::getSharedShops((int) $idShop, Shop::SHARE_STOCK) as $idSibling) {
+                if (in_array((int) $idSibling, $productShops, true)) {
+                    $ids[(int) $idSibling] = (int) $idSibling;
+                }
+            }
+        }
+
+        return array_values($ids);
     }
 
     /**
@@ -3275,20 +3875,19 @@ class AmazonMarketplacePro extends Module
         if (!$idProduct) {
             return;
         }
+        AmzproShop::ensureSchema();
 
         $this->enqueueForDeltaSync($idProduct, 'quantity changed');
-
-        if (!Configuration::get('AMZPRO_SYNC_STOCK_HOOK') || !$this->isProduction()) {
-            return;
-        }
-
-        $this->pushProductStockToAmazon($idProduct);
+        $this->pushProductStockToShops($idProduct, $params);
     }
 
     /**
      * When an order status changes:
      * - "Shipped" → send shipment confirmation to Amazon
      * - "Cancelled" → notify Amazon of cancellation
+     *
+     * Everything runs as the order's shop: its states, its settings and its
+     * Amazon connection.
      */
     public function hookActionOrderStatusUpdate($params)
     {
@@ -3303,36 +3902,59 @@ class AmazonMarketplacePro extends Module
         if (!Validate::isLoadedObject($order)) {
             return;
         }
+        AmzproShop::ensureSchema();
+
+        $idShop = (int) $order->id_shop ? (int) $order->id_shop : AmzproShop::actingId();
+        $module = $this;
+        AmzproShop::runInShop($idShop, function ($idShop) use ($module, $order, $newState) {
+            $module->onOrderStatusUpdate($order, $newState, $idShop);
+        });
+    }
+
+    /**
+     * hookActionOrderStatusUpdate, inside the order's shop.
+     *
+     * Public only so the closure that switches shop can call it.
+     *
+     * @param Order $order
+     * @param OrderState $newState
+     * @param int $idShop the order's shop
+     */
+    public function onOrderStatusUpdate($order, $newState, $idShop)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+        $idShop = (int) $idShop;
 
         // Only act on orders this module imported. The staged table is the
         // authority: checking $order->module would also catch orders created
         // by the all-in-one Marketplaces Pro module on the same shop.
         $isOurs = (bool) Db::getInstance()->getValue(
             'SELECT `id_amazonmarketplacepro_order` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` = ' . $idOrder
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', $idShop)
         );
         if (!$isOurs) {
             return;
         }
 
-        $shippedStateId = (int) Configuration::get('PS_OS_SHIPPING');
-        $cancelledStateId = (int) Configuration::get('PS_OS_CANCELED');
+        $idGroup = AmzproShop::groupId($idShop);
+        $shippedStateId = (int) Configuration::get('PS_OS_SHIPPING', null, $idGroup, $idShop);
+        $cancelledStateId = (int) Configuration::get('PS_OS_CANCELED', null, $idGroup, $idShop);
 
         // Shipment confirmation
-        if ((int) $newState->id === $shippedStateId && Configuration::get('AMZPRO_SYNC_ORDER_STATUS_HOOK')) {
+        if ((int) $newState->id === $shippedStateId && AmzproShop::get('AMZPRO_SYNC_ORDER_STATUS_HOOK', $idShop)) {
             if ($this->isProduction()) {
                 $this->confirmShipmentOnAmazon($order);
             }
         }
 
         // Cancellation
-        if ((int) $newState->id === $cancelledStateId && Configuration::get('AMZPRO_SYNC_CANCEL_HOOK')
+        if ((int) $newState->id === $cancelledStateId && AmzproShop::get('AMZPRO_SYNC_CANCEL_HOOK', $idShop)
             && $this->isProduction()) {
             $this->cancelOrderOnAmazon($order);
         }
 
         // Buyer invoice e-mail on the configured status
-        $invoiceState = (int) Configuration::get('AMZPRO_INVOICE_EMAIL_STATE');
+        $invoiceState = (int) AmzproShop::get('AMZPRO_INVOICE_EMAIL_STATE', $idShop);
         if ($invoiceState > 0 && (int) $newState->id === $invoiceState) {
             $this->sendBuyerInvoice($order);
         }
@@ -3341,44 +3963,98 @@ class AmazonMarketplacePro extends Module
     /* ─────────────────── Hook helpers ─────────────────── */
 
     /**
-     * Push a single product's current stock/price to Amazon.
+     * Push a product's stock and price to every shop's Amazon listing the
+     * change affects. Two shops can list the same SKU with the same seller
+     * account on the same marketplace only through a shared marketplace
+     * account; the offer is then sent once.
+     *
+     * @param int $idProduct
+     * @param array $params the hook's parameters
      */
-    private function pushProductStockToAmazon($idProduct)
+    private function pushProductStockToShops($idProduct, $params)
     {
-        $sku = (string) Db::getInstance()->getValue(
-            'SELECT `reference` FROM `' . _DB_PREFIX_ . 'product`
+        $pushed = array();
+        foreach ($this->stockPushShopIds($idProduct, $params) as $idShop) {
+            if (!AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK', $idShop)) {
+                continue;
+            }
+            // The environment is the same for every shop.
+            require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+            if (!$this->isProduction()) {
+                return;
+            }
+            $module = $this;
+            try {
+                AmzproShop::runInShop($idShop, function ($idShop) use ($module, $idProduct, &$pushed) {
+                    $module->pushProductStockToAmazon($idProduct, $idShop, $pushed);
+                });
+            } catch (Exception $e) {
+                // A failed push must never break the product or stock save.
+                $this->logActivity('error', 'hook_stock_push', 'Product #' . (int) $idProduct . ': ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Push a single product's current stock/price to one shop's Amazon
+     * listing. Runs inside that shop (see pushProductStockToShops).
+     *
+     * Public only so the closure that switches shop can call it.
+     *
+     * @param int $idProduct
+     * @param int $idShop
+     * @param array $pushed seller|marketplace|SKU already sent in this request
+     */
+    public function pushProductStockToAmazon($idProduct, $idShop, array &$pushed)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
+        require_once dirname(__FILE__) . '/classes/AmazonProductOverride.php';
+
+        $idShop = (int) $idShop;
+
+        // Only a shop connected to Amazon has a listing to update.
+        if (AmazonSpApiClient::storedRefreshToken(null, $idShop) == '') {
+            return;
+        }
+        $sellerId = (string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop);
+        if ($sellerId === '') {
+            return;
+        }
+
+        // The SKU as the product sync builds it for this shop.
+        $row = Db::getInstance()->getRow(
+            'SELECT `reference`, `ean13`, `supplier_reference` FROM `' . _DB_PREFIX_ . 'product`
              WHERE `id_product` = ' . (int) $idProduct
+        );
+        if (!$row) {
+            return;
+        }
+        $overrides = array((int) $idProduct => AmazonProductOverride::get($idProduct));
+        $sku = (string) AmazonProductOverride::effectiveSku(
+            $idProduct, AmazonListingSettings::buildSku($row), $overrides
         );
         if ($sku === '') {
             return;
         }
 
-        $sellerId = Configuration::get('AMZPRO_SELLER_ID');
-        if (!$sellerId) {
+        $marketplaceId = $this->getMarketplaceId();
+        $offerKey = $sellerId . '|' . $marketplaceId . '|' . $sku;
+        if (isset($pushed[$offerKey])) {
             return;
         }
-
-        require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
+        $pushed[$offerKey] = true;
 
         $client = $this->buildAmazonClient();
-        $marketplaceId = $this->getMarketplaceId();
 
-        $idShop = (int) Context::getContext()->shop->id;
-        if (!$idShop) {
-            $idShop = 1;
-        }
         $qty = (int) StockAvailable::getQuantityAvailableByProduct($idProduct, 0, $idShop);
+        $price = $this->shopPriceTaxIncl($idProduct, $idShop);
 
-        $price = (float) Db::getInstance()->getValue(
-            'SELECT `price` FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `id_product` = ' . (int) $idProduct
-        );
-
-        $effectiveQty = AmazonSpApiClient::effectiveQuantity($qty);
+        $effectiveQty = AmazonSpApiClient::effectiveQuantity($qty, $idShop);
 
         // Out-of-stock delisting (optional): remove the listing instead of
         // publishing zero stock.
-        if (Configuration::get('AMZPRO_DELETE_WHEN_OOS') && $effectiveQty <= 0) {
+        if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop) && $effectiveQty <= 0) {
             $resp = $client->request(
                 'DELETE',
                 '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
@@ -3393,7 +4069,7 @@ class AmazonMarketplacePro extends Module
         }
 
         $attributes = array(
-            'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
+            'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition($idShop))),
             'purchasable_offer' => array(array(
                 'currency' => AmazonSpApiClient::currencyForMarketplace($marketplaceId),
                 'marketplace_id' => $marketplaceId,
@@ -3406,7 +4082,7 @@ class AmazonMarketplacePro extends Module
                 'quantity' => $effectiveQty,
             )),
         );
-        $attributes = AmazonSpApiClient::enrichOfferAttributes($attributes, $marketplaceId, $price);
+        $attributes = AmazonSpApiClient::enrichOfferAttributes($attributes, $marketplaceId, $price, null, $idShop);
 
         $body = array(
             'productType' => 'PRODUCT',
@@ -3432,13 +4108,40 @@ class AmazonMarketplacePro extends Module
     }
 
     /**
-     * Send shipment confirmation to Amazon for an order.
+     * A product's price in a shop, tax included, before discounts: what the
+     * offer's value_with_tax means. Called inside that shop.
+     *
+     * Product::getPriceStatic() refuses to run without a cart or an employee
+     * in the context (a web service or command line stock update has
+     * neither), so there the shop's price and the product's tax rate are
+     * combined directly.
+     *
+     * @return float
+     */
+    private function shopPriceTaxIncl($idProduct, $idShop)
+    {
+        $context = Context::getContext();
+        if (is_object($context->cart) || isset($context->employee)) {
+            return (float) Product::getPriceStatic((int) $idProduct, true, 0, 6, null, false, false);
+        }
+
+        $priceExcl = (float) Db::getInstance()->getValue(
+            'SELECT `price` FROM `' . _DB_PREFIX_ . 'product_shop`
+             WHERE `id_product` = ' . (int) $idProduct . ' AND `id_shop` = ' . (int) $idShop
+        );
+        $rate = (float) Tax::getProductTaxRate((int) $idProduct, null, $context);
+
+        return (float) Tools::ps_round($priceExcl * (1 + $rate / 100), 6);
+    }
+
+    /**
+     * Send shipment confirmation to Amazon for an order. Runs in the order's shop.
      */
     private function confirmShipmentOnAmazon($order)
     {
         $amazonOrderId = Db::getInstance()->getValue(
             'SELECT `amazon_order_id` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` = ' . (int) $order->id
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', (int) $order->id_shop)
         );
 
         if (!$amazonOrderId) {
@@ -3453,8 +4156,7 @@ class AmazonMarketplacePro extends Module
              FROM `' . _DB_PREFIX_ . 'order_carrier` oc
              LEFT JOIN `' . _DB_PREFIX_ . 'carrier` c ON (c.`id_carrier` = oc.`id_carrier`)
              WHERE oc.`id_order` = ' . (int) $order->id . '
-             ORDER BY oc.`id_order_carrier` DESC
-             LIMIT 1'
+             ORDER BY oc.`id_order_carrier` DESC'
         );
         if ($orderCarrier) {
             $trackingNumber = (string) $orderCarrier['tracking_number'];
@@ -3485,13 +4187,14 @@ class AmazonMarketplacePro extends Module
     }
 
     /**
-     * Cancel an Amazon order when PS order is cancelled.
+     * Cancel an Amazon order when PS order is cancelled. Runs in the order's shop.
      */
     private function cancelOrderOnAmazon($order)
     {
+        $idShop = (int) $order->id_shop;
         $amazonOrderId = Db::getInstance()->getValue(
             'SELECT `amazon_order_id` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` = ' . (int) $order->id
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', $idShop)
         );
 
         if (!$amazonOrderId) {
@@ -3504,7 +4207,8 @@ class AmazonMarketplacePro extends Module
         $manager = new AmazonReturnManager(
             $client,
             $this->getMarketplaceId(),
-            Configuration::get('AMZPRO_SELLER_ID')
+            AmzproShop::get('AMZPRO_SELLER_ID', $idShop),
+            $idShop
         );
 
         $success = $manager->cancelOrderOnAmazon($amazonOrderId);
@@ -3524,13 +4228,10 @@ class AmazonMarketplacePro extends Module
                 `order_status` = \'Canceled\',
                 `import_status` = \'cancelled\',
                 `date_upd` = \'' . pSQL($now) . '\'
-             WHERE `id_order` = ' . (int) $order->id
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', $idShop)
         );
     }
 
-    /**
-     * Map a PrestaShop carrier name to an Amazon carrier code.
-     */
     /** Amazon carrier codes offered in the mapping UI. */
     public static $amazonCarrierCodes = array(
         'DHL', 'DPD', 'GLS', 'Hermes', 'UPS', 'USPS', 'FedEx', 'Royal Mail',
@@ -3541,12 +4242,12 @@ class AmazonMarketplacePro extends Module
 
     /**
      * Map a PS carrier to an Amazon carrier code: explicit merchant mapping
-     * first, name heuristics as fallback.
+     * first (the current shop's), name heuristics as fallback.
      */
     private function mapCarrierToAmazon($carrierName, $idCarrier = 0)
     {
         if ($idCarrier) {
-            $map = json_decode((string) Configuration::get('AMZPRO_CARRIER_MAP'), true);
+            $map = json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true);
             if (is_array($map) && !empty($map[$idCarrier])) {
                 return $map[$idCarrier];
             }
@@ -3573,13 +4274,18 @@ class AmazonMarketplacePro extends Module
 
     /* ─────────────────── Logging ─────────────────── */
 
+    /**
+     * Write an activity log line for the shop the request acts for; 0 with
+     * "All shops" selected, where the line belongs to no one shop.
+     */
     protected function logActivity($level, $source, $message)
     {
         $now = date('Y-m-d H:i:s');
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`
-             (`level`, `source`, `message`, `date_add`)
+             (`id_shop`, `level`, `source`, `message`, `date_add`)
              VALUES (
+                ' . (int) AmzproShop::id() . ',
                 \'' . pSQL($level) . '\',
                 \'' . pSQL($source) . '\',
                 \'' . pSQL(Tools::substr((string) $message, 0, 2000)) . '\',
@@ -3588,13 +4294,18 @@ class AmazonMarketplacePro extends Module
         );
     }
 
+    /**
+     * The latest log lines: the selected shop's and those that belong to no
+     * shop. With "All shops" selected, every line, with its shop's name.
+     */
     protected function getRecentLogs($limit = 50)
     {
-        $sql = 'SELECT `level`, `source`, `message`, `date_add`
+        $sql = 'SELECT `id_shop`, `level`, `source`, `message`, `date_add`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`
+                WHERE ' . (AmzproShop::isAllShops() ? '1' : AmzproShop::sqlShared()) . '
                 ORDER BY `id_amazonmarketplacepro_log` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $this->withShopNames($rows) : array();
     }
 }
