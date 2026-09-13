@@ -107,21 +107,21 @@ return array(
     'es' => '%d pedido(s) completado(s) a partir del informe.',
     'de' => '%d Bestellung(en) aus dem Bericht ergänzt.',
     'it' => '%d ordine/i completato/i dal report.',
-    'pl' => 'Uzupełniono %d zamówień na podstawie raportu.',
+    'pl' => 'Zamówienia uzupełnione na podstawie raportu: %d.',
 ),
 '%d order(s) already had a full address.' => array(
     'fr' => 'Adresse déjà complète pour %d commande(s).',
     'es' => 'Dirección ya completa en %d pedido(s).',
     'de' => '%d Bestellung(en) hatten bereits eine vollständige Adresse.',
     'it' => 'Indirizzo già completo per %d ordine/i.',
-    'pl' => 'Pełny adres miało już %d zamówień.',
+    'pl' => 'Zamówienia, które miały już pełny adres: %d.',
 ),
 '%d PrestaShop address(es) left unchanged because they had already been filled in or edited.' => array(
     'fr' => '%d adresse(s) PrestaShop laissée(s) telle(s) quelle(s), car déjà complétée(s) ou modifiée(s).',
     'es' => '%d dirección(es) de PrestaShop sin cambios porque ya se habían completado o editado.',
     'de' => '%d PrestaShop-Adresse(n) unverändert gelassen, weil sie bereits ausgefüllt oder bearbeitet waren.',
     'it' => 'Indirizzi PrestaShop lasciati invariati perché già compilati o modificati: %d.',
-    'pl' => 'Pozostawiono bez zmian %d adresów PrestaShop, ponieważ były już uzupełnione lub zmienione.',
+    'pl' => 'Adresy PrestaShop pozostawione bez zmian, bo były już uzupełnione lub zmienione: %d.',
 ),
 '%d order(s) are not imported yet. Import them first, then upload the report again.' => array(
     'fr' => '%d commande(s) pas encore importée(s). Importez-les d\'abord, puis envoyez à nouveau le rapport.',
@@ -135,7 +135,7 @@ return array(
     'es' => '%d pedido(s) omitido(s): sus datos de comprador ya se eliminaron según la política de conservación.',
     'de' => '%d Bestellung(en) übersprungen: deren Käuferdaten wurden gemäß der Aufbewahrungsfrist bereits gelöscht.',
     'it' => 'Ordini saltati: %d. I dati dell\'acquirente erano già stati rimossi secondo la politica di conservazione.',
-    'pl' => 'Pominięto %d zamówień: dane kupującego zostały już usunięte zgodnie z zasadami przechowywania.',
+    'pl' => 'Pominięte zamówienia, których dane kupującego usunięto już zgodnie z zasadami przechowywania: %d.',
 ),
 
 );

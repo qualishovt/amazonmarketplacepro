@@ -932,7 +932,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_4d42dd4f85a8be1
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_f6838b622aa7616a19d33e03333e5ffb'] = 'Nie udało się zarejestrować: ';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e6d76658648c4e514df6e5e8ec43898a'] = 'Usunięto z harmonogramu IntelliPresta. Od teraz harmonogramem steruje Twój własny cron.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_9a7e58ee13cb727cb7c4acc68f4cafe5'] = 'Ustawienia zapisane.';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_48cf4bee08b53245c08505d40dbf3454'] = 'Wyczyszczono dane kupującego z %1$d zamówień. Pozostało %2$d.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_48cf4bee08b53245c08505d40dbf3454'] = 'Zamówienia z wyczyszczonymi danymi kupującego: %1$d. Pozostało: %2$d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_dfd0188bc53a0c90e0dea19e991f32cf'] = 'Twój sklep jest teraz połączony z Amazon. Możesz zacząć synchronizację.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_f2c19a689032cb1e1e35e4e7ec7efdf2'] = 'Od teraz harmonogramem steruje Twój własny cron, a ten sklep został usunięty z harmonogramu IntelliPresta.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_7de7c6c905526136752ab033b6ece5ac'] = 'Zapisano. Naciśnij teraz „Zarejestruj ten sklep”, aby uruchomić harmonogram.';
@@ -982,11 +982,11 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_57c3c048c3746fc
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e4a47597d975e0ee44f1c72eb51557fd'] = 'Ten plik nie jest raportem zamówień Amazon: nie ma kolumny order-id.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_cc3a7818d4289bba3a85ec58b95b6317'] = 'Ten raport nie ma kolumn z adresem wysyłki. Pobierz zamiast niego raport Unshipped Orders lub New Orders.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_b16d3ca26d66036877db556a6f935bc2'] = 'Raport nie zawiera żadnych zamówień.';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_26dd8624fa0738a42b6673f1afa27061'] = 'Uzupełniono %d zamówień na podstawie raportu.';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_076ca88508f857997862f81c51e115cc'] = 'Pełny adres miało już %d zamówień.';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e2fad198556a0b6cf71ba2e4ed80244f'] = 'Pozostawiono bez zmian %d adresów PrestaShop, ponieważ były już uzupełnione lub zmienione.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_26dd8624fa0738a42b6673f1afa27061'] = 'Zamówienia uzupełnione na podstawie raportu: %d.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_076ca88508f857997862f81c51e115cc'] = 'Zamówienia, które miały już pełny adres: %d.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e2fad198556a0b6cf71ba2e4ed80244f'] = 'Adresy PrestaShop pozostawione bez zmian, bo były już uzupełnione lub zmienione: %d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1ac8490f522b5c1b58b0b7307ef40f4a'] = 'Zamówienia jeszcze niezaimportowane: %d. Najpierw je zaimportuj, a potem prześlij raport ponownie.';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_0abd7c078133fc1d0022254f570c90f4'] = 'Pominięto %d zamówień: dane kupującego zostały już usunięte zgodnie z zasadami przechowywania.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_0abd7c078133fc1d0022254f570c90f4'] = 'Pominięte zamówienia, których dane kupującego usunięto już zgodnie z zasadami przechowywania: %d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_63f484f16741e65b53a387b34a3028c5'] = 'Zaznacz co najmniej jedną ofertę do usunięcia.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_bfa3677b92b40086dc31b0c09a2c2dec'] = 'Dane dostępowe Amazon nie są uzupełnione. Wpisz je w panelu Ręczne dane SP-API.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_eff03f6358477e1d585cba1b5079e53b'] = 'Ten sklep nie jest jeszcze połączony z Amazon. Kliknij Połącz z Amazon.';

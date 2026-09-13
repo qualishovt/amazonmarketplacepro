@@ -246,7 +246,7 @@ return array(
     'es' => 'Datos del comprador borrados de %1$d pedido(s). Quedan %2$d pendientes.',
     'de' => 'Käuferdaten aus %1$d Bestellung(en) gelöscht. %2$d stehen noch aus.',
     'it' => 'Dati dell\'acquirente cancellati da %1$d ordine/i. %2$d ancora in attesa.',
-    'pl' => 'Wyczyszczono dane kupującego z %1$d zamówień. Pozostało %2$d.',
+    'pl' => 'Zamówienia z wyczyszczonymi danymi kupującego: %1$d. Pozostało: %2$d.',
 ),
 'Your shop is now connected to Amazon. You can start syncing.' => array(
     'fr' => 'Votre boutique est maintenant connectée à Amazon. Vous pouvez commencer à synchroniser.',
