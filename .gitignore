@@ -3,3 +3,18 @@ relay-server/config.php
 
 # Build artefacts
 *.zip
+
+# Marketing build output (sources stay tracked)
+marketing/ad/frames*/
+marketing/ad/probe-*/
+marketing/ad/promo7.*.html
+marketing/ad/*.mp4
+marketing/ad/vo-*/**/*.tmp
+marketing/cards/out-*/
+marketing/cards/cards.*.html
+marketing/shots/snap/
+node_modules/
+marketing/thumbnail/out-*.png
+marketing/thumbnail/thumb.*.html
+marketing/cards/sheet-*.jpg
+marketing/ad/render-*.log

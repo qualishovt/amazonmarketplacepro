@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1000px; height:1000px; overflow:hidden; }
+  body { background:#F2F4F3; font-family:"Segoe UI",system-ui,sans-serif; color:#1F2933;
+         -webkit-font-smoothing:antialiased; }
+  #card { position:relative; width:1000px; height:1000px; }
+  svg.layer { position:absolute; left:0; top:0; width:1000px; height:1000px; overflow:visible; }
+
+  /* Header: the mark and the module name, identical on every card so the set
+     reads as one family in the Addons carousel. */
+  #mark { position:absolute; left:60px; top:52px; width:62px; height:62px; border-radius:15px;
+          box-shadow:0 8px 20px rgba(31,41,51,.18); }
+  #name { position:absolute; left:140px; top:64px; font-size:27px; font-weight:700; letter-spacing:-.3px; }
+  #ver  { position:absolute; left:140px; top:97px; font-size:17px; font-weight:600; color:#8B95A1; }
+
+  #eyebrow { position:absolute; left:60px; top:176px; font-size:19px; font-weight:700;
+             letter-spacing:2.4px; text-transform:uppercase; color:#51954B; }
+  #title   { position:absolute; left:60px; top:212px; width:880px; font-size:53px; font-weight:700;
+             letter-spacing:-1.2px; line-height:1.12; }
+  #ticks   { position:absolute; left:60px; top:772px; width:880px; }
+  .tk { display:flex; align-items:center; gap:18px; margin-bottom:19px; font-size:26px; font-weight:600; }
+  .tk i { flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:#51954B;
+          display:flex; align-items:center; justify-content:center; }
+  .tk i svg { width:18px; height:18px; }
+</style>
+</head>
+<body>
+<div id="card">
+  <svg class="layer" id="bg"></svg>
+  <img id="mark" src="logo.png">
+  <div id="name">Amazon Marketplace Pro</div>
+  <div id="ver">for PrestaShop 1.6 &ndash; 9</div>
+  <div id="eyebrow"></div>
+  <div id="title"></div>
+  <svg class="layer" id="art"></svg>
+  <div id="ticks"></div>
+</div>
+
+<script src="art.js"></script>
+<script src="art2.js"></script>
+<script>
+const A = window.ART, C = A.C;
+const $ = id => document.getElementById(id);
+const F = 'font-family="Segoe UI,sans-serif"';
+
+// ── background, matching the films ───────────────────────────────────────
+const PANELS = [[70,300,190,130],[790,150,170,120],[820,560,150,150],[40,640,150,120],[430,120,150,80]];
+const DOTS = [];
+for (let i=0;i<22;i++) DOTS.push({x:40+((i*331)%930), y:150+((i*457)%800), r:3+((i*7)%7), o:(0.05+(i%5)*0.014)});
+$('bg').innerHTML =
+  PANELS.map(p=>`<rect x="${p[0]}" y="${p[1]}" width="${p[2]}" height="${p[3]}" rx="22" fill="#fff" opacity=".55"/>`).join('') +
+  DOTS.map(d=>`<circle cx="${d.x}" cy="${d.y}" r="${d.r}" fill="${C.green}" opacity="${d.o.toFixed(3)}"/>`).join('');
+
+/** A stock counter with a value baked in, rather than the animated one. */
+function counter(label, value, colour) {
+  return `<g>
+    <rect x="-105" y="-56" width="210" height="112" rx="18" fill="#fff" stroke="${C.line}" stroke-width="2.5"/>
+    <text x="0" y="-18" text-anchor="middle" ${F} font-size="21" font-weight="600" fill="${C.grey}">${label}</text>
+    <text x="0" y="34" text-anchor="middle" ${F} font-size="48" font-weight="700" fill="${colour||C.ink}">${value}</text>
+  </g>`;
+}
+
+/** A labelled screen, used wherever two systems face each other. */
+function screen(label, accent, x, y, s) {
+  return `<g transform="translate(${x},${y}) scale(${s})">${A.monitor(label, accent)}</g>`;
+}
+
+/** Parcels along an arc between two points. */
+function arc(x1, y1, x2, y2, n, lift, scale) {
+  let out = '';
+  for (let i = 0; i < n; i++) {
+    const p = (i + 1) / (n + 1);
+    const x = x1 + (x2 - x1) * p;
+    const y = y1 + (y2 - y1) * p - Math.sin(p * Math.PI) * lift;
+    out += `<g transform="translate(${x.toFixed(0)},${y.toFixed(0)}) rotate(${(-18 + p * 36).toFixed(0)})">${A.parcel(scale)}</g>`;
+  }
+  return out;
+}
+
+const CARDS = [
+  {
+    eyebrow: 'Catalogue',
+    title: 'Publish your catalogue<br>to Amazon',
+    ticks: ['Bulk publishing, hundreds at a time', 'Images, attributes and variations', 'Map your categories to Amazon types'],
+    art: () => `
+      ${screen('PrestaShop', C.green, 235, 500, .82)}
+      ${screen('Amazon', C.amber, 765, 500, .82)}
+      ${arc(400, 500, 600, 500, 3, 118, .62)}
+      <g transform="translate(500,655)">${A.tick('Listed', 190)}</g>`,
+  },
+  {
+    eyebrow: 'Stock',
+    title: 'Stock stays in step,<br>so you never oversell',
+    ticks: ['Both sides updated together', 'Scheduled and on every order', 'Safety stock and buffers'],
+    art: () => `
+      <path d="M 275 545 C 380 615, 620 615, 725 545" fill="none" stroke="${C.green}" stroke-width="5" stroke-linecap="round"/>
+      <g transform="translate(275,470)">${counter('In PrestaShop', 11, C.green)}</g>
+      <g transform="translate(725,470)">${counter('On Amazon', 11, C.green)}</g>
+      <g transform="translate(500,455) scale(.95)">${A.parcel(1)}</g>
+      <g transform="translate(500,640)">${A.tick('Sold once. Everywhere.', 330)}</g>`,
+  },
+  {
+    eyebrow: 'Pricing',
+    title: 'Repricing that respects<br>your margin',
+    ticks: ['Never below the floor you set', 'Reacts when a competitor moves', 'Buy Box win and loss tracked'],
+    art: () => `
+      <g transform="translate(500,412) scale(1.15)">${A.buybox()}</g>
+      <text x="290" y="500" text-anchor="middle" ${F} font-size="24" font-weight="600" fill="${C.grey}">Your price</text>
+      <text x="712" y="500" text-anchor="middle" ${F} font-size="24" font-weight="600" fill="${C.grey}">A competitor</text>
+      <g transform="translate(290,578) scale(1.5)">${A.tag2('23.49', C.green)}</g>
+      <g transform="translate(712,578) scale(1.5)">${A.tag2('23.50', C.red)}</g>
+      <g transform="translate(500,700)">${A.tick('Min and max price per product', 430)}</g>`,
+  },
+  {
+    eyebrow: 'Orders',
+    title: 'Amazon orders become<br>real PrestaShop orders',
+    ticks: ['Customer, address and invoice', 'Your normal order pipeline', 'Statuses mapped both ways'],
+    art: () => `
+      <g transform="translate(215,470) scale(1.15)">${A.receipt()}</g>
+      <path d="M 300 440 C 360 380, 400 380, 440 420" fill="none" stroke="${C.amber}"
+            stroke-width="4.5" stroke-dasharray="12 10" stroke-linecap="round"/>
+      <g transform="translate(620,500)">
+        <rect x="-210" y="-150" width="420" height="300" rx="20" fill="#fff" stroke="${C.line}" stroke-width="3"/>
+        <rect x="-210" y="-150" width="420" height="62" rx="20" fill="${C.green2}"/>
+        <rect x="-210" y="-110" width="420" height="22" fill="${C.green2}"/>
+        <text x="-180" y="-108" ${F} font-size="25" font-weight="700" fill="${C.green}">Order #A-30112</text>
+        ${[['Customer','Lena Hoffmann'],['Address','Torstra&szlig;e 12, Berlin'],['Invoice','#IN-004512']].map((r,i)=>`
+          <g transform="translate(0,${-42+i*68})">
+            <circle cx="-176" cy="0" r="15" fill="${C.green}"/>
+            <path d="M -183 0 l 5 6 l 10 -11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="-146" y="-5" ${F} font-size="20" font-weight="600" fill="${C.grey}">${r[0]}</text>
+            <text x="-146" y="21" ${F} font-size="23" font-weight="600" fill="${C.ink}">${r[1]}</text>
+          </g>`).join('')}
+      </g>`,
+  },
+  {
+    eyebrow: 'Fulfilment',
+    title: 'Ship it, and everyone<br>is told at once',
+    ticks: ['Confirm dispatch from your shop', 'Tracking pushed to Amazon', 'Returns handled in PrestaShop'],
+    art: () => `
+      <g transform="translate(500,650)">${A.road(880)}</g>
+      <g transform="translate(420,595) scale(1.15)"><g transform="translate(0,-58)">${A.parcel(.62)}</g>${A.van()}</g>
+      <g transform="translate(250,425)">${A.tick('Tracking added', 300)}</g>
+      <g transform="translate(710,420) scale(1.05)">${A.amazonChip('Amazon told')}</g>
+      <g transform="translate(812,590) scale(.92)">${A.phone(`<g transform="translate(0,24) scale(.62)">${A.notice('Dispatched','Arrives Thursday',C.green)}</g>`)}</g>`,
+  },
+  {
+    eyebrow: 'FBA',
+    title: 'FBA stock, watched<br>from the same screen',
+    ticks: ['Fulfilled by Amazon inventory', 'FBA and your own stock side by side', 'See low stock before it bites'],
+    art: () => `
+      <g transform="translate(500,590) scale(1.5)">
+        <g transform="translate(0,60)">${A.shelf()}</g>
+        <g transform="translate(-72,22)">${A.parcel(.72)}</g>
+        <g transform="translate(4,22)">${A.parcel(.72)}</g>
+        <g transform="translate(80,22)">${A.parcel(.72)}</g>
+        <g transform="translate(-34,-56)">${A.parcel(.72)}</g>
+        <g transform="translate(44,-56)">${A.parcel(.72)}</g>
+      </g>
+      <g transform="translate(390,418) scale(1.05)">${A.amazonChip('FBA · 240 units')}</g>
+      <g transform="translate(715,418) scale(1.25)">${A.eye()}</g>`,
+  },
+  {
+    eyebrow: 'Reach',
+    title: '23 marketplaces,<br>one back office',
+    ticks: ['Europe, the Americas, Asia-Pacific', 'Settings and prices per marketplace', 'One connection for each account'],
+    art: () => {
+      const M = ['US','CA','MX','BR','UK','IE','FR','DE','IT','ES','NL','BE','PL','SE','TR','AE','EG','SA','ZA','IN','JP','SG','AU'];
+      let codes = '';
+      M.forEach((m, i) => {
+        const ang = (i / M.length) * Math.PI * 2 - Math.PI / 2;
+        const x = 500 + Math.cos(ang) * 302, y = 548 + Math.sin(ang) * 152;
+        codes += `<g transform="translate(${x.toFixed(0)},${y.toFixed(0)})">
+          <rect x="-38" y="-21" width="76" height="42" rx="13" fill="#fff"/>
+          <text x="0" y="8" text-anchor="middle" ${F} font-size="22" font-weight="700" fill="${C.ink}">${m}</text></g>`;
+      });
+      return `<g transform="translate(500,548)">${A.globe(112)}</g>${codes}`;
+    },
+  },
+  {
+    eyebrow: 'Trust',
+    title: 'Built the official way,<br>on your own server',
+    ticks: ['Official Amazon authorisation', 'Orders and customers stay in your shop', 'No third parties, no trackers'],
+    art: () => `
+      <circle cx="325" cy="500" r="135" fill="none" stroke="${C.green}" stroke-width="2.5" opacity=".35"/>
+      <circle cx="675" cy="500" r="135" fill="none" stroke="${C.green}" stroke-width="2.5" opacity=".35"/>
+      <g transform="translate(325,495) scale(1.5)">${A.shield()}</g>
+      <g transform="translate(675,500) scale(1.5)">${A.lock()}</g>
+      <text x="325" y="690" text-anchor="middle" ${F} font-size="24" font-weight="600" fill="${C.grey}">Connect with Amazon</text>
+      <text x="675" y="690" text-anchor="middle" ${F} font-size="24" font-weight="600" fill="${C.grey}">Your data, your server</text>`,
+  },
+];
+
+const CHECK = `<svg viewBox="0 0 18 18"><path d="M 4 9 l 3.4 3.4 L 14 5.6" fill="none" stroke="#fff"
+  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+window.CARD_COUNT = CARDS.length;
+window.card = function (i) {
+  const c = CARDS[i];
+  $('eyebrow').textContent = c.eyebrow;
+  $('title').innerHTML = c.title;
+  $('art').innerHTML = c.art();
+  $('ticks').innerHTML = c.ticks.map(t => `<div class="tk"><i>${CHECK}</i><span>${t}</span></div>`).join('');
+  return c.eyebrow.toLowerCase();
+};
+window.card(0);
+</script>
+</body>
+</html>

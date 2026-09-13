@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  YouTube thumbnail for the ad, 1920x1080. Same palette, type and artwork as
+  the film (../ad/art.js), so the thumbnail and the first frame read as one.
+  Translated copies come from locale/thumb.<iso>.json through ../i18n-apply.js.
+-->
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; }
+  body { background:#F2F4F3; font-family:"Segoe UI",system-ui,sans-serif; color:#1F2933;
+         -webkit-font-smoothing:antialiased; position:relative; }
+  svg.layer { position:absolute; left:0; top:0; width:1920px; height:1080px; }
+  #brand { position:absolute; left:80px; top:62px; display:flex; align-items:center; gap:24px; }
+  #brand img { width:88px; height:88px; border-radius:21px; box-shadow:0 12px 30px rgba(31,41,51,.22); }
+  #brand span { font-size:46px; font-weight:700; letter-spacing:-.6px; }
+  #head { position:absolute; left:0; top:214px; width:1920px; text-align:center; white-space:nowrap;
+          font-size:118px; font-weight:800; letter-spacing:-3px; line-height:1.05; }
+  #sub  { position:absolute; left:0; top:370px; width:1920px; text-align:center; white-space:nowrap;
+          font-size:46px; font-weight:500; color:#6B7580; }
+  #cards { position:absolute; left:100px; top:468px; width:1720px; display:flex; gap:40px; }
+  .card { flex:1; height:352px; background:#fff; border-radius:34px; box-shadow:0 18px 44px rgba(31,41,51,.10);
+          display:flex; flex-direction:column; align-items:center; padding:34px 20px 0; overflow:hidden; }
+  .card svg { width:156px; height:156px; flex:0 0 156px; }
+  .card b { margin-top:18px; font-size:50px; font-weight:800; letter-spacing:-1px; white-space:nowrap; }
+  .card i { font-style:normal; margin-top:8px; font-size:31px; color:#6B7580; white-space:nowrap; }
+  #pills { position:absolute; left:0; top:878px; width:1920px; display:flex; justify-content:center; gap:34px; }
+  .pill { background:#fff; border-radius:999px; padding:22px 46px 22px 36px; font-size:38px; font-weight:700;
+          white-space:nowrap; box-shadow:0 10px 26px rgba(31,41,51,.08); display:flex; align-items:center; gap:18px; }
+  .pill em { width:34px; height:34px; border-radius:50%; background:#51954B; display:flex; align-items:center; justify-content:center; }
+  .pill em svg { width:18px; height:18px; }
+</style>
+</head>
+<body>
+<svg class="layer" id="bg"></svg>
+<div id="brand"><img src="../ad/logo.png"><span>Amazon Marketplace Pro</span></div>
+<div id="head">Sell on <span style="color:#FF9900">Amazon</span> from <span style="color:#241C4E">Presta</span><span style="color:#DF0067">Shop</span></div>
+<div id="sub">Listings, stock, prices and orders. One module.</div>
+<div id="cards">
+  <div class="card"><svg id="i1" viewBox="-78 -78 156 156"></svg><b>Publish</b><i>Your whole catalogue</i></div>
+  <div class="card"><svg id="i2" viewBox="-78 -78 156 156"></svg><b>Sync</b><i>Stock and prices</i></div>
+  <div class="card"><svg id="i3" viewBox="-78 -78 156 156"></svg><b>Orders</b><i>Straight into PrestaShop</i></div>
+  <div class="card"><svg id="i4" viewBox="-78 -78 156 156"></svg><b>FBA</b><i>Stock and shipments</i></div>
+</div>
+<div id="pills">
+  <div class="pill"><em></em><span>23 marketplaces</span></div>
+  <div class="pill"><em></em><span>Repricing</span></div>
+  <div class="pill"><em></em><span>Runs on its own</span></div>
+</div>
+<script src="../ad/art.js"></script>
+<script>
+const A = window.ART, C = A.C;
+const $ = id => document.getElementById(id);
+
+// background: the film's soft panels and dots
+const PANELS = [[1500,40,330,210],[60,690,280,220],[1640,740,240,250],[760,20,240,110]];
+let bg = PANELS.map(p => `<rect x="${p[0]}" y="${p[1]}" width="${p[2]}" height="${p[3]}" rx="28" fill="#FFFFFF" opacity=".55"/>`).join('');
+for (let i = 0; i < 26; i++) {
+  bg += `<circle cx="${60 + ((i * 397) % 1800)}" cy="${60 + ((i * 613) % 960)}" r="${3 + ((i * 7) % 8)}" fill="${C.green}" opacity="${(0.03 + (i % 5) * 0.012).toFixed(3)}"/>`;
+}
+$('bg').innerHTML = bg;
+
+// card icons, drawn with the film's artwork on a tinted tile
+const tile = fill => `<rect x="-78" y="-78" width="156" height="156" rx="38" fill="${fill}"/>`;
+$('i1').innerHTML = tile('#E4F0E2') + `<g transform="translate(0,34) scale(.55)">${A.shelf()}</g>`
+  + `<g transform="translate(-24,4) scale(.5)">${A.parcel(1)}</g><g transform="translate(24,4) scale(.5)">${A.parcel(1)}</g>`
+  + `<g transform="translate(0,-30) scale(.5)">${A.parcel(1)}</g>`;
+$('i2').innerHTML = tile('#FFF1DC') + `<g transform="translate(0,0) scale(.95)">${A.tag('22.49')}</g>`;
+$('i3').innerHTML = tile('#E4F0E2') + `<g transform="translate(0,4) scale(1.05)">${A.receipt()}</g>`;
+$('i4').innerHTML = tile('#FFF1DC') + `<g transform="translate(0,8) scale(.62)">${A.van()}</g>`;
+
+const CHECK = `<svg viewBox="0 0 18 18"><path d="M 4 9 l 3.4 3.4 L 14 5.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+document.querySelectorAll('.pill em').forEach(e => { e.innerHTML = CHECK; });
+
+// A translation can run longer than the English: shrink type until it fits.
+function fit(el, max) {
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > max && size > 10) { size -= 1; el.style.fontSize = size + 'px'; }
+}
+const head = $('head'), sub = $('sub');
+[head, sub].forEach(el => {
+  el.style.display = 'inline-block'; el.style.width = 'auto';
+  fit(el, 1780);
+  el.style.display = ''; el.style.width = '1920px';
+});
+document.querySelectorAll('.card').forEach(c => {
+  const inner = c.clientWidth - 40;
+  ['b', 'i'].forEach(tag => {
+    const t = c.querySelector(tag);
+    t.style.display = 'inline-block';
+    fit(t, inner);
+  });
+});
+// The pill row is full width, so measure the pills themselves.
+const pillList = [...document.querySelectorAll('.pill')];
+const pillsWidth = () => pillList.reduce((w, p) => w + p.offsetWidth, 0) + 34 * (pillList.length - 1);
+let ps = 38;
+while (pillsWidth() > 1780 && ps > 20) {
+  ps -= 1;
+  pillList.forEach(p => { p.style.fontSize = ps + 'px'; });
+}
+</script>
+</body>
+</html>

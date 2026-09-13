@@ -1,0 +1,51 @@
+1
+00:00:00,800 --> 00:00:03,512
+Your products live in PrestaShop.
+
+2
+00:00:04,400 --> 00:00:07,016
+Your buyers are on Amazon.
+
+3
+00:00:07,600 --> 00:00:12,304
+Keeping the two in step, by hand, is a job nobody wants.
+
+4
+00:00:13,400 --> 00:00:19,424
+Stock sells twice. Prices drift. Orders get missed.
+
+5
+00:00:20,600 --> 00:00:26,000
+Amazon Marketplace Pro connects them, inside the back office you already use.
+
+6
+00:00:27,300 --> 00:00:32,340
+Publish listings in bulk, with images, attributes and categories.
+
+7
+00:00:34,100 --> 00:00:39,164
+Stock and prices stay current on their own, and repricing keeps you competitive.
+
+8
+00:00:40,800 --> 00:00:47,112
+Amazon orders arrive as real PrestaShop orders, with the customer, the address, and the invoice.
+
+9
+00:00:47,800 --> 00:00:53,944
+Confirm shipments, handle returns, and watch FBA stock, without leaving your shop.
+
+10
+00:00:54,400 --> 00:01:01,960
+The most full-featured and comprehensive Amazon module on the market. From the first listing to the last invoice.
+
+11
+00:01:03,300 --> 00:01:08,100
+All marketplaces. One shop to run them from.
+
+12
+00:01:10,000 --> 00:01:18,400
+Connected through official Amazon authorisation. Your data stays on your server, and nothing is shared with any third party.
+
+13
+00:01:21,300 --> 00:01:26,220
+Amazon Marketplace Pro. On PrestaShop Addons.

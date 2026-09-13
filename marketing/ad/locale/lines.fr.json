@@ -1,0 +1,16 @@
+[
+  { "id": "l01", "text": "Vos produits vivent dans PrestaShop." },
+  { "id": "l02", "text": "Vos acheteurs sont sur Amazon." },
+  { "id": "l03", "text": "Les garder en phase, à la main, est une corvée dont personne ne veut." },
+  { "id": "l04", "text": "Le stock se vend deux fois. Les prix dérivent. Des commandes passent à la trappe." },
+  { "id": "l05", "text": "Amazon Marketplace Pro les relie, dans le back-office que vous utilisez déjà." },
+  { "id": "l06", "text": "Publiez vos annonces en masse, avec images, attributs et catégories." },
+  { "id": "l07", "text": "Stock et prix se mettent à jour tout seuls, et le repricing vous garde compétitif." },
+  { "id": "l08", "text": "Les commandes Amazon arrivent comme de vraies commandes PrestaShop, avec le client, l'adresse et la facture." },
+  { "id": "l09", "text": "Confirmez les expéditions, gérez les retours et suivez le stock F.B.A., sans quitter votre boutique.",
+    "caption": "Confirmez les expéditions, gérez les retours et suivez le stock FBA, sans quitter votre boutique." },
+  { "id": "l13", "text": "Le module Amazon le plus complet du marché. De la première annonce à la dernière facture." },
+  { "id": "l10", "text": "Toutes les marketplaces. Une seule boutique pour les gérer." },
+  { "id": "l11", "text": "Connecté via l'autorisation officielle d'Amazon. Vos données restent sur votre serveur, et rien n'est partagé avec des tiers." },
+  { "id": "l12", "text": "Amazon Marketplace Pro. Sur PrestaShop Addons." }
+]

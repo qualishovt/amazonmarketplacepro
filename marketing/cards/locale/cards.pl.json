@@ -1,0 +1,252 @@
+{
+  "pairs": [
+    [
+      "  $('art').innerHTML = c.art();",
+      "  $('art').innerHTML = c.art();\n  // A translated label can set wider than the pill or chip drawn for the\n  // English words: grow the shape around the text and keep it centred.\n  $('art').querySelectorAll('g').forEach(g => {\n    const r = g.querySelector(':scope > rect'), t = g.querySelector(':scope > text');\n    if (!r || !t) return;\n    const x = +r.getAttribute('x'), w = +r.getAttribute('width'), b = t.getBBox();\n    if (t.getAttribute('text-anchor') === 'middle') {\n      const need = b.width + 48;\n      if (need <= w) return;\n      r.setAttribute('x', (x + w / 2 - need / 2).toFixed(1));\n      r.setAttribute('width', need.toFixed(1));\n    } else {\n      const need = b.x + b.width + 28 - x;\n      if (need <= w) return;\n      const dx = -(need - w) / 2;\n      r.setAttribute('x', (x + dx).toFixed(1));\n      r.setAttribute('width', need.toFixed(1));\n      [...g.children].forEach(el => { if (el !== r) el.setAttribute('transform', 'translate(' + dx.toFixed(1) + ',0)'); });\n    }\n  });"
+    ],
+    [
+      "return c.eyebrow.toLowerCase();",
+      "return ['catalogue','stock','pricing','orders','fulfilment','fba','reach','trust'][i];"
+    ],
+    [
+      ">for PrestaShop 1.6 &ndash; 9<",
+      ">dla PrestaShop 1.6 &ndash; 9<"
+    ],
+    [
+      "'Catalogue'",
+      "'Katalog'"
+    ],
+    [
+      "'Publish your catalogue<br>to Amazon'",
+      "'Opublikuj swój katalog<br>na Amazonie'"
+    ],
+    [
+      "'Bulk publishing, hundreds at a time'",
+      "'Publikacja hurtowa, setki naraz'"
+    ],
+    [
+      "'Images, attributes and variations'",
+      "'Zdjęcia, atrybuty i warianty'"
+    ],
+    [
+      "'Map your categories to Amazon types'",
+      "'Kategorie powiązane z typami Amazon'"
+    ],
+    [
+      "'Listed', 190",
+      "'Wystawione', 210"
+    ],
+    [
+      "eyebrow: 'Stock'",
+      "eyebrow: 'Stany'"
+    ],
+    [
+      "'Stock stays in step,<br>so you never oversell'",
+      "'Stany zawsze zgodne,<br>bez nadsprzedaży'"
+    ],
+    [
+      "'Both sides updated together'",
+      "'Obie strony aktualizowane razem'"
+    ],
+    [
+      "'Scheduled and on every order'",
+      "'Według harmonogramu i przy zamówieniu'"
+    ],
+    [
+      "'Safety stock and buffers'",
+      "'Zapas bezpieczeństwa i bufory'"
+    ],
+    [
+      "'In PrestaShop'",
+      "'W PrestaShop'"
+    ],
+    [
+      "'On Amazon'",
+      "'Na Amazonie'"
+    ],
+    [
+      "'Sold once. Everywhere.'",
+      "'Sprzedane raz. Wszędzie.'"
+    ],
+    [
+      "'Pricing'",
+      "'Ceny'"
+    ],
+    [
+      "'Repricing that respects<br>your margin'",
+      "'Repricing, który szanuje<br>twoją marżę'"
+    ],
+    [
+      "'Never below the floor you set'",
+      "'Nigdy poniżej ustalonego minimum'"
+    ],
+    [
+      "'Reacts when a competitor moves'",
+      "'Reaguje, gdy konkurent zmienia cenę'"
+    ],
+    [
+      "'Buy Box win and loss tracked'",
+      "'Wygrane i przegrane Buy Box pod kontrolą'"
+    ],
+    [
+      ">Your price<",
+      ">Twoja cena<"
+    ],
+    [
+      ">A competitor<",
+      ">Konkurent<"
+    ],
+    [
+      "'23.49'",
+      "'23,49'"
+    ],
+    [
+      "'23.50'",
+      "'23,50'"
+    ],
+    [
+      "'Min and max price per product'",
+      "'Cena min. i maks. dla produktu'"
+    ],
+    [
+      "eyebrow: 'Orders'",
+      "eyebrow: 'Zamówienia'"
+    ],
+    [
+      "'Amazon orders become<br>real PrestaShop orders'",
+      "'Zamówienia z Amazona<br>trafiają do PrestaShop'"
+    ],
+    [
+      "'Customer, address and invoice'",
+      "'Klient, adres i faktura'"
+    ],
+    [
+      "'Your normal order pipeline'",
+      "'Twój zwykły proces zamówień'"
+    ],
+    [
+      "'Statuses mapped both ways'",
+      "'Statusy zgodne w obie strony'"
+    ],
+    [
+      ">Order #A-30112<",
+      ">Zamówienie #A-30112<"
+    ],
+    [
+      "['Customer',",
+      "['Klient',"
+    ],
+    [
+      "['Address',",
+      "['Adres',"
+    ],
+    [
+      "['Invoice',",
+      "['Faktura',"
+    ],
+    [
+      "'Fulfilment'",
+      "'Wysyłka'"
+    ],
+    [
+      "'Ship it, and everyone<br>is told at once'",
+      "'Wyślij, a wszyscy<br>od razu o tym wiedzą'"
+    ],
+    [
+      "'Confirm dispatch from your shop'",
+      "'Potwierdzaj wysyłkę ze sklepu'"
+    ],
+    [
+      "'Tracking pushed to Amazon'",
+      "'Numer śledzenia trafia do Amazona'"
+    ],
+    [
+      "'Returns handled in PrestaShop'",
+      "'Zwroty obsługiwane w PrestaShop'"
+    ],
+    [
+      "'Tracking added'",
+      "'Dodano śledzenie'"
+    ],
+    [
+      "'Amazon told'",
+      "'Amazon powiadomiony'"
+    ],
+    [
+      "'Dispatched'",
+      "'Wysłano'"
+    ],
+    [
+      "'Arrives Thursday'",
+      "'Dotrze w czwartek'"
+    ],
+    [
+      "'FBA stock, watched<br>from the same screen'",
+      "'Stany FBA pod kontrolą<br>na tym samym ekranie'"
+    ],
+    [
+      "'Fulfilled by Amazon inventory'",
+      "'Zapasy w Realizacji przez Amazon'"
+    ],
+    [
+      "'FBA and your own stock side by side'",
+      "'FBA i twoje stany obok siebie'"
+    ],
+    [
+      "'See low stock before it bites'",
+      "'Niskie stany widać z wyprzedzeniem'"
+    ],
+    [
+      "'FBA · 240 units'",
+      "'FBA · 240 szt.'"
+    ],
+    [
+      "'Reach'",
+      "'Zasięg'"
+    ],
+    [
+      "'23 marketplaces,<br>one back office'",
+      "'23 rynki,<br>jeden panel'"
+    ],
+    [
+      "'Europe, the Americas, Asia-Pacific'",
+      "'Europa, Ameryki, Azja i Pacyfik'"
+    ],
+    [
+      "'Settings and prices per marketplace'",
+      "'Ustawienia i ceny dla każdego rynku'"
+    ],
+    [
+      "'One connection for each account'",
+      "'Jedno połączenie na konto'"
+    ],
+    [
+      "'Trust'",
+      "'Zaufanie'"
+    ],
+    [
+      "'Built the official way,<br>on your own server'",
+      "'Oficjalnie i na<br>twoim własnym serwerze'"
+    ],
+    [
+      "'Official Amazon authorisation'",
+      "'Oficjalna autoryzacja Amazon'"
+    ],
+    [
+      "'Orders and customers stay in your shop'",
+      "'Zamówienia i klienci zostają w sklepie'"
+    ],
+    [
+      "'No third parties, no trackers'",
+      "'Bez firm trzecich i trackerów'"
+    ],
+    [
+      ">Connect with Amazon<",
+      ">Połącz z Amazon<"
+    ],
+    [
+      ">Your data, your server<",
+      ">Twoje dane, twój serwer<"
+    ]
+  ]
+}

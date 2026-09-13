@@ -1,0 +1,93 @@
+{
+ "l01": {
+  "rate": 0,
+  "speech": 2.98,
+  "file": 2.98,
+  "allowed": 3.3,
+  "ok": true
+ },
+ "l02": {
+  "rate": 0,
+  "speech": 2.71,
+  "file": 2.71,
+  "allowed": 2.9,
+  "ok": true
+ },
+ "l03": {
+  "rate": 0,
+  "speech": 4.58,
+  "file": 4.58,
+  "allowed": 5.5,
+  "ok": true
+ },
+ "l04": {
+  "rate": 0,
+  "speech": 6.77,
+  "file": 6.77,
+  "allowed": 6.9,
+  "ok": true
+ },
+ "l05": {
+  "rate": 0,
+  "speech": 5.86,
+  "file": 5.86,
+  "allowed": 6.4,
+  "ok": true
+ },
+ "l06": {
+  "rate": 0,
+  "speech": 5.3,
+  "file": 5.3,
+  "allowed": 6.5,
+  "ok": true
+ },
+ "l07": {
+  "rate": 0,
+  "speech": 5.95,
+  "file": 5.95,
+  "allowed": 6.4,
+  "ok": true
+ },
+ "l08": {
+  "rate": 0,
+  "speech": 6.46,
+  "file": 6.46,
+  "allowed": 6.7,
+  "ok": true
+ },
+ "l09": {
+  "rate": 0,
+  "speech": 6.17,
+  "file": 6.17,
+  "allowed": 6.3,
+  "ok": true
+ },
+ "l13": {
+  "rate": 0,
+  "speech": 6.67,
+  "file": 6.67,
+  "allowed": 8.2,
+  "ok": true
+ },
+ "l10": {
+  "rate": 0,
+  "speech": 4.94,
+  "file": 4.94,
+  "allowed": 6,
+  "ok": true
+ },
+ "l11": {
+  "rate": 0,
+  "speech": 8.59,
+  "file": 8.59,
+  "allowed": 10.6,
+  "ok": true
+ },
+ "l12": {
+  "rate": 0,
+  "speech": 4.68,
+  "file": 4.68,
+  "allowed": 5.8,
+  "ok": true
+ }
+}

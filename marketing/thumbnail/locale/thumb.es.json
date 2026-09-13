@@ -1,0 +1,48 @@
+{
+  "pairs": [
+    [
+      ">Sell on <span style=\"color:#FF9900\">Amazon</span> from <span style=\"color:#241C4E\">Presta</span><span style=\"color:#DF0067\">Shop</span><",
+      ">Vende en <span style=\"color:#FF9900\">Amazon</span> desde <span style=\"color:#241C4E\">Presta</span><span style=\"color:#DF0067\">Shop</span><"
+    ],
+    [
+      ">Listings, stock, prices and orders. One module.<",
+      ">Anuncios, stock, precios y pedidos. Un solo módulo.<"
+    ],
+    [
+      "<b>Publish</b>",
+      "<b>Publicar</b>"
+    ],
+    [
+      "<i>Your whole catalogue</i>",
+      "<i>Todo tu catálogo</i>"
+    ],
+    [
+      "<b>Sync</b>",
+      "<b>Sincronizar</b>"
+    ],
+    [
+      "<i>Stock and prices</i>",
+      "<i>Stock y precios</i>"
+    ],
+    [
+      "<b>Orders</b>",
+      "<b>Pedidos</b>"
+    ],
+    [
+      "<i>Straight into PrestaShop</i>",
+      "<i>Directos a PrestaShop</i>"
+    ],
+    [
+      "<i>Stock and shipments</i>",
+      "<i>Stock y envíos</i>"
+    ],
+    [
+      "<span>Runs on its own</span>",
+      "<span>Funciona solo</span>"
+    ],
+    [
+      "'22.49'",
+      "'22,49'"
+    ]
+  ]
+}

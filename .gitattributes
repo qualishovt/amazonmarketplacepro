@@ -29,3 +29,6 @@ logo-rounded.png    export-ignore
 .gitignore          export-ignore
 .gitattributes      export-ignore
 Readme.md           export-ignore
+
+# Marketing sources: the ad, the listing images and the screenshot tooling.
+marketing/          export-ignore

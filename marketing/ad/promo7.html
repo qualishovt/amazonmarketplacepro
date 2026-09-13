@@ -1,0 +1,524 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; }
+  body { background:#F2F4F3; font-family:"Segoe UI",system-ui,sans-serif; color:#1F2933;
+         -webkit-font-smoothing:antialiased; }
+  #stage { position:relative; width:1920px; height:1080px; transform-origin:960px 540px; }
+  .scene { position:absolute; inset:0; opacity:0; transform-origin:960px 540px; }
+  .h1 { font-size:70px; font-weight:700; letter-spacing:-1px; line-height:1.08; }
+  .h2 { font-size:46px; font-weight:700; letter-spacing:-.4px; }
+  .sub { font-size:30px; font-weight:500; color:#6B7580; }
+  .centre { position:absolute; left:0; width:1920px; text-align:center; }
+  .mark { border-radius:26px; box-shadow:0 24px 55px rgba(31,41,51,.24); }
+  svg.layer { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:visible; }
+  .capt { position:absolute; text-align:center; font-size:27px; font-weight:600; }
+  .capts { display:block; font-size:21px; font-weight:500; color:#8B95A1; margin-top:9px; line-height:1.45; }
+  /* Subtitles sit outside #stage so the gentle drift of the stage does not
+     move them - a caption that floats is harder to read than one that does not. */
+  #sub { position:absolute; left:0; top:952px; width:1920px; text-align:center; pointer-events:none; }
+  #subt { display:inline-block; max-width:1560px; padding:13px 34px; border-radius:18px;
+          background:rgba(31,41,51,.86); color:#fff; font-size:36px; font-weight:600; line-height:1.3;
+          opacity:0; }
+</style>
+</head>
+<body>
+<svg class="layer" id="bg"></svg>
+<div id="stage">
+
+  <div class="scene" id="s1">
+    <div class="centre h1" id="s1h" style="top:120px;"></div>
+    <svg class="layer" id="s1art"></svg>
+    <div class="centre sub" id="s1sub" style="top:838px;"></div>
+  </div>
+
+  <div class="scene" id="s2">
+    <div class="centre h1" id="s2h" style="top:150px;">Every gap costs money.</div>
+    <svg class="layer" id="s2art"></svg>
+  </div>
+
+  <div class="scene" id="s3">
+    <div class="centre h1" id="s3h" style="top:130px;">One module. Both in step.</div>
+    <svg class="layer" id="s3art"></svg>
+    <img id="s3mark" class="mark" src="logo.png" style="position:absolute; left:895px; top:465px; width:150px; height:150px;">
+    <div class="centre sub" id="s3sub" style="top:838px;">Amazon Marketplace Pro &mdash; in the back office you already use.</div>
+  </div>
+
+  <div class="scene" id="s4">
+    <div class="centre h2" id="s4h" style="top:120px;"></div>
+    <div class="centre sub" id="s4s" style="top:196px;"></div>
+    <svg class="layer" id="s4art"></svg>
+  </div>
+
+  <div class="scene" id="s5">
+    <div class="centre h1" id="s5h" style="top:120px;">All marketplaces.</div>
+    <div class="centre sub" id="s5s" style="top:228px;">One shop to run them all from.</div>
+    <svg class="layer" id="s5art"></svg>
+  </div>
+
+  <div class="scene" id="s6">
+    <div class="centre h1" id="s6h" style="top:130px;">Built for the rules.</div>
+    <svg class="layer" id="s6art"></svg>
+    <div id="s6caps"></div>
+  </div>
+
+  <div class="scene" id="s7">
+    <img id="s7mark" class="mark" src="logo.png" style="position:absolute; left:875px; top:250px; width:170px; height:170px;">
+    <div class="centre h1" id="s7h" style="top:470px;">Amazon Marketplace Pro</div>
+    <div class="centre sub" id="s7s" style="top:580px;">Listings, stock, prices, orders, shipping, returns, FBA.</div>
+    <div class="centre" id="s7price" style="top:695px;"></div>
+  </div>
+
+  <div class="scene" id="sA">
+    <div class="centre h1" id="sAh" style="top:288px;">The most full-featured and comprehensive<br>Amazon module on the market.</div>
+    <div class="centre sub" id="sAs" style="top:456px;">From the first listing to the last invoice.</div>
+    <svg class="layer" id="sAart"></svg>
+  </div>
+
+</div>
+
+
+<script src="art.js"></script>
+<script src="timeline1.js"></script>
+<script>
+const E = {
+  out:     t => 1 - Math.pow(1-t, 3),
+  outBack: t => { const c1=1.9, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); },
+  inOut:   t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2,
+  elastic: t => t<=0?0:t>=1?1:Math.pow(2,-9*t)*Math.sin((t*10-0.75)*(2*Math.PI/3))+1,
+};
+const cl  = v => v<0?0:v>1?1:v;
+const seg = (t,a,b,e) => (e||E.out)(cl((t-a)/(b-a)));
+const $   = id => document.getElementById(id);
+const fl  = (t,a,p,ph) => Math.sin((t/p + (ph||0)) * Math.PI*2) * a;
+const A   = window.ART, C = A.C;
+
+// A name card for the marketplace side of the picture, in our own
+// palette. Amazon is named, never imitated.
+const sign = () => `<g>
+  <rect x="-128" y="-45" width="256" height="90" rx="24" fill="${C.white}"
+        stroke="${C.line}" stroke-width="3"/>
+  <text x="0" y="-4" text-anchor="middle" font-family="Segoe UI,sans-serif"
+        font-size="42" font-weight="700" letter-spacing="-1" fill="${C.amzInk}">amazon</text>
+  <path d="M -76 6 C -60 23, -32 31, -4 30 C 6 29.5, 14 28, 20 25
+           L 36 4 L 26 29 C 13 35, -12 39, -34 34 C -54 30, -70 19, -76 6 Z"
+        fill="${C.amber}"/>
+</g>`;
+
+// ── background: soft floating panels + a dot field, as in the reference ───
+const PANELS = [
+  [120,90,300,190],[1560,60,320,200],[1620,700,260,240],[60,760,280,200],
+  [820,40,220,120],[400,880,260,150],[1180,900,300,140]
+];
+const DOTS = [];
+for (let i=0;i<34;i++) DOTS.push({x:60+((i*397)%1800), y:60+((i*613)%960),
+  r:3+((i*7)%8), s:.2+((i%5)*.05), p:8+(i%6)*2.5, ph:(i%10)/10});
+$('bg').innerHTML =
+  PANELS.map((p,i)=>`<rect class="pn" data-i="${i}" x="${p[0]}" y="${p[1]}" width="${p[2]}" height="${p[3]}"
+     rx="26" fill="#FFFFFF" opacity=".55"/>`).join('') +
+  DOTS.map((d,i)=>`<circle class="bd" data-i="${i}" cx="${d.x}" cy="${d.y}" r="${d.r}"
+     fill="${C.green}" opacity="${(d.s*0.13).toFixed(3)}"/>`).join('');
+const PN = [...document.querySelectorAll('.pn')], BD = [...document.querySelectorAll('.bd')];
+
+// ── S1: a desk on the left, a fulfilment shelf on the right ──────────────
+$('s1art').innerHTML = `
+  <g id="s1desk" transform="translate(430,520)">
+    <g transform="translate(0,-30)">${A.monitor('PrestaShop', C.green)}</g>
+    <rect x="-260" y="120" width="520" height="16" rx="8" fill="${C.grey}" opacity=".28"/>
+    <g transform="translate(-205,74)">${A.plant()}</g>
+    <g transform="translate(190,102)">${A.mug()}</g>
+  </g>
+  <g id="s1shelf" transform="translate(1480,520)" style="--s:1">
+    <g id="s1amz" transform="translate(0,-132) scale(0.8)">${sign('Amazon')}</g>
+    <g transform="translate(0,110)">${A.shelf()}</g>
+    <g class="s1p" data-i="0" transform="translate(-72,72)">${A.parcel(0.8)}</g>
+    <g class="s1p" data-i="1" transform="translate(6,72)">${A.parcel(0.8)}</g>
+    <g class="s1p" data-i="2" transform="translate(84,72)">${A.parcel(0.8)}</g>
+    <g class="s1p" data-i="3" transform="translate(-34,-20)">${A.parcel(0.8)}</g>
+    <g class="s1p" data-i="4" transform="translate(46,-20)">${A.parcel(0.8)}</g>
+  </g>
+  <g id="s1x"></g>`;
+const XPOS = [[880,420],[1010,530],[900,640],[1060,400],[960,720]];
+$('s1x').innerHTML = XPOS.map((p,i)=>`<g class="mn" data-i="${i}" opacity="0">
+    <circle r="34" fill="${C.red2}"/>
+    <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" stroke="${C.red}" stroke-width="6" stroke-linecap="round"/></g>`).join('');
+
+// ── S2: a declining chart with a callout, and a rising cost ──────────────
+$('s2art').innerHTML = `
+  <g id="s2chart" transform="translate(560,720)">
+    <line x1="-40" y1="14" x2="330" y2="14" stroke="${C.line}" stroke-width="4"/>
+    <g id="s2bars"></g>
+    <text x="145" y="76" text-anchor="middle" font-family="Segoe UI" font-size="25"
+          font-weight="600" fill="${C.grey}">Sales you could have had</text>
+  </g>
+  <g id="s2curve" transform="translate(1180,700)">
+    <line x1="-20" y1="34" x2="380" y2="34" stroke="${C.line}" stroke-width="4"/>
+    <path id="s2line" d="M 0 -10 C 70 -40, 120 40, 190 -6 C 260 -50, 300 24, 370 -70"
+          fill="none" stroke="${C.red}" stroke-width="7" stroke-linecap="round"/>
+    <circle class="s2d" data-i="0" cx="0"   cy="-10" r="9" fill="${C.amber}" opacity="0"/>
+    <circle class="s2d" data-i="1" cx="190" cy="-6"  r="9" fill="${C.amber}" opacity="0"/>
+    <circle class="s2d" data-i="2" cx="370" cy="-70" r="9" fill="${C.red}"   opacity="0"/>
+    <text x="180" y="106" text-anchor="middle" font-family="Segoe UI" font-size="25"
+          font-weight="600" fill="${C.grey}">Time spent fixing it by hand</text>
+  </g>
+  <g id="s2call" transform="translate(880,400)" opacity="0">${A.callout('Overselling')}</g>
+  <g id="s2call2" transform="translate(1420,420)" opacity="0">${A.callout('Stale prices', C.amber)}</g>`;
+
+// callout() in art.js draws a fixed 156px box, but "Overselling" and "Stale
+// prices" both set wider than that at 30px bold, so the labels ran out to the
+// edges. Ask the browser how wide it actually laid the text out and grow the
+// box to match, instead of guessing at glyph widths. getBBox works here
+// because the scenes are still displayed at this point - they carry opacity 0,
+// not display:none, until window.render() first runs at the end of the script.
+['s2call', 's2call2'].forEach(id => {
+  const g = $(id), rect = g.querySelector('rect');
+  const box = Math.max(156, Math.ceil(g.querySelector('text').getBBox().width) + 64);
+  rect.setAttribute('width', box);
+  rect.setAttribute('x', (-box / 2).toFixed(1));
+});
+
+// ── S3: two screens joined by the module ─────────────────────────────────
+$('s3art').innerHTML = `
+  <g id="s3a" transform="translate(430,540)">${A.monitor('PrestaShop', C.green)}</g>
+  <g id="s3b" transform="translate(1490,540)">${A.monitor('Amazon', C.amber)}</g>
+  <path id="s3flow" d="M 600 540 C 720 540, 1200 540, 1320 540" fill="none"
+        stroke="${C.green}" stroke-width="7" stroke-linecap="round" opacity="0"/>
+  <g id="s3pk"></g>`;
+$('s3pk').innerHTML = [0,1,2,3].map(i=>
+  `<g class="s3p" data-i="${i}" opacity="0">${A.parcel(0.5)}</g>`).join('');
+
+// ── S4: one illustrated tableau per feature ─────────────────────────────
+$('s4art').innerHTML = `
+  <g id="f_shop" transform="translate(400,600)">${A.monitor('PrestaShop', C.green)}</g>
+  <g id="f_shelf" transform="translate(1500,640)">
+    <g transform="translate(0,60)">${A.shelf()}</g>
+    <g class="fsp" data-i="0" transform="translate(-72,22)">${A.parcel(0.72)}</g>
+    <g class="fsp" data-i="1" transform="translate(4,22)">${A.parcel(0.72)}</g>
+    <g class="fsp" data-i="2" transform="translate(80,22)">${A.parcel(0.72)}</g>
+  </g>
+  <g id="f_tag"  transform="translate(1490,600)" opacity="0">${A.tag('22.49')}</g>
+  <g id="f_bars" transform="translate(1390,760)" opacity="0"></g>
+  <g id="f_van"  transform="translate(1470,660)" opacity="0">${A.van()}</g>
+  <g id="f_clock" transform="translate(1690,500)" opacity="0">${A.clock(0)}</g>
+  <g id="f_orders" transform="translate(1470,628)" opacity="0">
+    <g class="fo" transform="translate(-52,16) rotate(-7)">${A.receipt()}</g>
+    <g class="fo" transform="translate(4,-2)">${A.receipt()}</g>
+    <g class="fo" transform="translate(60,16) rotate(7)">${A.receipt()}</g>
+  </g>
+  <g id="f_amz" transform="translate(1470,430)" opacity="0">${sign('Amazon')}</g>
+  <g id="f_fly"></g>`;
+$('f_fly').innerHTML = [0,1,2,3].map(i=>
+  `<g class="ff" data-i="${i}" opacity="0"></g>`).join('');
+
+// ── S5: a globe with pins, market codes orbiting ────────────────────────
+const MARKETS = ['US','CA','MX','BR','UK','IE','FR','DE','IT','ES','NL','BE','PL','SE','TR',
+                 'AE','EG','SA','ZA','IN','JP','SG','AU'];
+$('s5art').innerHTML = `
+  <g id="s5globe" transform="translate(960,640)">${A.globe(150)}</g>
+  <g id="s5pins"></g>
+  <g id="s5codes"></g>`;
+$('s5pins').innerHTML = [[-70,-52],[42,-74],[86,10],[-40,44],[10,-14],[-96,6]]
+  .map((p,i)=>`<g class="sp" data-i="${i}" opacity="0" transform="translate(${960+p[0]},${640+p[1]})">
+     ${A.pin(i%2 ? C.amber : C.green)}</g>`).join('');
+$('s5codes').innerHTML = MARKETS.map((m,i)=>
+  `<g class="mc" data-i="${i}" opacity="0">
+     <rect x="-44" y="-24" width="88" height="48" rx="14" fill="#fff"/>
+     <text x="0" y="9" text-anchor="middle" font-family="Segoe UI" font-size="25"
+           font-weight="700" fill="${C.ink}">${m}</text></g>`).join('');
+
+// ── S6: shield, lock, clock with captions ───────────────────────────────
+const TRUST = [
+  ['Official authorisation','Connect with Amazon.<br>No credentials to copy or store.'],
+  ['Your data stays yours','Orders live in your shop.<br>Nothing passes through our servers.'],
+  ['Nothing shared with anyone','No third parties, no analytics,<br>no trackers in the module.'],
+];
+$('s6art').innerHTML = `
+  <g class="ti" data-i="0" transform="translate(480,520)" opacity="0">${A.shield()}</g>
+  <g class="ti" data-i="1" transform="translate(960,520)" opacity="0">${A.lock()}</g>
+  <g class="ti" data-i="2" transform="translate(1440,520)" opacity="0">${A.noShare()}</g>`;
+$('s6caps').innerHTML = TRUST.map((t,i)=>
+  `<div class="tc capt" data-i="${i}" style="opacity:0; left:${[240,720,1200][i]}px; top:650px; width:480px;">
+     ${t[0]}<span class="capts">${t[1]}</span></div>`).join('');
+
+$('s7price').innerHTML = `<span id="s7p" style="display:inline-block; opacity:0; padding:24px 58px;
+  border-radius:999px; background:${C.green}; color:#fff; font-size:35px; font-weight:700;
+  box-shadow:0 18px 44px rgba(81,149,75,.34);">On PrestaShop Addons</span>`;
+
+const FEATURES = [
+  { h:'Listings, published for you', s:'Images, attributes and categories &mdash; in bulk.', art:'listings' },
+  { h:'Stock and prices, always current', s:'Repricing keeps you competitive without watching it.', art:'prices' },
+  { h:'Orders arrive as real orders', s:'Customer, address and invoice, in your normal pipeline.', art:'orders' },
+  { h:'Shipments, returns and FBA', s:'Confirm tracking and handle returns without leaving PrestaShop.', art:'ship' },
+];
+
+// ── SA: the claim, then what the module covers. Every chip is a feature that
+// exists in the module; the grid is there so the breadth behind the claim can
+// be read off the screen rather than taken on trust.
+const CAPS = [
+  'Listings','Bulk feeds','Product types','Variations','Categories','Images',
+  'Stock sync','Price rules','Repricing','Buy Box','Sale prices','B2B tiers',
+  'Orders','Invoices','Shipping','Returns','FBA & MCF','Reports'
+];
+const capPos = i => [360 + (i % 6) * 240, 562 + ((i / 6) | 0) * 96];
+
+// One assignment, not innerHTML += : appending re-parses the layer and every
+// node captured below would then be a detached copy animating out of sight.
+$('sAart').innerHTML = CAPS.map((c, i) => `
+  <g class="cap" transform="translate(${capPos(i)[0]},${capPos(i)[1]})" opacity="0">
+    <rect x="-110" y="-39" width="220" height="78" rx="18" fill="${C.white}" stroke="${C.line}" stroke-width="2.5"/>
+    <circle cx="-80" cy="0" r="14" fill="${C.green2}"/>
+    <path d="M -87 0 l 5 5 l 9 -10" fill="none" stroke="${C.green}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="-56" y="8" font-family="Segoe UI,sans-serif" font-size="22" font-weight="600" fill="${C.ink}">${c}</text>
+  </g>`).join('') + `
+  <g id="sAbadge" transform="translate(960,172)" opacity="0">
+    <path d="M -56 -140 L -18 -140 L -6 -62 L -44 -50 Z" fill="#E07C00"/>
+    <path d="M  56 -140 L  18 -140 L   6 -62 L  44 -50 Z" fill="#FFB84D"/>
+    <circle r="90" fill="${C.amber2}"/>
+    <circle r="76" fill="${C.amber}"/>
+    <circle r="63" fill="none" stroke="${C.white}" stroke-width="3" opacity=".5"/>
+    <text x="0" y="27" text-anchor="middle" font-family="Segoe UI,sans-serif"
+          font-size="76" font-weight="800" fill="${C.white}">#1</text>
+  </g>`;
+const CAPG = [...document.querySelectorAll('.cap')];
+const SCENES = [['s1',0,13],['s2',12.6,20.3],['s3',19.9,27],['s4',26.6,54],
+                ['sA',53.6,62.9],['s5',62.5,69.6],['s6',69.2,80.9],['s7',80.5,88.9]];
+const FADE = 0.55;
+
+window.render = function (t) {
+  PN.forEach((p,i)=>p.setAttribute('transform',
+    `translate(${fl(t,16,13+i*1.7,i*.13).toFixed(1)},${fl(t,12,11+i*1.3,i*.21).toFixed(1)})`));
+  BD.forEach((c,i)=>{ const d=DOTS[i];
+    c.setAttribute('cx',(d.x+fl(t,24*d.s,d.p,d.ph)).toFixed(1));
+    c.setAttribute('cy',(d.y+fl(t,17*d.s,d.p*1.4,d.ph+.3)).toFixed(1)); });
+  $('stage').style.transform =
+    `translate(${fl(t,7,17).toFixed(2)}px,${fl(t,6,13,.25).toFixed(2)}px) scale(${(1+fl(t,.004,23)).toFixed(4)})`;
+
+  for (const [id,a,b] of SCENES) {
+    const el=$(id), inP=seg(t,a,a+FADE,E.inOut), outP=seg(t,b-FADE,b,E.inOut), vis=cl(inP-outP);
+    el.style.opacity=vis; el.style.display = vis<=0.001?'none':'block';
+    if (vis>0.001) el.style.transform =
+      `translateY(${((1-inP)*55 - outP*45).toFixed(1)}px) scale(${(0.985+0.015*inP-0.02*outP).toFixed(4)})`;
+  }
+
+  { // S1
+    const u=t, a=seg(u,.2,1.5), b=seg(u,.5,1.9);
+    $('s1desk').setAttribute('transform',
+      `translate(${(430-300*(1-a)).toFixed(1)},${(520+fl(u,9,6)).toFixed(1)})`);
+    $('s1shelf').setAttribute('transform',
+      `translate(${(1470+300*(1-b)).toFixed(1)},${(520+fl(u,9,6.7,.4)).toFixed(1)}) scale(1.25)`);
+    $('s1desk').setAttribute('opacity',a); $('s1shelf').setAttribute('opacity',b);
+    document.querySelectorAll('.s1p').forEach((g,i)=>{
+      const p=seg(u,1.1+i*.13,1.9+i*.13,E.outBack);
+      g.setAttribute('opacity',cl(p));
+      const base=[[-72,72],[6,72],[84,72],[-34,-20],[46,-20]][i];
+      g.setAttribute('transform',`translate(${base[0]},${(base[1]-26*(1-p)).toFixed(1)}) scale(${(0.6+0.4*p).toFixed(3)})`);
+    });
+    const showB=u>=4.4, h1=seg(u,.9,1.8), sw=seg(u,4.0,4.5), h2=seg(u,4.4,5.2);
+    $('s1h').innerHTML = showB ? 'Your buyers are on <span style="color:#FF9900">Amazon</span>.'
+                               : 'Your products live in <span style="color:#241C4E">Presta</span><span style="color:#DF0067">Shop</span>.';
+    $('s1h').style.opacity = showB ? h2 : h1*(1-sw);
+    $('s1h').style.transform = `translateY(${(26*(1-(showB?h2:h1))).toFixed(1)}px)`;
+    document.querySelectorAll('#s1x .mn').forEach((g,i)=>{
+      const p=seg(u,7.9+i*.28,8.6+i*.28,E.elastic), [x,y]=XPOS[i];
+      g.setAttribute('opacity',cl(p)*.95);
+      g.setAttribute('transform',`translate(${(x+fl(u,5,2.1+i*.3,i*.2)).toFixed(1)},${(y+fl(u,6,1.7+i*.25,i*.15)).toFixed(1)}) scale(${(0.3+0.7*cl(p)).toFixed(3)}) rotate(${fl(u,7,3+i*.4,i*.3).toFixed(1)})`);
+    });
+    const s=seg(u,7.6,8.5);
+    $('s1sub').textContent='Keeping them in step is a job nobody wants.';
+    $('s1sub').style.opacity=s*.95;
+    $('s1sub').style.transform=`translateY(${(20*(1-s)+fl(u,4,6.5)).toFixed(1)}px)`;
+  }
+
+  { // S2
+    const u=t-12.6, h=seg(u,.25,1.1);
+    $('s2h').style.opacity=h; $('s2h').style.transform=`translateY(${(28*(1-h)+fl(u,5,7)).toFixed(1)}px)`;
+    const g=seg(u,.9,3.0,E.inOut);
+    $('s2bars').innerHTML = A.bars([1,.86,.66,.44,.26,.12], g, C.green);
+    document.querySelectorAll('#s2bars rect').forEach((r,i)=>{
+      r.setAttribute('opacity', cl(seg(u,.9+i*.12,1.5+i*.12)));
+    });
+    const lp=$('s2line'), L=lp.getTotalLength();
+    lp.setAttribute('stroke-dasharray',L);
+    const d=seg(u,1.4,3.4,E.inOut);
+    lp.setAttribute('stroke-dashoffset',(L*(1-d)).toFixed(1));
+    lp.setAttribute('opacity',cl(d*4));
+    document.querySelectorAll('.s2d').forEach((c,i)=>
+      c.setAttribute('opacity', cl(seg(u,2.0+i*.42,2.5+i*.42))));
+    const c1=seg(u,3.2,4.0,E.outBack), c2=seg(u,3.9,4.7,E.outBack);
+    $('s2call').setAttribute('opacity',cl(c1));
+    $('s2call').setAttribute('transform',`translate(880,${(400-24*(1-c1)+fl(u,7,4.6)).toFixed(1)}) scale(${(0.7+0.3*c1).toFixed(3)})`);
+    $('s2call2').setAttribute('opacity',cl(c2));
+    $('s2call2').setAttribute('transform',`translate(1420,${(420-24*(1-c2)+fl(u,7,5.2,.4)).toFixed(1)}) scale(${(0.7+0.3*c2).toFixed(3)})`);
+  }
+
+  { // S3
+    const u=t-19.9, h=seg(u,.25,1.1);
+    $('s3h').style.opacity=h; $('s3h').style.transform=`translateY(${(28*(1-h)+fl(u,5,8)).toFixed(1)}px)`;
+    const a=seg(u,.4,1.6), b=seg(u,.6,1.8);
+    $('s3a').setAttribute('opacity',a); $('s3b').setAttribute('opacity',b);
+    $('s3a').setAttribute('transform',`translate(${(430-170*(1-a)).toFixed(1)},${(540+fl(u,8,6)).toFixed(1)})`);
+    $('s3b').setAttribute('transform',`translate(${(1490+170*(1-b)).toFixed(1)},${(540+fl(u,8,6.6,.4)).toFixed(1)})`);
+    const mk=seg(u,1.5,2.7,E.outBack);
+    $('s3mark').style.opacity=cl(mk*1.3);
+    $('s3mark').style.transform=`translateY(${fl(u,9,4.5).toFixed(1)}px) scale(${(0.35+0.65*mk).toFixed(3)}) rotate(${((1-mk)*-25+fl(u,1.6,7)).toFixed(2)}deg)`;
+    const fp=$('s3flow'), L=fp.getTotalLength();
+    fp.setAttribute('stroke-dasharray',L);
+    const dr=seg(u,2.3,3.7,E.inOut);
+    fp.setAttribute('opacity',cl(dr*3)*.85);
+    fp.setAttribute('stroke-dashoffset',(L*(1-dr)).toFixed(1));
+    document.querySelectorAll('.s3p').forEach((g,i)=>{
+      const cyc=2.6, st=3.1+i*.55, k=(u-st)/cyc;
+      if (k<0) { g.setAttribute('opacity',0); return; }
+      const p=k-Math.floor(k), fwd=i%2===0;
+      const x=fwd ? 620+(1300-620)*p : 1300-(1300-620)*p;
+      const y=540+Math.sin(p*Math.PI)*-70;
+      g.setAttribute('opacity',(Math.sin(p*Math.PI)*cl(dr*2)).toFixed(3));
+      g.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(Math.sin(p*Math.PI*2)*10).toFixed(1)})`);
+    });
+    const s=seg(u,4.6,5.5);
+    $('s3sub').style.opacity=s*.95;
+    $('s3sub').style.transform=`translateY(${(20*(1-s)+fl(u,4,7.5)).toFixed(1)}px)`;
+  }
+
+  { // S4
+    const u=t-26.6, SLOT=6.85;
+    const idx=Math.min(3,Math.max(0,Math.floor(u/SLOT))), lu=u-idx*SLOT, f=FEATURES[idx];
+    const on=cl(seg(lu,.12,.85)-seg(lu,SLOT-.75,SLOT-.2));
+    if ($('s4h').dataset.i!==String(idx)) {
+      $('s4h').dataset.i=String(idx); $('s4h').innerHTML=f.h; $('s4s').innerHTML=f.s;
+      $('f_bars').innerHTML = A.bars([.5,.7,.55,.85,.65],1,C.green);
+      document.querySelectorAll('.ff').forEach(g=>{
+        g.innerHTML = idx===2 ? A.receipt() : A.parcel(0.85);
+      });
+    }
+    $('s4h').style.opacity=on;
+    $('s4h').style.transform=`translateY(${(30*(1-seg(lu,.12,.85))+fl(t,4,9)).toFixed(1)}px)`;
+    $('s4s').style.opacity=on*.95;
+    $('s4s').style.transform=`translateY(${(24*(1-seg(lu,.3,1.05))+fl(t,3.4,10,.3)).toFixed(1)}px)`;
+
+    const ca=seg(u,.15,1.15);
+    // The marketplace side stays named for the whole scene: every parcel
+    // and receipt in it is travelling to or from here.
+    $('f_amz').setAttribute('opacity',ca);
+    $('f_amz').setAttribute('transform',
+      `translate(${(1470+40*(1-ca)).toFixed(1)},${(430+fl(t,7,7.6,.15)).toFixed(1)})`);
+    $('f_shop').setAttribute('opacity',ca);
+    $('f_shop').setAttribute('transform',`translate(${(430-70*(1-ca)).toFixed(1)},${(560+fl(t,9,6.4)).toFixed(1)}) scale(1.16)`);
+
+    const showShelf = idx===0, showTag = idx===1, showOrders = idx===2, showVan = idx===3;
+    $('f_shelf').setAttribute('opacity', (showShelf?on:0));
+    $('f_shelf').setAttribute('transform',`translate(1480,${(600+fl(t,8,7.1,.4)).toFixed(1)}) scale(1.2)`);
+    $('f_tag').setAttribute('opacity', (showTag?on:0));
+    $('f_tag').setAttribute('transform',`translate(1500,${(540+fl(t,10,5.2)).toFixed(1)}) scale(${(1.25+0.12*Math.sin(lu*2)).toFixed(3)})`);
+    $('f_bars').setAttribute('opacity', (showTag?on*.9:0));
+    $('f_bars').setAttribute('transform',`translate(1370,${(760+fl(t,6,6.3,.2)).toFixed(1)}) scale(1.15)`);
+    $('f_van').setAttribute('opacity', (showVan?on:0));
+    $('f_van').setAttribute('transform',`translate(${(1440+fl(lu,30,3.4)).toFixed(1)},${(600+fl(t,5,4.4)).toFixed(1)}) scale(1.25)`);
+    $('f_clock').setAttribute('opacity', (showVan?on*.9:0));
+    $('f_clock').innerHTML = A.clock(lu*0.22);
+    $('f_clock').setAttribute('transform',`translate(1720,${(470+fl(t,7,5.6,.3)).toFixed(1)})`);
+    // Slot 2 is the orders beat. Without a prop the Amazon card floats
+    // over nothing for the whole slot, so it gets the receipts the
+    // flight animation is already carrying across to PrestaShop.
+    $('f_orders').setAttribute('opacity', (showOrders?on:0));
+    $('f_orders').setAttribute('transform',`translate(1470,${(628+fl(t,8,6.8,.25)).toFixed(1)})`);
+    if (showOrders) document.querySelectorAll('.fo').forEach((g,i)=>{
+      const p=seg(lu,1.15+i*.42,1.95+i*.42,E.outBack), b=[[-52,16,-7],[4,-2,0],[60,16,7]][i];
+      g.setAttribute('opacity',cl(p));
+      g.setAttribute('transform',
+        `translate(${b[0]},${(b[1]-28*(1-p)).toFixed(1)}) rotate(${b[2]}) scale(${(0.7+0.3*p).toFixed(3)})`);
+    });
+    if (showShelf) document.querySelectorAll('.fsp').forEach((g,i)=>{
+      const p=seg(lu,1.6+i*.6,2.4+i*.6,E.outBack);
+      g.setAttribute('opacity',cl(p));
+      const base=[[-72,22],[4,22],[80,22]][i];
+      g.setAttribute('transform',`translate(${base[0]},${(base[1]-30*(1-p)).toFixed(1)}) scale(${(0.5+0.22*p).toFixed(3)})`);
+    });
+
+    document.querySelectorAll('.ff').forEach((g,i)=>{
+      const cyc=2.6, st=1.0+i*.6, k=(lu-st)/cyc;
+      if (k<0) { g.setAttribute('opacity',0); return; }
+      const p=k-Math.floor(k), out = idx<2;
+      const x = out ? 600+(1300-600)*p : 1300-(1300-600)*p;
+      const y = 545+Math.sin(p*Math.PI)*-78+fl(t,6,2.2,i*.25);
+      g.setAttribute('opacity',(Math.sin(p*Math.PI)*on).toFixed(3));
+      g.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${(Math.sin(p*Math.PI*2)*9).toFixed(1)})`);
+    });
+  }
+
+  { // S5
+    const u=t-62.5, h=seg(u,.25,1.1), s=seg(u,.5,1.4);
+    $('s5h').style.opacity=h; $('s5h').style.transform=`translateY(${(28*(1-h)+fl(u,5,7)).toFixed(1)}px)`;
+    $('s5s').style.opacity=s*.95; $('s5s').style.transform=`translateY(${(22*(1-s)+fl(u,4,8,.3)).toFixed(1)}px)`;
+    const gp=seg(u,.6,1.9,E.outBack);
+    $('s5globe').setAttribute('opacity',cl(gp));
+    $('s5globe').setAttribute('transform',`translate(960,${(640+fl(u,9,6)).toFixed(1)}) scale(${(0.5+0.5*gp).toFixed(3)}) rotate(${(u*3).toFixed(1)})`);
+    document.querySelectorAll('.sp').forEach((g,i)=>{
+      const p=seg(u,1.5+i*.16,2.1+i*.16,E.elastic);
+      const base=[[-70,-52],[42,-74],[86,10],[-40,44],[10,-14],[-96,6]][i];
+      g.setAttribute('opacity',cl(p));
+      g.setAttribute('transform',`translate(${960+base[0]},${(640+base[1]+fl(u,5,3+i*.3,i*.2)).toFixed(1)}) scale(${(0.4+0.6*cl(p)).toFixed(3)})`);
+    });
+    document.querySelectorAll('.mc').forEach((g,i)=>{
+      const n=MARKETS.length, ang=(i/n)*Math.PI*2 + u*0.22;
+      const rx=560, ry=250;
+      const x=960+Math.cos(ang)*rx, y=640+Math.sin(ang)*ry;
+      const p=seg(u,1.0+i*.055,1.6+i*.055,E.outBack);
+      const depth=(Math.sin(ang)+1)/2;
+      g.setAttribute('opacity',(cl(p)*(0.35+0.65*depth)).toFixed(3));
+      g.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)}) scale(${((0.72+0.28*depth)*(0.5+0.5*cl(p))).toFixed(3)})`);
+    });
+  }
+
+  { // S6
+    const u=t-69.2, h=seg(u,.25,1.1);
+    $('s6h').style.opacity=h; $('s6h').style.transform=`translateY(${(28*(1-h)+fl(u,5,7.5)).toFixed(1)}px)`;
+    document.querySelectorAll('.ti').forEach((g,i)=>{
+      const p=seg(u,.9+i*.55,1.9+i*.55,E.outBack);
+      const bx=[480,960,1440][i];
+      const pulse=1+Math.max(0,Math.sin((u*1.3-i*.6)*Math.PI))*0.07;
+      g.setAttribute('opacity',cl(p));
+      g.setAttribute('transform',`translate(${bx},${(520-38*(1-p)+fl(u,8,5+i*.6,i*.3)).toFixed(1)}) scale(${((0.55+0.45*p)*pulse).toFixed(3)})`);
+    });
+    document.querySelectorAll('.tc').forEach((el,i)=>{
+      const p=seg(u,1.3+i*.55,2.2+i*.55);
+      el.style.opacity=cl(p);
+      el.style.transform=`translateY(${(26*(1-p)).toFixed(1)}px)`;
+    });
+  }
+
+  { // S7
+    const u=t-80.5, m=seg(u,.25,1.5,E.outBack);
+    $('s7mark').style.opacity=cl(m*1.3);
+    $('s7mark').style.transform=`translateY(${fl(u,10,4.6).toFixed(1)}px) scale(${(0.45+0.55*m).toFixed(3)}) rotate(${((1-m)*22+fl(u,1.8,7)).toFixed(2)}deg)`;
+    const h=seg(u,.9,1.8), s=seg(u,1.25,2.15), p=seg(u,1.7,2.6,E.outBack);
+    $('s7h').style.opacity=h; $('s7h').style.transform=`translateY(${(28*(1-h)).toFixed(1)}px)`;
+    $('s7s').style.opacity=s*.95; $('s7s').style.transform=`translateY(${(24*(1-s)).toFixed(1)}px)`;
+    const br=1+Math.max(0,Math.sin(u*1.25*Math.PI))*0.035;
+    $('s7p').style.opacity=cl(p*1.2);
+    $('s7p').style.transform=`translateY(${(30*(1-p)).toFixed(1)}px) scale(${(br*(0.9+0.1*p)).toFixed(3)})`;
+  }
+
+  { // SA - the medal lands, the claim reads, then the grid fills in behind it
+    const u=t-53.6, h=seg(u,.55,1.45), s=seg(u,.85,1.75);
+    const bp=seg(u,.15,1.25,E.outBack);
+    $('sAbadge').setAttribute('opacity',cl(bp));
+    $('sAbadge').setAttribute('transform',
+      `translate(960,${(172+fl(t,5,6.5)).toFixed(1)}) scale(${(0.4+0.6*bp).toFixed(3)}) rotate(${((1-bp)*-22).toFixed(2)})`);
+    $('sAh').style.opacity=h; $('sAh').style.transform=`translateY(${(30*(1-h)).toFixed(1)}px)`;
+    $('sAs').style.opacity=s*.95; $('sAs').style.transform=`translateY(${(24*(1-s)).toFixed(1)}px)`;
+    CAPG.forEach((g,i)=>{
+      const p=seg(u, 1.5+i*.072, 2.15+i*.072, E.outBack), P=capPos(i);
+      g.setAttribute('opacity',cl(p));
+      g.setAttribute('transform',
+        `translate(${P[0]},${(P[1]+20*(1-p)+fl(t,3,7.5+(i%5),i*.11)).toFixed(1)}) scale(${(0.88+0.12*p).toFixed(3)})`);
+    });
+  }
+};
+window.render(0);
+</script>
+</body>
+</html>
