@@ -869,7 +869,7 @@ class AmazonMarketplacePro extends Module
             // stay assigned so an install that already uses them keeps working.
             'cron_run_due_url'   => $cronBase . '&action=run_due',
             'schedule_tasks'     => AmazonScheduler::all(),
-            'schedule_catalogue' => AmazonScheduler::catalogue(),
+            'schedule_catalogue' => $this->translatedScheduleCatalogue(),
             'schedule_mode'      => AmazonRelaySchedule::mode(),
             'schedule_relay'     => AmazonRelaySchedule::status(),
             'schedule_notice'    => $this->scheduleNotice,
@@ -1434,11 +1434,11 @@ class AmazonMarketplacePro extends Module
 
         $type = trim((string) Tools::getValue('entity_type'));
         if (!in_array($type, array('category', 'manufacturer', 'supplier'))) {
-            return array('success' => false, 'error' => 'Unknown entity type.');
+            return array('success' => false, 'error' => $this->l('Unknown entity type.'));
         }
         $rows = json_decode((string) Tools::getValue('rows'), true);
         if (!is_array($rows)) {
-            return array('success' => false, 'error' => 'Invalid rows payload.');
+            return array('success' => false, 'error' => $this->l('Invalid rows payload.'));
         }
 
         $before = AmazonListingSettings::getEntitySettings($type);
@@ -1487,7 +1487,7 @@ class AmazonMarketplacePro extends Module
 
         $rows = json_decode((string) Tools::getValue('rows'), true);
         if (!is_array($rows)) {
-            return array('success' => false, 'error' => 'Invalid rows payload.');
+            return array('success' => false, 'error' => $this->l('Invalid rows payload.'));
         }
 
         $before = AmazonListingSettings::getProductSettings();
@@ -1526,7 +1526,7 @@ class AmazonMarketplacePro extends Module
         } elseif (in_array($op, array('enable', 'disable', 'clear'))) {
             AmazonListingSettings::queueAction($op);
         } else {
-            return array('success' => false, 'error' => 'Unknown queue action.');
+            return array('success' => false, 'error' => $this->l('Unknown queue action.'));
         }
 
         return array('success' => true, 'queue' => AmazonListingSettings::getQueue(200));
@@ -1541,9 +1541,62 @@ class AmazonMarketplacePro extends Module
         return array(
             'success' => true,
             'orphans' => $orphans,
-            'notice' => 'Orphans are computed from the last Amazon-side sync. '
-                . 'Run "Sync Amazon to PS" (Products tab) first for an up-to-date list.',
+            'notice' => $this->l('Orphans are computed from the last Amazon-side sync. Run the Amazon to PrestaShop sync on the Products tab first for an up-to-date list.'),
         );
+    }
+
+    /**
+     * The task catalogue with its names and groups in the back-office language.
+     *
+     * AmazonScheduler keeps the English names: the cron endpoint and the logs
+     * use them, and a plain class has no module to translate with. Only the
+     * screen shows them to a merchant, so the swap happens here.
+     *
+     * @return array
+     */
+    protected function translatedScheduleCatalogue()
+    {
+        $names = array(
+            'import_orders'       => $this->l('Import orders'),
+            'create_orders'       => $this->l('Create PrestaShop orders'),
+            'sync_stock'          => $this->l('Sync stock'),
+            'sync_products'       => $this->l('Full product sync'),
+            'import_returns'      => $this->l('Import returns'),
+            'process_returns'     => $this->l('Process returns'),
+            'sync_fba'            => $this->l('FBA inventory sync'),
+            'reprice'             => $this->l('Repricing cycle'),
+            'fetch_fees'          => $this->l('Fetch fees'),
+            'poll_reports'        => $this->l('Poll reports'),
+            'sync_promotions'     => $this->l('Sync promotions'),
+            'multi_import_orders' => $this->l('Import orders, all marketplaces'),
+            'multi_sync_products' => $this->l('Product sync, all marketplaces'),
+            'request_reviews'     => $this->l('Request reviews'),
+            'process_feeds'       => $this->l('Process feed queue'),
+            'remote_cart'         => $this->l('Settle remote carts'),
+            'fetch_messages'      => $this->l('Fetch buyer messages'),
+            'upload_invoices'     => $this->l('Upload invoices'),
+            'purge_pii'           => $this->l('Purge buyer data past retention'),
+        );
+        $groups = array(
+            'Orders'     => $this->l('Orders'),
+            'Catalogue'  => $this->l('Catalogue'),
+            'Fulfilment' => $this->l('Fulfilment'),
+            'Pricing'    => $this->l('Pricing'),
+            'Money'      => $this->l('Money'),
+            'System'     => $this->l('System'),
+        );
+
+        $catalogue = AmazonScheduler::catalogue();
+        foreach ($catalogue as $key => $meta) {
+            if (isset($names[$key])) {
+                $catalogue[$key][0] = $names[$key];
+            }
+            if (isset($groups[$meta[2]])) {
+                $catalogue[$key][2] = $groups[$meta[2]];
+            }
+        }
+
+        return $catalogue;
     }
 
     protected function runPendingOrderAction()
@@ -1559,7 +1612,7 @@ class AmazonMarketplacePro extends Module
                AND `import_status` = \'pending_stock\''
         );
         if (!$row) {
-            return array('success' => false, 'error' => 'Pending order not found.');
+            return array('success' => false, 'error' => $this->l('Pending order not found.'));
         }
 
         if ($op === 'delete') {
@@ -1570,7 +1623,7 @@ class AmazonMarketplacePro extends Module
             );
             $this->logActivity('info', 'pending_orders', $row['amazon_order_id'] . ' removed from pending orders.');
 
-            return array('success' => true, 'message' => 'Pending order removed.');
+            return array('success' => true, 'message' => $this->l('Pending order removed.'));
         }
 
         if ($op === 'create') {
@@ -1587,10 +1640,10 @@ class AmazonMarketplacePro extends Module
             $this->logActivity('info', 'pending_orders',
                 $row['amazon_order_id'] . ' force-created as PS order #' . (int) $result . ' despite missing stock.');
 
-            return array('success' => true, 'message' => 'PS order #' . (int) $result . ' created.', 'id_order' => (int) $result);
+            return array('success' => true, 'message' => sprintf($this->l('PrestaShop order #%d created.'), (int) $result), 'id_order' => (int) $result);
         }
 
-        return array('success' => false, 'error' => 'Unknown pending order action.');
+        return array('success' => false, 'error' => $this->l('Unknown pending order action.'));
     }
 
     protected function runSaveShippingTemplate()
@@ -1599,7 +1652,7 @@ class AmazonMarketplacePro extends Module
 
         $name = trim((string) Tools::getValue('template_name'));
         if ($name === '') {
-            return array('success' => false, 'error' => 'Template name is required.');
+            return array('success' => false, 'error' => $this->l('Template name is required.'));
         }
         AmazonListingSettings::saveShippingTemplate(
             Tools::getValue('basis'),
@@ -2554,7 +2607,7 @@ class AmazonMarketplacePro extends Module
         $marketplaceId = $this->getMarketplaceId();
 
         if (!$idCategory || !$productType) {
-            return array('success' => false, 'error' => 'Category and Amazon Product Type are required.');
+            return array('success' => false, 'error' => $this->l('Category and Amazon Product Type are required.'));
         }
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
@@ -2578,7 +2631,7 @@ class AmazonMarketplacePro extends Module
     {
         $idMap = (int) Tools::getValue('id_category_map');
         if (!$idMap) {
-            return array('success' => false, 'error' => 'No mapping ID provided.');
+            return array('success' => false, 'error' => $this->l('No mapping ID provided.'));
         }
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
@@ -2687,7 +2740,7 @@ class AmazonMarketplacePro extends Module
             'active' => (int) Tools::getValue('rule_active', 1),
         );
         if (!$data['name']) {
-            return array('success' => false, 'error' => 'Rule name is required.');
+            return array('success' => false, 'error' => $this->l('Rule name is required.'));
         }
         $engine->savePricingRule($data);
         return array('success' => true, 'rules' => $engine->listPricingRules());

@@ -2769,6 +2769,218 @@
         return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    /* ── Helper: fill %1$s, %2$s ... in a translated sentence ── */
+    function fmt(s) {
+        var a = arguments;
+        return String(s).replace(/%(\d+)\$s/g, function (m, n) { return (a[+n] === undefined) ? m : a[+n]; });
+    }
+
+    /* ── Helper: table header cells from labels ── */
+    function th() {
+        var h = '';
+        for (var i = 0; i < arguments.length; i++) h += '<th>' + esc(arguments[i]) + '</th>';
+        return h;
+    }
+
+    /* ── Everything this script writes on screen, in the back-office language.
+       The strings stay free of double quotes, ampersands and angle brackets:
+       PrestaShop 1.6 HTML-escapes js=1 translations and 9 does not, so those
+       characters would come out differently on the two. ── */
+    var T = {
+        unexpected: '{l s='Unexpected response' mod='amazonmarketplacepro' js=1}',
+        done: '{l s='Done.' mod='amazonmarketplacepro' js=1}',
+        saving: '{l s='Saving...' mod='amazonmarketplacepro' js=1}',
+        working: '{l s='Working...' mod='amazonmarketplacepro' js=1}',
+        saveFailed: '{l s='Save failed' mod='amazonmarketplacepro' js=1}',
+        actionFailed: '{l s='Action failed' mod='amazonmarketplacepro' js=1}',
+        refreshFailed: '{l s='Refresh failed' mod='amazonmarketplacepro' js=1}',
+        updateFailed: '{l s='Update failed' mod='amazonmarketplacepro' js=1}',
+        fetchFailed: '{l s='Fetch failed' mod='amazonmarketplacepro' js=1}',
+        importFailed: '{l s='Import failed' mod='amazonmarketplacepro' js=1}',
+        deletionFailed: '{l s='Deletion failed' mod='amazonmarketplacepro' js=1}',
+        searchFailed: '{l s='Search failed' mod='amazonmarketplacepro' js=1}',
+        loadFailed: '{l s='Load failed' mod='amazonmarketplacepro' js=1}',
+        checkFailed: '{l s='Check failed' mod='amazonmarketplacepro' js=1}',
+        lookupFailed: '{l s='Lookup failed' mod='amazonmarketplacepro' js=1}',
+        yes: '{l s='Yes' mod='amazonmarketplacepro' js=1}',
+        no: '{l s='No' mod='amazonmarketplacepro' js=1}',
+        error: '{l s='Error: %1$s' mod='amazonmarketplacepro' js=1}',
+        psOnly: '{l s='PS only' mod='amazonmarketplacepro' js=1}',
+        amazonOnly: '{l s='Amazon only' mod='amazonmarketplacepro' js=1}',
+        conflict: '{l s='Conflict' mod='amazonmarketplacepro' js=1}',
+        inSync: '{l s='In sync' mod='amazonmarketplacepro' js=1}',
+        thAmazonOrderId: '{l s='Amazon Order ID' mod='amazonmarketplacepro' js=1}',
+        thDate: '{l s='Date' mod='amazonmarketplacepro' js=1}',
+        thStatus: '{l s='Status' mod='amazonmarketplacepro' js=1}',
+        thTotal: '{l s='Total' mod='amazonmarketplacepro' js=1}',
+        thShipping: '{l s='Shipping' mod='amazonmarketplacepro' js=1}',
+        thTax: '{l s='Tax' mod='amazonmarketplacepro' js=1}',
+        thChannel: '{l s='Channel' mod='amazonmarketplacepro' js=1}',
+        thItems: '{l s='Items' mod='amazonmarketplacepro' js=1}',
+        thPsOrder: '{l s='PS Order' mod='amazonmarketplacepro' js=1}',
+        thImport: '{l s='Import' mod='amazonmarketplacepro' js=1}',
+        thFeed: '{l s='Feed' mod='amazonmarketplacepro' js=1}',
+        thMessages: '{l s='Messages' mod='amazonmarketplacepro' js=1}',
+        thAccepted: '{l s='Accepted' mod='amazonmarketplacepro' js=1}',
+        thErrors: '{l s='Errors' mod='amazonmarketplacepro' js=1}',
+        thWarnings: '{l s='Warnings' mod='amazonmarketplacepro' js=1}',
+        thUpdated: '{l s='Updated' mod='amazonmarketplacepro' js=1}',
+        thBrandMfr: '{l s='Brand/Mfr' mod='amazonmarketplacepro' js=1}',
+        thBrand: '{l s='Brand' mod='amazonmarketplacepro' js=1}',
+        thType: '{l s='Type' mod='amazonmarketplacepro' js=1}',
+        thDirection: '{l s='Direction' mod='amazonmarketplacepro' js=1}',
+        thIssues: '{l s='Issues' mod='amazonmarketplacepro' js=1}',
+        thTitle: '{l s='Title' mod='amazonmarketplacepro' js=1}',
+        thPrice: '{l s='Price' mod='amazonmarketplacepro' js=1}',
+        thQty: '{l s='Qty' mod='amazonmarketplacepro' js=1}',
+        stCreated: '{l s='Created' mod='amazonmarketplacepro' js=1}',
+        stCancelled: '{l s='Cancelled' mod='amazonmarketplacepro' js=1}',
+        stStaged: '{l s='Staged' mod='amazonmarketplacepro' js=1}',
+        noOrdersStaged: '{l s='No orders staged yet.' mod='amazonmarketplacepro' js=1}',
+        fetchingOrders: '{l s='Fetching orders from Amazon...' mod='amazonmarketplacepro' js=1}',
+        ordersFetched: '{l s='Fetched %1$s · imported %2$s new · %3$s already staged · items matched %4$s / unmatched %5$s' mod='amazonmarketplacepro' js=1}',
+        creatingOrders: '{l s='Creating PrestaShop orders from staged Amazon orders...' mod='amazonmarketplacepro' js=1}',
+        ordersCreated: '{l s='%1$s pending · %2$s created · %3$s skipped · %4$s failed' mod='amazonmarketplacepro' js=1}',
+        noPendingToCreate: '{l s='No pending orders to create.' mod='amazonmarketplacepro' js=1}',
+        enterOrderId: '{l s='Enter an Amazon order id first.' mod='amazonmarketplacepro' js=1}',
+        askingMsgTypes: '{l s='Asking Amazon which message types are allowed...' mod='amazonmarketplacepro' js=1}',
+        noMsgAllowed: '{l s='Amazon allows no messages for this order right now.' mod='amazonmarketplacepro' js=1}',
+        msgTypesAllowed: '{l s='%1$s message type(s) allowed.' mod='amazonmarketplacepro' js=1}',
+        requestingReview: '{l s='Requesting a review from the buyer...' mod='amazonmarketplacepro' js=1}',
+        reviewSent: '{l s='Review request sent.' mod='amazonmarketplacepro' js=1}',
+        pickMsgType: '{l s='Load message types and pick one first.' mod='amazonmarketplacepro' js=1}',
+        sendingMsg: '{l s='Sending message...' mod='amazonmarketplacepro' js=1}',
+        msgSent: '{l s='Message sent to the buyer.' mod='amazonmarketplacepro' js=1}',
+        searchingEan: '{l s='Searching the Amazon catalog by EAN...' mod='amazonmarketplacepro' js=1}',
+        matchSummary: '{l s='%1$s checked · %2$s ASIN(s) matched · %3$s not in the Amazon catalog' mod='amazonmarketplacepro' js=1}',
+        creatingProducts: '{l s='Creating PrestaShop products from Amazon listings...' mod='amazonmarketplacepro' js=1}',
+        importSummary: '{l s='%1$s Amazon-only listing(s) · %2$s product(s) created (inactive) · %3$s linked to existing · %4$s failed' mod='amazonmarketplacepro' js=1}',
+        imagesFailed: '{l s='%1$s image(s) failed' mod='amazonmarketplacepro' js=1}',
+        checkingFeeds: '{l s='Checking feed status with Amazon...' mod='amazonmarketplacepro' js=1}',
+        feedsSummary: '{l s='%1$s feed(s) checked · %2$s completed · %3$s still processing · %4$s failed' mod='amazonmarketplacepro' js=1}',
+        noProductsRef: '{l s='No products with a reference (SKU) found.' mod='amazonmarketplacepro' js=1}',
+        qty: '{l s='qty %1$s' mod='amazonmarketplacepro' js=1}',
+        pullingAmazon: '{l s='Pulling from Amazon...' mod='amazonmarketplacepro' js=1}',
+        scanningPs: '{l s='Scanning PrestaShop...' mod='amazonmarketplacepro' js=1}',
+        syncSummary: '{l s='%1$s products · %2$s PS only · %3$s Amazon only · %4$s conflicts · %5$s in sync' mod='amazonmarketplacepro' js=1}',
+        sendingPending: '{l s='Sending pending changes to Amazon...' mod='amazonmarketplacepro' js=1}',
+        skusSkipped: '{l s='%1$s SKU(s) skipped' mod='amazonmarketplacepro' js=1}',
+        feedSubmitted: '{l s='%1$s SKUs were pending, so they went as one feed. Feed %2$s was submitted with %3$s message(s). Amazon processes it in the background: use Check feed status below.' mod='amazonmarketplacepro' js=1}',
+        skusSkippedNoMap: '{l s='%1$s SKU(s) skipped (no category mapping).' mod='amazonmarketplacepro' js=1}',
+        pushSummary: '{l s='%1$s candidates · %2$s accepted · %3$s failed' mod='amazonmarketplacepro' js=1}',
+        nothingToSend: '{l s='Nothing to send.' mod='amazonmarketplacepro' js=1}',
+        fetchingProducts: '{l s='Fetching products from Amazon...' mod='amazonmarketplacepro' js=1}',
+        productsFound: '{l s='%1$s product(s) found.' mod='amazonmarketplacepro' js=1}',
+        noProductsDisplay: '{l s='No products to display.' mod='amazonmarketplacepro' js=1}',
+        selectCatPt: '{l s='Please select a category and enter an Amazon Product Type.' mod='amazonmarketplacepro' js=1}',
+        attrsJson: '{l s='Extra attributes must be valid JSON: %1$s' mod='amazonmarketplacepro' js=1}',
+        mapSaveFailed: '{l s='Failed to save mapping.' mod='amazonmarketplacepro' js=1}',
+        mapSaved: '{l s='Mapping saved.' mod='amazonmarketplacepro' js=1}',
+        noCatMaps: '{l s='No category mappings configured yet.' mod='amazonmarketplacepro' js=1}',
+        importingReturns: '{l s='Importing returns from Amazon...' mod='amazonmarketplacepro' js=1}',
+        returnsSummary: '{l s='Checked %1$s · %2$s new returns · %3$s new cancellations · %4$s already imported' mod='amazonmarketplacepro' js=1}',
+        noNewReturns: '{l s='No new returns found.' mod='amazonmarketplacepro' js=1}',
+        processingReturns: '{l s='Processing pending returns...' mod='amazonmarketplacepro' js=1}',
+        returnsProcessed: '{l s='%1$s pending · %2$s processed · %3$s skipped · %4$s failed' mod='amazonmarketplacepro' js=1}',
+        noPendingReturns: '{l s='No pending returns to process.' mod='amazonmarketplacepro' js=1}',
+        syncingFba: '{l s='Syncing FBA inventory from Amazon...' mod='amazonmarketplacepro' js=1}',
+        fbaSummary: '{l s='Fetched %1$s SKUs · %2$s new · %3$s updated · %4$s matched in PrestaShop' mod='amazonmarketplacepro' js=1}',
+        noFbaData: '{l s='No FBA inventory data returned.' mod='amazonmarketplacepro' js=1}',
+        updatingFbaStock: '{l s='Updating PrestaShop stock from FBA quantities...' mod='amazonmarketplacepro' js=1}',
+        fbaStockSummary: '{l s='%1$s FBA SKUs · %2$s PrestaShop stock updated · %3$s skipped' mod='amazonmarketplacepro' js=1}',
+        enterPsOrder: '{l s='Please enter a PrestaShop order ID.' mod='amazonmarketplacepro' js=1}',
+        creatingMcf: '{l s='Creating the MCF fulfilment order...' mod='amazonmarketplacepro' js=1}',
+        mcfCreated: '{l s='MCF order created. Seller fulfilment order ID: %1$s' mod='amazonmarketplacepro' js=1}',
+        mcfFailed: '{l s='Failed to create the MCF order.' mod='amazonmarketplacepro' js=1}',
+        fetchingPricing: '{l s='Fetching competitive pricing from Amazon...' mod='amazonmarketplacepro' js=1}',
+        pricingSummary: '{l s='%1$s ASINs processed · %2$s Buy Box wins · %3$s updated' mod='amazonmarketplacepro' js=1}',
+        applyingRules: '{l s='Applying pricing rules...' mod='amazonmarketplacepro' js=1}',
+        rulesSummary: '{l s='%1$s products evaluated · %2$s repriced · %3$s capped at min/max' mod='amazonmarketplacepro' js=1}',
+        pushingPrices: '{l s='Pushing suggested prices to Amazon...' mod='amazonmarketplacepro' js=1}',
+        pricesPushed: '{l s='%1$s candidates · %2$s pushed · %3$s failed' mod='amazonmarketplacepro' js=1}',
+        enterRuleName: '{l s='Please enter a rule name.' mod='amazonmarketplacepro' js=1}',
+        ruleSaved: '{l s='Pricing rule saved. Refresh the page to see it in the table.' mod='amazonmarketplacepro' js=1}',
+        ruleFailed: '{l s='Failed to save the rule.' mod='amazonmarketplacepro' js=1}',
+        fetchingFees: '{l s='Fetching order fees from the Amazon Finances API...' mod='amazonmarketplacepro' js=1}',
+        feesSummary: '{l s='%1$s orders checked · %2$s fee entries recorded · %3$s orders updated' mod='amazonmarketplacepro' js=1}',
+        requestingReport: '{l s='Requesting the %1$s report...' mod='amazonmarketplacepro' js=1}',
+        reportRequested: '{l s='Report requested. ID: %1$s. Use Poll Pending Reports to check its status.' mod='amazonmarketplacepro' js=1}',
+        reportFailed: '{l s='Failed to request the report.' mod='amazonmarketplacepro' js=1}',
+        pollingReports: '{l s='Polling pending reports...' mod='amazonmarketplacepro' js=1}',
+        reportsSummary: '{l s='%1$s reports checked · %2$s completed · %3$s still pending' mod='amazonmarketplacepro' js=1}',
+        importingPromos: '{l s='Importing promotions from Amazon orders...' mod='amazonmarketplacepro' js=1}',
+        promosSummary: '{l s='%1$s orders scanned · %2$s promotions found · %3$s new · %4$s updated' mod='amazonmarketplacepro' js=1}',
+        exportingPromos: '{l s='Exporting PrestaShop cart rules as promotions...' mod='amazonmarketplacepro' js=1}',
+        exportSummary: '{l s='%1$s cart rules scanned · %2$s exported' mod='amazonmarketplacepro' js=1}',
+        creatingCartRules: '{l s='Creating PrestaShop cart rules from promotions...' mod='amazonmarketplacepro' js=1}',
+        cartRulesSummary: '{l s='%1$s promotions · %2$s cart rules created · %3$s errors' mod='amazonmarketplacepro' js=1}',
+        selectMarketplace: '{l s='Please select a marketplace.' mod='amazonmarketplacepro' js=1}',
+        mpSaved: '{l s='Marketplace saved. Refresh the page to see it in the table.' mod='amazonmarketplacepro' js=1}',
+        mpFailed: '{l s='Failed to save the marketplace.' mod='amazonmarketplacepro' js=1}',
+        notSet: '{l s='Not set' mod='amazonmarketplacepro' js=1}',
+        amazonValue: '{l s='Amazon value' mod='amazonmarketplacepro' js=1}',
+        psField: '{l s='PrestaShop field' mod='amazonmarketplacepro' js=1}',
+        fixedText: '{l s='Fixed text' mod='amazonmarketplacepro' js=1}',
+        pickValue: '{l s='-- pick a value --' mod='amazonmarketplacepro' js=1}',
+        pickField: '{l s='-- pick a field --' mod='amazonmarketplacepro' js=1}',
+        productFeature: '{l s='Product feature (type the name)' mod='amazonmarketplacepro' js=1}',
+        comboAttribute: '{l s='Combination attribute (type the group)' mod='amazonmarketplacepro' js=1}',
+        featureGroupPh: '{l s='Feature or attribute group name' mod='amazonmarketplacepro' js=1}',
+        noRequiredAttrs: '{l s='Amazon lists no strictly required extra attributes for this product type.' mod='amazonmarketplacepro' js=1}',
+        noOptionalAttrs: '{l s='No optional attributes.' mod='amazonmarketplacepro' js=1}',
+        askingPt: '{l s='Asking Amazon for matching product types...' mod='amazonmarketplacepro' js=1}',
+        ptResults: '{l s='-- %1$s result(s) --' mod='amazonmarketplacepro' js=1}',
+        ptFound: '{l s='%1$s product type(s) found. Pick one and load its fields.' mod='amazonmarketplacepro' js=1}',
+        pickPt: '{l s='Pick a product type first.' mod='amazonmarketplacepro' js=1}',
+        downloadingSchema: '{l s='Downloading the attribute schema from Amazon...' mod='amazonmarketplacepro' js=1}',
+        schemaLoaded: '{l s='%1$s: %2$s required, %3$s optional attribute(s).' mod='amazonmarketplacepro' js=1}',
+        searchPickPt: '{l s='-- Search, then pick a product type --' mod='amazonmarketplacepro' js=1}',
+        newProfile: '{l s='New profile' mod='amazonmarketplacepro' js=1}',
+        profileLoadFailed: '{l s='Could not load the profile.' mod='amazonmarketplacepro' js=1}',
+        editProfile: '{l s='Edit profile: %1$s' mod='amazonmarketplacepro' js=1}',
+        deleteProfile: '{l s='Delete this profile? Its categories fall back to the Category Mapping.' mod='amazonmarketplacepro' js=1}',
+        profileSaved: '{l s='Profile saved. %1$s product(s) queued for the next sync. Reload the page to refresh the list.' mod='amazonmarketplacepro' js=1}',
+        entitySaved: '{l s='%1$s rule(s) saved, %2$s product(s) queued.' mod='amazonmarketplacepro' js=1}',
+        prodRulesSaved: '{l s='%1$s product rule(s) saved.' mod='amazonmarketplacepro' js=1}',
+        selectAction: '{l s='Select an action first.' mod='amazonmarketplacepro' js=1}',
+        confirmClearQueue: '{l s='Remove ALL queue entries?' mod='amazonmarketplacepro' js=1}',
+        queueEmpty: '{l s='Queue is empty.' mod='amazonmarketplacepro' js=1}',
+        lookingOrphans: '{l s='Looking for orphaned listings...' mod='amazonmarketplacepro' js=1}',
+        orphansFound: '{l s='%1$s orphaned listing(s).' mod='amazonmarketplacepro' js=1}',
+        noOrphans: '{l s='No orphaned listings found.' mod='amazonmarketplacepro' js=1}',
+        noPendingOrders: '{l s='No pending orders.' mod='amazonmarketplacepro' js=1}',
+        confirmCreatePending: '{l s='Create this PrestaShop order even though stock is insufficient?' mod='amazonmarketplacepro' js=1}',
+        confirmRemovePending: '{l s='Remove this pending order? It will not become a PrestaShop order.' mod='amazonmarketplacepro' js=1}',
+        noRanges: '{l s='No template ranges yet.' mod='amazonmarketplacepro' js=1}',
+        enterTemplate: '{l s='Enter the template name exactly as in Seller Central.' mod='amazonmarketplacepro' js=1}',
+        rangeSaved: '{l s='Range saved.' mod='amazonmarketplacepro' js=1}',
+        tickOne: '{l s='Tick at least one thing to update.' mod='amazonmarketplacepro' js=1}',
+        confirmOverwrite: '{l s='This overwrites PrestaShop data for products that exist on both sides. Continue?' mod='amazonmarketplacepro' js=1}',
+        updatingFromAmazon: '{l s='Updating from Amazon...' mod='amazonmarketplacepro' js=1}',
+        updateSummary: '{l s='%1$s matched product(s) · %2$s content · %3$s price · %4$s stock · %5$s feature(s) · %6$s deactivated · %7$s failed' mod='amazonmarketplacepro' js=1}',
+        connectingMailbox: '{l s='Connecting to the mailbox...' mod='amazonmarketplacepro' js=1}',
+        inboxSummary: '{l s='%1$s unread message(s) scanned · %2$s quoting an Amazon order · %3$s filed into Customer Service · %4$s left alone' mod='amazonmarketplacepro' js=1}',
+        checking: '{l s='Checking...' mod='amazonmarketplacepro' js=1}',
+        auditNoRef: '{l s='Active products with no reference' mod='amazonmarketplacepro' js=1}',
+        auditDupRef: '{l s='Duplicated references' mod='amazonmarketplacepro' js=1}',
+        auditComboNoRef: '{l s='Combinations with no reference' mod='amazonmarketplacepro' js=1}',
+        auditNoBarcode: '{l s='Active products with no EAN and no UPC' mod='amazonmarketplacepro' js=1}',
+        catalogueReady: '{l s='Your catalogue is ready to sync.' mod='amazonmarketplacepro' js=1}',
+        fixWithCsv: '{l s='Fix these with the CSV editor below before publishing. Amazon cannot match products without a unique reference.' mod='amazonmarketplacepro' js=1}',
+        chooseCsv: '{l s='Choose a CSV file first.' mod='amazonmarketplacepro' js=1}',
+        confirmRewriteRefs: '{l s='This rewrites references and barcodes in your PrestaShop catalogue. Continue?' mod='amazonmarketplacepro' js=1}',
+        importing: '{l s='Importing...' mod='amazonmarketplacepro' js=1}',
+        refsSummary: '{l s='%1$s row(s) updated · %2$s skipped' mod='amazonmarketplacepro' js=1}',
+        andMore: '{l s='...and %1$s more.' mod='amazonmarketplacepro' js=1}',
+        lookingDeletions: '{l s='Looking for listings whose product is gone or excluded...' mod='amazonmarketplacepro' js=1}',
+        deletionsFound: '{l s='%1$s listing(s) would be deleted. Tick the ones you really want gone.' mod='amazonmarketplacepro' js=1}',
+        nothingSelected: '{l s='Nothing selected.' mod='amazonmarketplacepro' js=1}',
+        confirmDelete: '{l s='Delete %1$s listing(s) from Amazon? The offers and their history go with them.' mod='amazonmarketplacepro' js=1}',
+        deletingAmazon: '{l s='Deleting from Amazon...' mod='amazonmarketplacepro' js=1}',
+        deletionSummary: '{l s='%1$s requested · %2$s deleted · %3$s failed' mod='amazonmarketplacepro' js=1}',
+        enterFeedId: '{l s='Enter a feed ID. You will find it on the Products tab after submitting a bulk feed.' mod='amazonmarketplacepro' js=1}'
+    };
+
     /* ── Helper: AJAX POST returning parsed JSON ── */
     /* ── Sidebar accordion: one open marketplace group, single active item.
        Runs on Bootstrap's shown event (after the pane switch) — reacting
@@ -2823,7 +3035,7 @@
     /* ── Helper: Direction badge ── */
     function dirBadge(dir) {
         var cls = { ps_only:'badge-warning', amazon_only:'badge-info', conflict:'badge-danger', in_sync:'badge-success' };
-        var lbl = { ps_only:'PS only', amazon_only:'Amazon only', conflict:'Conflict', in_sync:'In sync' };
+        var lbl = { ps_only:T.psOnly, amazon_only:T.amazonOnly, conflict:T.conflict, in_sync:T.inSync };
         return '<span class="badge '+(cls[dir]||'badge-default')+'">'+ esc(lbl[dir]||dir) +'</span>';
     }
 
@@ -2873,11 +3085,11 @@
         if (!out) return;
 
         function renderOrders(orders) {
-            if (!orders || !orders.length) return '<div class="alert alert-info">No orders staged yet.</div>';
+            if (!orders || !orders.length) return '<div class="alert alert-info">'+esc(T.noOrdersStaged)+'</div>';
             var h = '<table class="table"><thead><tr>'
-                +'<th>Amazon Order ID</th><th>Date</th><th>Status</th>'
-                +'<th>Total</th><th>Shipping</th><th>Tax</th><th>Channel</th>'
-                +'<th>Items</th><th>PS Order</th><th>Import</th>'
+                +th(T.thAmazonOrderId, T.thDate, T.thStatus)
+                +th(T.thTotal, T.thShipping, T.thTax, T.thChannel)
+                +th(T.thItems, T.thPsOrder, T.thImport)
                 +'</tr></thead><tbody>';
             for (var i=0; i<orders.length; i++) {
                 var o = orders[i];
@@ -2889,10 +3101,10 @@
                     ? '<span class="badge badge-success">#'+esc(o.id_order)+'</span>'
                     : '<span class="badge badge-default">-</span>';
                 var impBadge = o.import_status === 'created'
-                    ? '<span class="badge badge-success">Created</span>'
+                    ? '<span class="badge badge-success">'+esc(T.stCreated)+'</span>'
                     : (o.import_status === 'cancelled'
-                        ? '<span class="badge badge-danger">Cancelled</span>'
-                        : '<span class="badge badge-info">Staged</span>');
+                        ? '<span class="badge badge-danger">'+esc(T.stCancelled)+'</span>'
+                        : '<span class="badge badge-info">'+esc(T.stStaged)+'</span>');
                 var channel = (o.fulfillment_channel === 'AFN')
                     ? '<span class="badge badge-info">FBA</span>'
                     : '<span class="badge badge-default">MFN</span>';
@@ -2921,24 +3133,23 @@
                 if (btnCreate) btnCreate.disabled = true;
                 summary.style.display = 'none';
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-info">Fetching orders from Amazon...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.fetchingOrders)+'</div>';
 
                 ajaxPost('{$ajax_import_orders_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnImport.disabled = false;
                     if (btnCreate) btnCreate.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
 
                     if (data.summary) {
                         var s = data.summary;
                         summary.style.display = 'block';
                         summary.className = 'alert alert-success';
-                        summary.innerHTML = 'Fetched '+esc(s.fetched)+' &middot; imported '+esc(s.imported_new)+' new &middot; '
-                            +esc(s.already)+' already staged &middot; items matched '+esc(s.items_matched)+' / unmatched '+esc(s.items_unmatched);
+                        summary.innerHTML = esc(fmt(T.ordersFetched, s.fetched, s.imported_new, s.already, s.items_matched, s.items_unmatched));
                     }
                     if (data.error) {
                         summary.style.display = 'block';
                         summary.className = 'alert alert-danger';
-                        summary.innerHTML = 'Error: '+esc(data.error);
+                        summary.innerHTML = esc(fmt(T.error, data.error));
                     }
                     out.innerHTML = renderOrders(data.orders);
                 });
@@ -2951,19 +3162,18 @@
                 if (btnImport) btnImport.disabled = true;
                 summary.style.display = 'none';
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-info">Creating PrestaShop orders from staged Amazon orders...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.creatingOrders)+'</div>';
 
                 ajaxPost('{$ajax_create_ps_orders_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnCreate.disabled = false;
                     if (btnImport) btnImport.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
 
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
                         html += '<div class="alert alert-success">'
-                            + esc(s.total)+' pending &middot; '+esc(s.created)+' created &middot; '
-                            + esc(s.skipped)+' skipped &middot; '+esc(s.failed)+' failed'
+                            + esc(fmt(T.ordersCreated, s.total, s.created, s.skipped, s.failed))
                             + '</div>';
                     }
                     if (data.notices && data.notices.length) {
@@ -2976,7 +3186,7 @@
                             html += '<div class="alert alert-danger">'+esc(data.summary.errors[e])+'</div>';
                         }
                     }
-                    out.innerHTML = html || '<div class="alert alert-info">No pending orders to create.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.noPendingToCreate)+'</div>';
                 });
             });
         }
@@ -2999,20 +3209,20 @@
 
         btnLoad.addEventListener('click', function () {
             var orderId = inpOrder.value.replace(/^\s+|\s+$/g, '');
-            if (!orderId) { show('warning', 'Enter an Amazon order id first.'); return; }
+            if (!orderId) { show('warning', T.enterOrderId); return; }
             btnLoad.disabled = true;
-            show('info', 'Asking Amazon which message types are allowed...');
+            show('info', T.askingMsgTypes);
 
             ajaxPost('{$ajax_get_messaging_actions_url|escape:'javascript':'UTF-8'}', function (data) {
                 btnLoad.disabled = false;
-                if (!data) { show('danger', 'Unexpected response'); return; }
+                if (!data) { show('danger', T.unexpected); return; }
                 if (data.error) { show('danger', data.error); return; }
 
                 selAction.innerHTML = '';
                 if (!data.actions || !data.actions.length) {
                     selAction.disabled = true;
                     btnSend.disabled = true;
-                    show('warning', 'Amazon allows no messages for this order right now.');
+                    show('warning', T.noMsgAllowed);
                     return;
                 }
                 for (var i = 0; i < data.actions.length; i++) {
@@ -3023,7 +3233,7 @@
                 }
                 selAction.disabled = false;
                 btnSend.disabled = false;
-                show('success', (data.actions.length)+' message type(s) allowed.'+(data.notice ? ' '+data.notice : ''));
+                show('success', fmt(T.msgTypesAllowed, data.actions.length)+(data.notice ? ' '+data.notice : ''));
             }, 'amazon_order_id='+encodeURIComponent(orderId));
         });
 
@@ -3031,15 +3241,15 @@
         if (btnReview) {
             btnReview.addEventListener('click', function () {
                 var orderId = inpOrder.value.replace(/^\s+|\s+$/g, '');
-                if (!orderId) { show('warning', 'Enter an Amazon order id first.'); return; }
+                if (!orderId) { show('warning', T.enterOrderId); return; }
                 btnReview.disabled = true;
-                show('info', 'Requesting a review from the buyer...');
+                show('info', T.requestingReview);
 
                 ajaxPost('{$ajax_request_review_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnReview.disabled = false;
-                    if (!data) { show('danger', 'Unexpected response'); return; }
+                    if (!data) { show('danger', T.unexpected); return; }
                     if (data.error) { show('danger', data.error); return; }
-                    show('success', 'Review request sent.'+(data.notice ? ' '+data.notice : ''));
+                    show('success', T.reviewSent+(data.notice ? ' '+data.notice : ''));
                 }, 'amazon_order_id='+encodeURIComponent(orderId));
             });
         }
@@ -3047,15 +3257,15 @@
         btnSend.addEventListener('click', function () {
             var orderId = inpOrder.value.replace(/^\s+|\s+$/g, '');
             var action = selAction.value;
-            if (!orderId || !action) { show('warning', 'Load message types and pick one first.'); return; }
+            if (!orderId || !action) { show('warning', T.pickMsgType); return; }
             btnSend.disabled = true;
-            show('info', 'Sending message...');
+            show('info', T.sendingMsg);
 
             ajaxPost('{$ajax_send_buyer_message_url|escape:'javascript':'UTF-8'}', function (data) {
                 btnSend.disabled = false;
-                if (!data) { show('danger', 'Unexpected response'); return; }
+                if (!data) { show('danger', T.unexpected); return; }
                 if (data.error) { show('danger', data.error); return; }
-                show('success', 'Message sent to the buyer.'+(data.notice ? ' '+data.notice : ''));
+                show('success', T.msgSent+(data.notice ? ' '+data.notice : ''));
                 txtMsg.value = '';
             }, 'amazon_order_id='+encodeURIComponent(orderId)
                 +'&action_name='+encodeURIComponent(action)
@@ -3072,16 +3282,15 @@
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Searching the Amazon catalog by EAN...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(T.searchingEan)+'</div>';
 
             ajaxPost('{$ajax_match_catalog_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML = '<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML = '<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 if (data.error) { out.innerHTML = '<div class="alert alert-danger">'+esc(data.error)+'</div>'; return; }
                 var s = data.summary || {};
                 out.innerHTML = '<div class="alert alert-success">'
-                    + esc(s.candidates||0)+' checked &middot; '+esc(s.matched||0)+' ASIN(s) matched &middot; '
-                    + esc(s.not_found||0)+' not in Amazon catalog'
+                    + esc(fmt(T.matchSummary, s.candidates||0, s.matched||0, s.not_found||0))
                     + (data.notice ? ' &middot; '+esc(data.notice) : '')
                     + '</div>';
             });
@@ -3098,17 +3307,16 @@
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Creating PrestaShop products from Amazon listings...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(T.creatingProducts)+'</div>';
 
             ajaxPost('{$ajax_import_catalog_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML = '<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML = '<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 if (data.error) { out.innerHTML = '<div class="alert alert-danger">'+esc(data.error)+'</div>'; return; }
                 var s = data.summary || {};
                 var html = '<div class="alert alert-success">'
-                    + esc(s.candidates||0)+' Amazon-only listing(s) &middot; '+esc(s.created||0)+' product(s) created (inactive) &middot; '
-                    + esc(s.skipped||0)+' linked to existing &middot; '+esc(s.failed||0)+' failed'
-                    + ((s.images_failed|0) > 0 ? ' &middot; '+esc(s.images_failed)+' image(s) failed' : '')
+                    + esc(fmt(T.importSummary, s.candidates||0, s.created||0, s.skipped||0, s.failed||0))
+                    + ((s.images_failed|0) > 0 ? ' &middot; '+esc(fmt(T.imagesFailed, s.images_failed)) : '')
                     + '</div>';
                 if (data.notices && data.notices.length) {
                     for (var n=0; n<data.notices.length; n++) {
@@ -3129,7 +3337,7 @@
 
         function renderFeeds(feeds) {
             if (!feeds || !feeds.length) { tableWrap.innerHTML = ''; return; }
-            var h = '<table class="table"><thead><tr><th>Feed</th><th>Status</th><th>Messages</th><th>Accepted</th><th>Errors</th><th>Warnings</th><th>Updated</th></tr></thead><tbody>';
+            var h = '<table class="table"><thead><tr>'+th(T.thFeed, T.thStatus, T.thMessages, T.thAccepted, T.thErrors, T.thWarnings, T.thUpdated)+'</tr></thead><tbody>';
             for (var i = 0; i < feeds.length; i++) {
                 var f = feeds[i];
                 var cls = f.processing_status === 'DONE' ? 'badge-success'
@@ -3151,14 +3359,13 @@
 
         btnPoll.addEventListener('click', function () {
             btnPoll.disabled = true;
-            show('info', 'Checking feed status with Amazon...');
+            show('info', esc(T.checkingFeeds));
             ajaxPost('{$ajax_poll_feeds_url|escape:'javascript':'UTF-8'}', function (data) {
                 btnPoll.disabled = false;
-                if (!data) { show('danger', 'Unexpected response'); return; }
+                if (!data) { show('danger', T.unexpected); return; }
                 if (data.error) { show('danger', esc(data.error)); return; }
                 var s = data.summary || {};
-                show('success', esc(s.checked||0)+' feed(s) checked &middot; '+esc(s.done||0)+' completed &middot; '
-                    +esc(s.still_processing||0)+' still processing &middot; '+esc(s.failed||0)+' failed');
+                show('success', esc(fmt(T.feedsSummary, s.checked||0, s.done||0, s.still_processing||0, s.failed||0)));
                 renderFeeds(data.feeds);
             });
         });
@@ -3181,15 +3388,15 @@
         };
 
         function renderProducts(products) {
-            if (!products || !products.length) return '<div class="alert alert-info">No products with a reference (SKU) found.</div>';
+            if (!products || !products.length) return '<div class="alert alert-info">'+esc(T.noProductsRef)+'</div>';
             var h = '<table class="table"><thead><tr>'
-                +'<th>SKU</th><th>PrestaShop</th><th>Brand/Mfr</th><th>EAN</th>'
-                +'<th>Amazon</th><th>Brand</th><th>Type</th><th>Direction</th>'
+                +'<th>SKU</th><th>PrestaShop</th>'+th(T.thBrandMfr)+'<th>EAN</th>'
+                +'<th>Amazon</th>'+th(T.thBrand, T.thType, T.thDirection)
                 +'</tr></thead><tbody>';
             for (var i=0; i<products.length; i++) {
                 var p = products[i];
-                var ps = parseInt(p.ps_exists,10) ? esc(p.ps_name)+' &middot; '+esc(p.ps_price)+' &middot; qty '+esc(p.ps_quantity) : '<em>&mdash;</em>';
-                var az = parseInt(p.amazon_exists,10) ? esc(p.amazon_title)+' &middot; '+esc(p.amazon_price)+' &middot; qty '+esc(p.amazon_quantity) : '<em>&mdash;</em>';
+                var ps = parseInt(p.ps_exists,10) ? esc(p.ps_name)+' &middot; '+esc(p.ps_price)+' &middot; '+esc(fmt(T.qty, p.ps_quantity)) : '<em>&mdash;</em>';
+                var az = parseInt(p.amazon_exists,10) ? esc(p.amazon_title)+' &middot; '+esc(p.amazon_price)+' &middot; '+esc(fmt(T.qty, p.amazon_quantity)) : '<em>&mdash;</em>';
                 h += '<tr>'
                     +'<td>'+esc(p.seller_sku)+'</td>'
                     +'<td>'+ps+'</td>'
@@ -3214,18 +3421,16 @@
             setBusy(true);
             sumBox.style.display = 'none';
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">'+(dir==='amazon'?'Pulling from Amazon...':'Scanning PrestaShop...')+'</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(dir==='amazon'?T.pullingAmazon:T.scanningPs)+'</div>';
 
             ajaxPost(urls[dir], function (data) {
                 setBusy(false);
-                if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 var html = '';
                 if (data.summary) {
                     var s = data.summary;
                     html += '<div class="alert alert-success">'
-                        +esc(s.total)+' products &middot; '+esc(s.ps_only)+' PS only &middot; '
-                        +esc(s.amazon_only)+' Amazon only &middot; '+esc(s.conflict)+' conflicts &middot; '
-                        +esc(s.in_sync)+' in sync</div>';
+                        +esc(fmt(T.syncSummary, s.total, s.ps_only, s.amazon_only, s.conflict, s.in_sync))+'</div>';
                 }
                 if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                 if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
@@ -3249,38 +3454,37 @@
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Sending pending changes to Amazon...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(T.sendingPending)+'</div>';
 
             ajaxPost('{$ajax_send_pending_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 var html = '';
 
                 if (data.method === 'feed') {
                     if (data.error) {
                         html += '<div class="alert alert-danger">'+esc(data.error)
-                              + (data.skipped && data.skipped.length ? ' &middot; '+esc(data.skipped.length)+' SKU(s) skipped' : '')+'</div>';
+                              + (data.skipped && data.skipped.length ? ' &middot; '+esc(fmt(T.skusSkipped, data.skipped.length)) : '')+'</div>';
                     } else {
-                        html += '<div class="alert alert-success">'+esc(data.pending)+' SKUs pending, so they went as one feed. Feed '+esc(data.feed_id)
-                              + ' submitted with '+esc(data.messages)+' message(s). Amazon processes it in the background: use Check feed status below.'
-                              + (data.skipped && data.skipped.length ? ' '+esc(data.skipped.length)+' SKU(s) skipped (no category mapping).' : '')
+                        html += '<div class="alert alert-success">'+esc(fmt(T.feedSubmitted, data.pending, data.feed_id, data.messages))
+                              + (data.skipped && data.skipped.length ? ' '+esc(fmt(T.skusSkippedNoMap, data.skipped.length)) : '')
                               + (data.notice ? ' '+esc(data.notice) : '')+'</div>';
                         if (window.mkproRenderFeeds) window.mkproRenderFeeds(data.feeds);
                     }
                 } else if (data.summary) {
                     var s = data.summary;
-                    html += '<div class="alert alert-success">'+esc(s.candidates)+' candidates &middot; '+esc(s.pushed)+' accepted &middot; '+esc(s.failed)+' failed</div>';
+                    html += '<div class="alert alert-success">'+esc(fmt(T.pushSummary, s.candidates, s.pushed, s.failed))+'</div>';
                 }
                 if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
                 if (data.summary && data.summary.results && data.summary.results.length) {
-                    html += '<table class="table"><thead><tr><th>SKU</th><th>Status</th><th>Issues</th></tr></thead><tbody>';
+                    html += '<table class="table"><thead><tr><th>SKU</th>'+th(T.thStatus, T.thIssues)+'</tr></thead><tbody>';
                     for (var i=0; i<data.summary.results.length; i++) {
                         var r = data.summary.results[i];
                         html += '<tr><td>'+esc(r.sku)+'</td><td>'+statusBadge(r.status)+'</td><td>'+esc(r.issues)+'</td></tr>';
                     }
                     html += '</tbody></table>';
                 }
-                out.innerHTML = html || '<div class="alert alert-info">Nothing to send.</div>';
+                out.innerHTML = html || '<div class="alert alert-info">'+esc(T.nothingToSend)+'</div>';
             });
         });
     })();
@@ -3296,19 +3500,19 @@
             btn.disabled = true;
             msg.style.display = 'none';
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Fetching products from Amazon...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(T.fetchingProducts)+'</div>';
 
             ajaxPost('{$ajax_list_amazon_products_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 var html = '';
-                if (data.products && data.products.length) html += '<div class="alert alert-success">'+data.products.length+' product(s) found.</div>';
+                if (data.products && data.products.length) html += '<div class="alert alert-success">'+esc(fmt(T.productsFound, data.products.length))+'</div>';
                 if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                 if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
                 if (html) { msg.style.display='block'; msg.className=''; msg.innerHTML=html; }
 
                 if (data.products && data.products.length) {
-                    var t = '<table class="table"><thead><tr><th>SKU</th><th>ASIN</th><th>Title</th><th>Price</th><th>Qty</th><th>Brand</th><th>Type</th><th>Status</th></tr></thead><tbody>';
+                    var t = '<table class="table"><thead><tr><th>SKU</th><th>ASIN</th>'+th(T.thTitle, T.thPrice, T.thQty, T.thBrand, T.thType, T.thStatus)+'</tr></thead><tbody>';
                     for (var i=0; i<data.products.length; i++) {
                         var p = data.products[i];
                         t += '<tr><td>'+esc(p.seller_sku)+'</td><td>'+esc(p.asin)+'</td><td>'+esc(p.title)+'</td><td>'+esc(p.price)+'</td><td>'+esc(p.quantity)+'</td><td>'+esc(p.brand||'')+'</td><td>'+esc(p.product_type||'')+'</td><td>'+esc(p.status)+'</td></tr>';
@@ -3316,7 +3520,7 @@
                     t += '</tbody></table>';
                     out.innerHTML = t;
                 } else {
-                    out.innerHTML = '<div class="alert alert-info">No products to display.</div>';
+                    out.innerHTML = '<div class="alert alert-info">'+esc(T.noProductsDisplay)+'</div>';
                 }
             });
         });
@@ -3338,14 +3542,14 @@
             if (!cat || !pt) {
                 result.style.display = 'block';
                 result.className = 'alert alert-danger';
-                result.textContent = 'Please select a category and enter an Amazon Product Type.';
+                result.textContent = T.selectCatPt;
                 return;
             }
             if (attrs) {
                 try { JSON.parse(attrs); } catch (err) {
                     result.style.display = 'block';
                     result.className = 'alert alert-danger';
-                    result.textContent = 'Extra attributes must be valid JSON: ' + err.message;
+                    result.textContent = fmt(T.attrsJson, err.message);
                     return;
                 }
             }
@@ -3358,12 +3562,12 @@
                 if (!data || !data.success) {
                     result.style.display = 'block';
                     result.className = 'alert alert-danger';
-                    result.textContent = (data && data.error) ? data.error : 'Failed to save mapping.';
+                    result.textContent = (data && data.error) ? data.error : T.mapSaveFailed;
                     return;
                 }
                 result.style.display = 'block';
                 result.className = 'alert alert-success';
-                result.textContent = 'Mapping saved.';
+                result.textContent = T.mapSaved;
                 if (data.mappings) renderCatmapTable(data.mappings);
             }, params);
         });
@@ -3384,7 +3588,7 @@
             var tbody = document.querySelector('#catmap-table tbody');
             if (!tbody) return;
             if (!mappings.length) {
-                tbody.innerHTML = '<tr id="catmap-empty"><td colspan="4" class="text-center">No category mappings configured yet.</td></tr>';
+                tbody.innerHTML = '<tr id="catmap-empty"><td colspan="4" class="text-center">'+esc(T.noCatMaps)+'</td></tr>';
                 return;
             }
             var h = '';
@@ -3415,26 +3619,25 @@
                 if (btnProcess) btnProcess.disabled = true;
                 summary.style.display = 'none';
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-info">Importing returns from Amazon...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.importingReturns)+'</div>';
 
                 ajaxPost('{$ajax_import_returns_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnImport.disabled = false;
                     if (btnProcess) btnProcess.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
 
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
                         html += '<div class="alert alert-success">'
-                            +'Checked '+esc(s.checked)+' &middot; '+esc(s.new_returns)+' new returns &middot; '
-                            +esc(s.new_cancellations)+' new cancellations &middot; '+esc(s.already)+' already imported'
+                            +esc(fmt(T.returnsSummary, s.checked, s.new_returns, s.new_cancellations, s.already))
                             +'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
 
                     if (html) { summary.style.display='block'; summary.className=''; summary.innerHTML=html; }
-                    out.innerHTML = html ? '' : '<div class="alert alert-info">No new returns found.</div>';
+                    out.innerHTML = html ? '' : '<div class="alert alert-info">'+esc(T.noNewReturns)+'</div>';
                 });
             });
         }
@@ -3445,23 +3648,22 @@
                 if (btnImport) btnImport.disabled = true;
                 summary.style.display = 'none';
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-info">Processing pending returns...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.processingReturns)+'</div>';
 
                 ajaxPost('{$ajax_process_returns_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnProcess.disabled = false;
                     if (btnImport) btnImport.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
 
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
                         html += '<div class="alert alert-success">'
-                            +esc(s.total)+' pending &middot; '+esc(s.processed)+' processed &middot; '
-                            +esc(s.skipped)+' skipped &middot; '+esc(s.failed)+' failed'
+                            +esc(fmt(T.returnsProcessed, s.total, s.processed, s.skipped, s.failed))
                             +'</div>';
                     }
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">No pending returns to process.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.noPendingReturns)+'</div>';
                 });
             });
         }
@@ -3479,19 +3681,19 @@
             btnSync.addEventListener('click', function () {
                 btnSync.disabled = true;
                 fbaResult.style.display = 'block';
-                fbaResult.innerHTML = '<div class="alert alert-info">Syncing FBA inventory from Amazon...</div>';
+                fbaResult.innerHTML = '<div class="alert alert-info">'+esc(T.syncingFba)+'</div>';
 
                 ajaxPost('{$ajax_sync_fba_inventory_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnSync.disabled = false;
-                    if (!data) { fbaResult.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { fbaResult.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">Fetched '+esc(s.fetched)+' SKUs &middot; '+esc(s.new_skus)+' new &middot; '+esc(s.updated)+' updated &middot; '+esc(s.ps_matched)+' PS matched</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.fbaSummary, s.fetched, s.new_skus, s.updated, s.ps_matched))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                    fbaResult.innerHTML = html || '<div class="alert alert-info">No FBA inventory data returned.</div>';
+                    fbaResult.innerHTML = html || '<div class="alert alert-info">'+esc(T.noFbaData)+'</div>';
                 });
             });
         }
@@ -3500,18 +3702,18 @@
             btnStock.addEventListener('click', function () {
                 btnStock.disabled = true;
                 fbaResult.style.display = 'block';
-                fbaResult.innerHTML = '<div class="alert alert-info">Updating PrestaShop stock from FBA quantities...</div>';
+                fbaResult.innerHTML = '<div class="alert alert-info">'+esc(T.updatingFbaStock)+'</div>';
 
                 ajaxPost('{$ajax_sync_fba_stock_ps_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnStock.disabled = false;
-                    if (!data) { fbaResult.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { fbaResult.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.total)+' FBA SKUs &middot; '+esc(s.updated)+' PS stock updated &middot; '+esc(s.skipped)+' skipped</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.fbaStockSummary, s.total, s.updated, s.skipped))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
-                    fbaResult.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    fbaResult.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3519,17 +3721,17 @@
         if (btnMcf) {
             btnMcf.addEventListener('click', function () {
                 var orderId = document.getElementById('mcf-order-id').value;
-                if (!orderId) { mcfResult.innerHTML='<div class="alert alert-danger">Please enter a PS Order ID.</div>'; return; }
+                if (!orderId) { mcfResult.innerHTML='<div class="alert alert-danger">'+esc(T.enterPsOrder)+'</div>'; return; }
                 btnMcf.disabled = true;
-                mcfResult.innerHTML = '<div class="alert alert-info">Creating MCF fulfillment order...</div>';
+                mcfResult.innerHTML = '<div class="alert alert-info">'+esc(T.creatingMcf)+'</div>';
 
                 ajaxPost('{$ajax_create_mcf_order_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnMcf.disabled = false;
-                    if (!data) { mcfResult.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { mcfResult.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     if (data.success) {
-                        mcfResult.innerHTML = '<div class="alert alert-success">MCF order created! Seller Fulfillment Order ID: '+esc(data.seller_fulfillment_order_id)+'</div>';
+                        mcfResult.innerHTML = '<div class="alert alert-success">'+esc(fmt(T.mcfCreated, data.seller_fulfillment_order_id))+'</div>';
                     } else {
-                        mcfResult.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : 'Failed to create MCF order.')+'</div>';
+                        mcfResult.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : esc(T.mcfFailed))+'</div>';
                     }
                 }, 'id_order='+encodeURIComponent(orderId));
             });
@@ -3553,18 +3755,18 @@
         if (btnFetch) {
             btnFetch.addEventListener('click', function () {
                 setBusy(true);
-                out.innerHTML = '<div class="alert alert-info">Fetching competitive pricing from Amazon...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.fetchingPricing)+'</div>';
 
                 ajaxPost('{$ajax_fetch_pricing_url|escape:'javascript':'UTF-8'}', function (data) {
                     setBusy(false);
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.total)+' ASINs processed &middot; '+esc(s.buybox_wins)+' Buy Box wins &middot; '+esc(s.updated)+' updated</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.pricingSummary, s.total, s.buybox_wins, s.updated))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3572,18 +3774,18 @@
         if (btnApply) {
             btnApply.addEventListener('click', function () {
                 setBusy(true);
-                out.innerHTML = '<div class="alert alert-info">Applying pricing rules...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.applyingRules)+'</div>';
 
                 ajaxPost('{$ajax_apply_pricing_rules_url|escape:'javascript':'UTF-8'}', function (data) {
                     setBusy(false);
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.evaluated)+' products evaluated &middot; '+esc(s.repriced)+' repriced &middot; '+esc(s.capped)+' capped at min/max</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.rulesSummary, s.evaluated, s.repriced, s.capped))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3591,19 +3793,19 @@
         if (btnPush) {
             btnPush.addEventListener('click', function () {
                 setBusy(true);
-                out.innerHTML = '<div class="alert alert-info">Pushing suggested prices to Amazon...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.pushingPrices)+'</div>';
 
                 ajaxPost('{$ajax_push_prices_url|escape:'javascript':'UTF-8'}', function (data) {
                     setBusy(false);
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.candidates)+' candidates &middot; '+esc(s.pushed)+' pushed &middot; '+esc(s.failed)+' failed</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.pricesPushed, s.candidates, s.pushed, s.failed))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3617,7 +3819,7 @@
                 var minP = document.getElementById('min-price').value;
                 var maxP = document.getElementById('max-price').value;
 
-                if (!name) { out.innerHTML='<div class="alert alert-danger">Please enter a rule name.</div>'; return; }
+                if (!name) { out.innerHTML='<div class="alert alert-danger">'+esc(T.enterRuleName)+'</div>'; return; }
 
                 btnSave.disabled = true;
                 var params = 'name='+encodeURIComponent(name)+'&rule_type='+encodeURIComponent(type)
@@ -3626,15 +3828,15 @@
 
                 ajaxPost('{$ajax_save_pricing_rule_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnSave.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     if (data.success) {
-                        out.innerHTML = '<div class="alert alert-success">Pricing rule saved. Refresh the page to see it in the table.</div>';
+                        out.innerHTML = '<div class="alert alert-success">'+esc(T.ruleSaved)+'</div>';
                         document.getElementById('rule-name').value = '';
                         document.getElementById('price-adjustment').value = '';
                         document.getElementById('min-price').value = '';
                         document.getElementById('max-price').value = '';
                     } else {
-                        out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : 'Failed to save rule.')+'</div>';
+                        out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : esc(T.ruleFailed))+'</div>';
                     }
                 }, params);
             });
@@ -3664,19 +3866,19 @@
 
         btn.addEventListener('click', function () {
             btn.disabled = true;
-            out.innerHTML = '<div class="alert alert-info">Fetching order fees from Amazon Finances API...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(T.fetchingFees)+'</div>';
 
             ajaxPost('{$ajax_fetch_fees_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 var html = '';
                 if (data.summary) {
                     var s = data.summary;
-                    html += '<div class="alert alert-success">'+esc(s.orders_checked)+' orders checked &middot; '+esc(s.fees_recorded)+' fee entries recorded &middot; '+esc(s.orders_updated)+' orders updated</div>';
+                    html += '<div class="alert alert-success">'+esc(fmt(T.feesSummary, s.orders_checked, s.fees_recorded, s.orders_updated))+'</div>';
                 }
                 if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                 if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
             });
         });
     })();
@@ -3692,15 +3894,15 @@
 
         function requestReport(reportType, btn) {
             btn.disabled = true;
-            out.innerHTML = '<div class="alert alert-info">Requesting '+esc(reportType)+' report...</div>';
+            out.innerHTML = '<div class="alert alert-info">'+esc(fmt(T.requestingReport, reportType))+'</div>';
 
             ajaxPost('{$ajax_request_report_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                 if (data.success) {
-                    out.innerHTML = '<div class="alert alert-success">Report requested! ID: '+esc(data.report_id)+'. Use "Poll Pending Reports" to check status.</div>';
+                    out.innerHTML = '<div class="alert alert-success">'+esc(fmt(T.reportRequested, data.report_id))+'</div>';
                 } else {
-                    out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : 'Failed to request report.')+'</div>';
+                    out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : esc(T.reportFailed))+'</div>';
                 }
             }, 'report_type='+encodeURIComponent(reportType));
         }
@@ -3712,18 +3914,18 @@
         if (btnPoll) {
             btnPoll.addEventListener('click', function () {
                 btnPoll.disabled = true;
-                out.innerHTML = '<div class="alert alert-info">Polling pending reports...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.pollingReports)+'</div>';
 
                 ajaxPost('{$ajax_poll_reports_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnPoll.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.checked)+' reports checked &middot; '+esc(s.completed)+' completed &middot; '+esc(s.still_pending)+' still pending</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.reportsSummary, s.checked, s.completed, s.still_pending))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3740,19 +3942,19 @@
         if (btnImport) {
             btnImport.addEventListener('click', function () {
                 btnImport.disabled = true;
-                out.innerHTML = '<div class="alert alert-info">Importing promotions from Amazon orders...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.importingPromos)+'</div>';
 
                 ajaxPost('{$ajax_import_promotions_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnImport.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.orders_scanned)+' orders scanned &middot; '+esc(s.promotions_found)+' promotions found &middot; '+esc(s.promotions_new)+' new &middot; '+esc(s.promotions_updated)+' updated</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.promosSummary, s.orders_scanned, s.promotions_found, s.promotions_new, s.promotions_updated))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3760,19 +3962,19 @@
         if (btnExport) {
             btnExport.addEventListener('click', function () {
                 btnExport.disabled = true;
-                out.innerHTML = '<div class="alert alert-info">Exporting PS cart rules as promotions...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.exportingPromos)+'</div>';
 
                 ajaxPost('{$ajax_export_promotions_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnExport.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.scanned)+' cart rules scanned &middot; '+esc(s.exported)+' exported</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.exportSummary, s.scanned, s.exported))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3780,18 +3982,18 @@
         if (btnCartRules) {
             btnCartRules.addEventListener('click', function () {
                 btnCartRules.disabled = true;
-                out.innerHTML = '<div class="alert alert-info">Creating PrestaShop cart rules from promotions...</div>';
+                out.innerHTML = '<div class="alert alert-info">'+esc(T.creatingCartRules)+'</div>';
 
                 ajaxPost('{$ajax_create_promo_cart_rules_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnCartRules.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(s.total)+' promotions &middot; '+esc(s.created)+' cart rules created &middot; '+esc(s.errors)+' errors</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.cartRulesSummary, s.total, s.created, s.errors))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
-                    out.innerHTML = html || '<div class="alert alert-info">Done.</div>';
+                    out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
                 });
             });
         }
@@ -3806,7 +4008,7 @@
         if (btnSave) {
             btnSave.addEventListener('click', function () {
                 var mpId = document.getElementById('mp-marketplace-id').value;
-                if (!mpId) { out.innerHTML='<div class="alert alert-danger">Please select a marketplace.</div>'; return; }
+                if (!mpId) { out.innerHTML='<div class="alert alert-danger">'+esc(T.selectMarketplace)+'</div>'; return; }
 
                 var sellerId = document.getElementById('mp-seller-id').value.trim();
                 var syncOrders = document.getElementById('mp-sync-orders').checked ? 1 : 0;
@@ -3822,11 +4024,11 @@
 
                 ajaxPost('{$ajax_save_marketplace_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnSave.disabled = false;
-                    if (!data) { out.innerHTML='<div class="alert alert-danger">Unexpected response</div>'; return; }
+                    if (!data) { out.innerHTML='<div class="alert alert-danger">'+esc(T.unexpected)+'</div>'; return; }
                     if (data.success) {
-                        out.innerHTML = '<div class="alert alert-success">Marketplace saved. Refresh the page to see it in the table.</div>';
+                        out.innerHTML = '<div class="alert alert-success">'+esc(T.mpSaved)+'</div>';
                     } else {
-                        out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : 'Failed to save marketplace.')+'</div>';
+                        out.innerHTML = '<div class="alert alert-danger">'+(data.error ? esc(data.error) : esc(T.mpFailed))+'</div>';
                     }
                 }, params);
             });
@@ -3876,16 +4078,16 @@
                 + '<div class="col-lg-6">'
                 + '<div class="row"><div class="col-xs-4">'
                 + '<select class="form-control input-sm attr-src">'
-                + '<option value="">' + 'Not set' + '</option>'
-                + (enumKeys.length ? '<option value="allowed">Amazon value</option>' : '')
-                + '<option value="ps">PrestaShop field</option>'
-                + '<option value="fixed">Fixed text</option>'
+                + '<option value="">' + esc(T.notSet) + '</option>'
+                + (enumKeys.length ? '<option value="allowed">' + esc(T.amazonValue) + '</option>' : '')
+                + '<option value="ps">' + esc(T.psField) + '</option>'
+                + '<option value="fixed">' + esc(T.fixedText) + '</option>'
                 + '</select></div>'
                 + '<div class="col-xs-8">';
 
             // Amazon allowed values
             h += '<select class="form-control input-sm attr-allowed" style="display:none;">';
-            h += '<option value="">-- pick a value --</option>';
+            h += '<option value="">' + esc(T.pickValue) + '</option>';
             for (var i = 0; i < enumKeys.length; i++) {
                 h += '<option value="' + esc(enumKeys[i]) + '">' + esc(attr.enum[enumKeys[i]]) + '</option>';
             }
@@ -3893,14 +4095,14 @@
 
             // PrestaShop field
             h += '<select class="form-control input-sm attr-ps" style="display:none;">';
-            h += '<option value="">-- pick a field --</option>';
+            h += '<option value="">' + esc(T.pickField) + '</option>';
             for (var f in psFields) {
                 if (psFields.hasOwnProperty(f)) h += '<option value="' + esc(f) + '">' + esc(psFields[f]) + '</option>';
             }
-            h += '<option value="__feature">Product feature (type the name)</option>';
-            h += '<option value="__attribute">Combination attribute (type the group)</option>';
+            h += '<option value="__feature">' + esc(T.productFeature) + '</option>';
+            h += '<option value="__attribute">' + esc(T.comboAttribute) + '</option>';
             h += '</select>';
-            h += '<input type="text" class="form-control input-sm attr-ps-extra" style="display:none; margin-top:4px;" placeholder="Feature / attribute group name" />';
+            h += '<input type="text" class="form-control input-sm attr-ps-extra" style="display:none; margin-top:4px;" placeholder="' + esc(T.featureGroupPh) + '" />';
 
             // Fixed literal
             h += '<input type="text" class="form-control input-sm attr-fixed" style="display:none;" />';
@@ -3936,8 +4138,8 @@
                 var a = schemaAttributes[i];
                 if (a.required) req += attrRow(a); else opt += attrRow(a);
             }
-            el('attrs-required').innerHTML = req || '<p class="help-block col-lg-offset-3">Amazon lists no strictly required extra attributes for this product type.</p>';
-            el('attrs-optional').innerHTML = opt || '<p class="help-block col-lg-offset-3">No optional attributes.</p>';
+            el('attrs-required').innerHTML = req || '<p class="help-block col-lg-offset-3">' + esc(T.noRequiredAttrs) + '</p>';
+            el('attrs-optional').innerHTML = opt || '<p class="help-block col-lg-offset-3">' + esc(T.noOptionalAttrs) + '</p>';
             el('profile-attributes-wrap').style.display = 'block';
 
             var rows = editor.querySelectorAll('.amz-attr');
@@ -4003,30 +4205,29 @@
         el('pt-search-btn').addEventListener('click', function () {
             var btn = this;
             btn.disabled = true;
-            status('Asking Amazon for matching product types...');
+            status(T.askingPt);
             ajaxPost('{$ajax_search_product_types_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data || !data.success) { status((data && data.error) ? data.error : 'Search failed', 'danger'); return; }
+                if (!data || !data.success) { status((data && data.error) ? data.error : T.searchFailed, 'danger'); return; }
                 var sel = el('pt-results');
-                sel.innerHTML = '<option value="">-- ' + data.product_types.length + ' result(s) --</option>';
+                sel.innerHTML = '<option value="">' + esc(fmt(T.ptResults, data.product_types.length)) + '</option>';
                 for (var i = 0; i < data.product_types.length; i++) {
                     var pt = data.product_types[i];
                     sel.innerHTML += '<option value="' + esc(pt.name) + '">' + esc(pt.displayName) + ' (' + esc(pt.name) + ')</option>';
                 }
                 sel.size = Math.min(10, Math.max(2, data.product_types.length + 1));
-                status(data.product_types.length + ' product type(s) found — pick one and load its fields.', 'success');
+                status(fmt(T.ptFound, data.product_types.length), 'success');
             }, 'keywords=' + encodeURIComponent(el('pt-search').value));
         });
 
         function loadSchema(refresh) {
             var pt = el('pt-results').value;
-            if (!pt) { status('Pick a product type first.', 'danger'); return; }
-            status('Downloading the attribute schema from Amazon...');
+            if (!pt) { status(T.pickPt, 'danger'); return; }
+            status(T.downloadingSchema);
             ajaxPost('{$ajax_load_pt_schema_url|escape:'javascript':'UTF-8'}', function (data) {
-                if (!data || !data.success) { status((data && data.error) ? data.error : 'Load failed', 'danger'); return; }
+                if (!data || !data.success) { status((data && data.error) ? data.error : T.loadFailed, 'danger'); return; }
                 renderSchema(data.attributes);
-                status(esc(data.display_name) + ': ' + data.required_count + ' required, '
-                    + (data.attributes.length - data.required_count) + ' optional attribute(s).', 'success');
+                status(fmt(T.schemaLoaded, data.display_name, data.required_count, data.attributes.length - data.required_count), 'success');
             }, 'product_type=' + encodeURIComponent(pt) + (refresh ? '&refresh=1' : ''));
         }
         el('pt-load').addEventListener('click', function () { loadSchema(false); });
@@ -4056,7 +4257,7 @@
             el('profile-id').value = '0';
             el('profile-name').value = '';
             el('pt-search').value = '';
-            el('pt-results').innerHTML = '<option value="">-- Search, then pick a product type --</option>';
+            el('pt-results').innerHTML = '<option value="">' + esc(T.searchPickPt) + '</option>';
             el('pt-results').size = 1;
             el('profile-browse-nodes').value = '';
             el('profile-latency').value = '';
@@ -4078,7 +4279,7 @@
 
         el('profile-new').addEventListener('click', function () {
             resetEditor();
-            el('profile-editor-title').textContent = 'New profile';
+            el('profile-editor-title').textContent = T.newProfile;
             editor.style.display = 'block';
             editor.scrollIntoView({ behavior: 'smooth' });
         });
@@ -4091,10 +4292,10 @@
             var btn = e.target.closest('.profile-edit');
             if (!btn) return;
             ajaxPost('{$ajax_get_profile_url|escape:'javascript':'UTF-8'}', function (data) {
-                if (!data || !data.success) { alert((data && data.error) ? data.error : 'Could not load the profile.'); return; }
+                if (!data || !data.success) { alert((data && data.error) ? data.error : T.profileLoadFailed); return; }
                 var p = data.profile;
                 resetEditor();
-                el('profile-editor-title').textContent = 'Edit profile: ' + p.name;
+                el('profile-editor-title').textContent = fmt(T.editProfile, p.name);
                 el('profile-id').value = p.id_amazonmarketplacepro_profile;
                 el('profile-name').value = p.name;
                 el('pt-results').innerHTML = '<option value="' + esc(p.product_type) + '" selected>' + esc(p.product_type) + '</option>';
@@ -4125,7 +4326,7 @@
         document.addEventListener('click', function (e) {
             var btn = e.target.closest('.profile-delete');
             if (!btn) return;
-            if (!confirm('Delete this profile? Its categories fall back to the Category Mapping.')) return;
+            if (!confirm(T.deleteProfile)) return;
             ajaxPost('{$ajax_delete_profile_url|escape:'javascript':'UTF-8'}', function (data) {
                 if (data && data.success) {
                     var row = btn.closest('tr');
@@ -4143,7 +4344,7 @@
             for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) cats.push(boxes[i].value); }
 
             btn.disabled = true;
-            out.innerHTML = 'Saving...';
+            out.innerHTML = esc(T.saving);
             var params = 'id_profile=' + encodeURIComponent(el('profile-id').value)
                 + '&name=' + encodeURIComponent(el('profile-name').value)
                 + '&product_type=' + encodeURIComponent(el('pt-results').value)
@@ -4160,10 +4361,10 @@
             ajaxPost('{$ajax_save_profile_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    out.innerHTML = '<span class="text-danger">' + esc((data && data.error) ? data.error : 'Save failed') + '</span>';
+                    out.innerHTML = '<span class="text-danger">' + esc((data && data.error) ? data.error : T.saveFailed) + '</span>';
                     return;
                 }
-                out.innerHTML = '<span class="text-success">Profile saved. ' + esc(data.queued) + ' product(s) queued for the next sync. Reload the page to refresh the list.</span>';
+                out.innerHTML = '<span class="text-success">' + esc(fmt(T.profileSaved, data.queued)) + '</span>';
                 el('profile-id').value = data.id_profile;
             }, params);
         });
@@ -4196,14 +4397,14 @@
                 }
 
                 btn.disabled = true;
-                resultEl.textContent = 'Saving...';
+                resultEl.textContent = T.saving;
                 ajaxPost('{$ajax_save_entity_settings_url|escape:'javascript':'UTF-8'}', function (data) {
                     btn.disabled = false;
                     if (!data || !data.success) {
-                        resultEl.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Save failed') + '</span>';
+                        resultEl.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : T.saveFailed) + '</span>';
                         return;
                     }
-                    resultEl.innerHTML = '<span class="text-success">' + esc(data.saved) + ' rule(s) saved, ' + esc(data.queued) + ' product(s) queued.</span>';
+                    resultEl.innerHTML = '<span class="text-success">' + esc(fmt(T.entitySaved, data.saved, data.queued)) + '</span>';
                 }, 'entity_type=' + encodeURIComponent(type) + '&rows=' + encodeURIComponent(JSON.stringify(rows)));
             });
         }
@@ -4238,14 +4439,14 @@
                 });
             }
             btn.disabled = true;
-            result.textContent = 'Saving...';
+            result.textContent = T.saving;
             ajaxPost('{$ajax_save_product_rules_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Save failed') + '</span>';
+                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : T.saveFailed) + '</span>';
                     return;
                 }
-                result.innerHTML = '<span class="text-success">' + esc(data.saved) + ' product rule(s) saved.</span>';
+                result.innerHTML = '<span class="text-success">' + esc(fmt(T.prodRulesSaved, data.saved)) + '</span>';
             }, 'rows=' + encodeURIComponent(JSON.stringify(rows)));
         });
     })();
@@ -4259,15 +4460,15 @@
 
         btn.addEventListener('click', function () {
             var op = sel.value;
-            if (!op) { result.innerHTML = '<span class="text-danger">Select an action first.</span>'; return; }
-            if (op === 'clear' && !confirm('Remove ALL queue entries?')) return;
+            if (!op) { result.innerHTML = '<span class="text-danger">' + esc(T.selectAction) + '</span>'; return; }
+            if (op === 'clear' && !confirm(T.confirmClearQueue)) return;
 
             btn.disabled = true;
-            result.textContent = 'Working...';
+            result.textContent = T.working;
             ajaxPost('{$ajax_queue_action_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : 'Action failed') + '</span>';
+                    result.innerHTML = '<span class="text-danger">' + esc(data && data.error ? data.error : T.actionFailed) + '</span>';
                     return;
                 }
                 var tbody = document.querySelector('#queue-table tbody');
@@ -4277,11 +4478,11 @@
                     var q = rows[i];
                     h += '<tr><td>' + esc(q.id_product) + '</td><td><code>' + esc(q.reference || '') + '</code></td>'
                         + '<td>' + esc(q.name || '') + '</td><td>' + esc(q.reason) + '</td>'
-                        + '<td>' + (parseInt(q.active, 10) ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-default">No</span>') + '</td>'
+                        + '<td>' + (parseInt(q.active, 10) ? '<span class="badge badge-success">' + esc(T.yes) + '</span>' : '<span class="badge badge-default">' + esc(T.no) + '</span>') + '</td>'
                         + '<td><small>' + esc(q.date_add) + '</small></td><td><small>' + esc(q.date_upd) + '</small></td></tr>';
                 }
-                tbody.innerHTML = h || '<tr><td colspan="7" class="text-center text-muted">Queue is empty.</td></tr>';
-                result.innerHTML = '<span class="text-success">Done.</span>';
+                tbody.innerHTML = h || '<tr><td colspan="7" class="text-center text-muted">' + esc(T.queueEmpty) + '</td></tr>';
+                result.innerHTML = '<span class="text-success">' + esc(T.done) + '</span>';
             }, 'queue_op=' + encodeURIComponent(op));
         });
     })();
@@ -4295,17 +4496,17 @@
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Looking for orphaned listings...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.lookingOrphans) + '</div>';
 
             ajaxPost('{$ajax_refresh_orphans_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : 'Refresh failed') + '</div>';
+                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : T.refreshFailed) + '</div>';
                     return;
                 }
                 var rows = data.orphans || [];
                 out.innerHTML = '<div class="alert alert-' + (rows.length ? 'warning' : 'success') + '">'
-                    + esc(rows.length) + ' orphaned listing(s).' + (data.notice ? ' ' + esc(data.notice) : '') + '</div>';
+                    + esc(fmt(T.orphansFound, rows.length)) + (data.notice ? ' ' + esc(data.notice) : '') + '</div>';
                 var tbody = document.querySelector('#orphans-table tbody');
                 var h = '';
                 for (var i = 0; i < rows.length; i++) {
@@ -4315,7 +4516,7 @@
                         + '<td>' + (parseInt(o.id_product, 10) > 0 ? '#' + esc(o.id_product) : '-') + '</td>'
                         + '<td>' + esc(o.reason) + '</td></tr>';
                 }
-                tbody.innerHTML = h || '<tr><td colspan="5" class="text-center text-muted">No orphaned listings found.</td></tr>';
+                tbody.innerHTML = h || '<tr><td colspan="5" class="text-center text-muted">' + esc(T.noOrphans) + '</td></tr>';
             });
         });
     })();
@@ -4327,17 +4528,17 @@
 
         function act(op, id, row) {
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Working...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.working) + '</div>';
             ajaxPost('{$ajax_pending_order_action_url|escape:'javascript':'UTF-8'}', function (data) {
                 if (!data || !data.success) {
-                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : 'Action failed') + '</div>';
+                    out.innerHTML = '<div class="alert alert-danger">' + esc(data && data.error ? data.error : T.actionFailed) + '</div>';
                     return;
                 }
-                out.innerHTML = '<div class="alert alert-success">' + esc(data.message || 'Done.') + '</div>';
+                out.innerHTML = '<div class="alert alert-success">' + esc(data.message || T.done) + '</div>';
                 if (row) row.remove();
                 var tbody = document.querySelector('#pending-table tbody');
                 if (tbody && !tbody.querySelector('tr[data-id]')) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending orders.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">' + esc(T.noPendingOrders) + '</td></tr>';
                 }
             }, 'pending_op=' + encodeURIComponent(op) + '&id_staged=' + encodeURIComponent(id));
         }
@@ -4345,13 +4546,13 @@
         document.addEventListener('click', function (e) {
             var create = e.target.closest('.pending-create');
             if (create) {
-                if (!confirm('Create this PS order even though stock is insufficient?')) return;
+                if (!confirm(T.confirmCreatePending)) return;
                 act('create', create.getAttribute('data-id'), create.closest('tr'));
                 return;
             }
             var del = e.target.closest('.pending-delete');
             if (del) {
-                if (!confirm('Remove this pending order? It will not become a PS order.')) return;
+                if (!confirm(T.confirmRemovePending)) return;
                 act('delete', del.getAttribute('data-id'), del.closest('tr'));
             }
         });
@@ -4372,7 +4573,7 @@
                     + '<td>' + esc(t.template_name) + '</td>'
                     + '<td><button type="button" class="btn btn-xs btn-danger shiptpl-delete" data-id="' + esc(t.id_amazonmarketplacepro_shipping_template) + '"><i class="icon-trash"></i></button></td></tr>';
             }
-            tbody.innerHTML = h || '<tr id="shiptpl-empty"><td colspan="5" class="text-center text-muted">No template ranges yet.</td></tr>';
+            tbody.innerHTML = h || '<tr id="shiptpl-empty"><td colspan="5" class="text-center text-muted">' + esc(T.noRanges) + '</td></tr>';
         }
 
         function show(cls, msg) {
@@ -4382,13 +4583,13 @@
 
         btn.addEventListener('click', function () {
             var name = document.getElementById('shiptpl-name').value.trim();
-            if (!name) { show('danger', 'Enter the template name exactly as in Seller Central.'); return; }
+            if (!name) { show('danger', T.enterTemplate); return; }
             btn.disabled = true;
             ajaxPost('{$ajax_save_shipping_template_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
-                if (!data || !data.success) { show('danger', (data && data.error) ? data.error : 'Save failed'); return; }
+                if (!data || !data.success) { show('danger', (data && data.error) ? data.error : T.saveFailed); return; }
                 renderRows(data.templates || []);
-                show('success', 'Range saved.');
+                show('success', T.rangeSaved);
                 document.getElementById('shiptpl-name').value = '';
             }, 'basis=' + encodeURIComponent(document.getElementById('shiptpl-basis').value)
                 + '&min_value=' + encodeURIComponent(document.getElementById('shiptpl-min').value || '0')
@@ -4435,26 +4636,23 @@
             for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) ops.push(boxes[i].value); }
             if (!ops.length) {
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-danger">Tick at least one thing to update.</div>';
+                out.innerHTML = '<div class="alert alert-danger">' + esc(T.tickOne) + '</div>';
                 return;
             }
-            if (!confirm('This overwrites PrestaShop data for products that exist on both sides. Continue?')) return;
+            if (!confirm(T.confirmOverwrite)) return;
 
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Updating from Amazon...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.updatingFromAmazon) + '</div>';
             ajaxPost('{$ajax_update_from_amazon_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Update failed') + '</div>';
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.updateFailed) + '</div>';
                     return;
                 }
                 var s = data.summary;
                 var h = '<div class="alert alert-success">'
-                    + esc(s.candidates) + ' matched product(s) &middot; '
-                    + esc(s.content) + ' content &middot; ' + esc(s.price) + ' price &middot; '
-                    + esc(s.quantity) + ' stock &middot; ' + esc(s.features) + ' feature(s) &middot; '
-                    + esc(s.hidden) + ' deactivated &middot; ' + esc(s.failed) + ' failed</div>';
+                    + esc(fmt(T.updateSummary, s.candidates, s.content, s.price, s.quantity, s.features, s.hidden, s.failed)) + '</div>';
                 if (data.notices) {
                     for (var n = 0; n < data.notices.length; n++) {
                         h += '<div class="alert alert-warning">' + esc(data.notices[n]) + '</div>';
@@ -4474,17 +4672,15 @@
         btn.addEventListener('click', function () {
             btn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Connecting to the mailbox...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.connectingMailbox) + '</div>';
             ajaxPost('{$ajax_fetch_buyer_messages_url|escape:'javascript':'UTF-8'}', function (data) {
                 btn.disabled = false;
                 if (!data || !data.success) {
-                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Fetch failed') + '</div>';
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.fetchFailed) + '</div>';
                     return;
                 }
                 var s = data.summary;
-                var h = '<div class="alert alert-success">' + esc(s.scanned) + ' unread message(s) scanned &middot; '
-                    + esc(s.matched) + ' quoting an Amazon order &middot; ' + esc(s.filed)
-                    + ' filed into Customer Service &middot; ' + esc(s.skipped) + ' left alone</div>';
+                var h = '<div class="alert alert-success">' + esc(fmt(T.inboxSummary, s.scanned, s.matched, s.filed, s.skipped)) + '</div>';
                 if (data.notices) {
                     for (var n = 0; n < data.notices.length; n++) {
                         h += '<div class="alert alert-warning">' + esc(data.notices[n]) + '</div>';
@@ -4505,21 +4701,21 @@
             var out = document.getElementById('audit-result');
             auditBtn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Checking...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.checking) + '</div>';
             ajaxPost('{$ajax_audit_catalogue_url|escape:'javascript':'UTF-8'}', function (data) {
                 auditBtn.disabled = false;
-                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">Check failed</div>'; return; }
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc(T.checkFailed) + '</div>'; return; }
                 var a = data.audit;
                 var problems = a.no_reference + a.duplicate_references + a.combinations_no_reference;
                 var h = '<table class="table" style="max-width:560px;"><tbody>'
-                    + '<tr><td>Active products with no reference</td><td>' + badge(a.no_reference) + '</td></tr>'
-                    + '<tr><td>Duplicated references</td><td>' + badge(a.duplicate_references) + '</td></tr>'
-                    + '<tr><td>Combinations with no reference</td><td>' + badge(a.combinations_no_reference) + '</td></tr>'
-                    + '<tr><td>Active products with no EAN and no UPC</td><td>' + badge(a.no_barcode) + '</td></tr>'
+                    + '<tr><td>' + esc(T.auditNoRef) + '</td><td>' + badge(a.no_reference) + '</td></tr>'
+                    + '<tr><td>' + esc(T.auditDupRef) + '</td><td>' + badge(a.duplicate_references) + '</td></tr>'
+                    + '<tr><td>' + esc(T.auditComboNoRef) + '</td><td>' + badge(a.combinations_no_reference) + '</td></tr>'
+                    + '<tr><td>' + esc(T.auditNoBarcode) + '</td><td>' + badge(a.no_barcode) + '</td></tr>'
                     + '</tbody></table>';
                 h += problems === 0
-                    ? '<div class="alert alert-success">Your catalogue is ready to sync.</div>'
-                    : '<div class="alert alert-warning">Fix these with the CSV editor below before publishing — Amazon cannot match products without a unique reference.</div>';
+                    ? '<div class="alert alert-success">' + esc(T.catalogueReady) + '</div>'
+                    : '<div class="alert alert-warning">' + esc(T.fixWithCsv) + '</div>';
                 out.innerHTML = h;
             });
         });
@@ -4536,14 +4732,14 @@
             var out = document.getElementById('reference-result');
             if (!input.files || !input.files.length) {
                 out.style.display = 'block';
-                out.innerHTML = '<div class="alert alert-danger">Choose a CSV file first.</div>';
+                out.innerHTML = '<div class="alert alert-danger">' + esc(T.chooseCsv) + '</div>';
                 return;
             }
-            if (!confirm('This rewrites references and barcodes in your PrestaShop catalogue. Continue?')) return;
+            if (!confirm(T.confirmRewriteRefs)) return;
 
             importBtn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Importing...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.importing) + '</div>';
 
             var fd = new FormData();
             fd.append('reference_file', input.files[0]);
@@ -4556,18 +4752,17 @@
                 var data = null;
                 try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
                 if (!data || !data.success) {
-                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Import failed') + '</div>';
+                    out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.importFailed) + '</div>';
                     return;
                 }
                 var s = data.summary;
-                var h = '<div class="alert alert-success">' + esc(s.updated) + ' row(s) updated &middot; '
-                    + esc(s.skipped) + ' skipped</div>';
+                var h = '<div class="alert alert-success">' + esc(fmt(T.refsSummary, s.updated, s.skipped)) + '</div>';
                 if (s.errors && s.errors.length) {
                     for (var i = 0; i < s.errors.length && i < 25; i++) {
                         h += '<div class="alert alert-warning">' + esc(s.errors[i]) + '</div>';
                     }
                     if (s.errors.length > 25) {
-                        h += '<div class="alert alert-warning">...and ' + esc(s.errors.length - 25) + ' more.</div>';
+                        h += '<div class="alert alert-warning">' + esc(fmt(T.andMore, s.errors.length - 25)) + '</div>';
                     }
                 }
                 out.innerHTML = h;
@@ -4625,10 +4820,10 @@
         listBtn.addEventListener('click', function () {
             listBtn.disabled = true;
             out.style.display = 'block';
-            out.innerHTML = '<div class="alert alert-info">Looking for listings whose product is gone or excluded...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.lookingDeletions) + '</div>';
             ajaxPost('{$ajax_list_deletions_url|escape:'javascript':'UTF-8'}', function (data) {
                 listBtn.disabled = false;
-                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">Lookup failed</div>'; return; }
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc(T.lookupFailed) + '</div>'; return; }
                 var rows = data.candidates || [];
                 var tbody = table.querySelector('tbody');
                 var h = '';
@@ -4644,7 +4839,7 @@
                 table.style.display = rows.length ? '' : 'none';
                 sendBtn.disabled = rows.length === 0;
                 out.innerHTML = '<div class="alert alert-' + (rows.length ? 'warning' : 'success') + '">'
-                    + esc(rows.length) + ' listing(s) would be deleted. Tick the ones you really want gone.</div>';
+                    + esc(fmt(T.deletionsFound, rows.length)) + '</div>';
             });
         });
 
@@ -4659,21 +4854,21 @@
             var boxes = table.querySelectorAll('.deletion-pick');
             for (var i = 0; i < boxes.length; i++) { if (boxes[i].checked) picked.push(boxes[i].value); }
             if (!picked.length) {
-                out.innerHTML = '<div class="alert alert-danger">Nothing selected.</div>';
+                out.innerHTML = '<div class="alert alert-danger">' + esc(T.nothingSelected) + '</div>';
                 return;
             }
-            if (!confirm('Delete ' + picked.length + ' listing(s) from Amazon? The offers and their history go with them.')) return;
+            if (!confirm(fmt(T.confirmDelete, picked.length))) return;
 
             sendBtn.disabled = true;
-            out.innerHTML = '<div class="alert alert-info">Deleting from Amazon...</div>';
+            out.innerHTML = '<div class="alert alert-info">' + esc(T.deletingAmazon) + '</div>';
             ajaxPost('{$ajax_delete_listings_url|escape:'javascript':'UTF-8'}', function (data) {
                 sendBtn.disabled = false;
-                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : 'Deletion failed') + '</div>'; return; }
+                if (!data || !data.success) { out.innerHTML = '<div class="alert alert-danger">' + esc((data && data.error) ? data.error : T.deletionFailed) + '</div>'; return; }
                 var s = data.summary;
                 var h = '<div class="alert alert-' + (s.failed ? 'warning' : 'success') + '">'
-                    + esc(s.requested) + ' requested &middot; ' + esc(s.deleted) + ' deleted &middot; ' + esc(s.failed) + ' failed</div>';
+                    + esc(fmt(T.deletionSummary, s.requested, s.deleted, s.failed)) + '</div>';
                 if (s.results && s.results.length) {
-                    h += '<table class="table"><thead><tr><th>SKU</th><th>Status</th><th>Issues</th></tr></thead><tbody>';
+                    h += '<table class="table"><thead><tr><th>SKU</th>' + th(T.thStatus, T.thIssues) + '</tr></thead><tbody>';
                     for (var i = 0; i < s.results.length; i++) {
                         h += '<tr><td>' + esc(s.results[i].sku) + '</td><td>' + statusBadge(s.results[i].status)
                             + '</td><td>' + esc(s.results[i].issues) + '</td></tr>';
@@ -4689,7 +4884,7 @@
         dl.addEventListener('click', function (e) {
             e.preventDefault();
             var id = document.getElementById('feed-payload-id').value.replace(/^\s+|\s+$/g, '');
-            if (!id) { alert('Enter a feed id — you will find it on the Products tab after submitting a bulk feed.'); return; }
+            if (!id) { alert(T.enterFeedId); return; }
             window.location.href = '{$download_feed_url|escape:'javascript':'UTF-8'}&feed_id=' + encodeURIComponent(id);
         });
     })();
