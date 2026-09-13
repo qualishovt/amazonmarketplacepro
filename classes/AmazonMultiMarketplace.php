@@ -30,6 +30,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonMultiMarketplace
 {
     /** Amazon marketplace directory (id => label). */
@@ -125,7 +127,7 @@ class AmazonMultiMarketplace
     {
         $marketplaceId = isset($data['marketplace_id']) ? $data['marketplace_id'] : '';
         if ($marketplaceId === '') {
-            $this->lastError = 'Marketplace ID is required.';
+            $this->lastError = AmazonI18n::get()->l('Marketplace ID is required.', 'amazonmultimarketplace');
             return false;
         }
 

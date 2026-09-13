@@ -29,6 +29,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonOrderCreator
 {
     /**
@@ -126,14 +128,21 @@ class AmazonOrderCreator
             // Skip orders with zero matched items
             if ((int) $row['items_matched'] === 0) {
                 $summary['skipped']++;
-                $this->notices[] = $amazonId . ': skipped (no matched products)';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('%s: skipped (no matched products)', 'amazonordercreator'),
+                    $amazonId
+                );
                 continue;
             }
 
             $result = $this->createOneOrder($row);
             if ($result === 'pending_stock') {
                 $summary['pending']++;
-                $this->notices[] = $amazonId . ': moved to Pending Orders (' . $this->lastError . ')';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('%1$s: moved to Pending Orders (%2$s)', 'amazonordercreator'),
+                    $amazonId,
+                    $this->lastError
+                );
             } elseif ($result === false) {
                 $summary['failed']++;
                 $summary['errors'][] = $amazonId . ': ' . $this->lastError;
@@ -166,7 +175,10 @@ class AmazonOrderCreator
                AND `match_status` = \'matched\''
         );
         if (!is_array($items) || empty($items)) {
-            $this->lastError = 'No matched items for order ' . $amazonId;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('No matched items for order %s', 'amazonordercreator'),
+                $amazonId
+            );
             return false;
         }
 
@@ -183,7 +195,10 @@ class AmazonOrderCreator
                          `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
                      WHERE `id_amazonmarketplacepro_order` = ' . $idStaged
                 );
-                $this->lastError = 'insufficient stock: ' . implode('; ', $shortages);
+                $this->lastError = sprintf(
+                    AmazonI18n::get()->l('insufficient stock: %s', 'amazonordercreator'),
+                    implode('; ', $shortages)
+                );
                 return 'pending_stock';
             }
         }
@@ -206,14 +221,20 @@ class AmazonOrderCreator
             $stagedOrder['buyer_name']
         );
         if (!$customer || !$customer->id) {
-            $this->lastError = 'Could not create customer for ' . $amazonId;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not create customer for %s', 'amazonordercreator'),
+                $amazonId
+            );
             return false;
         }
 
         // 2. Create address using real data when available
         $address = $this->createAddress($customer, $stagedOrder);
         if (!$address || !$address->id) {
-            $this->lastError = 'Could not create address for ' . $amazonId;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not create address for %s', 'amazonordercreator'),
+                $amazonId
+            );
             return false;
         }
 
@@ -238,7 +259,10 @@ class AmazonOrderCreator
         $cart->add();
 
         if (!$cart->id) {
-            $this->lastError = 'Could not create cart for ' . $amazonId;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not create cart for %s', 'amazonordercreator'),
+                $amazonId
+            );
             return false;
         }
 
@@ -325,7 +349,10 @@ class AmazonOrderCreator
         $order->valid = 1;
 
         if (!$order->add()) {
-            $this->lastError = 'Could not save order for ' . $amazonId;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not save order for %s', 'amazonordercreator'),
+                $amazonId
+            );
             return false;
         }
 
@@ -366,7 +393,11 @@ class AmazonOrderCreator
         // Note fulfillment channel
         $channel = isset($stagedOrder['fulfillment_channel']) ? $stagedOrder['fulfillment_channel'] : 'MFN';
         if ($channel === 'AFN') {
-            $this->notices[] = $amazonId . ': FBA order (fulfilled by Amazon) — PS order #' . $order->id;
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%1$s: FBA order (fulfilled by Amazon) — PrestaShop order #%2$d', 'amazonordercreator'),
+                $amazonId,
+                (int) $order->id
+            );
         }
 
         return (int) $order->id;
@@ -536,7 +567,12 @@ class AmazonOrderCreator
                 continue;
             }
 
-            $shortages[] = $it['seller_sku'] . ' ordered ' . $qty . ', available ' . $available;
+            $shortages[] = sprintf(
+                AmazonI18n::get()->l('%1$s ordered %2$d, available %3$d', 'amazonordercreator'),
+                $it['seller_sku'],
+                $qty,
+                $available
+            );
         }
 
         return $shortages;

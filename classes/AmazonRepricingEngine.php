@@ -31,6 +31,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonRepricingEngine
 {
     /** Rule types */
@@ -96,7 +98,7 @@ class AmazonRepricingEngine
         );
 
         if (!is_array($products) || empty($products)) {
-            $this->notices[] = 'No products with ASINs found. Sync products first.';
+            $this->notices[] = AmazonI18n::get()->l('No products with ASINs found. Sync products first.', 'amazonrepricingengine');
             return $summary;
         }
 
@@ -240,7 +242,7 @@ class AmazonRepricingEngine
         );
 
         if (!is_array($rules) || empty($rules)) {
-            $this->notices[] = 'No active pricing rules found.';
+            $this->notices[] = AmazonI18n::get()->l('No active pricing rules found.', 'amazonrepricingengine');
             return $summary;
         }
 
@@ -322,7 +324,7 @@ class AmazonRepricingEngine
         );
 
         if ($this->sellerId === '') {
-            $this->notices[] = 'No seller ID configured. Cannot push prices.';
+            $this->notices[] = AmazonI18n::get()->l('Cannot push prices: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonrepricingengine');
             return $summary;
         }
 

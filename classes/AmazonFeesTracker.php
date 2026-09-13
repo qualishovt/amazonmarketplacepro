@@ -31,6 +31,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonFeesTracker
 {
     /** @var AmazonSpApiClient */
@@ -86,7 +88,7 @@ class AmazonFeesTracker
         );
 
         if (!is_array($orders) || empty($orders)) {
-            $this->notices[] = 'No orders pending fee tracking.';
+            $this->notices[] = AmazonI18n::get()->l('No orders pending fee tracking.', 'amazonfeestracker');
             return $summary;
         }
 

@@ -20,10 +20,28 @@ The key is
 strtolower('<{amazonmarketplacepro}prestashop>' . <source>) . '_' . md5(<english>)
 ```
 
-where `<source>` is the template's basename (`configure`, `product_tab`) for
-`{l s='...'}` strings and the module name for `$this->l('...')` strings, and
-`<english>` has had its apostrophes backslash-escaped first, exactly as
-PrestaShop does before hashing.
+where `<source>` is the lower-case basename of the file the string is in
+(`configure`, `product_tab`, `amazonmarketplacepro`, `amazonproductsync`,
+`oauth` ...), and `<english>` has had its apostrophes backslash-escaped first,
+exactly as PrestaShop does before hashing.
+
+## Strings in the classes and front controllers
+
+A plain class has no module to call `l()` on, so it uses the helper:
+
+```php
+AmazonI18n::get()->l('Order #%d not found.', 'amazonfbamanager')
+```
+
+The front controllers call `$this->module->l('...', 'oauth')`. In both, the
+text and the source are single literals, and the source must be the file's
+own basename: `extract.php` refuses anything else. Values go in with
+`sprintf()` after the call. The helper undoes PrestaShop's HTML escaping,
+because these messages are escaped again where the page shows them.
+
+When a translation reads exactly like the English, PrestaShop 9 falls back to
+its own catalogue, which can change it (its Italian turns "UPC" into "UPS").
+Give such a string a translation that differs from the source.
 
 ## Changing an English string
 

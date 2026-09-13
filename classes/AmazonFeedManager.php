@@ -29,6 +29,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonFeedManager
 {
     const FEED_TYPE = 'JSON_LISTINGS_FEED';
@@ -115,7 +117,7 @@ class AmazonFeedManager
     public function submitListingsFeed($messages)
     {
         if (empty($messages)) {
-            $this->lastError = 'Nothing to submit: no pending listing changes.';
+            $this->lastError = AmazonI18n::get()->l('Nothing to submit: no pending listing changes.', 'amazonfeedmanager');
             return false;
         }
 
@@ -147,7 +149,7 @@ class AmazonFeedManager
         $this->ensureTable();
 
         if ($this->sellerId === '') {
-            $this->lastError = 'No seller id configured.';
+            $this->lastError = AmazonI18n::get()->l('Your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonfeedmanager');
             return false;
         }
 

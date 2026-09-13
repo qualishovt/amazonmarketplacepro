@@ -18,6 +18,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonBuyerMessaging
 {
     /** Message types that carry a free-text body. */
@@ -113,11 +115,11 @@ class AmazonBuyerMessaging
         $text = trim((string) $text);
 
         if ($amazonOrderId === '' || $actionName === '') {
-            $this->lastError = 'Order id and message type are required.';
+            $this->lastError = AmazonI18n::get()->l('Order id and message type are required.', 'amazonbuyermessaging');
             return false;
         }
         if (in_array($actionName, self::$textActions) && $text === '') {
-            $this->lastError = 'This message type requires a text body.';
+            $this->lastError = AmazonI18n::get()->l('This message type requires a text body.', 'amazonbuyermessaging');
             return false;
         }
 

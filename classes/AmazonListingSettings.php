@@ -19,6 +19,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonListingSettings
 {
     const ENTITY_CATEGORY = 'category';
@@ -879,11 +881,11 @@ class AmazonListingSettings
         $out = array();
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $reason = 'No PrestaShop product with this SKU';
+                $reason = AmazonI18n::get()->l('No PrestaShop product with this SKU', 'amazonlistingsettings');
                 if ((int) $r['id_product'] > 0 && $r['active'] !== null && !(int) $r['active']) {
-                    $reason = 'PrestaShop product is inactive';
+                    $reason = AmazonI18n::get()->l('PrestaShop product is inactive', 'amazonlistingsettings');
                 } elseif ((int) $r['id_product'] > 0 && $r['active'] === null) {
-                    $reason = 'PrestaShop product was deleted';
+                    $reason = AmazonI18n::get()->l('PrestaShop product was deleted', 'amazonlistingsettings');
                 }
                 $r['reason'] = $reason;
                 $out[] = $r;

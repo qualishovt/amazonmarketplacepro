@@ -41,6 +41,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonRelaySchedule
 {
     /** Where the scheduler lives. */
@@ -92,17 +94,17 @@ class AmazonRelaySchedule
     {
         $token = Configuration::get('AMZPRO_CRON_TOKEN');
         if (!$token) {
-            return self::refuse('This shop has no cron token yet. Save the settings once and try again.');
+            return self::refuse(AmazonI18n::get()->l('This shop has no cron token yet. Save the settings once and try again.', 'amazonrelayschedule'));
         }
 
         $url = self::cronUrl();
         if (Tools::substr($url, 0, 8) !== 'https://') {
             // The token would otherwise cross the network in clear text on
             // every call, several hundred times a day.
-            return self::refuse(
-                'The scheduler needs the shop to be reachable over HTTPS, and this shop\'s address is '
-                . $url . '. Enable SSL in Shop Parameters > General, then register again.'
-            );
+            return self::refuse(sprintf(
+                AmazonI18n::get()->l('The scheduler needs the shop to be reachable over HTTPS, and this shop\'s address is %s. Enable SSL in Shop Parameters > General, then register again.', 'amazonrelayschedule'),
+                $url
+            ));
         }
 
         $reply = self::call(array(
@@ -115,7 +117,7 @@ class AmazonRelaySchedule
         ));
 
         if (empty($reply['success'])) {
-            Configuration::updateValue('AMZPRO_RELAY_ERROR', isset($reply['error']) ? $reply['error'] : 'Unknown error');
+            Configuration::updateValue('AMZPRO_RELAY_ERROR', isset($reply['error']) ? $reply['error'] : AmazonI18n::get()->l('Unknown error', 'amazonrelayschedule'));
 
             return $reply;
         }
@@ -164,7 +166,7 @@ class AmazonRelaySchedule
     protected static function call(array $fields)
     {
         if (!function_exists('curl_init')) {
-            return array('success' => false, 'error' => 'PHP cURL is not available on this server.');
+            return array('success' => false, 'error' => AmazonI18n::get()->l('This server cannot reach the scheduler because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonrelayschedule'));
         }
 
         $ch = curl_init(self::ENDPOINT);
@@ -183,12 +185,12 @@ class AmazonRelaySchedule
         curl_close($ch);
 
         if ($body === false) {
-            return array('success' => false, 'error' => 'Could not reach the scheduler: ' . $error);
+            return array('success' => false, 'error' => sprintf(AmazonI18n::get()->l('Could not reach the scheduler: %s', 'amazonrelayschedule'), $error));
         }
 
         $reply = json_decode($body, true);
         if (!is_array($reply)) {
-            return array('success' => false, 'error' => 'The scheduler answered with HTTP ' . $code . '.');
+            return array('success' => false, 'error' => sprintf(AmazonI18n::get()->l('The scheduler answered with HTTP %d.', 'amazonrelayschedule'), $code));
         }
 
         return $reply;

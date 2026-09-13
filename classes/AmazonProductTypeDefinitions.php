@@ -22,6 +22,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonProductTypeDefinitions
 {
     /** Refetch a cached schema after this many days. */
@@ -126,7 +128,7 @@ class AmazonProductTypeDefinitions
         $this->ensureTable();
         $productType = trim((string) $productType);
         if ($productType === '') {
-            $this->lastError = 'No product type given.';
+            $this->lastError = AmazonI18n::get()->l('No product type given.', 'amazonproducttypedefinitions');
             return false;
         }
 
@@ -168,18 +170,24 @@ class AmazonProductTypeDefinitions
         $schemaUrl = isset($resp['body']['schema']['link']['resource'])
             ? $resp['body']['schema']['link']['resource'] : '';
         if ($schemaUrl === '') {
-            $this->lastError = 'Amazon returned no schema link for ' . $productType . '.';
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Amazon did not send the list of fields for product type %s.', 'amazonproducttypedefinitions'),
+                $productType
+            );
             return false;
         }
 
         $raw = $this->client->downloadDocument($schemaUrl);
         if ($raw === false) {
-            $this->lastError = 'Could not download the schema: ' . (string) $this->client->getLastError();
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not download the list of fields for this product type from Amazon: %s', 'amazonproducttypedefinitions'),
+                (string) $this->client->getLastError()
+            );
             return false;
         }
         $schema = json_decode($raw, true);
         if (!is_array($schema)) {
-            $this->lastError = 'The downloaded schema was not valid JSON.';
+            $this->lastError = AmazonI18n::get()->l('The list of fields downloaded from Amazon could not be read. Please try again.', 'amazonproducttypedefinitions');
             return false;
         }
 

@@ -44,6 +44,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonScheduler
 {
     /** A run in progress is considered dead after this long, so a fatal
@@ -283,7 +285,7 @@ class AmazonScheduler
     {
         $ok = !empty($result['success']);
         $message = $ok
-            ? (isset($result['summary']) ? Tools::substr(json_encode($result['summary']), 0, 500) : 'OK')
+            ? (isset($result['summary']) ? Tools::substr(is_string($result['summary']) ? $result['summary'] : json_encode($result['summary'], JSON_UNESCAPED_UNICODE), 0, 500) : 'OK')
             : (isset($result['error']) ? (string) $result['error'] : 'Failed');
 
         $now = time();
@@ -329,7 +331,7 @@ class AmazonScheduler
     {
         $task = self::get($idTask);
         if (!$task) {
-            return array('success' => false, 'error' => 'No such task.');
+            return array('success' => false, 'error' => AmazonI18n::get()->l('No such task.', 'amazonscheduler'));
         }
 
         require_once dirname(__FILE__) . '/AmazonTaskRunner.php';

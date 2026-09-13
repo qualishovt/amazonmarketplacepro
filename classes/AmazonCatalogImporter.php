@@ -19,6 +19,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonCatalogImporter
 {
     private $idShop;
@@ -71,7 +73,7 @@ class AmazonCatalogImporter
             array('content', 'price', 'quantity', 'hide', 'features')
         );
         if (empty($operations)) {
-            $this->lastError = 'No operation selected.';
+            $this->lastError = AmazonI18n::get()->l('No operation selected.', 'amazoncatalogimporter');
             return $summary;
         }
 
@@ -135,8 +137,7 @@ class AmazonCatalogImporter
         }
 
         if (in_array('price', $operations)) {
-            $this->notices[] = 'Prices were converted from Amazon\'s tax-inclusive figures '
-                . 'using each product\'s tax rule — check a few before relying on them.';
+            $this->notices[] = AmazonI18n::get()->l('Prices were converted from Amazon\'s tax-inclusive figures using each product\'s tax rule — check a few before relying on them.', 'amazoncatalogimporter');
         }
 
         return $summary;
@@ -277,8 +278,10 @@ class AmazonCatalogImporter
             }
         }
         if ($count > 0) {
-            $this->notices[] = $count . ' product(s) deactivated because Amazon no longer carries them '
-                . 'or shows zero stock. They were not deleted — re-enable them from the catalogue.';
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%d product(s) deactivated because Amazon no longer carries them or shows zero stock. They were not deleted — re-enable them from the catalogue.', 'amazoncatalogimporter'),
+                $count
+            );
         }
 
         return $count;
@@ -326,7 +329,11 @@ class AmazonCatalogImporter
             if ($existing) {
                 $this->linkStagedRow($row['seller_sku'], $existing);
                 $summary['skipped']++;
-                $this->notices[] = 'SKU ' . $row['seller_sku'] . ': already exists as product #' . $existing . ' — linked.';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('SKU %1$s: already exists as product #%2$d — linked.', 'amazoncatalogimporter'),
+                    $row['seller_sku'],
+                    $existing
+                );
                 continue;
             }
 
@@ -335,7 +342,11 @@ class AmazonCatalogImporter
                 $summary['created']++;
             } else {
                 $summary['failed']++;
-                $this->notices[] = 'SKU ' . $row['seller_sku'] . ': ' . $this->lastError;
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('SKU %1$s: %2$s', 'amazoncatalogimporter'),
+                    $row['seller_sku'],
+                    $this->lastError
+                );
             }
         }
 
@@ -351,7 +362,7 @@ class AmazonCatalogImporter
 
         $name = trim((string) $row['amazon_title']);
         if ($name === '') {
-            $this->lastError = 'Amazon listing has no title.';
+            $this->lastError = AmazonI18n::get()->l('Amazon listing has no title.', 'amazoncatalogimporter');
             return false;
         }
         // PS product name limit is 128 chars and forbids some characters.
@@ -408,7 +419,7 @@ class AmazonCatalogImporter
         }
 
         if (!$product->add()) {
-            $this->lastError = 'Could not create the product.';
+            $this->lastError = AmazonI18n::get()->l('Could not create the product.', 'amazoncatalogimporter');
             return false;
         }
 

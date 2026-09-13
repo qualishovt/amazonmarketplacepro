@@ -29,6 +29,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
 require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
 
 class AmazonReturnManager
@@ -371,7 +372,11 @@ class AmazonReturnManager
             $order = new Order($idOrder);
             if (!Validate::isLoadedObject($order)) {
                 $summary['skipped']++;
-                $this->notices[] = 'Return #' . $idReturn . ': PS order #' . $idOrder . ' not found';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('Return #%1$d: PrestaShop order #%2$d not found', 'amazonreturnmanager'),
+                    $idReturn,
+                    $idOrder
+                );
                 continue;
             }
 
@@ -387,7 +392,11 @@ class AmazonReturnManager
                     $history->changeIdOrderState($cancelledStateId, $idOrder);
                     $history->add();
 
-                    $this->notices[] = 'Order #' . $idOrder . ' (Amazon: ' . $ret['amazon_order_id'] . ') cancelled';
+                    $this->notices[] = sprintf(
+                        AmazonI18n::get()->l('Order #%1$d (Amazon: %2$s) cancelled', 'amazonreturnmanager'),
+                        $idOrder,
+                        $ret['amazon_order_id']
+                    );
                 }
 
                 Db::getInstance()->execute(
@@ -411,7 +420,11 @@ class AmazonReturnManager
                          WHERE `id_amazonmarketplacepro_return` = ' . $idReturn
                     );
                     $summary['processed']++;
-                    $this->notices[] = 'Credit slip #' . $slipId . ' created for order #' . $idOrder;
+                    $this->notices[] = sprintf(
+                        AmazonI18n::get()->l('Credit slip #%1$d created for order #%2$d', 'amazonreturnmanager'),
+                        (int) $slipId,
+                        $idOrder
+                    );
                 } else {
                     Db::getInstance()->execute(
                         'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_return` SET
@@ -420,7 +433,10 @@ class AmazonReturnManager
                          WHERE `id_amazonmarketplacepro_return` = ' . $idReturn
                     );
                     $summary['processed']++;
-                    $this->notices[] = 'Return processed for order #' . $idOrder . ' (no credit slip — partial return)';
+                    $this->notices[] = sprintf(
+                        AmazonI18n::get()->l('Return processed for order #%d (no credit slip — partial return)', 'amazonreturnmanager'),
+                        $idOrder
+                    );
                 }
             } else {
                 $summary['skipped']++;

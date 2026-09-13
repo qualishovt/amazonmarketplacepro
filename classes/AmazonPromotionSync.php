@@ -32,6 +32,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonPromotionSync
 {
     /** @var AmazonSpApiClient */
@@ -90,7 +92,7 @@ class AmazonPromotionSync
         );
 
         if (!is_array($items) || empty($items)) {
-            $this->notices[] = 'No orders with promotion discounts found.';
+            $this->notices[] = AmazonI18n::get()->l('No orders with promotion discounts found.', 'amazonpromotionsync');
             return $summary;
         }
 
@@ -368,9 +370,10 @@ class AmazonPromotionSync
         }
 
         if ($summary['exported'] > 0) {
-            $this->notices[] = $summary['exported'] . ' PS cart rule(s) exported to promotion tracking. '
-                . 'Note: Amazon Promotions API for 3P sellers is limited. '
-                . 'Manage Amazon-side promotions in Seller Central.';
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%d PrestaShop cart rule(s) exported to promotion tracking. They are not created on Amazon: manage your Amazon promotions in Seller Central.', 'amazonpromotionsync'),
+                (int) $summary['exported']
+            );
         }
 
         return $summary;

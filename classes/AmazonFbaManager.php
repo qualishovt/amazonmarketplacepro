@@ -30,6 +30,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonFbaManager
 {
     /** @var AmazonSpApiClient */
@@ -194,7 +196,7 @@ class AmazonFbaManager
 
         // Handle pagination if present
         if (is_array($resp['body']) && isset($resp['body']['pagination']['nextToken'])) {
-            $this->notices[] = 'More FBA inventory pages available. Run again to fetch more.';
+            $this->notices[] = AmazonI18n::get()->l('More FBA inventory pages available. Run again to fetch more.', 'amazonfbamanager');
         }
 
         return $summary;
@@ -215,14 +217,20 @@ class AmazonFbaManager
 
         $order = new Order((int) $idOrder);
         if (!Validate::isLoadedObject($order)) {
-            $this->lastError = 'PS order #' . $idOrder . ' not found.';
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('PrestaShop order #%d not found.', 'amazonfbamanager'),
+                (int) $idOrder
+            );
             return array('success' => false, 'error' => $this->lastError);
         }
 
         // Get delivery address
         $address = new Address((int) $order->id_address_delivery);
         if (!Validate::isLoadedObject($address)) {
-            $this->lastError = 'Delivery address not found for order #' . $idOrder;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Delivery address not found for order #%d', 'amazonfbamanager'),
+                (int) $idOrder
+            );
             return array('success' => false, 'error' => $this->lastError);
         }
 
@@ -238,7 +246,10 @@ class AmazonFbaManager
         // Get order items
         $orderDetails = OrderDetail::getList((int) $order->id);
         if (empty($orderDetails)) {
-            $this->lastError = 'No items in order #' . $idOrder;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('No items in order #%d', 'amazonfbamanager'),
+                (int) $idOrder
+            );
             return array('success' => false, 'error' => $this->lastError);
         }
 
@@ -258,7 +269,12 @@ class AmazonFbaManager
             );
 
             if ($fbaQty < (int) $detail['product_quantity']) {
-                $this->notices[] = 'SKU ' . $sku . ': FBA qty (' . $fbaQty . ') < ordered qty (' . $detail['product_quantity'] . ')';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('SKU %1$s: Amazon holds %2$d in FBA stock, but %3$d were ordered.', 'amazonfbamanager'),
+                    $sku,
+                    $fbaQty,
+                    (int) $detail['product_quantity']
+                );
             }
 
             $items[] = array(
@@ -269,7 +285,10 @@ class AmazonFbaManager
         }
 
         if (empty($items)) {
-            $this->lastError = 'No FBA-eligible items (no reference/SKU) in order #' . $idOrder;
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('No FBA-eligible items (no reference/SKU) in order #%d', 'amazonfbamanager'),
+                (int) $idOrder
+            );
             return array('success' => false, 'error' => $this->lastError);
         }
 

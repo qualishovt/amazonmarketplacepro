@@ -24,9 +24,14 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonProfile
 {
-    /** PrestaShop fields offerable as an attribute source. */
+    /**
+     * PrestaShop fields offerable as an attribute source. The labels here are
+     * the English originals; use getPsFields() to show them to the merchant.
+     */
     public static $psFields = array(
         'name' => 'Product name',
         'description' => 'Description',
@@ -44,6 +49,32 @@ class AmazonProfile
         'depth' => 'Depth',
         'category' => 'Default category name',
     );
+
+    /**
+     * The same keys as $psFields, with labels translated for display.
+     *
+     * @return array field key => label
+     */
+    public static function getPsFields()
+    {
+        return array(
+            'name' => AmazonI18n::get()->l('Product name', 'amazonprofile'),
+            'description' => AmazonI18n::get()->l('Description', 'amazonprofile'),
+            'description_short' => AmazonI18n::get()->l('Short description', 'amazonprofile'),
+            'manufacturer' => AmazonI18n::get()->l('Brand / Manufacturer', 'amazonprofile'),
+            'supplier' => AmazonI18n::get()->l('Supplier', 'amazonprofile'),
+            'reference' => AmazonI18n::get()->l('Reference (SKU)', 'amazonprofile'),
+            'ean13' => AmazonI18n::get()->l('EAN / barcode', 'amazonprofile'),
+            'upc' => AmazonI18n::get()->l('UPC', 'amazonprofile'),
+            'price' => AmazonI18n::get()->l('Price', 'amazonprofile'),
+            'quantity' => AmazonI18n::get()->l('Quantity', 'amazonprofile'),
+            'weight' => AmazonI18n::get()->l('Weight', 'amazonprofile'),
+            'width' => AmazonI18n::get()->l('Width', 'amazonprofile'),
+            'height' => AmazonI18n::get()->l('Height', 'amazonprofile'),
+            'depth' => AmazonI18n::get()->l('Depth', 'amazonprofile'),
+            'category' => AmazonI18n::get()->l('Default category name', 'amazonprofile'),
+        );
+    }
 
     /* ─────────────────── Schema ─────────────────── */
 

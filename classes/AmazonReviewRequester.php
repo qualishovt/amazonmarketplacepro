@@ -19,6 +19,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonReviewRequester
 {
     const ACTION_NAME = 'productReviewAndSellerFeedback';
@@ -33,6 +35,10 @@ class AmazonReviewRequester
     private $marketplaceId;
     private $lastError = null;
     private $useMock = false;
+
+    /** True when the last requestReview() failed because Amazon does not offer
+     *  the request for that order, as opposed to an error. */
+    private $notAllowed = false;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
@@ -116,10 +122,11 @@ class AmazonReviewRequester
     public function requestReview($amazonOrderId)
     {
         $this->lastError = null;
+        $this->notAllowed = false;
 
         $amazonOrderId = trim((string) $amazonOrderId);
         if ($amazonOrderId === '') {
-            $this->lastError = 'Order id is required.';
+            $this->lastError = AmazonI18n::get()->l('Order id is required.', 'amazonreviewrequester');
             return false;
         }
 
@@ -128,8 +135,8 @@ class AmazonReviewRequester
             return false; // lastError already set
         }
         if ($available === false) {
-            $this->lastError = 'Amazon does not allow a review request for this order '
-                . '(already sent, outside the 5-30 day window, or buyer opted out).';
+            $this->notAllowed = true;
+            $this->lastError = AmazonI18n::get()->l('Amazon does not allow a review request for this order (already sent, outside the 5-30 day window, or buyer opted out).', 'amazonreviewrequester');
             return false;
         }
 
@@ -206,7 +213,7 @@ class AmazonReviewRequester
                 continue;
             }
 
-            if ($this->lastError !== null && strpos($this->lastError, 'does not allow') !== false) {
+            if ($this->notAllowed) {
                 $summary['unavailable']++;
                 if ($tooOld) {
                     $this->markOrder($orderId, self::STATE_INELIGIBLE);

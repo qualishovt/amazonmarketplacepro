@@ -33,6 +33,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 /**
  * Runs one scheduled task.
  *
@@ -113,7 +115,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $importer = new AmazonOrderImporter($client, $this->getMarketplaceId());
@@ -153,7 +155,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -189,7 +191,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -238,7 +240,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -268,7 +270,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -292,7 +294,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -319,7 +321,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -347,7 +349,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $tracker = new AmazonFeesTracker($client, $this->getMarketplaceId());
@@ -370,7 +372,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $manager = new AmazonReportManager($client, $this->getMarketplaceId());
@@ -392,7 +394,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sync = new AmazonPromotionSync($client, $this->getMarketplaceId());
@@ -451,7 +453,7 @@ class AmazonTaskRunner
     {
         if (!Configuration::get('AMZPRO_AUTO_REVIEW_REQUEST')) {
             return array('success' => true, 'action' => 'request_reviews',
-                'summary' => 'Skipped: automatic review requests are disabled in module settings.');
+                'summary' => AmazonI18n::get()->l('Skipped: automatic review requests are disabled in module settings.', 'amazontaskrunner'));
         }
 
         require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
@@ -459,7 +461,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $requester = new AmazonReviewRequester($client, $this->getMarketplaceId());
@@ -485,7 +487,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $sellerId = Configuration::get('AMZPRO_SELLER_ID');
@@ -559,7 +561,7 @@ class AmazonTaskRunner
     {
         if (!Configuration::get('AMZPRO_VCS_ENABLED')) {
             return array('success' => true, 'action' => 'upload_invoices',
-                'summary' => 'Skipped: VCS invoice upload is disabled in module settings.');
+                'summary' => AmazonI18n::get()->l('Skipped: VCS invoice upload is disabled in module settings.', 'amazontaskrunner'));
         }
 
         require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
@@ -567,7 +569,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => 'Amazon API not configured.');
+            return array('success' => false, 'error' => $this->notConnected());
         }
 
         $uploader = new AmazonVcsInvoiceUploader(
@@ -662,6 +664,13 @@ class AmazonTaskRunner
 
         return $client;
     }
+
+    /** The error a task returns when buildClient() finds no connection. */
+    private function notConnected()
+    {
+        return AmazonI18n::get()->l('This shop is not connected to Amazon yet. Use the "Connect to Amazon" button in the module settings.', 'amazontaskrunner');
+    }
+
     private function getMarketplaceId()
     {
         $env = AmazonSpApiClient::environment();

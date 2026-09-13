@@ -2307,7 +2307,7 @@
                         <td><code>{$res.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$res.product_name|escape:'htmlall':'UTF-8'}</td>
                         <td><span class="badge badge-warning">{$res.quantity|escape:'htmlall':'UTF-8'}</span></td>
-                        <td><span class="badge badge-default">{if $res.order_status}{$res.order_status|escape:'htmlall':'UTF-8'}{else}In Cart{/if}</span></td>
+                        <td><span class="badge badge-default">{if $res.order_status}{$res.order_status|escape:'htmlall':'UTF-8'}{else}{l s='In cart' mod='amazonmarketplacepro'}{/if}</span></td>
                         <td><small>{$res.date_add|escape:'htmlall':'UTF-8'}</small></td>
                     </tr>
                     {/foreach}
@@ -2367,7 +2367,7 @@
                                 {/if}
                             </td>
                             <td>{$ret.seller_sku|escape:'htmlall':'UTF-8'}</td>
-                            <td>{$ret.title|truncate:40:'...':true|escape:'htmlall':'UTF-8'}</td>
+                            <td>{if $ret.title == 'Full order cancellation'}{l s='Full order cancellation' mod='amazonmarketplacepro'}{else}{$ret.title|truncate:40:'...':true|escape:'htmlall':'UTF-8'}{/if}</td>
                             <td>{$ret.quantity|escape:'htmlall':'UTF-8'}</td>
                             <td>{$ret.refund_amount|escape:'htmlall':'UTF-8'} {$ret.currency|escape:'htmlall':'UTF-8'}</td>
                             <td>

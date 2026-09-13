@@ -20,6 +20,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonReferenceTool
 {
     const SEPARATOR = ';';
@@ -94,7 +96,7 @@ class AmazonReferenceTool
         $content = str_replace("\xEF\xBB\xBF", '', (string) $content);
         $lines = preg_split('/\r\n|\r|\n/', $content);
         if (count($lines) < 2) {
-            $summary['errors'][] = 'The file has no data rows.';
+            $summary['errors'][] = AmazonI18n::get()->l('The file has no data rows.', 'amazonreferencetool');
             return $summary;
         }
 
@@ -104,7 +106,7 @@ class AmazonReferenceTool
             $index[trim(Tools::strtolower($name))] = $i;
         }
         if (!isset($index['key'])) {
-            $summary['errors'][] = 'The first column must be "key" — export a fresh file and edit that.';
+            $summary['errors'][] = AmazonI18n::get()->l('The first column must be \'key\' — export a fresh file and edit that.', 'amazonreferencetool');
             return $summary;
         }
 
@@ -139,8 +141,12 @@ class AmazonReferenceTool
             if (isset($values['reference']) && $values['reference'] !== '') {
                 $ref = Tools::strtolower($values['reference']);
                 if (isset($seenReferences[$ref])) {
-                    $summary['errors'][] = 'Line ' . ($lineNo + 2) . ': reference "'
-                        . $values['reference'] . '" is already used on row ' . $seenReferences[$ref] . '.';
+                    $summary['errors'][] = sprintf(
+                        AmazonI18n::get()->l('Line %1$d: reference \'%2$s\' is already used on row %3$s.', 'amazonreferencetool'),
+                        $lineNo + 2,
+                        $values['reference'],
+                        $seenReferences[$ref]
+                    );
                     $summary['skipped']++;
                     continue;
                 }
@@ -167,7 +173,11 @@ class AmazonReferenceTool
             if ($ok) {
                 $summary['updated']++;
             } else {
-                $summary['errors'][] = 'Line ' . ($lineNo + 2) . ': could not update ' . $key . '.';
+                $summary['errors'][] = sprintf(
+                    AmazonI18n::get()->l('Line %1$d: could not update %2$s.', 'amazonreferencetool'),
+                    $lineNo + 2,
+                    $key
+                );
             }
         }
 

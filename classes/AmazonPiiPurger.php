@@ -17,6 +17,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 /**
  * Removes buyer personal data from finished Amazon orders.
  *
@@ -267,7 +269,7 @@ class AmazonPiiPurger
         );
 
         if (!$ok) {
-            $this->lastError = 'Could not clear buyer data from the order staging table.';
+            $this->lastError = AmazonI18n::get()->l('Could not clear buyer data from the imported Amazon orders.', 'amazonpiipurger');
             $this->log('error', $this->lastError);
 
             return false;

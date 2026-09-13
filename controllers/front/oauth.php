@@ -52,9 +52,8 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
 
         if ($expected === '' || $nonce === '' || !hash_equals($expected, $nonce)) {
             $this->htmlPage(
-                'Connection failed',
-                'This connection link is invalid or has expired. Please go back to your '
-                . 'PrestaShop admin and click "Connect to Amazon" again.'
+                $this->text($this->module->l('Connection failed', 'oauth')),
+                $this->text($this->module->l('This connection link is invalid or has expired. Please go back to your PrestaShop admin and click "Connect to Amazon" again.', 'oauth'))
             );
             return;
         }
@@ -65,8 +64,8 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         $error = (string) Tools::getValue('mkpro_oauth_error');
         if ($error !== '') {
             $this->htmlPage(
-                'Amazon connection was not completed',
-                'Amazon reported: ' . $error . ' — You can retry from the module settings.'
+                $this->text($this->module->l('Amazon connection was not completed', 'oauth')),
+                sprintf($this->text($this->module->l('Amazon reported: %s — You can retry from the module settings.', 'oauth')), $error)
             );
             return;
         }
@@ -74,8 +73,8 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         $refreshToken = (string) Tools::getValue('refresh_token');
         if ($refreshToken === '' || strpos($refreshToken, 'Atzr|') !== 0) {
             $this->htmlPage(
-                'Connection failed',
-                'No valid token was received from Amazon. Please retry from the module settings.'
+                $this->text($this->module->l('Connection failed', 'oauth')),
+                $this->text($this->module->l('No valid token was received from Amazon. Please retry from the module settings.', 'oauth'))
             );
             return;
         }
@@ -110,24 +109,40 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
         }
 
         // Fallback if the return URL is unavailable (e.g. config cleared).
-        $this->htmlPage(
-            'Connected to Amazon ✓',
-            'Your shop is now connected to Amazon'
-            . ($sellingPartnerId !== '' ? ' (seller ' . htmlspecialchars($sellingPartnerId) . ')' : '')
-            . '. You can close this tab and return to the Marketplaces Pro settings in your shop admin.'
-        );
+        if ($sellingPartnerId !== '') {
+            $message = sprintf(
+                $this->text($this->module->l('Your shop is now connected to Amazon (seller %s). You can close this tab and return to the Amazon Marketplace Pro settings in your shop admin.', 'oauth')),
+                $sellingPartnerId
+            );
+        } else {
+            $message = $this->text($this->module->l('Your shop is now connected to Amazon. You can close this tab and return to the Amazon Marketplace Pro settings in your shop admin.', 'oauth'));
+        }
+        $this->htmlPage($this->text($this->module->l('Connected to Amazon', 'oauth')) . ' ✓', $message);
+    }
+
+    /**
+     * Plain text from a translation. PrestaShop returns l() HTML-escaped;
+     * htmlPage() escapes everything it prints, so the escaping is undone
+     * here to keep quotes and accents from showing up twice-escaped.
+     */
+    private function text($translated)
+    {
+        return html_entity_decode($translated, ENT_QUOTES, 'UTF-8');
     }
 
     /**
      * Render a minimal standalone HTML page and stop (no theme dependencies).
+     * Both arguments are plain text and are escaped here, including anything
+     * that came back from Amazon in the query string.
      */
     private function htmlPage($title, $message)
     {
         header('Content-Type: text/html; charset=utf-8');
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . htmlspecialchars($title) . '</title>'
+        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>'
             . '<style>body{font-family:sans-serif;max-width:620px;margin:80px auto;color:#333}'
             . 'h1{font-size:20px}div{padding:16px;border:1px solid #ddd;border-radius:6px;background:#fafafa}</style>'
-            . '</head><body><div><h1>' . htmlspecialchars($title) . '</h1><p>' . $message . '</p></div></body></html>';
+            . '</head><body><div><h1>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h1><p>'
+            . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p></div></body></html>';
         exit;
     }
 }

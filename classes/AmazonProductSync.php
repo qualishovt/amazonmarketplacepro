@@ -31,6 +31,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonProductSync
 {
     /** Native content language (ISO 639-1) per marketplace, for auto mode. */
@@ -225,7 +227,7 @@ class AmazonProductSync
         }
 
         if (empty($psRows)) {
-            $this->notices[] = 'No PrestaShop products with a reference (SKU) were found.';
+            $this->notices[] = AmazonI18n::get()->l('No PrestaShop products with a reference (SKU) were found.', 'amazonproductsync');
         }
 
         $this->recomputeDirections();
@@ -264,15 +266,14 @@ class AmazonProductSync
         }
 
         if ($this->sellerId === '') {
-            $this->notices[] = 'Amazon side skipped: no seller id configured (set AMAZON_SELLER_ID). '
-                . 'A seller id and production access are required to read Amazon listings.';
+            $this->notices[] = AmazonI18n::get()->l('Amazon side skipped: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync');
             return $this->buildSummary(0, 0);
         }
 
         $skus = $this->stagedSkus();
         if (empty($skus)) {
-            $this->notices[] = 'No SKUs in staging yet. Run "Sync PrestaShop → Amazon" first to populate SKUs '
-                . '(detecting Amazon-only listings needs the Reports API, not added yet).';
+            // Amazon-only listings would need the Reports API, not added yet.
+            $this->notices[] = AmazonI18n::get()->l('No SKUs to check yet. Run "Sync PS to Amazon" first to collect your PrestaShop SKUs. Finding listings that exist only on Amazon is coming soon.', 'amazonproductsync');
         }
 
         $amazonChecked = 0;
@@ -325,8 +326,7 @@ class AmazonProductSync
         }
 
         if ($this->sellerId === '') {
-            $this->notices[] = 'Cannot list Amazon products: no seller id configured (set AMAZON_SELLER_ID). '
-                . 'A seller id and production access are required to read Amazon listings.';
+            $this->notices[] = AmazonI18n::get()->l('Cannot list Amazon products: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync');
             return array();
         }
 
@@ -358,7 +358,7 @@ class AmazonProductSync
         }
 
         if (empty($out)) {
-            $this->notices[] = 'Amazon returned no products for this seller/marketplace.';
+            $this->notices[] = AmazonI18n::get()->l('Amazon returned no products for this seller/marketplace.', 'amazonproductsync');
         }
 
         return $out;
@@ -761,8 +761,10 @@ class AmazonProductSync
         // become children pointing at the parent SKU.
         foreach ($comboRowIndexes as $idProduct => $indexes) {
             if (!isset($baseRowIndex[$idProduct])) {
-                $this->notices[] = 'Product #' . (int) $idProduct . ' has variation combinations but no base '
-                    . 'reference (SKU) — pushed as standalone listings, not an Amazon variation family.';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('Product #%d has variation combinations but no base reference (SKU) — pushed as standalone listings, not an Amazon variation family.', 'amazonproductsync'),
+                    (int) $idProduct
+                );
                 continue;
             }
 
@@ -784,12 +786,16 @@ class AmazonProductSync
         }
 
         if ($filteredOut > 0) {
-            $this->notices[] = $filteredOut . ' product(s) excluded by export filters '
-                . '(price min/max, quantity min, or sync switched off).';
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%d product(s) excluded by export filters (price min/max, quantity min, or sync switched off).', 'amazonproductsync'),
+                (int) $filteredOut
+            );
         }
         if ($deltaCutoff !== null) {
-            $this->notices[] = 'Delta export: only products updated in the last ' . $deltaHours
-                . ' hour(s) or queued by rule changes were collected.';
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('Delta export: only products updated in the last %d hour(s) or queued by rule changes were collected.', 'amazonproductsync'),
+                (int) $deltaHours
+            );
         }
 
         return $out;
@@ -1405,9 +1411,11 @@ class AmazonProductSync
         }
 
         if (empty($rows)) {
-            $this->notices[] = 'Nothing to push. Run "Sync PS to Amazon" first, '
-                . 'and make sure there are ps_only / conflict rows to send.'
-                . ($onlyWithAsin ? ' Note: "Export only products with ASIN" is enabled.' : '');
+            $notice = AmazonI18n::get()->l('Nothing to push. Run "Sync PS to Amazon" first, and make sure some rows are marked PS only or Conflict.', 'amazonproductsync');
+            if ($onlyWithAsin) {
+                $notice .= ' ' . AmazonI18n::get()->l('Note: "Export only products with ASIN" is enabled.', 'amazonproductsync');
+            }
+            $this->notices[] = $notice;
         }
 
         $results = array();
@@ -1455,7 +1463,11 @@ class AmazonProductSync
             return array('sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) submission accepted');
         }
         if ($this->sellerId === '') {
-            return array('sku' => $sku, 'status' => 'SKIPPED', 'issues' => 'No seller id configured (production only).');
+            return array(
+                'sku' => $sku,
+                'status' => 'SKIPPED',
+                'issues' => AmazonI18n::get()->l('Your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync'),
+            );
         }
 
         // Price-only / quantity-only modes send a partial PATCH instead of a
@@ -1497,7 +1509,11 @@ class AmazonProductSync
             }
             $status = (is_array($resp['body']) && isset($resp['body']['status']))
                 ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
-            return array('sku' => $sku, 'status' => $status, 'issues' => 'Out of stock: listing deletion requested.');
+            return array(
+                'sku' => $sku,
+                'status' => $status,
+                'issues' => AmazonI18n::get()->l('Out of stock: listing deletion requested.', 'amazonproductsync'),
+            );
         }
 
         $body = $this->buildListingRequestBody($r);
@@ -1557,11 +1573,11 @@ class AmazonProductSync
 
         foreach ($rows as &$r) {
             if ((int) $r['id_product'] === 0 || $r['active'] === null) {
-                $r['reason'] = 'No PrestaShop product with this SKU';
+                $r['reason'] = AmazonI18n::get()->l('No PrestaShop product with this SKU', 'amazonproductsync');
             } elseif (!(int) $r['active']) {
-                $r['reason'] = 'PrestaShop product is disabled';
+                $r['reason'] = AmazonI18n::get()->l('PrestaShop product is disabled', 'amazonproductsync');
             } else {
-                $r['reason'] = 'Excluded from Amazon sync on the product';
+                $r['reason'] = AmazonI18n::get()->l('Excluded from Amazon sync on the product', 'amazonproductsync');
             }
         }
         unset($r);
@@ -1871,8 +1887,10 @@ class AmazonProductSync
             // Variation parent: a non-sellable listing that groups the children.
             // Amazon requires full product data for parents — offer-only is impossible.
             if (!$hasProductType) {
-                return array('_skip' => 'Variation parent needs a category mapping (Amazon product type). '
-                    . 'Map category #' . (int) $r['ps_id_category_default'] . ' first.');
+                return array('_skip' => sprintf(
+                    AmazonI18n::get()->l('Variation parent needs a category mapping (Amazon product type). Map category #%d first.', 'amazonproductsync'),
+                    (int) $r['ps_id_category_default']
+                ));
             }
             $body = $this->buildFullListingBody($r, $bulletPoints, $images);
             // Parents carry no offer or stock.
@@ -2531,7 +2549,7 @@ class AmazonProductSync
     {
         $attributesJson = trim((string) $attributesJson);
         if ($attributesJson !== '' && json_decode($attributesJson, true) === null) {
-            $this->lastError = 'Extra attributes must be a valid JSON object.';
+            $this->lastError = AmazonI18n::get()->l('Extra attributes must be a valid JSON object.', 'amazonproductsync');
             return false;
         }
 

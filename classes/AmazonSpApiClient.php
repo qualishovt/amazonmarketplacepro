@@ -29,6 +29,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonSpApiClient
 {
     const LWA_TOKEN_URL = 'https://api.amazon.com/auth/o2/token';
@@ -518,8 +520,7 @@ class AmazonSpApiClient
     private function authenticateViaRelay()
     {
         if (trim((string) $this->refreshToken) === '') {
-            $this->lastError = 'Not connected to Amazon yet: no refresh token stored. '
-                . 'Use the "Connect to Amazon" button in the module settings.';
+            $this->lastError = AmazonI18n::get()->l('Not connected to Amazon yet. Use the "Connect to Amazon" button in the module settings.', 'amazonspapiclient');
             return false;
         }
 
@@ -748,7 +749,7 @@ class AmazonSpApiClient
         if ($compressionAlgorithm === 'GZIP') {
             $decoded = @gzdecode($body);
             if ($decoded === false) {
-                $this->lastError = 'Could not decompress the GZIP result document.';
+                $this->lastError = AmazonI18n::get()->l('The file downloaded from Amazon could not be unpacked.', 'amazonspapiclient');
                 return false;
             }
             $body = $decoded;
@@ -767,7 +768,7 @@ class AmazonSpApiClient
         $this->lastError = null;
 
         if (!function_exists('curl_init')) {
-            $this->lastError = 'The cURL PHP extension is not available on this server.';
+            $this->lastError = AmazonI18n::get()->l('This server cannot connect to Amazon because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonspapiclient');
             return false;
         }
 

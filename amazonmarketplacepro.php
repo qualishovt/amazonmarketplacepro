@@ -376,7 +376,7 @@ class AmazonMarketplacePro extends Module
             $r = AmazonRelaySchedule::register();
             $this->scheduleNotice = !empty($r['success'])
                 ? $this->l('This shop is registered with the IntelliPresta scheduler.')
-                : $this->l('Could not register: ') . (isset($r['error']) ? $r['error'] : '');
+                : $this->l('Could not register: ') . (!empty($r['error']) ? $r['error'] : $this->l('Unknown error'));
             if (!empty($r['success'])) {
                 Configuration::updateValue('AMZPRO_CRON_MODE', 'relay');
             }
@@ -652,7 +652,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_oauth_error'     => Tools::getValue('mkpro_oauth_error', ''),
 
             // Select options
-            'marketplaces'   => self::$marketplaces,
+            'marketplaces'   => $this->translatedMarketplaces(),
             'carriers'       => $carriers,
             'order_states'   => $orderStates,
             'ps_categories'  => $categories,
@@ -677,7 +677,7 @@ class AmazonMarketplacePro extends Module
             'reports' => $reports,
 
             // Multi-marketplace
-            'marketplace_configs' => $marketplaceConfigs,
+            'marketplace_configs' => $this->translateMarketplaceNames($marketplaceConfigs),
 
             // Promotions
             'promotions' => $promotions,
@@ -760,19 +760,19 @@ class AmazonMarketplacePro extends Module
                 (array) json_decode((string) Configuration::get('AMZPRO_CONDITION_MAP'), true)
             ),
             'amazon_conditions'          => array(
-                'new_new' => 'New',
-                'used_like_new' => 'Used - Like New',
-                'used_very_good' => 'Used - Very Good',
-                'used_good' => 'Used - Good',
-                'used_acceptable' => 'Used - Acceptable',
-                'collectible_like_new' => 'Collectible - Like New',
-                'refurbished_refurbished' => 'Refurbished',
+                'new_new' => $this->l('New'),
+                'used_like_new' => $this->l('Used - Like New'),
+                'used_very_good' => $this->l('Used - Very Good'),
+                'used_good' => $this->l('Used - Good'),
+                'used_acceptable' => $this->l('Used - Acceptable'),
+                'collectible_like_new' => $this->l('Collectible - Like New'),
+                'refurbished_refurbished' => $this->l('Refurbished'),
             ),
             'customer_groups'            => $customerGroups,
 
             // Listing profiles
             'profiles'          => $profiles,
-            'profile_ps_fields' => AmazonProfile::$psFields,
+            'profile_ps_fields' => AmazonProfile::getPsFields(),
             'attribute_groups'  => is_array($attributeGroups) ? $attributeGroups : array(),
 
             // Rules / queue / orphans / pending
@@ -868,7 +868,7 @@ class AmazonMarketplacePro extends Module
             // The schedule. One URL replaces the nineteen above; the old ones
             // stay assigned so an install that already uses them keeps working.
             'cron_run_due_url'   => $cronBase . '&action=run_due',
-            'schedule_tasks'     => AmazonScheduler::all(),
+            'schedule_tasks'     => $this->scheduleTasksForDisplay(),
             'schedule_catalogue' => $this->translatedScheduleCatalogue(),
             'schedule_mode'      => AmazonRelaySchedule::mode(),
             'schedule_relay'     => AmazonRelaySchedule::status(),
@@ -1120,7 +1120,8 @@ class AmazonMarketplacePro extends Module
         }
 
         if ($mode === 'relay' && !Configuration::get('AMZPRO_RELAY_REGISTERED')) {
-            return $this->l('Saved. Now press "Register this shop" to start the scheduler.');
+            // The notice is escaped by the template, so undo PrestaShop's own escaping of the quotes.
+            return html_entity_decode($this->l('Saved. Now press "Register this shop" to start the scheduler.'), ENT_QUOTES, 'UTF-8');
         }
 
         return $this->l('Automation mode updated.');
@@ -1549,8 +1550,8 @@ class AmazonMarketplacePro extends Module
      * The task catalogue with its names and groups in the back-office language.
      *
      * AmazonScheduler keeps the English names: the cron endpoint and the logs
-     * use them, and a plain class has no module to translate with. Only the
-     * screen shows them to a merchant, so the swap happens here.
+     * use them. Only the screen shows them to a merchant, so the swap happens
+     * here.
      *
      * @return array
      */
@@ -1597,6 +1598,90 @@ class AmazonMarketplacePro extends Module
         }
 
         return $catalogue;
+    }
+
+    /**
+     * The scheduled tasks as the Result column shows them.
+     *
+     * A run stores "OK" or "Failed" when it has nothing more to say. The badge
+     * next to it already says that in the merchant's language, so the stored
+     * English word is not repeated under it.
+     *
+     * @return array
+     */
+    protected function scheduleTasksForDisplay()
+    {
+        $tasks = AmazonScheduler::all();
+        foreach ($tasks as $i => $task) {
+            if (isset($task['last_message']) && in_array($task['last_message'], array('OK', 'Failed'), true)) {
+                $tasks[$i]['last_message'] = '';
+            }
+        }
+
+        return $tasks;
+    }
+
+    /**
+     * The marketplace directory with each label in the back-office language.
+     *
+     * @return array marketplace id => label
+     */
+    protected function translatedMarketplaces()
+    {
+        $labels = array(
+            'ATVPDKIKX0DER'  => $this->l('Amazon.com (US)'),
+            'A2EUQ1WTGCTBG2' => $this->l('Amazon.ca (Canada)'),
+            'A1AM78C64UM0Y8' => $this->l('Amazon.com.mx (Mexico)'),
+            'A2Q3Y263D00KMC' => $this->l('Amazon.com.br (Brazil)'),
+            'A1F83G8C2ARO7P' => $this->l('Amazon.co.uk (UK)'),
+            'A1PA6795UKMFR9' => $this->l('Amazon.de (Germany)'),
+            'A13V1IB3VIYZZH' => $this->l('Amazon.fr (France)'),
+            'APJ6JRA9NG5V4'  => $this->l('Amazon.it (Italy)'),
+            'A1RKKUPIHCS9HS' => $this->l('Amazon.es (Spain)'),
+            'A1805IZSGTT6HS' => $this->l('Amazon.nl (Netherlands)'),
+            'A1C3SOZRARQ6R3' => $this->l('Amazon.pl (Poland)'),
+            'A2NODRKZP88ZB9' => $this->l('Amazon.se (Sweden)'),
+            'AMEN7PMS3EDWL'  => $this->l('Amazon.com.be (Belgium)'),
+            'A28R8C7NBKEWEA' => $this->l('Amazon.ie (Ireland)'),
+            'ARBP9OOSHTCHU'  => $this->l('Amazon.eg (Egypt)'),
+            'AE08WJ6YKNBMC'  => $this->l('Amazon.co.za (South Africa)'),
+            'A33AVAJ2PDY3EV' => $this->l('Amazon.com.tr (Turkey)'),
+            'A21TJRUUN4KGV'  => $this->l('Amazon.in (India)'),
+            'A2VIGQ35RCS4UG' => $this->l('Amazon.ae (UAE)'),
+            'A17E79C6D8DWNP' => $this->l('Amazon.sa (Saudi Arabia)'),
+            'A19VAU5U5O7RUS' => $this->l('Amazon.sg (Singapore)'),
+            'A39IBJ37TRP1C6' => $this->l('Amazon.com.au (Australia)'),
+            'A1VC38T7YXB528' => $this->l('Amazon.co.jp (Japan)'),
+        );
+        $out = array();
+        foreach (self::$marketplaces as $id => $label) {
+            $out[$id] = isset($labels[$id]) ? $labels[$id] : $label;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Swap the English name stored with each marketplace account for the
+     * translated label. An id the directory does not know keeps its stored name.
+     *
+     * @param array $rows marketplace account rows
+     *
+     * @return array
+     */
+    protected function translateMarketplaceNames($rows)
+    {
+        if (!is_array($rows)) {
+            return $rows;
+        }
+        $labels = $this->translatedMarketplaces();
+        foreach ($rows as $i => $row) {
+            if (isset($row['marketplace_id'], $labels[$row['marketplace_id']])) {
+                $rows[$i]['marketplace_name'] = $labels[$row['marketplace_id']];
+            }
+        }
+
+        return $rows;
     }
 
     protected function runPendingOrderAction()
@@ -1714,7 +1799,7 @@ class AmazonMarketplacePro extends Module
             'display_name' => $definition['display_name'],
             'attributes' => $definition['attributes'],
             'required_count' => $required,
-            'ps_fields' => AmazonProfile::$psFields,
+            'ps_fields' => AmazonProfile::getPsFields(),
         );
     }
 
@@ -2506,7 +2591,11 @@ class AmazonMarketplacePro extends Module
                 'success' => true,
                 'method' => 'none',
                 'pending' => 0,
-                'notices' => array('Nothing to push. Run "Sync PS to Amazon" first; it marks what differs from Amazon.'),
+                'notices' => array(html_entity_decode(
+                    $this->l('Nothing to send. Press "Sync PS to Amazon" first: it marks what differs from Amazon.'),
+                    ENT_QUOTES,
+                    'UTF-8'
+                )),
             );
         }
 
@@ -2618,7 +2707,7 @@ class AmazonMarketplacePro extends Module
 
         if (!$sync->saveCategoryMapping($idCategory, $productType, $browseNode, $marketplaceId, $attributesJson)) {
             return array('success' => false, 'error' => $sync->getLastError()
-                ? $sync->getLastError() : 'Failed to save mapping.');
+                ? $sync->getLastError() : $this->l('The category mapping could not be saved.'));
         }
 
         return array(

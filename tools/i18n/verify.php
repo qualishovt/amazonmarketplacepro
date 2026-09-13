@@ -40,11 +40,6 @@ $_SERVER['HTTP_HOST'] = 'localhost';
 require $root . '/config/config.inc.php';
 
 $strings = require __DIR__ . '/extract.php';
-$sources = array(
-    'views/templates/admin/configure.tpl'   => 'configure',
-    'views/templates/admin/product_tab.tpl' => 'product_tab',
-    'amazonmarketplacepro.php'              => 'amazonmarketplacepro',
-);
 
 function amzproI18nNormalise($s)
 {
@@ -76,7 +71,7 @@ $placeholder = array();
 $n = 0;
 
 foreach ($strings as $file => $list) {
-    $source = $sources[$file];
+    $source = amzproI18nSource($file);
     foreach ($list as $s) {
         $n++;
         $key = amzproI18nNormalise($s);

@@ -23,6 +23,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/AmazonI18n.php';
+
 class AmazonBuyerInbox
 {
     /** Amazon order ids look like 123-1234567-1234567. */
@@ -87,12 +89,11 @@ class AmazonBuyerInbox
         $summary = array('scanned' => 0, 'matched' => 0, 'filed' => 0, 'skipped' => 0);
 
         if (!self::isAvailable()) {
-            $this->lastError = 'The PHP IMAP extension is not installed on this server, '
-                . 'so buyer replies cannot be read. Ask your host to enable ext-imap.';
+            $this->lastError = AmazonI18n::get()->l('The PHP IMAP extension is not installed on this server, so buyer replies cannot be read. Ask your host to enable ext-imap.', 'amazonbuyerinbox');
             return false;
         }
         if (!self::isEnabled()) {
-            $this->lastError = 'Inbound buyer messages are disabled in the module settings.';
+            $this->lastError = AmazonI18n::get()->l('Inbound buyer messages are disabled in the module settings.', 'amazonbuyerinbox');
             return false;
         }
 
@@ -100,13 +101,16 @@ class AmazonBuyerInbox
         $user = trim((string) Configuration::get('AMZPRO_IMAP_USER'));
         $password = (string) Configuration::get('AMZPRO_IMAP_PASSWORD');
         if ($mailbox === '' || $user === '') {
-            $this->lastError = 'The mailbox host and user must be configured first.';
+            $this->lastError = AmazonI18n::get()->l('The mailbox host and user must be configured first.', 'amazonbuyerinbox');
             return false;
         }
 
         $connection = @imap_open($mailbox, $user, $password, 0, 1);
         if ($connection === false) {
-            $this->lastError = 'Could not open the mailbox: ' . implode('; ', (array) imap_errors());
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Could not open the mailbox: %s', 'amazonbuyerinbox'),
+                implode('; ', (array) imap_errors())
+            );
             return false;
         }
 
@@ -163,7 +167,10 @@ class AmazonBuyerInbox
              WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\''
         );
         if (!$staged) {
-            $this->notices[] = $amazonOrderId . ': message received for an order this shop has not imported.';
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%s: message received for an order this shop has not imported.', 'amazonbuyerinbox'),
+                $amazonOrderId
+            );
             return 'skipped';
         }
 
@@ -218,7 +225,10 @@ class AmazonBuyerInbox
             $thread->status = 'open';
             $thread->token = Tools::passwdGen(12);
             if (!$thread->add()) {
-                $this->notices[] = $amazonOrderId . ': could not open a customer service thread.';
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('%s: could not open a customer service thread.', 'amazonbuyerinbox'),
+                    $amazonOrderId
+                );
                 return false;
             }
             $idThread = (int) $thread->id;

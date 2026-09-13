@@ -22,10 +22,10 @@
  *
  *     strtolower('<{' . module . '}prestashop>' . source) . '_' . md5($string)
  *
- * where `source` is the template basename for .tpl strings and the module name
- * for $this->l() strings, and `$string` has already been through
- * preg_replace("/\\*'/", "\'", ...) - so the md5 covers the text with its
- * apostrophes backslash-escaped. PS 1.6 (classes/Translate.php) and PS 9
+ * where `source` is the lower-case basename of the file the string is in (the
+ * template, the module class, or the plain class), and `$string` has already
+ * been through preg_replace("/\\*'/", "\'", ...) - so the md5 covers the text
+ * with its apostrophes backslash-escaped. PS 1.6 (classes/Translate.php) and PS 9
  * (same file, same lines) build the key identically and both read
  * translations/<iso>.php, which is why one legacy file per language serves
  * every version the module supports.
@@ -53,13 +53,7 @@ function amzproI18nKey($source, $string)
         . '_' . md5(amzproI18nNormalise($string));
 }
 
-// Which `source` name each scanned file contributes to the key.
-$sources = array(
-    'views/templates/admin/configure.tpl'   => 'configure',
-    'views/templates/admin/product_tab.tpl' => 'product_tab',
-    'amazonmarketplacepro.php'              => AMZPRO_I18N_MODULE,
-);
-
+// The `source` of each file comes from amzproI18nSource() in extract.php.
 $strings = require __DIR__ . '/extract.php';
 
 // Key the data by the normalised English so a lookup cannot miss over an
@@ -129,7 +123,7 @@ foreach ($langs as $lang) {
     $lines = array();
     $seen = array();
     foreach ($strings as $file => $list) {
-        $source = $sources[$file];
+        $source = amzproI18nSource($file);
         foreach ($list as $s) {
             $row = $data[amzproI18nNormalise($s)];
             if (!isset($row[$lang]) || trim($row[$lang]) === '') {
