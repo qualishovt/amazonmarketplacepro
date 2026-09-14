@@ -617,24 +617,23 @@ class AmzproShop
             return false;
         }
 
-        $p = _DB_PREFIX_;
         foreach (self::$shopTables as $table => $spec) {
             if (!self::tableExists($table)) {
                 continue;
             }
             if ($spec['backfill'] === 'orders') {
-                $db->execute('UPDATE `' . $p . $table . '` t
-                    INNER JOIN `' . $p . 'orders` o ON o.`id_order` = t.`id_order`
+                $db->execute('UPDATE `' . _DB_PREFIX_ . bqSQL($table) . '` t
+                    INNER JOIN `' . _DB_PREFIX_ . 'orders` o ON o.`id_order` = t.`id_order`
                     SET t.`id_shop` = o.`id_shop`
                     WHERE t.`id_shop` = 0 AND t.`id_order` > 0');
             } elseif ($spec['backfill'] === 'amazon_order') {
-                $db->execute('UPDATE `' . $p . $table . '` t
-                    INNER JOIN `' . $p . 'amazonmarketplacepro_order` o ON o.`amazon_order_id` = t.`amazon_order_id`
+                $db->execute('UPDATE `' . _DB_PREFIX_ . bqSQL($table) . '` t
+                    INNER JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o ON o.`amazon_order_id` = t.`amazon_order_id`
                     SET t.`id_shop` = o.`id_shop`
                     WHERE t.`id_shop` = 0');
             }
             if (in_array($spec['backfill'], array('orders', 'amazon_order', 'default'), true)) {
-                $db->execute('UPDATE `' . $p . $table . '` SET `id_shop` = ' . (int) $default . ' WHERE `id_shop` = 0');
+                $db->execute('UPDATE `' . _DB_PREFIX_ . bqSQL($table) . '` SET `id_shop` = ' . (int) $default . ' WHERE `id_shop` = 0');
             }
         }
 
@@ -688,22 +687,22 @@ class AmzproShop
             return true;
         }
         $db = Db::getInstance();
-        $name = '`' . _DB_PREFIX_ . $table . '`';
+        $name = '`' . _DB_PREFIX_ . bqSQL($table) . '`';
 
         $hasColumn = false;
-        foreach ((array) $db->executeS('SHOW COLUMNS FROM ' . $name) as $col) {
+        foreach ((array) $db->executeS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . bqSQL($table) . '`') as $col) {
             if ($col['Field'] === 'id_shop') {
                 $hasColumn = true;
             }
         }
         if (!$hasColumn) {
-            if (!$db->execute('ALTER TABLE ' . $name . ' ADD `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0')) {
+            if (!$db->execute('ALTER TABLE `' . _DB_PREFIX_ . bqSQL($table) . '` ADD `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0')) {
                 return false;
             }
         }
 
         $indexes = array();
-        foreach ((array) $db->executeS('SHOW INDEX FROM ' . $name) as $ix) {
+        foreach ((array) $db->executeS('SHOW INDEX FROM `' . _DB_PREFIX_ . bqSQL($table) . '`') as $ix) {
             $indexes[$ix['Key_name']][(int) $ix['Seq_in_index']] = $ix['Column_name'];
         }
 

@@ -193,7 +193,7 @@ class AmazonListingSettings
         $key = '`entity_type` = \'' . pSQL($type) . '\' AND `id_entity` = ' . (int) $idEntity;
         self::$entityCache = array();
 
-        $existing = $db->executeS('SELECT * FROM `' . $table . '` WHERE ' . $key . ' AND ' . AmzproShop::sqlShared());
+        $existing = $db->executeS('SELECT * FROM `' . bqSQL($table) . '` WHERE ' . $key . ' AND ' . AmzproShop::sqlShared());
         $byShop = array();
         foreach ((is_array($existing) ? $existing : array()) as $r) {
             $byShop[(int) $r['id_shop']] = $r;

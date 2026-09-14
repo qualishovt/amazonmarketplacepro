@@ -734,8 +734,9 @@ class AmazonMarketplacePro extends Module
 
             // Current settings
             'mkpro_client_id'       => AmzproShop::get('AMZPRO_CLIENT_ID'),
-            'mkpro_client_secret'   => AmzproShop::get('AMZPRO_CLIENT_SECRET'),
-            'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken(),
+            // Only whether one is stored: the secrets themselves never reach the page.
+            'mkpro_client_secret'   => (string) AmzproShop::get('AMZPRO_CLIENT_SECRET') !== '',
+            'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken() !== '',
             'mkpro_seller_id'       => AmzproShop::get('AMZPRO_SELLER_ID'),
             'mkpro_marketplace_id'  => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
             'mkpro_environment'     => AmazonSpApiClient::environment(),
