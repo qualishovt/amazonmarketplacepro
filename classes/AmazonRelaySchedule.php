@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * The shop's half of the IntelliPresta scheduler.
  *
  * There are two ways the schedule can be driven, and the difference is only
@@ -98,12 +99,12 @@ class AmazonRelaySchedule
     {
         $idShop = self::shopId($idShop);
 
-        return array(
+        return [
             'registered' => (bool) AmzproShop::get('AMZPRO_RELAY_REGISTERED', $idShop),
             'since' => AmzproShop::get('AMZPRO_RELAY_SINCE', $idShop),
             'url' => AmzproShop::get('AMZPRO_RELAY_CRON_URL', $idShop),
             'last_error' => AmzproShop::get('AMZPRO_RELAY_ERROR', $idShop),
-        );
+        ];
     }
 
     /**
@@ -120,7 +121,7 @@ class AmazonRelaySchedule
             $link = new Link();
         }
 
-        return $link->getModuleLink('amazonmarketplacepro', 'cron', array(), true, null, $idShop);
+        return $link->getModuleLink('amazonmarketplacepro', 'cron', [], true, null, $idShop);
     }
 
     /**
@@ -148,14 +149,14 @@ class AmazonRelaySchedule
 
         $module = Module::getInstanceByName('amazonmarketplacepro');
 
-        $reply = self::call(array(
+        $reply = self::call([
             'action' => 'register',
             'cron_url' => $url,
             'token' => $token,
             'shop_name' => Configuration::get('PS_SHOP_NAME', null, AmzproShop::groupId($idShop), $idShop),
             'seller_id' => AmzproShop::get('AMZPRO_SELLER_ID', $idShop),
             'module_version' => $module ? (string) $module->version : '',
-        ));
+        ]);
 
         if (empty($reply['success'])) {
             AmzproShop::set('AMZPRO_RELAY_ERROR', isset($reply['error']) ? $reply['error'] : AmazonI18n::get()->l('Unknown error', 'amazonrelayschedule'), $idShop);
@@ -180,7 +181,7 @@ class AmazonRelaySchedule
     {
         AmzproShop::set('AMZPRO_RELAY_ERROR', $why, $idShop);
 
-        return array('success' => false, 'error' => $why);
+        return ['success' => false, 'error' => $why];
     }
 
     /** Ask the relay to stop, and forget the registration locally either way. */
@@ -195,11 +196,11 @@ class AmazonRelaySchedule
             $url = self::cronUrl($idShop);
         }
 
-        $reply = self::call(array(
+        $reply = self::call([
             'action' => 'unregister',
             'cron_url' => $url,
             'token' => AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop),
-        ));
+        ]);
 
         // Local state is cleared even if the relay could not be reached. A
         // merchant who has switched away should not be left looking at a screen
@@ -225,7 +226,7 @@ class AmazonRelaySchedule
     protected static function call(array $fields)
     {
         if (!function_exists('curl_init')) {
-            return array('success' => false, 'error' => AmazonI18n::get()->l('This server cannot reach the scheduler because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonrelayschedule'));
+            return ['success' => false, 'error' => AmazonI18n::get()->l('This server cannot reach the scheduler because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonrelayschedule')];
         }
 
         $ch = curl_init(self::ENDPOINT);
@@ -244,12 +245,12 @@ class AmazonRelaySchedule
         curl_close($ch);
 
         if ($body === false) {
-            return array('success' => false, 'error' => sprintf(AmazonI18n::get()->l('Could not reach the scheduler: %s', 'amazonrelayschedule'), $error));
+            return ['success' => false, 'error' => sprintf(AmazonI18n::get()->l('Could not reach the scheduler: %s', 'amazonrelayschedule'), $error)];
         }
 
         $reply = json_decode($body, true);
         if (!is_array($reply)) {
-            return array('success' => false, 'error' => sprintf(AmazonI18n::get()->l('The scheduler answered with HTTP %d.', 'amazonrelayschedule'), $code));
+            return ['success' => false, 'error' => sprintf(AmazonI18n::get()->l('The scheduler answered with HTTP %d.', 'amazonrelayschedule'), $code)];
         }
 
         return $reply;

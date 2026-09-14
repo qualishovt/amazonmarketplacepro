@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -18,7 +19,6 @@
  * Requires the PHP IMAP extension. Without it the feature reports itself
  * unavailable rather than failing at run time.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -37,8 +37,8 @@ class AmazonBuyerInbox
     /** Amazon order ids look like 123-1234567-1234567. */
     const ORDER_ID_PATTERN = '/\b(\d{3}-\d{7}-\d{7})\b/';
 
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function getLastError()
     {
@@ -58,6 +58,7 @@ class AmazonBuyerInbox
 
     /**
      * @param int|null $idShop default: the current shop
+     *
      * @return bool
      */
     public static function isEnabled($idShop = null)
@@ -69,6 +70,7 @@ class AmazonBuyerInbox
      * The IMAP mailbox string, e.g. {imap.gmail.com:993/imap/ssl}INBOX
      *
      * @param int|null $idShop default: the current shop
+     *
      * @return string '' when the settings are incomplete
      */
     public static function mailboxString($idShop = null)
@@ -94,18 +96,21 @@ class AmazonBuyerInbox
      * Read unseen mail and file anything that names an Amazon order.
      *
      * @param int $limit Messages to process in one run
+     *
      * @return array|false Summary, or false when the mailbox cannot be opened
      */
     public function fetchNewMessages($limit = 50)
     {
-        $summary = array('scanned' => 0, 'matched' => 0, 'filed' => 0, 'skipped' => 0);
+        $summary = ['scanned' => 0, 'matched' => 0, 'filed' => 0, 'skipped' => 0];
 
         if (!self::isAvailable()) {
             $this->lastError = AmazonI18n::get()->l('The PHP IMAP extension is not installed on this server, so buyer replies cannot be read. Ask your host to enable ext-imap.', 'amazonbuyerinbox');
+
             return false;
         }
         if (!self::isEnabled()) {
             $this->lastError = AmazonI18n::get()->l('Inbound buyer messages are disabled in the module settings.', 'amazonbuyerinbox');
+
             return false;
         }
 
@@ -114,6 +119,7 @@ class AmazonBuyerInbox
         $password = (string) AmzproShop::get('AMZPRO_IMAP_PASSWORD');
         if ($mailbox === '' || $user === '') {
             $this->lastError = AmazonI18n::get()->l('The mailbox host and user must be configured first.', 'amazonbuyerinbox');
+
             return false;
         }
 
@@ -123,25 +129,26 @@ class AmazonBuyerInbox
                 AmazonI18n::get()->l('Could not open the mailbox: %s', 'amazonbuyerinbox'),
                 implode('; ', (array) imap_errors())
             );
+
             return false;
         }
 
         $ids = @imap_search($connection, 'UNSEEN');
         if (!is_array($ids)) {
-            $ids = array(); // an empty result is not an error
+            $ids = []; // an empty result is not an error
         }
         $ids = array_slice($ids, 0, (int) $limit);
 
         foreach ($ids as $messageNumber) {
-            $summary['scanned']++;
+            ++$summary['scanned'];
             $result = $this->processMessage($connection, $messageNumber);
             if ($result === 'filed') {
-                $summary['matched']++;
-                $summary['filed']++;
+                ++$summary['matched'];
+                ++$summary['filed'];
             } elseif ($result === 'matched') {
-                $summary['matched']++;
+                ++$summary['matched'];
             } else {
-                $summary['skipped']++;
+                ++$summary['skipped'];
             }
         }
 
@@ -184,6 +191,7 @@ class AmazonBuyerInbox
                 AmazonI18n::get()->l('%s: message received for an order this shop has not imported.', 'amazonbuyerinbox'),
                 $amazonOrderId
             );
+
             return 'skipped';
         }
 
@@ -199,6 +207,7 @@ class AmazonBuyerInbox
         if ($filed) {
             // Only mark it read once it is safely in PrestaShop.
             @imap_setflag_full($connection, (string) $messageNumber, '\\Seen');
+
             return 'filed';
         }
 
@@ -254,6 +263,7 @@ class AmazonBuyerInbox
                     AmazonI18n::get()->l('%s: could not open a customer service thread.', 'amazonbuyerinbox'),
                     $amazonOrderId
                 );
+
                 return false;
             }
             $idThread = (int) $thread->id;
@@ -280,6 +290,7 @@ class AmazonBuyerInbox
      * filing threads without a contact, as it always has.
      *
      * @param int $idShop
+     *
      * @return int 0 when the shop has no contact
      */
     private function shopContactId($idShop)
@@ -353,6 +364,7 @@ class AmazonBuyerInbox
             foreach ($parts as $part) {
                 $decoded .= $part->text;
             }
+
             return $decoded;
         }
 

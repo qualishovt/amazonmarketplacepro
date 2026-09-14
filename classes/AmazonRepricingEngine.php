@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Repricing Engine.
  *
  * Handles:
@@ -51,8 +52,8 @@ class AmazonRepricingEngine
     private $client;
     private $marketplaceId;
     private $sellerId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '')
     {
@@ -82,15 +83,15 @@ class AmazonRepricingEngine
     public function fetchCompetitivePricing()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'checked' => 0,
             'updated' => 0,
             'buybox_wins' => 0,
             'buybox_losses' => 0,
             'errors' => 0,
-        );
+        ];
 
         // Get the shop's products with ASINs
         $products = Db::getInstance()->executeS(
@@ -105,6 +106,7 @@ class AmazonRepricingEngine
 
         if (!is_array($products) || empty($products)) {
             $this->notices[] = AmazonI18n::get()->l('No products with ASINs found. Sync products first.', 'amazonrepricingengine');
+
             return $summary;
         }
 
@@ -113,9 +115,9 @@ class AmazonRepricingEngine
         $now = date('Y-m-d H:i:s');
 
         foreach ($batches as $batch) {
-            $asins = array();
-            $skuByAsin = array();
-            $priceByAsin = array();
+            $asins = [];
+            $skuByAsin = [];
+            $priceByAsin = [];
 
             foreach ($batch as $p) {
                 $asin = $p['amazon_asin'];
@@ -127,11 +129,11 @@ class AmazonRepricingEngine
             $resp = $this->client->request(
                 'GET',
                 '/products/pricing/v0/competitivePrice',
-                array(
+                [
                     'MarketplaceId' => $this->marketplaceId,
                     'Asins' => implode(',', $asins),
                     'ItemType' => 'Asin',
-                )
+                ]
             );
 
             if ($resp === false || $resp['status'] >= 400) {
@@ -139,7 +141,7 @@ class AmazonRepricingEngine
                 continue;
             }
 
-            $payload = array();
+            $payload = [];
             if (is_array($resp['body']) && isset($resp['body']['payload'])) {
                 $payload = $resp['body']['payload'];
             }
@@ -152,7 +154,7 @@ class AmazonRepricingEngine
 
                 $sku = $skuByAsin[$asin];
                 $ourPrice = $priceByAsin[$asin];
-                $summary['checked']++;
+                ++$summary['checked'];
 
                 $buyboxPrice = 0;
                 $buyboxShipping = 0;
@@ -201,9 +203,9 @@ class AmazonRepricingEngine
                 }
 
                 if ($isBuyboxWinner) {
-                    $summary['buybox_wins']++;
+                    ++$summary['buybox_wins'];
                 } else {
-                    $summary['buybox_losses']++;
+                    ++$summary['buybox_losses'];
                 }
 
                 // Upsert competitive price data
@@ -212,7 +214,7 @@ class AmazonRepricingEngine
                     $buyboxSeller, $isBuyboxWinner, $lowestPrice, $lowestShipping,
                     $lowestLanded, $numberOfOffers, $ourPrice, $now
                 );
-                $summary['updated']++;
+                ++$summary['updated'];
             }
         }
 
@@ -230,14 +232,14 @@ class AmazonRepricingEngine
     public function applyPricingRules()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'rules_applied' => 0,
             'prices_suggested' => 0,
             'prices_pushed' => 0,
             'prices_capped' => 0,
-        );
+        ];
 
         $idShop = (int) AmzproShop::actingId();
 
@@ -253,13 +255,14 @@ class AmazonRepricingEngine
 
         if (!is_array($rules) || empty($rules)) {
             $this->notices[] = AmazonI18n::get()->l('No active pricing rules found.', 'amazonrepricingengine');
+
             return $summary;
         }
 
         $now = date('Y-m-d H:i:s');
 
         foreach ($rules as $rule) {
-            $summary['rules_applied']++;
+            ++$summary['rules_applied'];
 
             // Get the shop's products matching this rule
             $where = '`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' AND `id_shop` = ' . $idShop;
@@ -294,11 +297,11 @@ class AmazonRepricingEngine
 
                 if ($minPrice > 0 && $suggested < $minPrice) {
                     $suggested = $minPrice;
-                    $summary['prices_capped']++;
+                    ++$summary['prices_capped'];
                 }
                 if ($maxPrice > 0 && $suggested > $maxPrice) {
                     $suggested = $maxPrice;
-                    $summary['prices_capped']++;
+                    ++$summary['prices_capped'];
                 }
 
                 // Update suggested price
@@ -310,7 +313,7 @@ class AmazonRepricingEngine
                        AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
                        AND `id_shop` = ' . $idShop
                 );
-                $summary['prices_suggested']++;
+                ++$summary['prices_suggested'];
             }
         }
 
@@ -321,19 +324,20 @@ class AmazonRepricingEngine
      * Push suggested prices to Amazon for products where suggested != current.
      *
      * @param int $limit Max products to push per run
+     *
      * @return array Summary
      */
     public function pushSuggestedPrices($limit = 25)
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'candidates' => 0,
             'pushed' => 0,
             'failed' => 0,
             'skipped' => 0,
-        );
+        ];
 
         $idShop = (int) AmzproShop::actingId();
         // The listings belong to the seller account this shop is connected to.
@@ -343,6 +347,7 @@ class AmazonRepricingEngine
 
         if ($sellerId === '') {
             $this->notices[] = AmazonI18n::get()->l('Cannot push prices: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonrepricingengine');
+
             return $summary;
         }
 
@@ -358,7 +363,7 @@ class AmazonRepricingEngine
         );
 
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
         $summary['candidates'] = count($rows);
@@ -369,25 +374,25 @@ class AmazonRepricingEngine
             $newPrice = (float) $r['suggested_price'];
 
             // Push to Amazon via Listings API
-            $body = array(
+            $body = [
                 'productType' => 'PRODUCT',
                 'requirements' => 'LISTING_OFFER_ONLY',
-                'attributes' => array(
-                    'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition())),
-                    'purchasable_offer' => array(array(
+                'attributes' => [
+                    'condition_type' => [['value' => AmazonSpApiClient::listingCondition()]],
+                    'purchasable_offer' => [[
                         'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                         'marketplace_id' => $this->marketplaceId,
-                        'our_price' => array(array(
-                            'schedule' => array(array('value_with_tax' => $newPrice)),
-                        )),
-                    )),
-                ),
-            );
+                        'our_price' => [[
+                            'schedule' => [['value_with_tax' => $newPrice]],
+                        ]],
+                    ]],
+                ],
+            ];
 
             $resp = $this->client->request(
                 'PUT',
                 '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-                array('marketplaceIds' => $this->marketplaceId),
+                ['marketplaceIds' => $this->marketplaceId],
                 $body
             );
 
@@ -406,9 +411,9 @@ class AmazonRepricingEngine
                 // Also update PS product price
                 $this->updatePsPrice($sku, $newPrice, $idShop);
 
-                $summary['pushed']++;
+                ++$summary['pushed'];
             } else {
-                $summary['failed']++;
+                ++$summary['failed'];
             }
         }
 
@@ -420,6 +425,7 @@ class AmazonRepricingEngine
      *
      * @param array $cp Competitive price row
      * @param array $rule Pricing rule row
+     *
      * @return float|false Suggested price or false if no change needed
      */
     private function calculateSuggestedPrice($cp, $rule)
@@ -497,6 +503,7 @@ class AmazonRepricingEngine
         if ($direction === 'below') {
             return $basePrice - $delta;
         }
+
         return $basePrice + $delta;
     }
 
@@ -557,7 +564,7 @@ class AmazonRepricingEngine
                  ON (ps.`id_product` = pr.`id_product` AND ps.`id_shop` = ' . $idShop . ')
              WHERE pr.`reference` = \'' . $ref . '\''
         );
-        foreach ((is_array($products) ? $products : array()) as $product) {
+        foreach ((is_array($products) ? $products : []) as $product) {
             $idProduct = (int) $product['id_product'];
             $db->execute(
                 'UPDATE `' . $p . 'product_shop` SET `price` = ' . (float) $newPrice . '
@@ -631,7 +638,8 @@ class AmazonRepricingEngine
                 WHERE ' . AmzproShop::sqlShared() . '
                 ORDER BY `name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -746,6 +754,7 @@ class AmazonRepricingEngine
                 ORDER BY cp.`is_buybox_winner` ASC, cp.`seller_sku` ASC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -18,7 +19,7 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_1_2_0($module)
 {
-    $sql = array();
+    $sql = [];
 
     $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_pt_schema` (
         `id_amazonmarketplacepro_pt_schema` INT(11) NOT NULL AUTO_INCREMENT,

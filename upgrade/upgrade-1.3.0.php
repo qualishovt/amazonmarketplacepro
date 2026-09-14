@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -26,7 +27,7 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_1_3_0($module)
 {
-    $defaults = array(
+    $defaults = [
         // Listing refinements
         'AMZPRO_ROUNDING' => 'cents',
         'AMZPRO_SEND_SALE_PRICE' => '0',
@@ -64,7 +65,7 @@ function upgrade_module_1_3_0($module)
         'AMZPRO_IMAP_PASSWORD' => '',
         'AMZPRO_IMAP_FOLDER' => 'INBOX',
         'AMZPRO_IMAP_SSL' => '1',
-    );
+    ];
 
     foreach ($defaults as $key => $value) {
         // Only fill the blanks — never overwrite a merchant's choice.

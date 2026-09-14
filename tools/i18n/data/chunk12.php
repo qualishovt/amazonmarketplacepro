@@ -149,7 +149,7 @@ return array(
   ),
   'Error: %1$s' => 
   array(
-    'fr' => 'Erreur : %1$s',
+    'fr' => 'Erreur : %1$s',
     'es' => 'Error: %1$s',
     'de' => 'Fehler: %1$s',
     'it' => 'Errore: %1$s',
@@ -533,7 +533,7 @@ return array(
   ),
   '%1$s SKUs were pending, so they went as one feed. Feed %2$s was submitted with %3$s message(s). Amazon processes it in the background: use Check feed status below.' => 
   array(
-    'fr' => '%1$s SKU étaient en attente : ils sont donc partis en un seul flux. Le flux %2$s a été envoyé avec %3$s message(s). Amazon le traite en arrière-plan : utilisez « Vérifier l\'état du flux » ci-dessous.',
+    'fr' => '%1$s SKU étaient en attente : ils sont donc partis en un seul flux. Le flux %2$s a été envoyé avec %3$s message(s). Amazon le traite en arrière-plan : utilisez « Vérifier l\'état du flux » ci-dessous.',
     'es' => 'Había %1$s SKU pendientes, así que se han enviado en un único feed. El feed %2$s se ha enviado con %3$s mensaje(s). Amazon lo procesa en segundo plano: usa Comprobar el estado del feed más abajo.',
     'de' => '%1$s SKUs standen aus und wurden daher als ein Feed gesendet. Feed %2$s wurde mit %3$s Nachricht(en) übermittelt. Amazon verarbeitet ihn im Hintergrund: Verwenden Sie unten „Feed-Status prüfen“.',
     'it' => '%1$s SKU erano in attesa, quindi sono partiti con un unico feed. Il feed %2$s è stato inviato con %3$s messaggi. Amazon lo elabora in background: usa «Verifica lo stato del feed» qui sotto.',
@@ -597,7 +597,7 @@ return array(
   ),
   'Extra attributes must be valid JSON: %1$s' => 
   array(
-    'fr' => 'Les attributs supplémentaires doivent être du JSON valide : %1$s',
+    'fr' => 'Les attributs supplémentaires doivent être du JSON valide : %1$s',
     'es' => 'Los atributos adicionales deben ser JSON válido: %1$s',
     'de' => 'Zusätzliche Attribute müssen gültiges JSON sein: %1$s',
     'it' => 'Gli attributi aggiuntivi devono essere JSON valido: %1$s',
@@ -725,7 +725,7 @@ return array(
   ),
   'MCF order created. Seller fulfilment order ID: %1$s' => 
   array(
-    'fr' => 'Commande MCF créée. ID de la commande d\'expédition vendeur : %1$s',
+    'fr' => 'Commande MCF créée. ID de la commande d\'expédition vendeur : %1$s',
     'es' => 'Pedido MCF creado. ID del pedido de logística del vendedor: %1$s',
     'de' => 'MCF-Bestellung angelegt. Fulfillment-Auftrags-ID des Verkäufers: %1$s',
     'it' => 'Ordine MCF creato. ID dell\'ordine di evasione del venditore: %1$s',
@@ -837,7 +837,7 @@ return array(
   ),
   'Report requested. ID: %1$s. Use Poll Pending Reports to check its status.' => 
   array(
-    'fr' => 'Rapport demandé. ID : %1$s. Utilisez « Interroger les rapports en attente » pour suivre son état.',
+    'fr' => 'Rapport demandé. ID : %1$s. Utilisez « Interroger les rapports en attente » pour suivre son état.',
     'es' => 'Informe solicitado. ID: %1$s. Usa Consultar los informes pendientes para comprobar su estado.',
     'de' => 'Bericht angefordert. ID: %1$s. Prüfen Sie seinen Status mit „Ausstehende Berichte abfragen“.',
     'it' => 'Report richiesto. ID: %1$s. Usa «Interroga i report in sospeso» per verificarne lo stato.',
@@ -1069,7 +1069,7 @@ return array(
   ),
   '%1$s: %2$s required, %3$s optional attribute(s).' => 
   array(
-    'fr' => '%1$s : %2$s attribut(s) obligatoire(s), %3$s facultatif(s).',
+    'fr' => '%1$s : %2$s attribut(s) obligatoire(s), %3$s facultatif(s).',
     'es' => '%1$s: %2$s atributo(s) obligatorio(s), %3$s opcional(es).',
     'de' => '%1$s: Pflichtattribute %2$s, optionale Attribute %3$s.',
     'it' => '%1$s: %2$s attributi obbligatori, %3$s facoltativi.',
@@ -1085,7 +1085,7 @@ return array(
   ),
   'Edit profile: %1$s' => 
   array(
-    'fr' => 'Modifier le profil : %1$s',
+    'fr' => 'Modifier le profil : %1$s',
     'es' => 'Editar perfil: %1$s',
     'de' => 'Profil bearbeiten: %1$s',
     'it' => 'Modifica profilo: %1$s',
@@ -1093,7 +1093,7 @@ return array(
   ),
   'Delete this profile? Its categories fall back to the Category Mapping.' => 
   array(
-    'fr' => 'Supprimer ce profil ? Ses catégories reviennent à la correspondance des catégories.',
+    'fr' => 'Supprimer ce profil ? Ses catégories reviennent à la correspondance des catégories.',
     'es' => '¿Eliminar este perfil? Sus categorías volverán a usar la correspondencia de categorías.',
     'de' => 'Dieses Profil löschen? Seine Kategorien fallen auf die Kategoriezuordnung zurück.',
     'it' => 'Eliminare questo profilo? Le sue categorie torneranno alla corrispondenza delle categorie.',
@@ -1133,7 +1133,7 @@ return array(
   ),
   'Remove ALL queue entries?' => 
   array(
-    'fr' => 'Supprimer TOUTES les entrées de la file d\'attente ?',
+    'fr' => 'Supprimer TOUTES les entrées de la file d\'attente ?',
     'es' => '¿Eliminar TODAS las entradas de la cola?',
     'de' => 'ALLE Warteschlangeneinträge entfernen?',
     'it' => 'Rimuovere TUTTE le voci della coda?',
@@ -1165,7 +1165,7 @@ return array(
   ),
   'Create this PrestaShop order even though stock is insufficient?' => 
   array(
-    'fr' => 'Créer cette commande PrestaShop malgré un stock insuffisant ?',
+    'fr' => 'Créer cette commande PrestaShop malgré un stock insuffisant ?',
     'es' => '¿Crear este pedido de PrestaShop aunque no haya existencias suficientes?',
     'de' => 'Diese PrestaShop-Bestellung trotz unzureichenden Bestands anlegen?',
     'it' => 'Creare questo ordine PrestaShop anche se la giacenza è insufficiente?',
@@ -1173,7 +1173,7 @@ return array(
   ),
   'Remove this pending order? It will not become a PrestaShop order.' => 
   array(
-    'fr' => 'Supprimer cette commande en attente ? Elle ne deviendra pas une commande PrestaShop.',
+    'fr' => 'Supprimer cette commande en attente ? Elle ne deviendra pas une commande PrestaShop.',
     'es' => '¿Quitar este pedido pendiente? No se convertirá en un pedido de PrestaShop.',
     'de' => 'Diese ausstehende Bestellung entfernen? Sie wird dann keine PrestaShop-Bestellung.',
     'it' => 'Rimuovere questo ordine in sospeso? Non diventerà un ordine PrestaShop.',
@@ -1205,7 +1205,7 @@ return array(
   ),
   'This overwrites PrestaShop data for products that exist on both sides. Continue?' => 
   array(
-    'fr' => 'Cette opération écrase les données PrestaShop des produits présents des deux côtés. Continuer ?',
+    'fr' => 'Cette opération écrase les données PrestaShop des produits présents des deux côtés. Continuer ?',
     'es' => 'Esto sobrescribe los datos de PrestaShop de los productos que existen en ambos lados. ¿Continuar?',
     'de' => 'Dadurch werden PrestaShop-Daten für Produkte überschrieben, die auf beiden Seiten vorhanden sind. Fortfahren?',
     'it' => 'Questa operazione sovrascrive i dati PrestaShop dei prodotti presenti su entrambi i lati. Continuare?',
@@ -1309,7 +1309,7 @@ return array(
   ),
   'This rewrites references and barcodes in your PrestaShop catalogue. Continue?' => 
   array(
-    'fr' => 'Cette opération réécrit les références et les codes-barres de votre catalogue PrestaShop. Continuer ?',
+    'fr' => 'Cette opération réécrit les références et les codes-barres de votre catalogue PrestaShop. Continuer ?',
     'es' => 'Esto reescribe las referencias y los códigos de barras de tu catálogo de PrestaShop. ¿Continuar?',
     'de' => 'Dadurch werden Artikelnummern und Barcodes in Ihrem PrestaShop-Katalog überschrieben. Fortfahren?',
     'it' => 'Questa operazione riscrive riferimenti e codici a barre nel tuo catalogo PrestaShop. Continuare?',
@@ -1365,7 +1365,7 @@ return array(
   ),
   'Delete %1$s listing(s) from Amazon? The offers and their history go with them.' => 
   array(
-    'fr' => 'Supprimer %1$s offre(s) sur Amazon ? Les offres et leur historique disparaîtront avec elles.',
+    'fr' => 'Supprimer %1$s offre(s) sur Amazon ? Les offres et leur historique disparaîtront avec elles.',
     'es' => '¿Eliminar %1$s anuncio(s) de Amazon? Las ofertas y su historial se eliminan con ellos.',
     'de' => '%1$s Angebot(e) bei Amazon löschen? Die Angebote werden samt ihrer Historie entfernt.',
     'it' => 'Eliminare %1$s inserzioni da Amazon? Le offerte e la loro cronologia verranno eliminate insieme.',

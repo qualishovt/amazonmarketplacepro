@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -10,7 +11,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-$sql = array();
+$sql = [];
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` (
     `id_amazonmarketplacepro_order` INT(11) NOT NULL AUTO_INCREMENT,

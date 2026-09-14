@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Bulk listing updates via the SP-API Feeds API (2021-06-30).
  *
  * Instead of one HTTP call per SKU, thousands of listing changes travel in
@@ -45,7 +46,7 @@ class AmazonFeedManager
     private $client;
     private $marketplaceId;
     private $sellerId;
-    private $lastError = null;
+    private $lastError;
     private $useMock = false;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId)
@@ -120,23 +121,25 @@ class AmazonFeedManager
      * Submit one JSON_LISTINGS_FEED containing the given messages.
      *
      * @param array $messages Messages from AmazonProductSync::collectFeedMessages()
+     *
      * @return string|false The Amazon feedId, or false (see getLastError())
      */
     public function submitListingsFeed($messages)
     {
         if (empty($messages)) {
             $this->lastError = AmazonI18n::get()->l('Nothing to submit: no pending listing changes.', 'amazonfeedmanager');
+
             return false;
         }
 
-        $document = json_encode(array(
-            'header' => array(
+        $document = json_encode([
+            'header' => [
                 'sellerId' => $this->sellerId,
                 'version' => '2.0',
                 'issueLocale' => 'en_US',
-            ),
+            ],
             'messages' => $messages,
-        ));
+        ]);
 
         return $this->submitFeed(self::FEED_TYPE, self::CONTENT_TYPE, $document, count($messages));
     }
@@ -144,11 +147,12 @@ class AmazonFeedManager
     /**
      * Submit an arbitrary feed (document create -> upload -> create feed).
      *
-     * @param string     $feedType      e.g. JSON_LISTINGS_FEED, UPLOAD_VAT_INVOICE
-     * @param string     $contentType   Content type of the document
-     * @param string     $content       Raw document body
-     * @param int        $messagesCount For the tracking table
-     * @param array|null $feedOptions   Extra feed options (e.g. VCS metadata)
+     * @param string $feedType e.g. JSON_LISTINGS_FEED, UPLOAD_VAT_INVOICE
+     * @param string $contentType Content type of the document
+     * @param string $content Raw document body
+     * @param int $messagesCount For the tracking table
+     * @param array|null $feedOptions Extra feed options (e.g. VCS metadata)
+     *
      * @return string|false The Amazon feedId, or false (see getLastError())
      */
     public function submitFeed($feedType, $contentType, $content, $messagesCount, $feedOptions = null)
@@ -158,21 +162,24 @@ class AmazonFeedManager
 
         if ($this->sellerId === '') {
             $this->lastError = AmazonI18n::get()->l('Your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonfeedmanager');
+
             return false;
         }
 
         if ($this->useMock) {
             $feedId = 'MOCKFEED' . rand(1000, 9999);
             $this->storeFeed($feedId, $feedType, $messagesCount, 'DONE', $messagesCount, 0, 0, '[]', $content);
+
             return $feedId;
         }
 
         // 1. Create the feed document slot
-        $resp = $this->client->request('POST', '/feeds/2021-06-30/documents', array(), array(
+        $resp = $this->client->request('POST', '/feeds/2021-06-30/documents', [], [
             'contentType' => $contentType,
-        ));
+        ]);
         if ($resp === false || $resp['status'] >= 400 || !isset($resp['body']['feedDocumentId'])) {
             $this->lastError = 'createFeedDocument failed: ' . $this->respError($resp);
+
             return false;
         }
         $documentId = $resp['body']['feedDocumentId'];
@@ -181,21 +188,23 @@ class AmazonFeedManager
         // 2. Upload the document
         if (!$this->client->uploadDocument($uploadUrl, $content, $contentType)) {
             $this->lastError = 'Feed upload failed: ' . $this->client->getLastError();
+
             return false;
         }
 
         // 3. Create the feed itself
-        $feedSpec = array(
+        $feedSpec = [
             'feedType' => $feedType,
-            'marketplaceIds' => array($this->marketplaceId),
+            'marketplaceIds' => [$this->marketplaceId],
             'inputFeedDocumentId' => $documentId,
-        );
+        ];
         if (is_array($feedOptions) && !empty($feedOptions)) {
             $feedSpec['feedOptions'] = $feedOptions;
         }
-        $resp = $this->client->request('POST', '/feeds/2021-06-30/feeds', array(), $feedSpec);
+        $resp = $this->client->request('POST', '/feeds/2021-06-30/feeds', [], $feedSpec);
         if ($resp === false || $resp['status'] >= 400 || !isset($resp['body']['feedId'])) {
             $this->lastError = 'createFeed failed: ' . $this->respError($resp);
+
             return false;
         }
 
@@ -215,7 +224,7 @@ class AmazonFeedManager
         $this->lastError = null;
         $this->ensureTable();
 
-        $summary = array('checked' => 0, 'done' => 0, 'failed' => 0, 'still_processing' => 0);
+        $summary = ['checked' => 0, 'done' => 0, 'failed' => 0, 'still_processing' => 0];
 
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_feed`
@@ -229,33 +238,33 @@ class AmazonFeedManager
         }
 
         foreach ($rows as $row) {
-            $summary['checked']++;
+            ++$summary['checked'];
 
             $resp = $this->client->request('GET', '/feeds/2021-06-30/feeds/' . rawurlencode($row['feed_id']));
             if ($resp === false || $resp['status'] >= 400 || !isset($resp['body']['processingStatus'])) {
-                $summary['failed']++;
-                $this->updateFeed($row['feed_id'], array('error_message' => $this->respError($resp)));
+                ++$summary['failed'];
+                $this->updateFeed($row['feed_id'], ['error_message' => $this->respError($resp)]);
                 continue;
             }
 
             $status = $resp['body']['processingStatus'];
             if ($status === 'IN_QUEUE' || $status === 'IN_PROGRESS') {
-                $summary['still_processing']++;
-                $this->updateFeed($row['feed_id'], array('processing_status' => $status));
+                ++$summary['still_processing'];
+                $this->updateFeed($row['feed_id'], ['processing_status' => $status]);
                 continue;
             }
 
             if ($status !== 'DONE') { // CANCELLED / FATAL
-                $summary['failed']++;
-                $this->updateFeed($row['feed_id'], array(
+                ++$summary['failed'];
+                $this->updateFeed($row['feed_id'], [
                     'processing_status' => $status,
                     'error_message' => 'Feed ended with status ' . $status,
-                ));
+                ]);
                 continue;
             }
 
             // DONE: fetch and parse the processing report
-            $counts = array('accepted' => 0, 'errors' => 0, 'warnings' => 0, 'issues' => array());
+            $counts = ['accepted' => 0, 'errors' => 0, 'warnings' => 0, 'issues' => []];
             if (isset($resp['body']['resultFeedDocumentId'])) {
                 $parsed = $this->fetchResult($resp['body']['resultFeedDocumentId']);
                 if ($parsed !== false) {
@@ -263,14 +272,14 @@ class AmazonFeedManager
                 }
             }
 
-            $this->updateFeed($row['feed_id'], array(
+            $this->updateFeed($row['feed_id'], [
                 'processing_status' => 'DONE',
                 'accepted' => $counts['accepted'],
                 'errors' => $counts['errors'],
                 'warnings' => $counts['warnings'],
                 'issues_json' => Tools::substr(json_encode($counts['issues']), 0, 60000),
-            ));
-            $summary['done']++;
+            ]);
+            ++$summary['done'];
         }
 
         return $summary;
@@ -291,7 +300,8 @@ class AmazonFeedManager
              ORDER BY `id_amazonmarketplacepro_feed` DESC
              LIMIT ' . (int) $limit
         );
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -317,7 +327,7 @@ class AmazonFeedManager
             return false;
         }
 
-        $out = array('accepted' => 0, 'errors' => 0, 'warnings' => 0, 'issues' => array());
+        $out = ['accepted' => 0, 'errors' => 0, 'warnings' => 0, 'issues' => []];
         if (isset($report['summary'])) {
             $s = $report['summary'];
             $out['accepted'] = isset($s['messagesAccepted']) ? (int) $s['messagesAccepted'] : 0;
@@ -326,12 +336,12 @@ class AmazonFeedManager
         }
         if (isset($report['issues']) && is_array($report['issues'])) {
             foreach (array_slice($report['issues'], 0, 200) as $issue) {
-                $out['issues'][] = array(
+                $out['issues'][] = [
                     'sku' => isset($issue['sku']) ? $issue['sku'] : '',
                     'severity' => isset($issue['severity']) ? $issue['severity'] : '',
                     'code' => isset($issue['code']) ? $issue['code'] : '',
                     'message' => isset($issue['message']) ? $issue['message'] : '',
-                );
+                ];
             }
         }
 
@@ -380,7 +390,7 @@ class AmazonFeedManager
 
     private function updateFeed($feedId, $fields)
     {
-        $sets = array();
+        $sets = [];
         foreach ($fields as $col => $val) {
             $sets[] = '`' . bqSQL($col) . '` = ' . (is_int($val) ? (int) $val : '\'' . pSQL((string) $val, true) . '\'');
         }
@@ -400,6 +410,7 @@ class AmazonFeedManager
             return (string) $this->client->getLastError();
         }
         $body = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
+
         return 'HTTP ' . $resp['status'] . ': ' . Tools::substr($body, 0, 300);
     }
 }

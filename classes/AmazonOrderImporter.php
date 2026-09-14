@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Fetches Amazon SP-API orders and stages them in module tables for review.
  *
  * "Staging" import: orders are stored in amazonmarketplacepro_order /
@@ -45,8 +46,8 @@ class AmazonOrderImporter
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
     /** The shop orders are staged for. */
     private $idShop;
     /** The shop the caller named, or 0 for "the request's shop". */
@@ -54,8 +55,8 @@ class AmazonOrderImporter
 
     /**
      * @param AmazonSpApiClient $client
-     * @param string            $marketplaceId
-     * @param int               $idShop 0 = the shop the request acts for
+     * @param string $marketplaceId
+     * @param int $idShop 0 = the shop the request acts for
      */
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
     {
@@ -92,7 +93,7 @@ class AmazonOrderImporter
 
         $this->ensureOrderColumns();
 
-        $sqls = array();
+        $sqls = [];
         $sqls[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` (
             `id_amazonmarketplacepro_order` INT(11) NOT NULL AUTO_INCREMENT,
             `amazon_order_id` VARCHAR(64) NOT NULL,
@@ -196,7 +197,7 @@ class AmazonOrderImporter
             return; // fresh install: the CREATE below already has them
         }
 
-        $existing = array();
+        $existing = [];
         $cols = Db::getInstance()->executeS(
             'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`'
         );
@@ -205,13 +206,13 @@ class AmazonOrderImporter
                 $existing[$c['Field']] = true;
             }
         }
-        $add = array(
+        $add = [
             'ship_service_level' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'is_business' => 'TINYINT(1) NOT NULL DEFAULT 0',
             // The recipient, filled from an uploaded order report (see
             // AmazonOrderReportImporter) while the API withholds it.
             'ship_name' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
-        );
+        ];
         foreach ($add as $name => $definition) {
             if (!isset($existing[$name])) {
                 Db::getInstance()->execute(
@@ -225,9 +226,9 @@ class AmazonOrderImporter
     public function importNewOrders($createdAfter)
     {
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'fetched' => 0,
             'imported_new' => 0,
             'already' => 0,
@@ -235,13 +236,13 @@ class AmazonOrderImporter
             'items_unmatched' => 0,
             'pages' => 0,
             'truncated' => false,
-        );
+        ];
 
         // Follow NextToken pagination until exhausted (or the safety cap).
-        $orders = array();
+        $orders = [];
         $nextToken = null;
         do {
-            $query = array('MarketplaceIds' => $this->marketplaceId);
+            $query = ['MarketplaceIds' => $this->marketplaceId];
             if ($nextToken !== null) {
                 // When NextToken is set, Amazon ignores the other filter criteria.
                 $query['NextToken'] = $nextToken;
@@ -257,6 +258,7 @@ class AmazonOrderImporter
                     break; // keep what we already fetched
                 }
                 $this->lastError = $this->client->getLastError();
+
                 return false;
             }
             if ($resp['status'] === 429 && $summary['pages'] > 0) {
@@ -267,12 +269,13 @@ class AmazonOrderImporter
             if ($resp['status'] >= 400) {
                 $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
                 $this->lastError = 'getOrders HTTP ' . $resp['status'] . ': ' . $body;
+
                 return false;
             }
 
             $payload = (is_array($resp['body']) && isset($resp['body']['payload']))
                 ? $resp['body']['payload']
-                : array();
+                : [];
 
             if (isset($payload['Orders']) && is_array($payload['Orders'])) {
                 foreach ($payload['Orders'] as $o) {
@@ -283,7 +286,7 @@ class AmazonOrderImporter
             $nextToken = (isset($payload['NextToken']) && $payload['NextToken'] !== '')
                 ? $payload['NextToken']
                 : null;
-            $summary['pages']++;
+            ++$summary['pages'];
 
             if ($nextToken !== null && $summary['pages'] >= self::MAX_ORDER_PAGES) {
                 $summary['truncated'] = true;
@@ -305,14 +308,14 @@ class AmazonOrderImporter
             // FBA (AFN) orders are shipped by Amazon; importing them is optional.
             if (!$importFba && isset($order['FulfillmentChannel'])
                 && $order['FulfillmentChannel'] === 'AFN') {
-                $skippedFba++;
+                ++$skippedFba;
                 continue;
             }
             $owner = $this->orderOwner($amazonId);
             if ($owner !== false && $owner !== 0 && $owner !== $this->idShop) {
                 // The order number is unique across shops: another shop staged
                 // it first, and it stays there untouched.
-                $otherShop++;
+                ++$otherShop;
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('%1$s: skipped, this order is already imported in the shop "%2$s".', 'amazonorderimporter'),
                     $amazonId,
@@ -321,7 +324,7 @@ class AmazonOrderImporter
                 continue;
             }
             if ($owner !== false) {
-                $summary['already']++;
+                ++$summary['already'];
                 continue;
             }
 
@@ -339,10 +342,10 @@ class AmazonOrderImporter
                 $items[$idx]['id_product_attribute'] = $res['id_product_attribute'];
                 if ($res['id_product']) {
                     $items[$idx]['match_status'] = 'matched';
-                    $matched++;
+                    ++$matched;
                 } else {
                     $items[$idx]['match_status'] = 'unmatched';
-                    $unmatched++;
+                    ++$unmatched;
                 }
 
                 // Accumulate shipping and tax totals from items
@@ -366,7 +369,7 @@ class AmazonOrderImporter
                 }
             }
 
-            $summary['imported_new']++;
+            ++$summary['imported_new'];
             $summary['items_matched'] += $matched;
             $summary['items_unmatched'] += $unmatched;
         }
@@ -395,6 +398,7 @@ class AmazonOrderImporter
      * window (e.g. "7 days" or "12 hours").
      *
      * @param int|null $idShop the shop whose window applies (default: the current one)
+     *
      * @return string ISO-8601 timestamp
      */
     public static function configuredCreatedAfter($idShop = null)
@@ -412,7 +416,7 @@ class AmazonOrderImporter
      * Staged orders of the importer's shop, or of every shop when the back
      * office shows "All shops" (each row carries its id_shop).
      *
-     * @return array Staged orders (newest first), without the heavy raw_json blob.
+     * @return array staged orders (newest first), without the heavy raw_json blob
      */
     public function listStagedOrders()
     {
@@ -425,7 +429,7 @@ class AmazonOrderImporter
                 ORDER BY `purchase_date` DESC, `id_amazonmarketplacepro_order` DESC';
         $rows = Db::getInstance()->executeS($sql);
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -456,25 +460,25 @@ class AmazonOrderImporter
      */
     private function fetchItems($amazonOrderId)
     {
-        $out = array();
+        $out = [];
 
         $resp = $this->client->request(
             'GET',
             '/orders/v0/orders/' . rawurlencode($amazonOrderId) . '/orderItems',
-            array()
+            []
         );
 
         if ($resp === false || $resp['status'] >= 400) {
             return $out; // sandbox may not mock items for these IDs — not fatal
         }
 
-        $items = array();
+        $items = [];
         if (is_array($resp['body']) && isset($resp['body']['payload']['OrderItems'])) {
             $items = $resp['body']['payload']['OrderItems'];
         }
 
         foreach ($items as $i) {
-            $out[] = array(
+            $out[] = [
                 'order_item_id' => isset($i['OrderItemId']) ? $i['OrderItemId'] : '',
                 'seller_sku' => isset($i['SellerSKU']) ? $i['SellerSKU'] : '',
                 'asin' => isset($i['ASIN']) ? $i['ASIN'] : '',
@@ -489,7 +493,7 @@ class AmazonOrderImporter
                 'id_product' => 0,
                 'id_product_attribute' => 0,
                 'match_status' => 'unmatched',
-            );
+            ];
         }
 
         return $out;
@@ -500,12 +504,13 @@ class AmazonOrderImporter
      * falls back to order-level ShippingAddress data (available for some order types).
      *
      * @param string $amazonOrderId
-     * @param array  $orderData The order payload from getOrders
+     * @param array $orderData The order payload from getOrders
+     *
      * @return array Normalized address fields
      */
     private function fetchBuyerAddress($amazonOrderId, $orderData)
     {
-        $address = array(
+        $address = [
             'address1' => '',
             'address2' => '',
             'city' => '',
@@ -513,7 +518,7 @@ class AmazonOrderImporter
             'postal_code' => '',
             'country_code' => '',
             'phone' => '',
-        );
+        ];
 
         // Try order-level ShippingAddress first (available without RDT for some fields)
         if (isset($orderData['ShippingAddress']) && is_array($orderData['ShippingAddress'])) {
@@ -533,13 +538,13 @@ class AmazonOrderImporter
         }
 
         // Try fetching via RDT (Restricted Data Token) for PII access
-        $rdtToken = $this->client->getRestrictedDataToken(array(
-            array(
+        $rdtToken = $this->client->getRestrictedDataToken([
+            [
                 'method' => 'GET',
                 'path' => '/orders/v0/orders/' . $amazonOrderId . '/address',
-                'dataElements' => array('shippingAddress'),
-            ),
-        ));
+                'dataElements' => ['shippingAddress'],
+            ],
+        ]);
 
         if ($rdtToken === false) {
             return $address; // RDT not available — app may lack the required role
@@ -549,7 +554,7 @@ class AmazonOrderImporter
             $rdtToken,
             'GET',
             '/orders/v0/orders/' . rawurlencode($amazonOrderId) . '/address',
-            array()
+            []
         );
 
         if ($resp !== false && $resp['status'] < 400 && is_array($resp['body'])) {
@@ -582,7 +587,7 @@ class AmazonOrderImporter
      */
     private function resolveProduct($sku, $asin = '')
     {
-        $res = array('id_product' => 0, 'id_product_attribute' => 0);
+        $res = ['id_product' => 0, 'id_product_attribute' => 0];
         $idShop = (int) $this->idShop;
         $p = _DB_PREFIX_;
         $inShop = ' INNER JOIN `' . $p . 'product_shop` ps
@@ -603,6 +608,7 @@ class AmazonOrderImporter
             if ($row && (int) $row['id_product']) {
                 $res['id_product'] = (int) $row['id_product'];
                 $res['id_product_attribute'] = (int) $row['id_product_attribute'];
+
                 return $res;
             }
         }
@@ -631,6 +637,7 @@ class AmazonOrderImporter
             );
             if ($idProduct) {
                 $res['id_product'] = $idProduct;
+
                 return $res;
             }
         }
@@ -645,6 +652,7 @@ class AmazonOrderImporter
                 if ($idProduct) {
                     $res['id_product'] = $idProduct;
                     $res['id_product_attribute'] = isset($m[2]) ? (int) $m[2] : 0;
+
                     return $res;
                 }
             }
@@ -665,6 +673,7 @@ class AmazonOrderImporter
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
             $res['id_product_attribute'] = (int) $row['id_product_attribute'];
+
             return $res;
         }
 
@@ -675,6 +684,7 @@ class AmazonOrderImporter
         );
         if ($idProduct) {
             $res['id_product'] = $idProduct;
+
             return $res;
         }
 
@@ -687,6 +697,7 @@ class AmazonOrderImporter
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
             $res['id_product_attribute'] = (int) $row['id_product_attribute'];
+
             return $res;
         }
 

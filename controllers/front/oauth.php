@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * OAuth return endpoint for the "Connect with Amazon" flow.
  *
  * The IntelliPresta relay redirects the merchant here after exchanging the
@@ -61,6 +62,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
                 $this->text($this->module->l('Connection failed', 'oauth')),
                 $this->text($this->module->l('This connection link is invalid or has expired. Please go back to your PrestaShop admin and click "Connect to Amazon" again.', 'oauth'))
             );
+
             return;
         }
 
@@ -73,6 +75,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
                 $this->text($this->module->l('Amazon connection was not completed', 'oauth')),
                 sprintf($this->text($this->module->l('Amazon reported: %s — You can retry from the module settings.', 'oauth')), $error)
             );
+
             return;
         }
 
@@ -82,6 +85,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
                 $this->text($this->module->l('Connection failed', 'oauth')),
                 $this->text($this->module->l('No valid token was received from Amazon. Please retry from the module settings.', 'oauth'))
             );
+
             return;
         }
 
@@ -106,6 +110,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
                         AmzproShop::name($otherShop)
                     )
                 );
+
                 return;
             }
         }

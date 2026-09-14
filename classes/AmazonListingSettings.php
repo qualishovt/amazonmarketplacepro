@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -18,7 +19,6 @@
  * by every shop (id_shop 0) and a shop can override them with rows of its
  * own; the change queue holds one row per shop and product. See AmzproShop.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -34,13 +34,13 @@ class AmazonListingSettings
     const ENTITY_SUPPLIER = 'supplier';
 
     /** Cache: id_shop => entity_type => array(id_entity => row) */
-    private static $entityCache = array();
+    private static $entityCache = [];
 
     /** @var bool Tables checked this request */
     private static $tablesEnsured = false;
 
     /** @var string|null Why the last shipping template change was refused */
-    private static $lastError = null;
+    private static $lastError;
 
     /**
      * Create the rules/queue tables when they don't exist yet (e.g. module
@@ -53,7 +53,7 @@ class AmazonListingSettings
         }
         self::$tablesEnsured = true;
 
-        $sql = array();
+        $sql = [];
         $sql['amazonmarketplacepro_entity_setting'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting` (
             `id_amazonmarketplacepro_entity_setting` INT(11) NOT NULL AUTO_INCREMENT,
             `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
@@ -134,10 +134,10 @@ class AmazonListingSettings
     {
         $id = (int) AmzproShop::sharedWriteId();
         if (!AmzproShop::isMultistore()) {
-            return array_values(array_unique(array(0, $id)));
+            return array_values(array_unique([0, $id]));
         }
 
-        return array($id);
+        return [$id];
     }
 
     /* ─────────────────── Entity settings (category / manufacturer / supplier) ─────────────────── */
@@ -147,6 +147,7 @@ class AmazonListingSettings
      * row shared by all shops. In "All shops" only the shared rows.
      *
      * @param string $type One of the ENTITY_* constants
+     *
      * @return array id_entity => setting row (includes id_shop)
      */
     public static function getEntitySettings($type)
@@ -161,9 +162,9 @@ class AmazonListingSettings
              WHERE `entity_type` = \'' . pSQL($type) . '\'
                AND ' . AmzproShop::sqlShared()
         );
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
-            foreach (AmzproShop::preferShopRows($rows, array('id_entity')) as $r) {
+            foreach (AmzproShop::preferShopRows($rows, ['id_entity']) as $r) {
                 $out[(int) $r['id_entity']] = $r;
             }
         }
@@ -183,29 +184,29 @@ class AmazonListingSettings
         self::ensureTables();
         $db = Db::getInstance();
         $table = _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting';
-        $values = array(
+        $values = [
             'price_markup' => trim((string) $markup),
             'shipping_delay' => (int) $delay,
             'gpsr_contact' => trim((string) $gpsr),
             'country_of_origin' => Tools::strtoupper(trim((string) $coo)),
             'sync' => $sync ? 1 : 0,
-        );
+        ];
         $key = '`entity_type` = \'' . pSQL($type) . '\' AND `id_entity` = ' . (int) $idEntity;
-        self::$entityCache = array();
+        self::$entityCache = [];
 
         $existing = $db->executeS('SELECT * FROM `' . bqSQL($table) . '` WHERE ' . $key . ' AND ' . AmzproShop::sqlShared());
-        $byShop = array();
-        foreach ((is_array($existing) ? $existing : array()) as $r) {
+        $byShop = [];
+        foreach ((is_array($existing) ? $existing : []) as $r) {
             $byShop[(int) $r['id_shop']] = $r;
         }
 
         if (AmzproShop::isMultistore()) {
             $idShop = (int) AmzproShop::sharedWriteId();
             if ($idShop > 0 && !isset($byShop[$idShop])) {
-                $inherited = isset($byShop[0]) ? $byShop[0] : array(
+                $inherited = isset($byShop[0]) ? $byShop[0] : [
                     'price_markup' => '', 'shipping_delay' => -1, 'gpsr_contact' => '',
                     'country_of_origin' => '', 'sync' => 1,
-                );
+                ];
                 if ((string) $inherited['price_markup'] === $values['price_markup']
                     && (int) $inherited['shipping_delay'] === $values['shipping_delay']
                     && (string) $inherited['gpsr_contact'] === $values['gpsr_contact']
@@ -247,7 +248,7 @@ class AmazonListingSettings
     public static function deleteEntitySetting($type, $idEntity)
     {
         self::ensureTables();
-        self::$entityCache = array();
+        self::$entityCache = [];
 
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting`
@@ -276,10 +277,10 @@ class AmazonListingSettings
     {
         self::ensureTables();
 
-        return AmazonProductOverride::save((int) $idProduct, array(
+        return AmazonProductOverride::save((int) $idProduct, [
             'sync' => $sync ? 1 : 0,
             'gpsr_contact' => trim((string) $gpsr),
-        ));
+        ]);
     }
 
     /* ─────────────────── Product context lookup ─────────────────── */
@@ -292,7 +293,7 @@ class AmazonListingSettings
      */
     public static function productContext($idProduct)
     {
-        static $cache = array();
+        static $cache = [];
         $idProduct = (int) $idProduct;
         $idShop = AmzproShop::actingId();
         $cacheKey = $idShop . '-' . $idProduct;
@@ -307,11 +308,11 @@ class AmazonListingSettings
                  ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . (int) $idShop . ')
              WHERE p.`id_product` = ' . $idProduct
         );
-        $cache[$cacheKey] = array(
+        $cache[$cacheKey] = [
             'id_category' => $row ? (int) $row['id_category_default'] : 0,
             'id_manufacturer' => $row ? (int) $row['id_manufacturer'] : 0,
             'id_supplier' => $row ? (int) $row['id_supplier'] : 0,
-        );
+        ];
 
         return $cache[$cacheKey];
     }
@@ -322,7 +323,7 @@ class AmazonListingSettings
         $raw = (string) AmzproShop::get($configKey);
         $list = array_filter(array_map('trim', explode(',', $raw)));
 
-        return empty($list) ? array() : $list;
+        return empty($list) ? [] : $list;
     }
 
     /**
@@ -334,12 +335,12 @@ class AmazonListingSettings
     private static function resolveFromCascade($idProduct, $sources, $picker)
     {
         $ctx = self::productContext($idProduct);
-        $map = array(
+        $map = [
             self::ENTITY_CATEGORY => $ctx['id_category'],
             self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
             self::ENTITY_SUPPLIER => $ctx['id_supplier'],
-        );
-        foreach (array(self::ENTITY_CATEGORY, self::ENTITY_MANUFACTURER, self::ENTITY_SUPPLIER) as $type) {
+        ];
+        foreach ([self::ENTITY_CATEGORY, self::ENTITY_MANUFACTURER, self::ENTITY_SUPPLIER] as $type) {
             if (!in_array($type, $sources) || !$map[$type]) {
                 continue;
             }
@@ -369,6 +370,7 @@ class AmazonListingSettings
             self::enabledSources('AMZPRO_MARKUP_SOURCES'),
             function ($row) {
                 $m = trim((string) $row['price_markup']);
+
                 return ($m !== '') ? $m : null;
             }
         );
@@ -394,8 +396,9 @@ class AmazonListingSettings
             case 'smart':
                 $rounded = floor($price) + 0.99;
                 if ($rounded < $price) {
-                    $rounded += 1;
+                    ++$rounded;
                 }
+
                 return round($rounded, 2);
             case 'integer':
                 return (float) round($price, 0);
@@ -445,11 +448,11 @@ class AmazonListingSettings
             return false;
         }
 
-        return array(
+        return [
             'price' => $sale,
             'from' => date('Y-m-d', strtotime($row['from'])),
             'to' => date('Y-m-d', strtotime($row['to'])),
-        );
+        ];
     }
 
     /**
@@ -475,7 +478,7 @@ class AmazonListingSettings
             ? self::applyRounding($basePrice * (1 - $flat / 100))
             : self::applyRounding($basePrice);
 
-        $levels = array();
+        $levels = [];
         $discountType = 'PERCENT_OFF';
         if ($idGroup > 0) {
             $rows = Db::getInstance()->executeS(
@@ -489,7 +492,7 @@ class AmazonListingSettings
                  ORDER BY `from_quantity` ASC'
             );
             if (is_array($rows)) {
-                $seen = array();
+                $seen = [];
                 foreach ($rows as $r) {
                     $qty = (int) $r['from_quantity'];
                     if ($qty < 2 || isset($seen[$qty])) {
@@ -513,7 +516,7 @@ class AmazonListingSettings
                         continue;
                     }
                     $seen[$qty] = true;
-                    $levels[] = array('lower_bound' => $qty, 'value' => $value);
+                    $levels[] = ['lower_bound' => $qty, 'value' => $value];
                 }
             }
         }
@@ -521,7 +524,7 @@ class AmazonListingSettings
         // Amazon accepts at most five tiers.
         $levels = array_slice($levels, 0, 5);
 
-        return array('price' => $price, 'levels' => $levels, 'discount_type' => $discountType);
+        return ['price' => $price, 'levels' => $levels, 'discount_type' => $discountType];
     }
 
     /**
@@ -540,21 +543,21 @@ class AmazonListingSettings
             return;
         }
 
-        $offer = array(
+        $offer = [
             'audience' => 'B2B',
             'currency' => AmazonSpApiClient::currencyForMarketplace($marketplaceId),
             'marketplace_id' => $marketplaceId,
-            'our_price' => array(array(
-                'schedule' => array(array('value_with_tax' => $b2b['price'])),
-            )),
-        );
+            'our_price' => [[
+                'schedule' => [['value_with_tax' => $b2b['price']]],
+            ]],
+        ];
         if (!empty($b2b['levels'])) {
-            $offer['quantity_discount_plan'] = array(array(
-                'schedule' => array(array(
+            $offer['quantity_discount_plan'] = [[
+                'schedule' => [[
                     'discount_type' => $b2b['discount_type'],
                     'levels' => $b2b['levels'],
-                )),
-            ));
+                ]],
+            ]];
         }
 
         $attributes['purchasable_offer'][] = $offer;
@@ -581,6 +584,7 @@ class AmazonListingSettings
         }
         if (Tools::substr($markup, -1) === '%') {
             $pct = (float) str_replace(',', '.', rtrim($markup, '%'));
+
             return round($price * (1 + $pct / 100), 2);
         }
 
@@ -599,6 +603,7 @@ class AmazonListingSettings
             self::enabledSources('AMZPRO_DELAY_SOURCES'),
             function ($row) {
                 $d = (int) $row['shipping_delay'];
+
                 return ($d >= 0) ? $d : null;
             }
         );
@@ -629,8 +634,8 @@ class AmazonListingSettings
 
         $ctx = self::productContext($idProduct);
         $order = (AmzproShop::get('AMZPRO_GPSR_PRIORITY') === 'supplier')
-            ? array(self::ENTITY_SUPPLIER => $ctx['id_supplier'], self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'])
-            : array(self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'], self::ENTITY_SUPPLIER => $ctx['id_supplier']);
+            ? [self::ENTITY_SUPPLIER => $ctx['id_supplier'], self::ENTITY_MANUFACTURER => $ctx['id_manufacturer']]
+            : [self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'], self::ENTITY_SUPPLIER => $ctx['id_supplier']];
 
         foreach ($order as $type => $idEntity) {
             if (!$idEntity) {
@@ -674,11 +679,11 @@ class AmazonListingSettings
         }
 
         $ctx = self::productContext($idProduct);
-        $map = array(
+        $map = [
             self::ENTITY_CATEGORY => $ctx['id_category'],
             self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
             self::ENTITY_SUPPLIER => $ctx['id_supplier'],
-        );
+        ];
         foreach ($map as $type => $idEntity) {
             if (!$idEntity) {
                 continue;
@@ -699,6 +704,7 @@ class AmazonListingSettings
      * source field and optional prefix ("PREFIX-VALUE").
      *
      * @param array $row Needs keys: reference, ean13, supplier_reference
+     *
      * @return string '' when the source field is empty for this product
      */
     public static function buildSku($row)
@@ -773,12 +779,12 @@ class AmazonListingSettings
         $idShop = (int) AmzproShop::actingId();
         $idGroup = (int) AmzproShop::groupId($idShop);
 
-        return array(
+        return [
             'id_shop' => $idShop,
             'id_shop_group' => $idGroup,
             'id_currency' => (int) Configuration::get('PS_CURRENCY_DEFAULT', null, $idGroup, $idShop),
             'id_country' => (int) Configuration::get('PS_COUNTRY_DEFAULT', null, $idGroup, $idShop),
-        );
+        ];
     }
 
     /** SQL condition on ps_specific_price (no alias) for specificPriceScope(). */
@@ -807,7 +813,7 @@ class AmazonListingSettings
              ORDER BY `min_value` ASC, `id_shop` ASC'
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -823,8 +829,8 @@ class AmazonListingSettings
             $value = ($basis === 'weight') ? (float) $weight : (float) $priceTaxIncl;
             $templates = self::getShippingTemplates();
             if (AmzproShop::isMultistore()) {
-                $own = array();
-                $shared = array();
+                $own = [];
+                $shared = [];
                 foreach ($templates as $tpl) {
                     if ((int) $tpl['id_shop'] > 0) {
                         $own[] = $tpl;
@@ -930,14 +936,14 @@ class AmazonListingSettings
         self::ensureTables();
         $idProduct = (int) $idProduct;
         $idShop = AmzproShop::id();
-        $shops = array();
+        $shops = [];
         if ($idShop) {
             $shops[] = $idShop;
         } else {
             $rows = Db::getInstance()->executeS(
                 'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'product_shop` WHERE `id_product` = ' . $idProduct
             );
-            foreach ((is_array($rows) ? $rows : array()) as $r) {
+            foreach ((is_array($rows) ? $rows : []) as $r) {
                 $shops[] = (int) $r['id_shop'];
             }
         }
@@ -946,7 +952,7 @@ class AmazonListingSettings
         }
 
         $now = date('Y-m-d H:i:s');
-        $values = array();
+        $values = [];
         foreach ($shops as $s) {
             $values[] = '(' . (int) $s . ', ' . $idProduct . ', \'' . pSQL(Tools::substr($reason, 0, 128)) . '\', 1,
                  \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')';
@@ -992,7 +998,7 @@ class AmazonListingSettings
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 self::enqueueProduct((int) $r['id_product'], $reason);
-                $count++;
+                ++$count;
             }
         }
 
@@ -1018,7 +1024,7 @@ class AmazonListingSettings
              LIMIT ' . (int) $limit
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /** Active queued product ids of the current shop (for delta export). */
@@ -1029,7 +1035,7 @@ class AmazonListingSettings
             'SELECT `id_product` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_queue`
              WHERE `active` = 1 AND ' . AmzproShop::sqlWhere()
         );
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $out[(int) $r['id_product']] = true;
@@ -1083,7 +1089,7 @@ class AmazonListingSettings
     public static function purgeQueue()
     {
         $idShop = AmzproShop::id();
-        $shops = $idShop ? array($idShop) : AmzproShop::shopIds();
+        $shops = $idShop ? [$idShop] : AmzproShop::shopIds();
         $ok = true;
         foreach ($shops as $s) {
             $days = max(1, (int) AmzproShop::get('AMZPRO_QUEUE_TTL_DAYS', $s));
@@ -1128,7 +1134,7 @@ class AmazonListingSettings
              ORDER BY ap.`seller_sku` ASC
              LIMIT ' . (int) $limit
         );
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $reason = AmazonI18n::get()->l('No PrestaShop product with this SKU', 'amazonlistingsettings');

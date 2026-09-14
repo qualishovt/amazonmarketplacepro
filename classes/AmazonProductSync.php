@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Two-way product reconciliation between PrestaShop and Amazon.
  *
  * Links products by SKU (PrestaShop `reference` == Amazon `SellerSKU`),
@@ -43,31 +44,31 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonProductSync
 {
     /** Native content language (ISO 639-1) per marketplace, for auto mode. */
-    private static $marketplaceLanguages = array(
-        'ATVPDKIKX0DER'  => 'en', // US
+    private static $marketplaceLanguages = [
+        'ATVPDKIKX0DER' => 'en', // US
         'A2EUQ1WTGCTBG2' => 'en', // Canada
         'A1AM78C64UM0Y8' => 'es', // Mexico
         'A2Q3Y263D00KMC' => 'pt', // Brazil
         'A1F83G8C2ARO7P' => 'en', // UK
         'A1PA6795UKMFR9' => 'de', // Germany
         'A13V1IB3VIYZZH' => 'fr', // France
-        'APJ6JRA9NG5V4'  => 'it', // Italy
+        'APJ6JRA9NG5V4' => 'it', // Italy
         'A1RKKUPIHCS9HS' => 'es', // Spain
         'A1805IZSGTT6HS' => 'nl', // Netherlands
         'A1C3SOZRARQ6R3' => 'pl', // Poland
         'A2NODRKZP88ZB9' => 'sv', // Sweden
-        'AMEN7PMS3EDWL'  => 'fr', // Belgium
+        'AMEN7PMS3EDWL' => 'fr', // Belgium
         'A28R8C7NBKEWEA' => 'en', // Ireland
-        'ARBP9OOSHTCHU'  => 'ar', // Egypt
-        'AE08WJ6YKNBMC'  => 'en', // South Africa
+        'ARBP9OOSHTCHU' => 'ar', // Egypt
+        'AE08WJ6YKNBMC' => 'en', // South Africa
         'A33AVAJ2PDY3EV' => 'tr', // Turkey
-        'A21TJRUUN4KGV'  => 'en', // India
+        'A21TJRUUN4KGV' => 'en', // India
         'A2VIGQ35RCS4UG' => 'en', // UAE
         'A17E79C6D8DWNP' => 'en', // Saudi Arabia
         'A19VAU5U5O7RUS' => 'en', // Singapore
         'A39IBJ37TRP1C6' => 'en', // Australia
         'A1VC38T7YXB528' => 'ja', // Japan
-    );
+    ];
 
     /** Cap how many products we scan per run, to stay responsive. */
     const MAX_PRODUCTS = 2000;
@@ -76,8 +77,8 @@ class AmazonProductSync
     private $client;
     private $marketplaceId;
     private $sellerId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
     private $useMock = false;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '')
@@ -125,17 +126,17 @@ class AmazonProductSync
      * Join condition for a shared table keyed per shop: the row of the staged
      * row's shop when it has one, else the row for all shops.
      *
-     * @param string $table    table name without prefix
-     * @param string $alias    alias used in the outer query
-     * @param array  $match    column => SQL expression identifying the row
+     * @param string $table table name without prefix
+     * @param string $alias alias used in the outer query
+     * @param array $match column => SQL expression identifying the row
      * @param string $shopExpr SQL expression of the shop id (e.g. p.`id_shop`)
      *
      * @return string
      */
     private static function preferShopJoin($table, $alias, array $match, $shopExpr)
     {
-        $outer = array();
-        $inner = array();
+        $outer = [];
+        $inner = [];
         foreach ($match as $column => $expr) {
             $outer[] = '`' . bqSQL($alias) . '`.`' . bqSQL($column) . '` = ' . $expr;
             $inner[] = 'x.`' . bqSQL($column) . '` = ' . $expr;
@@ -163,25 +164,25 @@ class AmazonProductSync
 
         return ' LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (' . self::preferShopJoin(
-                    'amazonmarketplacepro_category_map', 'cm',
-                    array('id_category' => $category, 'marketplace_id' => $marketplace),
-                    $shopExpr
-                ) . ')
+            'amazonmarketplacepro_category_map', 'cm',
+            ['id_category' => $category, 'marketplace_id' => $marketplace],
+            $shopExpr
+        ) . ')
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile_category` pc
                  ON (' . self::preferShopJoin(
-                    'amazonmarketplacepro_profile_category', 'pc',
-                    array('id_category' => $category, 'marketplace_id' => $marketplace),
-                    $shopExpr
-                ) . ')
+            'amazonmarketplacepro_profile_category', 'pc',
+            ['id_category' => $category, 'marketplace_id' => $marketplace],
+            $shopExpr
+        ) . ')
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
                  ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1
                      AND pr.`id_shop` IN (0, ' . $shopExpr . '))
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
                  ON (' . self::preferShopJoin(
-                    'amazonmarketplacepro_product_setting', 'ov',
-                    array('id_product' => '`' . bqSQL($p) . '`.`id_product`'),
-                    $shopExpr
-                ) . ')';
+            'amazonmarketplacepro_product_setting', 'ov',
+            ['id_product' => '`' . bqSQL($p) . '`.`id_product`'],
+            $shopExpr
+        ) . ')';
     }
 
     public function ensureTables()
@@ -275,7 +276,7 @@ class AmazonProductSync
         }
         $done = true;
 
-        $existing = array();
+        $existing = [];
         $rows = Db::getInstance()->executeS(
             'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`'
         );
@@ -284,14 +285,14 @@ class AmazonProductSync
                 $existing[$r['Field']] = true;
             }
         }
-        $columns = array(
+        $columns = [
             'ps_condition' => 'VARCHAR(32) NOT NULL DEFAULT \'\'',
             'ps_available_date' => 'DATE NULL',
             'ps_list_price' => 'DECIMAL(20,6) NOT NULL DEFAULT 0',
             'sale_price' => 'DECIMAL(20,6) NOT NULL DEFAULT 0',
             'sale_from' => 'DATE NULL',
             'sale_to' => 'DATE NULL',
-        );
+        ];
         foreach ($columns as $name => $definition) {
             if (!isset($existing[$name])) {
                 Db::getInstance()->execute(
@@ -305,7 +306,7 @@ class AmazonProductSync
     public function syncPrestashopSide()
     {
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
         $now = date('Y-m-d H:i:s');
 
@@ -334,7 +335,7 @@ class AmazonProductSync
     public function syncAmazonSide()
     {
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
         $now = date('Y-m-d H:i:s');
 
@@ -345,16 +346,18 @@ class AmazonProductSync
             $found = 0;
             foreach ($mock as $sku => $listing) {
                 $this->upsertAmazonSide($sku, $listing, $now);
-                $checked++;
-                $found++;
+                ++$checked;
+                ++$found;
             }
             $this->recomputeDirections();
             $this->notices[] = 'MOCK MODE: Amazon side filled with SAMPLE data — not real Amazon listings.';
+
             return $this->buildSummary($checked, $found);
         }
 
         if ($this->sellerId === '') {
             $this->notices[] = AmazonI18n::get()->l('Amazon side skipped: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync');
+
             return $this->buildSummary(0, 0);
         }
 
@@ -368,10 +371,10 @@ class AmazonProductSync
         $amazonFound = 0;
         foreach ($skus as $sku) {
             $listing = $this->fetchAmazonListing($sku);
-            $amazonChecked++;
+            ++$amazonChecked;
             if ($listing !== null) {
                 $this->updateAmazonSide($sku, $listing, $now);
-                $amazonFound++;
+                ++$amazonFound;
             }
         }
 
@@ -402,46 +405,51 @@ class AmazonProductSync
      * Does not touch the staging table.
      *
      * @param int $pageSize How many listings to request
+     *
      * @return array List of normalized Amazon products
      */
     public function listAmazonProducts($pageSize = 20)
     {
-        $this->notices = array();
+        $this->notices = [];
         $this->lastError = null;
 
         if ($this->useMock) {
             $this->notices[] = 'MOCK MODE: showing SAMPLE data — not real Amazon listings.';
+
             return array_values($this->buildMockListings());
         }
 
         if ($this->sellerId === '') {
             $this->notices[] = AmazonI18n::get()->l('Cannot list Amazon products: your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync');
-            return array();
+
+            return [];
         }
 
         $resp = $this->client->request(
             'GET',
             '/listings/2021-08-01/items/' . rawurlencode($this->sellerId),
-            array(
+            [
                 'marketplaceIds' => $this->marketplaceId,
                 'includedData' => 'summaries,offers,fulfillmentAvailability,attributes',
                 'pageSize' => (int) $pageSize,
-            )
+            ]
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
-            return array();
+
+            return [];
         }
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
             $this->lastError = 'searchListingsItems HTTP ' . $resp['status'] . ': ' . $body;
-            return array();
+
+            return [];
         }
 
-        $items = isset($resp['body']['items']) ? $resp['body']['items'] : array();
+        $items = isset($resp['body']['items']) ? $resp['body']['items'] : [];
 
-        $out = array();
+        $out = [];
         foreach ($items as $it) {
             $out[] = $this->normalizeListingItem($it);
         }
@@ -490,7 +498,7 @@ class AmazonProductSync
         $description = '';
         $bulletPoints = '';
         $brand = '';
-        $images = array();
+        $images = [];
 
         if (isset($it['attributes'])) {
             $attrs = $it['attributes'];
@@ -500,7 +508,7 @@ class AmazonProductSync
             }
 
             if (isset($attrs['bullet_point']) && is_array($attrs['bullet_point'])) {
-                $bps = array();
+                $bps = [];
                 foreach ($attrs['bullet_point'] as $bp) {
                     if (isset($bp['value'])) {
                         $bps[] = $bp['value'];
@@ -524,7 +532,7 @@ class AmazonProductSync
             }
         }
 
-        return array(
+        return [
             'seller_sku' => $sku,
             'asin' => $asin,
             'title' => $title,
@@ -537,11 +545,11 @@ class AmazonProductSync
             'images' => $images,
             'product_type' => $productType,
             'browse_node' => $browseNode,
-        );
+        ];
     }
 
     /**
-     * @return array All SKUs the shop has in the staging table.
+     * @return array all SKUs the shop has in the staging table
      */
     private function stagedSkus()
     {
@@ -550,7 +558,7 @@ class AmazonProductSync
              WHERE `id_shop` = ' . (int) $this->shopId()
         );
 
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $out[] = $r['seller_sku'];
@@ -561,8 +569,8 @@ class AmazonProductSync
     }
 
     /**
-     * @return array Staged rows (capped), newest activity first: the shop's,
-     *               or every shop's in "All shops" (id_shop tells them apart).
+     * @return array staged rows (capped), newest activity first: the shop's,
+     *               or every shop's in "All shops" (id_shop tells them apart)
      */
     public function listStaged($limit = 500)
     {
@@ -578,7 +586,7 @@ class AmazonProductSync
                 LIMIT ' . $limit;
         $rows = Db::getInstance()->executeS($sql);
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -613,6 +621,7 @@ class AmazonProductSync
                     return $idLang;
                 }
             }
+
             return $default;
         }
 
@@ -649,15 +658,15 @@ class AmazonProductSync
         if (AmzproShop::get('AMZPRO_FULL_CATALOG', $idShop)) {
             $deltaHours = 0;
         }
-        $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : array();
+        $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : [];
         $deltaCutoff = ($deltaHours > 0) ? date('Y-m-d H:i:s', time() - $deltaHours * 3600) : null;
         $filteredOut = 0;
 
-        $out = array();
-        $seen = array();
-        $baseRowIndex = array();   // id_product => index in $out (base product rows)
-        $comboRowIndexes = array(); // id_product => list of indexes in $out (combination rows)
-        $familyAttrKeys = array(); // id_product => array('color' => true, 'size' => true, ...)
+        $out = [];
+        $seen = [];
+        $baseRowIndex = [];   // id_product => index in $out (base product rows)
+        $comboRowIndexes = []; // id_product => list of indexes in $out (combination rows)
+        $familyAttrKeys = []; // id_product => array('color' => true, 'size' => true, ...)
 
         // Base products of this shop. The SKU is built from the configured
         // source field (reference / EAN / supplier reference) plus the
@@ -691,7 +700,7 @@ class AmazonProductSync
                 }
 
                 if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
-                    $filteredOut++;
+                    ++$filteredOut;
                     continue;
                 }
                 if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
@@ -706,7 +715,7 @@ class AmazonProductSync
 
                 if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
                     || ($qtyMin > 0 && $quantity < $qtyMin)) {
-                    $filteredOut++;
+                    ++$filteredOut;
                     continue;
                 }
 
@@ -716,7 +725,7 @@ class AmazonProductSync
                 $sale = AmazonListingSettings::resolveSaleSchedule($price, $idProduct, 0);
 
                 $baseRowIndex[$idProduct] = count($out);
-                $out[] = array(
+                $out[] = [
                     'sku' => $sku,
                     'id_product' => $idProduct,
                     'id_product_attribute' => 0,
@@ -735,7 +744,7 @@ class AmazonProductSync
                     'ean13' => (string) $r['ean13'],
                     'id_category_default' => (int) $r['id_category_default'],
                     'images' => $images,
-                );
+                ];
             }
         }
 
@@ -766,12 +775,12 @@ class AmazonProductSync
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 // Combination falls back to the base product's identifiers.
-                $skuRow = array(
+                $skuRow = [
                     'reference' => $r['reference'],
                     'ean13' => (trim((string) $r['combo_ean']) !== '') ? $r['combo_ean'] : $r['product_ean'],
                     'supplier_reference' => (trim((string) $r['supplier_reference']) !== '')
                         ? $r['supplier_reference'] : $r['product_supplier_ref'],
-                );
+                ];
                 $sku = AmazonListingSettings::buildSku($skuRow);
                 if ($sku === '' || isset($seen[$sku])) {
                     continue;
@@ -780,7 +789,7 @@ class AmazonProductSync
                 $idPa = (int) $r['id_product_attribute'];
 
                 if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
-                    $filteredOut++;
+                    ++$filteredOut;
                     continue;
                 }
                 if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
@@ -795,7 +804,7 @@ class AmazonProductSync
 
                 if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
                     || ($qtyMin > 0 && $quantity < $qtyMin)) {
-                    $filteredOut++;
+                    ++$filteredOut;
                     continue;
                 }
 
@@ -820,20 +829,20 @@ class AmazonProductSync
                 $amzAttrs = $this->getCombinationAmazonAttributes($idPa, $idLang);
                 if (!empty($amzAttrs)) {
                     if (!isset($familyAttrKeys[$idProduct])) {
-                        $familyAttrKeys[$idProduct] = array();
+                        $familyAttrKeys[$idProduct] = [];
                     }
                     foreach (array_keys($amzAttrs) as $k) {
                         $familyAttrKeys[$idProduct][$k] = true;
                     }
                     if (!isset($comboRowIndexes[$idProduct])) {
-                        $comboRowIndexes[$idProduct] = array();
+                        $comboRowIndexes[$idProduct] = [];
                     }
                     $comboRowIndexes[$idProduct][] = count($out);
                 }
 
                 $sale = AmazonListingSettings::resolveSaleSchedule($price, $idProduct, $idPa);
 
-                $out[] = array(
+                $out[] = [
                     'sku' => $sku,
                     'id_product' => $idProduct,
                     'id_product_attribute' => $idPa,
@@ -853,7 +862,7 @@ class AmazonProductSync
                     'id_category_default' => (int) $r['id_category_default'],
                     'images' => $images,
                     'variation_attributes' => $amzAttrs,
-                );
+                ];
             }
         }
 
@@ -954,7 +963,7 @@ class AmazonProductSync
                 WHERE pac.`id_product_attribute` = ' . (int) $idProductAttribute;
         $rows = Db::getInstance()->executeS($sql);
 
-        $attrs = array();
+        $attrs = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $key = $this->mapAttributeGroupToAmazon($r['group_name']);
@@ -975,8 +984,8 @@ class AmazonProductSync
     {
         $g = Tools::strtolower(trim((string) $groupName));
 
-        $colorNames = array('color', 'colour', 'couleur', 'farbe', 'colore', 'kolor', 'cor', 'renk');
-        $sizeNames = array('size', 'taille', 'talla', 'taglia', 'tamanho', 'rozmiar', 'maat', 'beden', 'größe', 'grösse', 'groesse');
+        $colorNames = ['color', 'colour', 'couleur', 'farbe', 'colore', 'kolor', 'cor', 'renk'];
+        $sizeNames = ['size', 'taille', 'talla', 'taglia', 'tamanho', 'rozmiar', 'maat', 'beden', 'größe', 'grösse', 'groesse'];
 
         foreach ($colorNames as $n) {
             if (strpos($g, $n) !== false) {
@@ -996,6 +1005,7 @@ class AmazonProductSync
      * Amazon variation theme from the set of mapped attribute keys.
      *
      * @param array $attrKeys e.g. array('color' => true, 'size' => true)
+     *
      * @return string 'SIZE/COLOR', 'COLOR', 'SIZE', or '' if none
      */
     private function buildVariationTheme($attrKeys)
@@ -1031,10 +1041,11 @@ class AmazonProductSync
             return '';
         }
 
-        $vals = array();
+        $vals = [];
         foreach ($rows as $r) {
             $vals[] = $r['name'];
         }
+
         return implode(' / ', $vals);
     }
 
@@ -1046,7 +1057,7 @@ class AmazonProductSync
      */
     private function getProductImageUrls($idProduct, $idProductAttribute, $shopBaseUrl, $idShop)
     {
-        $urls = array();
+        $urls = [];
         $idShop = (int) $idShop;
 
         if ($idProductAttribute > 0) {
@@ -1064,6 +1075,7 @@ class AmazonProductSync
                 foreach ($rows as $r) {
                     $urls[] = $shopBaseUrl . $this->imagePath($idProduct, $r['id_image']);
                 }
+
                 return $urls;
             }
         }
@@ -1146,7 +1158,7 @@ class AmazonProductSync
 
     private function upsertPsSide($row, $now)
     {
-        $imagesJson = json_encode(isset($row['images']) ? $row['images'] : array());
+        $imagesJson = json_encode(isset($row['images']) ? $row['images'] : []);
 
         $parentSku = isset($row['parent_sku']) ? $row['parent_sku'] : '';
         $isParent = !empty($row['is_parent']) ? 1 : 0;
@@ -1154,7 +1166,7 @@ class AmazonProductSync
         $variationAttrs = json_encode(
             (isset($row['variation_attributes']) && is_array($row['variation_attributes']))
                 ? $row['variation_attributes']
-                : array()
+                : []
         );
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
@@ -1232,16 +1244,17 @@ class AmazonProductSync
     {
         if ($this->useMock) {
             $mock = $this->buildMockListings();
+
             return isset($mock[$sku]) ? $mock[$sku] : null;
         }
 
         $resp = $this->client->request(
             'GET',
             '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
-            array(
+            [
                 'marketplaceIds' => $this->marketplaceId,
                 'includedData' => 'summaries,offers,fulfillmentAvailability,attributes',
-            )
+            ]
         );
 
         if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body'])) {
@@ -1280,7 +1293,7 @@ class AmazonProductSync
         $description = '';
         $bulletPoints = '';
         $brand = '';
-        $images = array();
+        $images = [];
 
         if (isset($body['attributes'])) {
             $attrs = $body['attributes'];
@@ -1290,7 +1303,7 @@ class AmazonProductSync
             }
 
             if (isset($attrs['bullet_point']) && is_array($attrs['bullet_point'])) {
-                $bps = array();
+                $bps = [];
                 foreach ($attrs['bullet_point'] as $bp) {
                     if (isset($bp['value'])) {
                         $bps[] = $bp['value'];
@@ -1308,7 +1321,7 @@ class AmazonProductSync
             }
         }
 
-        return array(
+        return [
             'asin' => $asin,
             'title' => $title,
             'status' => $status,
@@ -1321,12 +1334,12 @@ class AmazonProductSync
             'product_type' => $productType,
             'browse_node' => $browseNode,
             'raw' => json_encode($body),
-        );
+        ];
     }
 
     private function updateAmazonSide($sku, $listing, $now)
     {
-        $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : array());
+        $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : []);
 
         $sql = 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` SET
                     `amazon_exists` = 1,
@@ -1354,7 +1367,7 @@ class AmazonProductSync
     private function upsertAmazonSide($sku, $listing, $now)
     {
         $raw = isset($listing['raw']) ? $listing['raw'] : json_encode($listing);
-        $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : array());
+        $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : []);
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
             (`id_shop`, `seller_sku`, `ps_exists`, `amazon_exists`, `amazon_asin`, `amazon_title`,
@@ -1404,7 +1417,7 @@ class AmazonProductSync
      */
     private function buildMockListings()
     {
-        $mock = array();
+        $mock = [];
 
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `ps_name`, `ps_price`, `ps_quantity`
@@ -1417,13 +1430,13 @@ class AmazonProductSync
         $i = 0;
         if (is_array($rows)) {
             foreach ($rows as $r) {
-                $i++;
+                ++$i;
                 $sku = $r['seller_sku'];
                 $conflict = ($i === 1);
                 $price = $conflict ? ((float) $r['ps_price'] + 5) : (float) $r['ps_price'];
                 $qty = $conflict ? ((int) $r['ps_quantity'] + 10) : (int) $r['ps_quantity'];
 
-                $entry = array(
+                $entry = [
                     'seller_sku' => $sku,
                     'asin' => 'B0MOCK' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
                     'title' => '[MOCK] ' . $r['ps_name'],
@@ -1433,22 +1446,22 @@ class AmazonProductSync
                     'description' => '[MOCK] Sample product description for ' . $r['ps_name'],
                     'bullet_points' => "High quality product\nFast shipping\nGreat value",
                     'brand' => 'MockBrand',
-                    'images' => array('https://example.com/mock-image-' . $i . '.jpg'),
+                    'images' => ['https://example.com/mock-image-' . $i . '.jpg'],
                     'product_type' => 'PRODUCT',
                     'browse_node' => '12345',
-                );
+                ];
                 $entry['raw'] = json_encode($entry);
                 $mock[$sku] = $entry;
             }
         }
 
         // Two Amazon-only SKUs
-        $amazonOnly = array(
-            array('AMZ-ONLY-001', '[MOCK] Amazon-only widget', 19.99, 7),
-            array('AMZ-ONLY-002', '[MOCK] Amazon-only gadget', 29.50, 3),
-        );
+        $amazonOnly = [
+            ['AMZ-ONLY-001', '[MOCK] Amazon-only widget', 19.99, 7],
+            ['AMZ-ONLY-002', '[MOCK] Amazon-only gadget', 29.50, 3],
+        ];
         foreach ($amazonOnly as $idx => $o) {
-            $entry = array(
+            $entry = [
                 'seller_sku' => $o[0],
                 'asin' => 'B0MOCKONLY' . ($idx + 1),
                 'title' => $o[1],
@@ -1458,10 +1471,10 @@ class AmazonProductSync
                 'description' => '[MOCK] Description for ' . $o[1],
                 'bullet_points' => "Sample bullet point 1\nSample bullet point 2",
                 'brand' => 'MockBrand',
-                'images' => array(),
+                'images' => [],
                 'product_type' => 'PRODUCT',
                 'browse_node' => '12345',
-            );
+            ];
             $entry['raw'] = json_encode($entry);
             $mock[$o[0]] = $entry;
         }
@@ -1500,7 +1513,7 @@ class AmazonProductSync
     {
         require_once dirname(__FILE__) . '/AmazonListingSettings.php';
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
         $limit = (int) $limit;
         // A configured export line limit caps every push batch.
@@ -1545,7 +1558,7 @@ class AmazonProductSync
              LIMIT ' . $limit
         );
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
         if (empty($rows)) {
@@ -1556,20 +1569,20 @@ class AmazonProductSync
             $this->notices[] = $notice;
         }
 
-        $results = array();
+        $results = [];
         $pushed = 0;
         $failed = 0;
-        $pushedProductIds = array();
+        $pushedProductIds = [];
         foreach ($rows as $r) {
             $res = $this->pushOne($r);
             $results[] = $res;
             if ($res['status'] === 'ACCEPTED') {
-                $pushed++;
+                ++$pushed;
                 if (!empty($r['id_product'])) {
                     $pushedProductIds[] = (int) $r['id_product'];
                 }
             } else {
-                $failed++;
+                ++$failed;
             }
         }
 
@@ -1580,12 +1593,12 @@ class AmazonProductSync
             $this->notices[] = 'MOCK MODE: submissions are simulated — no real Amazon call was made.';
         }
 
-        return array(
+        return [
             'candidates' => count($rows),
             'pushed' => $pushed,
             'failed' => $failed,
             'results' => $results,
-        );
+        ];
     }
 
     /**
@@ -1598,14 +1611,14 @@ class AmazonProductSync
         $sku = $r['seller_sku'];
 
         if ($this->useMock) {
-            return array('sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) submission accepted');
+            return ['sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) submission accepted'];
         }
         if ($this->sellerId === '') {
-            return array(
+            return [
                 'sku' => $sku,
                 'status' => 'SKIPPED',
                 'issues' => AmazonI18n::get()->l('Your seller ID is missing. Click "Connect to Amazon" in Settings > Connection to fill it in.', 'amazonproductsync'),
-            );
+            ];
         }
 
         // Price-only / quantity-only modes send a partial PATCH instead of a
@@ -1616,17 +1629,18 @@ class AmazonProductSync
             $resp = $this->client->request(
                 'PATCH',
                 '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
-                array('marketplaceIds' => $this->marketplaceId),
+                ['marketplaceIds' => $this->marketplaceId],
                 $body
             );
             if ($resp === false) {
-                return array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+                return ['sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError()];
             }
             $status = (is_array($resp['body']) && isset($resp['body']['status']))
                 ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
             $issues = (is_array($resp['body']) && isset($resp['body']['issues']))
                 ? json_encode($resp['body']['issues']) : '';
-            return array('sku' => $sku, 'status' => $status, 'issues' => $issues);
+
+            return ['sku' => $sku, 'status' => $status, 'issues' => $issues];
         }
 
         // Optional: delete the listing entirely when it runs out of stock
@@ -1640,43 +1654,44 @@ class AmazonProductSync
             $resp = $this->client->request(
                 'DELETE',
                 '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
-                array('marketplaceIds' => $this->marketplaceId)
+                ['marketplaceIds' => $this->marketplaceId]
             );
             if ($resp === false) {
-                return array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+                return ['sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError()];
             }
             $status = (is_array($resp['body']) && isset($resp['body']['status']))
                 ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
-            return array(
+
+            return [
                 'sku' => $sku,
                 'status' => $status,
                 'issues' => AmazonI18n::get()->l('Out of stock: listing deletion requested.', 'amazonproductsync'),
-            );
+            ];
         }
 
         $body = $this->buildListingRequestBody($r);
         if (isset($body['_skip'])) {
-            return array('sku' => $sku, 'status' => 'SKIPPED', 'issues' => $body['_skip']);
+            return ['sku' => $sku, 'status' => 'SKIPPED', 'issues' => $body['_skip']];
         }
 
         $resp = $this->client->request(
             'PUT',
             '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
-            array('marketplaceIds' => $this->marketplaceId),
+            ['marketplaceIds' => $this->marketplaceId],
             $body
         );
 
         if ($resp === false) {
-            return array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+            return ['sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError()];
         }
         if (!is_array($resp['body'])) {
-            return array('sku' => $sku, 'status' => 'HTTP ' . $resp['status'], 'issues' => (string) $resp['body']);
+            return ['sku' => $sku, 'status' => 'HTTP ' . $resp['status'], 'issues' => (string) $resp['body']];
         }
 
         $status = isset($resp['body']['status']) ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
         $issues = isset($resp['body']['issues']) ? json_encode($resp['body']['issues']) : '';
 
-        return array('sku' => $sku, 'status' => $status, 'issues' => $issues);
+        return ['sku' => $sku, 'status' => $status, 'issues' => $issues];
     }
 
     /**
@@ -1700,10 +1715,10 @@ class AmazonProductSync
                  ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ap.`id_shop`)
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
                  ON (' . self::preferShopJoin(
-                    'amazonmarketplacepro_product_setting', 'ov',
-                    array('id_product' => 'ap.`id_product`'),
-                    'ap.`id_shop`'
-                ) . ')
+                'amazonmarketplacepro_product_setting', 'ov',
+                ['id_product' => 'ap.`id_product`'],
+                'ap.`id_shop`'
+            ) . ')
              WHERE ' . AmzproShop::sqlWhere('ap') . '
                AND ap.`amazon_exists` = 1
                AND (ap.`ps_exists` = 0
@@ -1714,7 +1729,7 @@ class AmazonProductSync
              LIMIT ' . (int) $limit
         );
         if (!is_array($rows)) {
-            return array();
+            return [];
         }
 
         foreach ($rows as &$r) {
@@ -1739,19 +1754,21 @@ class AmazonProductSync
      * SKUs, which the UI takes from listDeletionCandidates().
      *
      * @param array $skus
+     *
      * @return array array('requested' => int, 'deleted' => int, 'failed' => int, 'results' => array)
      */
     public function deleteFromAmazon($skus)
     {
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array('requested' => 0, 'deleted' => 0, 'failed' => 0, 'results' => array());
+        $summary = ['requested' => 0, 'deleted' => 0, 'failed' => 0, 'results' => []];
         if (!is_array($skus) || empty($skus)) {
             return $summary;
         }
         if ($this->sellerId === '' && !$this->useMock) {
             $this->lastError = 'No seller id configured.';
+
             return $summary;
         }
 
@@ -1760,29 +1777,29 @@ class AmazonProductSync
             if ($sku === '') {
                 continue;
             }
-            $summary['requested']++;
+            ++$summary['requested'];
 
             if ($this->useMock) {
-                $summary['deleted']++;
-                $summary['results'][] = array('sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) deletion simulated');
+                ++$summary['deleted'];
+                $summary['results'][] = ['sku' => $sku, 'status' => 'ACCEPTED', 'issues' => '(mock) deletion simulated'];
                 continue;
             }
 
             $resp = $this->client->request(
                 'DELETE',
                 '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
-                array('marketplaceIds' => $this->marketplaceId)
+                ['marketplaceIds' => $this->marketplaceId]
             );
             if ($resp === false) {
-                $summary['failed']++;
-                $summary['results'][] = array('sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError());
+                ++$summary['failed'];
+                $summary['results'][] = ['sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError()];
                 continue;
             }
 
             $status = (is_array($resp['body']) && isset($resp['body']['status']))
                 ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
             if ($resp['status'] < 300) {
-                $summary['deleted']++;
+                ++$summary['deleted'];
                 // The listing is gone: stop treating it as present on Amazon.
                 Db::getInstance()->execute(
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
@@ -1792,14 +1809,14 @@ class AmazonProductSync
                        AND `id_shop` = ' . (int) $this->shopId()
                 );
             } else {
-                $summary['failed']++;
+                ++$summary['failed'];
             }
-            $summary['results'][] = array(
+            $summary['results'][] = [
                 'sku' => $sku,
                 'status' => $status,
                 'issues' => (is_array($resp['body']) && isset($resp['body']['issues']))
                     ? json_encode($resp['body']['issues']) : '',
-            );
+            ];
         }
 
         return $summary;
@@ -1812,6 +1829,7 @@ class AmazonProductSync
      * direct pushes always agree. Parents come first.
      *
      * @param int $limit
+     *
      * @return array array('messages' => array, 'skipped' => array of array(sku, reason))
      */
     public function collectFeedMessages($limit = 500)
@@ -1861,12 +1879,12 @@ class AmazonProductSync
              LIMIT ' . (int) $limit
         );
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
-        $messages = array();
-        $skipped = array();
-        $idProducts = array();
+        $messages = [];
+        $skipped = [];
+        $idProducts = [];
         $messageId = 1;
 
         foreach ($rows as $r) {
@@ -1879,11 +1897,11 @@ class AmazonProductSync
                     continue;
                 }
                 $messages[] = array_merge(
-                    array(
+                    [
                         'messageId' => $messageId++,
                         'sku' => $sku,
                         'operationType' => 'PATCH',
-                    ),
+                    ],
                     $this->buildPatchBody($r, $syncMode)
                 );
                 $idProducts[] = (int) $r['id_product'];
@@ -1894,75 +1912,76 @@ class AmazonProductSync
                 && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)
                 && empty($r['is_parent'])
                 && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
-                $messages[] = array(
+                $messages[] = [
                     'messageId' => $messageId++,
                     'sku' => $sku,
                     'operationType' => 'DELETE',
                     'productType' => 'PRODUCT',
-                );
+                ];
                 $idProducts[] = (int) $r['id_product'];
                 continue;
             }
 
             $body = $this->buildListingRequestBody($r);
             if (isset($body['_skip'])) {
-                $skipped[] = array('sku' => $sku, 'reason' => $body['_skip']);
+                $skipped[] = ['sku' => $sku, 'reason' => $body['_skip']];
                 continue;
             }
 
             $messages[] = array_merge(
-                array(
+                [
                     'messageId' => $messageId++,
                     'sku' => $sku,
                     'operationType' => 'UPDATE',
-                ),
+                ],
                 $body
             );
             $idProducts[] = (int) $r['id_product'];
         }
 
-        return array('messages' => $messages, 'skipped' => $skipped, 'id_products' => $idProducts);
+        return ['messages' => $messages, 'skipped' => $skipped, 'id_products' => $idProducts];
     }
 
     /**
      * Partial update body (price-only or quantity-only sync mode) for both the
      * Listings Items PATCH call and JSON_LISTINGS_FEED PATCH messages.
      *
-     * @param array  $r    Staged row
+     * @param array $r Staged row
      * @param string $mode 'price' | 'quantity'
+     *
      * @return array array('productType' => ..., 'patches' => array(...))
      */
     private function buildPatchBody($r, $mode)
     {
         if ($mode === 'quantity') {
-            $patch = array(
+            $patch = [
                 'op' => 'replace',
                 'path' => '/attributes/fulfillment_availability',
-                'value' => array(array(
+                'value' => [[
                     'fulfillment_channel_code' => 'DEFAULT',
                     'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
                     'marketplace_id' => $this->marketplaceId,
-                )),
-            );
+                ]],
+            ];
         } else {
-            $offer = array(
+            $offer = [
                 'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                 'marketplace_id' => $this->marketplaceId,
-                'our_price' => array(array(
-                    'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
-                )),
-            );
-            $patch = array(
+                'our_price' => [[
+                    'schedule' => [['value_with_tax' => (float) $r['ps_price']]],
+                ]],
+            ];
+            $patch = [
                 'op' => 'replace',
                 'path' => '/attributes/purchasable_offer',
-                'value' => array($offer),
-            );
+                'value' => [$offer],
+            ];
         }
 
-        return array(
+        return [
             'productType' => !empty($r['amazon_product_type']) ? $r['amazon_product_type'] : 'PRODUCT',
-            'patches' => array($patch),
-        );
+            'patches' => [$patch],
+        ];
     }
 
     /**
@@ -1972,6 +1991,7 @@ class AmazonProductSync
      * standalone full listing, and offer-only fallback.
      *
      * @param array $r Staged product row
+     *
      * @return array Request body; contains a '_skip' key with a reason when
      *               the row cannot be pushed at all
      */
@@ -1985,7 +2005,7 @@ class AmazonProductSync
         $hasProductType = !empty($r['amazon_product_type']);
 
         // Parse images from JSON
-        $images = array();
+        $images = [];
         if (!empty($r['ps_images'])) {
             $decoded = json_decode($r['ps_images'], true);
             if (is_array($decoded)) {
@@ -1995,7 +2015,7 @@ class AmazonProductSync
 
         // Build bullet points: the per-product list wins, else derive them
         // from the short description.
-        $bulletPoints = array();
+        $bulletPoints = [];
         if (!empty($r['ov_bullet_points'])) {
             foreach (preg_split('/[\r\n]+/', (string) $r['ov_bullet_points']) as $line) {
                 $line = trim($line);
@@ -2027,41 +2047,41 @@ class AmazonProductSync
             // Variation parent: a non-sellable listing that groups the children.
             // Amazon requires full product data for parents — offer-only is impossible.
             if (!$hasProductType) {
-                return array('_skip' => sprintf(
+                return ['_skip' => sprintf(
                     AmazonI18n::get()->l('Variation parent needs a category mapping (Amazon product type). Map category #%d first.', 'amazonproductsync'),
                     (int) $r['ps_id_category_default']
-                ));
+                )];
             }
             $body = $this->buildFullListingBody($r, $bulletPoints, $images);
             // Parents carry no offer or stock.
             unset($body['attributes']['purchasable_offer']);
             unset($body['attributes']['fulfillment_availability']);
-            $body['attributes']['parentage_level'] = array(array(
+            $body['attributes']['parentage_level'] = [[
                 'value' => 'parent',
                 'marketplace_id' => $this->marketplaceId,
-            ));
-            $body['attributes']['variation_theme'] = array(array(
+            ]];
+            $body['attributes']['variation_theme'] = [[
                 'name' => $variationTheme,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         } elseif ($parentSku !== '' && $hasProductType) {
             // Variation child: full listing linked to its parent.
             $body = $this->buildFullListingBody($r, $bulletPoints, $images);
-            $body['attributes']['parentage_level'] = array(array(
+            $body['attributes']['parentage_level'] = [[
                 'value' => 'child',
                 'marketplace_id' => $this->marketplaceId,
-            ));
-            $body['attributes']['child_parent_sku_relationship'] = array(array(
+            ]];
+            $body['attributes']['child_parent_sku_relationship'] = [[
                 'child_relationship_type' => 'variation',
                 'parent_sku' => $parentSku,
                 'marketplace_id' => $this->marketplaceId,
-            ));
-            $body['attributes']['variation_theme'] = array(array(
+            ]];
+            $body['attributes']['variation_theme'] = [[
                 'name' => $variationTheme,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
             // Variation axes (color / size values from the PS combination)
-            $varAttrs = array();
+            $varAttrs = [];
             if (!empty($r['variation_attributes'])) {
                 $decoded = json_decode($r['variation_attributes'], true);
                 if (is_array($decoded)) {
@@ -2069,10 +2089,10 @@ class AmazonProductSync
                 }
             }
             foreach ($varAttrs as $attrKey => $attrValue) {
-                $body['attributes'][$attrKey] = array(array(
+                $body['attributes'][$attrKey] = [[
                     'value' => $attrValue,
                     'marketplace_id' => $this->marketplaceId,
-                ));
+                ]];
             }
         } elseif ($hasProductType && AmzproShop::get('AMZPRO_EXTENDED_DATA', $this->shopId()) !== '0') {
             // Standalone full listing with all attributes
@@ -2098,11 +2118,11 @@ class AmazonProductSync
         // Products marked Fulfilled-by-Amazon carry no merchant quantity:
         // Amazon owns the stock for that channel.
         $availability = !empty($r['ov_is_fba'])
-            ? array('fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId))
-            : array(
+            ? ['fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId)]
+            : [
                 'fulfillment_channel_code' => 'DEFAULT',
                 'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-            );
+            ];
         // Handling time: profile default first, then the
         // category/manufacturer/supplier cascade and the module default.
         $delay = (isset($r['profile_latency']) && (int) $r['profile_latency'] >= 0)
@@ -2124,56 +2144,56 @@ class AmazonProductSync
             $condition = AmazonSpApiClient::listingCondition();
         }
 
-        $attributes = array(
-            'condition_type' => array(array('value' => $condition)),
-            'item_name' => array(array(
+        $attributes = [
+            'condition_type' => [['value' => $condition]],
+            'item_name' => [[
                 'value' => $this->composeTitle($r),
                 'marketplace_id' => $this->marketplaceId,
-            )),
-            'purchasable_offer' => array(array(
+            ]],
+            'purchasable_offer' => [[
                 'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                 'marketplace_id' => $this->marketplaceId,
-                'our_price' => array(array(
-                    'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
-                )),
-            )),
-            'fulfillment_availability' => array($availability),
-        );
+                'our_price' => [[
+                    'schedule' => [['value_with_tax' => (float) $r['ps_price']]],
+                ]],
+            ]],
+            'fulfillment_availability' => [$availability],
+        ];
 
         // Condition note: per-product text wins over the global one.
         $condNote = !empty($r['ov_condition_note'])
             ? trim((string) $r['ov_condition_note'])
             : $this->conditionNote($condition);
         if ($condNote !== '') {
-            $attributes['condition_note'] = array(array(
+            $attributes['condition_note'] = [[
                 'value' => $condNote,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // GPSR responsible-person contact (product > manufacturer/supplier priority)
         $gpsr = AmazonListingSettings::resolveGpsrContact($idProduct);
         if ($gpsr !== '') {
             if (filter_var($gpsr, FILTER_VALIDATE_EMAIL)) {
-                $attributes['gpsr_manufacturer_email_address'] = array(array(
+                $attributes['gpsr_manufacturer_email_address'] = [[
                     'value' => $gpsr,
                     'marketplace_id' => $this->marketplaceId,
-                ));
+                ]];
             } else {
-                $attributes['gpsr_manufacturer_reference'] = array(array(
+                $attributes['gpsr_manufacturer_reference'] = [[
                     'value' => $gpsr,
                     'marketplace_id' => $this->marketplaceId,
-                ));
+                ]];
             }
         }
 
         // Country of origin (from the manufacturer rule)
         $coo = AmazonListingSettings::resolveCountryOfOrigin($idProduct);
         if ($coo !== '') {
-            $attributes['country_of_origin'] = array(array(
+            $attributes['country_of_origin'] = [[
                 'value' => $coo,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Description
@@ -2181,20 +2201,20 @@ class AmazonProductSync
         if ($desc !== '') {
             // Amazon limit: 2000 chars for most categories
             $desc = Tools::substr($desc, 0, 2000);
-            $attributes['product_description'] = array(array(
+            $attributes['product_description'] = [[
                 'value' => $desc,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Bullet points
         if (!empty($bulletPoints)) {
-            $bpArr = array();
+            $bpArr = [];
             foreach ($bulletPoints as $bp) {
-                $bpArr[] = array(
+                $bpArr[] = [
                     'value' => Tools::substr($bp, 0, 500),
                     'marketplace_id' => $this->marketplaceId,
-                );
+                ];
             }
             $attributes['bullet_point'] = $bpArr;
         }
@@ -2202,10 +2222,10 @@ class AmazonProductSync
         // Brand / manufacturer
         $brand = isset($r['ps_manufacturer']) ? trim((string) $r['ps_manufacturer']) : '';
         if ($brand !== '') {
-            $attributes['brand'] = array(array(
+            $attributes['brand'] = [[
                 'value' => $brand,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // EAN / external product ID. The merchant can force the field to be
@@ -2217,28 +2237,28 @@ class AmazonProductSync
             } else {
                 $idType = (strlen($ean) === 13) ? 'EAN' : 'UPC';
             }
-            $attributes['externally_assigned_product_identifier'] = array(array(
+            $attributes['externally_assigned_product_identifier'] = [[
                 'type' => $idType,
                 'value' => $ean,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Images are optional: hosting them costs Amazon a fetch per SKU, so
         // large catalogues often push them once and then sync offers only.
         if (AmzproShop::get('AMZPRO_SEND_IMAGES', $this->shopId()) !== '0') {
             if (!empty($images) && isset($images[0])) {
-                $attributes['main_product_image_locator'] = array(array(
+                $attributes['main_product_image_locator'] = [[
                     'media_location' => $images[0],
                     'marketplace_id' => $this->marketplaceId,
-                ));
+                ]];
             }
-            for ($i = 1; $i < min(count($images), 6); $i++) {
+            for ($i = 1; $i < min(count($images), 6); ++$i) {
                 $key = 'other_product_image_locator_' . $i;
-                $attributes[$key] = array(array(
+                $attributes[$key] = [[
                     'media_location' => $images[$i],
                     'marketplace_id' => $this->marketplaceId,
-                ));
+                ]];
             }
         }
 
@@ -2256,19 +2276,19 @@ class AmazonProductSync
 
         // Gift wrap / gift message availability
         if (!empty($r['ov_gift_option'])) {
-            $attributes['is_gift_wrap_available'] = array(array(
+            $attributes['is_gift_wrap_available'] = [[
                 'value' => true, 'marketplace_id' => $this->marketplaceId,
-            ));
-            $attributes['is_gift_message_available'] = array(array(
+            ]];
+            $attributes['is_gift_message_available'] = [[
                 'value' => true, 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
         // Amazon Transparency programme code
         if (!empty($r['ov_transparency_code'])) {
-            $attributes['transparency_code'] = array(array(
+            $attributes['transparency_code'] = [[
                 'value' => (string) $r['ov_transparency_code'],
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Per-product opt-outs: leave price and/or stock untouched on Amazon.
@@ -2283,11 +2303,11 @@ class AmazonProductSync
         // several; the merchant separates them with a comma or semicolon.
         $nodes = isset($r['amazon_browse_node']) ? trim((string) $r['amazon_browse_node']) : '';
         if ($nodes !== '') {
-            $nodeValues = array();
+            $nodeValues = [];
             foreach (preg_split('/[;,]/', $nodes) as $node) {
                 $node = trim($node);
                 if ($node !== '') {
-                    $nodeValues[] = array('value' => $node, 'marketplace_id' => $this->marketplaceId);
+                    $nodeValues[] = ['value' => $node, 'marketplace_id' => $this->marketplaceId];
                 }
             }
             if (!empty($nodeValues)) {
@@ -2299,10 +2319,10 @@ class AmazonProductSync
         // granted them a GTIN exemption for the product type.
         if (!empty($r['profile_gtin_exemption'])) {
             unset($attributes['externally_assigned_product_identifier']);
-            $attributes['supplier_declared_has_product_identifier_exemption'] = array(array(
+            $attributes['supplier_declared_has_product_identifier_exemption'] = [[
                 'value' => true,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Profile attribute map (schema-driven: PrestaShop field, Amazon
@@ -2345,11 +2365,11 @@ class AmazonProductSync
             $idProduct, isset($r['id_product_attribute']) ? (int) $r['id_product_attribute'] : 0
         );
 
-        return array(
+        return [
             'productType' => $r['amazon_product_type'],
             'requirements' => 'LISTING',
             'attributes' => $attributes,
-        );
+        ];
     }
 
     /**
@@ -2421,7 +2441,7 @@ class AmazonProductSync
      * already carries a purchasable_offer.
      *
      * @param array $attributes by reference
-     * @param array $r          staged row
+     * @param array $r staged row
      */
     private function applyPricingExtras(&$attributes, $r)
     {
@@ -2430,23 +2450,23 @@ class AmazonProductSync
         }
 
         if ((float) $r['sale_price'] > 0 && !empty($r['sale_from']) && !empty($r['sale_to'])) {
-            $attributes['purchasable_offer'][0]['discounted_price'] = array(array(
-                'schedule' => array(array(
+            $attributes['purchasable_offer'][0]['discounted_price'] = [[
+                'schedule' => [[
                     'value_with_tax' => (float) $r['sale_price'],
                     'start_at' => date('c', strtotime($r['sale_from'] . ' 00:00:00')),
                     'end_at' => date('c', strtotime($r['sale_to'] . ' 23:59:59')),
-                )),
-            ));
+                ]],
+            ]];
         }
 
         // The pre-discount shop price becomes Amazon's crossed-out list price.
         if (AmzproShop::get('AMZPRO_SEND_LIST_PRICE', $this->shopId()) && (float) $r['ps_list_price'] > 0
             && (float) $r['ps_list_price'] > (float) $r['ps_price']) {
-            $attributes['list_price'] = array(array(
+            $attributes['list_price'] = [[
                 'value' => AmazonListingSettings::applyRounding($r['ps_list_price']),
                 'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
     }
 
@@ -2505,7 +2525,8 @@ class AmazonProductSync
      * overwritten by scalar/feature entries; raw structures win.
      *
      * @param array $attributes Already-built listing attributes
-     * @param array $r          Staged row (needs attributes_json, id_product)
+     * @param array $r Staged row (needs attributes_json, id_product)
+     *
      * @return array
      */
     private function applyAttributeTemplate($attributes, $r)
@@ -2539,10 +2560,10 @@ class AmazonProductSync
                 continue;
             }
 
-            $attributes[$attrName] = array(array(
+            $attributes[$attrName] = [[
                 'value' => $value,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         return $attributes;
@@ -2589,11 +2610,11 @@ class AmazonProductSync
         $idProduct = isset($r['id_product']) ? (int) $r['id_product'] : 0;
 
         $availability = !empty($r['ov_is_fba'])
-            ? array('fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId))
-            : array(
+            ? ['fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId)]
+            : [
                 'fulfillment_channel_code' => 'DEFAULT',
                 'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
-            );
+            ];
         $delay = (isset($r['profile_latency']) && (int) $r['profile_latency'] >= 0)
             ? (int) $r['profile_latency']
             : AmazonListingSettings::resolveDelay($idProduct);
@@ -2613,17 +2634,17 @@ class AmazonProductSync
             $condition = AmazonSpApiClient::listingCondition();
         }
 
-        $attributes = array(
-            'condition_type' => array(array('value' => $condition)),
-            'purchasable_offer' => array(array(
+        $attributes = [
+            'condition_type' => [['value' => $condition]],
+            'purchasable_offer' => [[
                 'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
                 'marketplace_id' => $this->marketplaceId,
-                'our_price' => array(array(
-                    'schedule' => array(array('value_with_tax' => (float) $r['ps_price'])),
-                )),
-            )),
-            'fulfillment_availability' => array($availability),
-        );
+                'our_price' => [[
+                    'schedule' => [['value_with_tax' => (float) $r['ps_price']]],
+                ]],
+            ]],
+            'fulfillment_availability' => [$availability],
+        ];
 
         if (isset($r['ov_sync_price']) && !(int) $r['ov_sync_price']) {
             unset($attributes['purchasable_offer']);
@@ -2636,20 +2657,20 @@ class AmazonProductSync
             ? trim((string) $r['ov_condition_note'])
             : $this->conditionNote($condition);
         if ($condNote !== '') {
-            $attributes['condition_note'] = array(array(
+            $attributes['condition_note'] = [[
                 'value' => $condNote,
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         $this->applyPricingExtras($attributes, $r);
 
         // A known ASIN lets Amazon match the offer to the right catalog page.
         if (!empty($r['amazon_asin'])) {
-            $attributes['merchant_suggested_asin'] = array(array(
+            $attributes['merchant_suggested_asin'] = [[
                 'value' => $r['amazon_asin'],
                 'marketplace_id' => $this->marketplaceId,
-            ));
+            ]];
         }
 
         // Shipping template (price/weight ranges when enabled) + B2B offer
@@ -2664,11 +2685,11 @@ class AmazonProductSync
             $idProduct, isset($r['id_product_attribute']) ? (int) $r['id_product_attribute'] : 0
         );
 
-        return array(
+        return [
             'productType' => 'PRODUCT',
             'requirements' => 'LISTING_OFFER_ONLY',
             'attributes' => $attributes,
-        );
+        ];
     }
 
     /**
@@ -2690,7 +2711,7 @@ class AmazonProductSync
                 ORDER BY cl.`name` ASC, cm.`id_shop` ASC';
         $rows = Db::getInstance()->executeS($sql);
 
-        return is_array($rows) ? AmzproShop::preferShopRows($rows, array('id_category', 'marketplace_id')) : array();
+        return is_array($rows) ? AmzproShop::preferShopRows($rows, ['id_category', 'marketplace_id']) : [];
     }
 
     /**
@@ -2701,6 +2722,7 @@ class AmazonProductSync
         $attributesJson = trim((string) $attributesJson);
         if ($attributesJson !== '' && json_decode($attributesJson, true) === null) {
             $this->lastError = AmazonI18n::get()->l('Extra attributes must be a valid JSON object.', 'amazonproductsync');
+
             return false;
         }
 
@@ -2725,6 +2747,7 @@ class AmazonProductSync
                     `amazon_browse_node` = VALUES(`amazon_browse_node`),
                     `attributes_json` = VALUES(`attributes_json`),
                     `date_upd` = VALUES(`date_upd`)';
+
         return Db::getInstance()->execute($sql);
     }
 
@@ -2761,7 +2784,7 @@ class AmazonProductSync
 
     private function buildSummary($amazonChecked, $amazonFound)
     {
-        $summary = array(
+        $summary = [
             'total' => 0,
             'ps_only' => 0,
             'amazon_only' => 0,
@@ -2769,7 +2792,7 @@ class AmazonProductSync
             'in_sync' => 0,
             'amazon_checked' => (int) $amazonChecked,
             'amazon_found' => (int) $amazonFound,
-        );
+        ];
 
         $rows = Db::getInstance()->executeS(
             'SELECT `sync_direction`, COUNT(*) AS c

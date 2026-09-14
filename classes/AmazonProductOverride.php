@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -17,7 +18,6 @@
  * shop can save a row of its own that replaces it whole for that shop. Saving
  * in "All shops" changes the shared row; saving in a shop changes the shop's.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -27,24 +27,24 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonProductOverride
 {
     /** Columns the propagation tool can copy onto other products. */
-    public static $propagatable = array(
+    public static $propagatable = [
         'sync', 'sync_price', 'sync_quantity', 'force_in_stock', 'force_out_of_stock',
         'is_fba', 'lead_time', 'gift_option', 'shipping_template', 'browse_node',
         'brand', 'condition_type', 'condition_note', 'gpsr_contact',
-    );
+    ];
 
     /** Cache: id_shop => id_product => row */
-    private static $cache = array();
+    private static $cache = [];
 
     /** @var bool Table checked this request */
     private static $tableEnsured = false;
 
-    private static $intCols = array('sync', 'force_in_stock', 'force_out_of_stock', 'sync_price',
-        'sync_quantity', 'is_fba', 'gift_option');
+    private static $intCols = ['sync', 'force_in_stock', 'force_out_of_stock', 'sync_price',
+        'sync_quantity', 'is_fba', 'gift_option'];
 
-    private static $strCols = array('gpsr_contact', 'asin', 'override_sku', 'transparency_code',
+    private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points',
-        'condition_type', 'condition_note');
+        'condition_type', 'condition_note'];
 
     public static function ensureTable()
     {
@@ -71,7 +71,7 @@ class AmazonProductOverride
         // A table created before multistore support gets its shop column.
         AmzproShop::ensureTableShop('amazonmarketplacepro_product_setting');
 
-        $columns = array(
+        $columns = [
             'asin' => 'VARCHAR(32) NOT NULL DEFAULT \'\'',
             'override_price' => 'DECIMAL(20,6) NOT NULL DEFAULT 0',
             'override_sku' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
@@ -89,9 +89,9 @@ class AmazonProductOverride
             'bullet_points' => 'TEXT NULL',
             'condition_type' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'condition_note' => 'TEXT NULL',
-        );
+        ];
 
-        $existing = array();
+        $existing = [];
         $rows = Db::getInstance()->executeS(
             'SHOW COLUMNS FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`'
         );
@@ -113,7 +113,7 @@ class AmazonProductOverride
     /** The values of a product without any saved override. */
     private static function defaults($idProduct)
     {
-        return array(
+        return [
             'id_product' => (int) $idProduct,
             'sync' => 1, 'gpsr_contact' => '', 'asin' => '', 'override_price' => 0,
             'override_sku' => '', 'force_in_stock' => 0, 'force_out_of_stock' => 0,
@@ -121,7 +121,7 @@ class AmazonProductOverride
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
             'condition_type' => '', 'condition_note' => '',
-        );
+        ];
     }
 
     /**
@@ -175,8 +175,8 @@ class AmazonProductOverride
         $now = date('Y-m-d H:i:s');
 
         // Column => normalised value, and column => SQL literal.
-        $values = array();
-        $assign = array();
+        $values = [];
+        $assign = [];
         foreach (self::$intCols as $c) {
             if (array_key_exists($c, $data)) {
                 $values[$c] = (int) $data[$c] ? 1 : 0;
@@ -201,16 +201,16 @@ class AmazonProductOverride
             return true;
         }
 
-        self::$cache = array();
+        self::$cache = [];
         $db = Db::getInstance();
         $table = _DB_PREFIX_ . 'amazonmarketplacepro_product_setting';
 
-        $byShop = array();
+        $byShop = [];
         $existing = $db->executeS(
             'SELECT * FROM `' . $table . '`
              WHERE `id_product` = ' . $idProduct . ' AND ' . AmzproShop::sqlShared()
         );
-        foreach ((is_array($existing) ? $existing : array()) as $r) {
+        foreach ((is_array($existing) ? $existing : []) as $r) {
             $byShop[(int) $r['id_shop']] = $r;
         }
 
@@ -235,7 +235,7 @@ class AmazonProductOverride
             $idShop = $byShop ? max(array_keys($byShop)) : (int) AmzproShop::sharedWriteId();
         }
 
-        $sets = array();
+        $sets = [];
         foreach ($assign as $c => $sql) {
             $sets[] = '`' . bqSQL($c) . '` = ' . $sql;
         }
@@ -286,9 +286,9 @@ class AmazonProductOverride
     public static function delete($idProduct)
     {
         self::ensureTable();
-        self::$cache = array();
+        self::$cache = [];
         $id = (int) AmzproShop::sharedWriteId();
-        $shops = AmzproShop::isMultistore() ? array($id) : array_values(array_unique(array(0, $id)));
+        $shops = AmzproShop::isMultistore() ? [$id] : array_values(array_unique([0, $id]));
 
         return Db::getInstance()->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`
@@ -301,9 +301,10 @@ class AmazonProductOverride
      * Copy selected override fields from one product onto a wider set of the
      * current shop's products (every product in "All shops").
      *
-     * @param int    $idProduct Source product
-     * @param string $scope     category | manufacturer | supplier | all
-     * @param array  $fields    Column names to copy (subset of $propagatable)
+     * @param int $idProduct Source product
+     * @param string $scope category | manufacturer | supplier | all
+     * @param array $fields Column names to copy (subset of $propagatable)
+     *
      * @return int Number of products written
      */
     public static function propagate($idProduct, $scope, $fields)
@@ -315,7 +316,7 @@ class AmazonProductOverride
         }
 
         $targets = self::targetProducts($idProduct, $scope);
-        $payload = array();
+        $payload = [];
         foreach ($fields as $f) {
             $payload[$f] = $source[$f];
         }
@@ -326,7 +327,7 @@ class AmazonProductOverride
                 continue;
             }
             self::save((int) $idTarget, $payload);
-            $count++;
+            ++$count;
         }
 
         return $count;
@@ -369,7 +370,7 @@ class AmazonProductOverride
         }
 
         $rows = Db::getInstance()->executeS($sql);
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $out[] = (int) $r['id_product'];
@@ -405,9 +406,9 @@ class AmazonProductOverride
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting`
              WHERE ' . AmzproShop::sqlShared()
         );
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
-            foreach (AmzproShop::preferShopRows($rows, array('id_product')) as $r) {
+            foreach (AmzproShop::preferShopRows($rows, ['id_product']) as $r) {
                 $out[(int) $r['id_product']] = $r;
             }
         }

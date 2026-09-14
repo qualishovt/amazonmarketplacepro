@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -12,7 +13,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -57,20 +57,20 @@ class AmazonOrderReportImporter
     const MAX_BYTES = 10485760;
 
     /** Report columns accepted for each field; the first one present wins. */
-    private static $columns = array(
-        'order_id' => array('order-id', 'amazon-order-id'),
-        'ship_name' => array('recipient-name', 'ship-name', 'shipping-name'),
-        'buyer_name' => array('buyer-name'),
-        'address1' => array('ship-address-1', 'shipping-address-1'),
-        'address2' => array('ship-address-2', 'shipping-address-2'),
-        'address3' => array('ship-address-3', 'shipping-address-3'),
-        'city' => array('ship-city', 'shipping-city'),
-        'state' => array('ship-state', 'shipping-state'),
-        'postal_code' => array('ship-postal-code', 'shipping-postal-code'),
-        'country' => array('ship-country', 'shipping-country'),
-        'ship_phone' => array('ship-phone-number', 'shipping-phone-number'),
-        'buyer_phone' => array('buyer-phone-number'),
-    );
+    private static $columns = [
+        'order_id' => ['order-id', 'amazon-order-id'],
+        'ship_name' => ['recipient-name', 'ship-name', 'shipping-name'],
+        'buyer_name' => ['buyer-name'],
+        'address1' => ['ship-address-1', 'shipping-address-1'],
+        'address2' => ['ship-address-2', 'shipping-address-2'],
+        'address3' => ['ship-address-3', 'shipping-address-3'],
+        'city' => ['ship-city', 'shipping-city'],
+        'state' => ['ship-state', 'shipping-state'],
+        'postal_code' => ['ship-postal-code', 'shipping-postal-code'],
+        'country' => ['ship-country', 'shipping-country'],
+        'ship_phone' => ['ship-phone-number', 'shipping-phone-number'],
+        'buyer_phone' => ['buyer-phone-number'],
+    ];
 
     /**
      * What each PrestaShop validator objects to, stripped before validating.
@@ -81,13 +81,13 @@ class AmazonOrderReportImporter
      * both. Whatever survives is still checked against the running shop's own
      * Validate before it is written.
      */
-    private static $filters = array(
+    private static $filters = [
         'isName' => '/[0-9!<>,;?=+()@#"°{}_$%:¤|]/u',
         'isAddress' => '/[!<>?=+@{}_$%]/u',
         'isCityName' => '/[!<>;?=+@#"°{}_$%]/u',
         'isPostCode' => '/[^a-zA-Z 0-9-]/',
         'isPhoneNumber' => '/[^+0-9. ()-]/',
-    );
+    ];
 
     /**
      * Read the report into one record per order.
@@ -99,13 +99,14 @@ class AmazonOrderReportImporter
      * and saved again.
      *
      * @param string $content Raw file contents
+     *
      * @return array 'orders' => array(order id => fields), 'rows' => lines
      *               read, 'invalid' => lines without a valid order id,
      *               'error' => null, 'no_order_id' or 'no_address'
      */
     public function parse($content)
     {
-        $result = array('orders' => array(), 'rows' => 0, 'invalid' => 0, 'error' => null);
+        $result = ['orders' => [], 'rows' => 0, 'invalid' => 0, 'error' => null];
 
         $lines = preg_split('/\r\n|\n|\r/', self::toUtf8((string) $content));
         $header = null;
@@ -142,13 +143,13 @@ class AmazonOrderReportImporter
             $cells = self::split($line, $delimiter);
             $orderId = self::cell($cells, $index, 'order_id');
             if (!preg_match('/^\d{3}-\d{7}-\d{7}$/', $orderId)) {
-                $result['invalid']++;
+                ++$result['invalid'];
                 continue;
             }
-            $result['rows']++;
+            ++$result['rows'];
 
-            $second = array();
-            foreach (array('address2', 'address3') as $field) {
+            $second = [];
+            foreach (['address2', 'address3'] as $field) {
                 $value = self::cell($cells, $index, $field);
                 if ($value !== '') {
                     $second[] = $value;
@@ -156,7 +157,7 @@ class AmazonOrderReportImporter
             }
             $shipPhone = self::cell($cells, $index, 'ship_phone');
 
-            $record = array(
+            $record = [
                 'ship_name' => self::cell($cells, $index, 'ship_name'),
                 'buyer_name' => self::cell($cells, $index, 'buyer_name'),
                 'address1' => self::cell($cells, $index, 'address1'),
@@ -166,7 +167,7 @@ class AmazonOrderReportImporter
                 'postal_code' => self::cell($cells, $index, 'postal_code'),
                 'country' => self::cell($cells, $index, 'country'),
                 'phone' => $shipPhone !== '' ? $shipPhone : self::cell($cells, $index, 'buyer_phone'),
-            );
+            ];
 
             if (!isset($result['orders'][$orderId])) {
                 $result['orders'][$orderId] = $record;
@@ -186,8 +187,9 @@ class AmazonOrderReportImporter
      * Put the report's names and addresses on the orders they belong to.
      *
      * @param array $orders Output of parse(): order id => fields
-     * @param int   $idShop The shop whose orders are filled (0 = the shop the
-     *                      request acts for)
+     * @param int $idShop The shop whose orders are filled (0 = the shop the
+     *                    request acts for)
+     *
      * @return array Counts: in_report, updated, addresses, customers, already,
      *               kept, not_imported, purged, other_shop
      */
@@ -197,7 +199,7 @@ class AmazonOrderReportImporter
         $this->ensureSchema();
         $idShop = (int) $idShop ? (int) $idShop : AmzproShop::actingId();
 
-        $summary = array(
+        $summary = [
             'in_report' => count($orders),
             'updated' => 0,
             'addresses' => 0,
@@ -207,7 +209,7 @@ class AmazonOrderReportImporter
             'not_imported' => 0,
             'purged' => 0,
             'other_shop' => 0,
-        );
+        ];
 
         foreach ($orders as $orderId => $fields) {
             // No LIMIT: getRow() appends its own, and two make the query fail.
@@ -223,15 +225,15 @@ class AmazonOrderReportImporter
                  WHERE `amazon_order_id` = \'' . pSQL($orderId) . '\''
             );
             if (!$row) {
-                $summary['not_imported']++;
+                ++$summary['not_imported'];
                 continue;
             }
             if ((int) $row['id_shop'] !== $idShop) {
-                $summary['other_shop']++;
+                ++$summary['other_shop'];
                 continue;
             }
             if (!empty($row['pii_purged_at'])) {
-                $summary['purged']++;
+                ++$summary['purged'];
                 continue;
             }
 
@@ -254,9 +256,9 @@ class AmazonOrderReportImporter
             }
 
             if ($stagedChanged || $shopChanged) {
-                $summary['updated']++;
+                ++$summary['updated'];
             } else {
-                $summary['already']++;
+                ++$summary['already'];
             }
         }
 
@@ -284,7 +286,7 @@ class AmazonOrderReportImporter
      */
     private function fillStaged(array $row, array $clean)
     {
-        $map = array(
+        $map = [
             'ship_name' => 'ship_name',
             'buyer_name' => 'buyer_name',
             'ship_address1' => 'address1',
@@ -294,9 +296,9 @@ class AmazonOrderReportImporter
             'ship_postal_code' => 'postal_code',
             'ship_country_code' => 'country',
             'ship_phone' => 'phone',
-        );
+        ];
 
-        $sets = array();
+        $sets = [];
         foreach ($map as $column => $field) {
             $current = isset($row[$column]) ? trim((string) $row[$column]) : '';
             if ($current === '' && $clean[$field] !== '') {
@@ -324,7 +326,7 @@ class AmazonOrderReportImporter
      */
     private function fillShopOrder($idOrder, array $clean, $idShop)
     {
-        $result = array('addresses' => 0, 'customers' => 0, 'kept' => 0);
+        $result = ['addresses' => 0, 'customers' => 0, 'kept' => 0];
 
         $order = new Order((int) $idOrder);
         if (!Validate::isLoadedObject($order) || (int) $order->id_shop !== (int) $idShop) {
@@ -335,21 +337,21 @@ class AmazonOrderReportImporter
         // They differ for every gift order.
         $recipient = $clean['ship_name'] !== '' ? $clean['ship_name'] : $clean['buyer_name'];
 
-        $ids = array_unique(array_filter(array(
+        $ids = array_unique(array_filter([
             (int) $order->id_address_delivery,
             (int) $order->id_address_invoice,
-        )));
+        ]));
         foreach ($ids as $idAddress) {
             $outcome = $this->fillAddress($idAddress, $clean, $recipient);
             if ($outcome === 'filled') {
-                $result['addresses']++;
+                ++$result['addresses'];
             } elseif ($outcome === 'kept') {
-                $result['kept']++;
+                ++$result['kept'];
             }
         }
 
         if ($this->fillCustomer((int) $order->id_customer, $clean['buyer_name'])) {
-            $result['customers']++;
+            ++$result['customers'];
         }
 
         return $result;
@@ -390,11 +392,11 @@ class AmazonOrderReportImporter
             $address->lastname = $parts['lastname'];
         }
 
-        $placeholders = array(
-            'city' => array('city', AmazonOrderCreator::PLACEHOLDER_CITY),
-            'postcode' => array('postal_code', AmazonOrderCreator::PLACEHOLDER_POSTCODE),
-            'phone' => array('phone', AmazonOrderCreator::PLACEHOLDER_PHONE),
-        );
+        $placeholders = [
+            'city' => ['city', AmazonOrderCreator::PLACEHOLDER_CITY],
+            'postcode' => ['postal_code', AmazonOrderCreator::PLACEHOLDER_POSTCODE],
+            'phone' => ['phone', AmazonOrderCreator::PLACEHOLDER_PHONE],
+        ];
         foreach ($placeholders as $property => $pair) {
             $current = trim((string) $address->$property);
             if (($current === '' || $current === $pair[1]) && $clean[$pair[0]] !== '') {
@@ -479,7 +481,7 @@ class AmazonOrderReportImporter
     {
         $country = strtoupper(trim((string) $fields['country']));
 
-        return array(
+        return [
             'ship_name' => self::fit($fields['ship_name'], 'isName', 255),
             'buyer_name' => self::fit($fields['buyer_name'], 'isName', 255),
             'address1' => self::fit($fields['address1'], 'isAddress', self::size('address1', 128)),
@@ -489,7 +491,7 @@ class AmazonOrderReportImporter
             'postal_code' => self::fit($fields['postal_code'], 'isPostCode', self::size('postcode', 12)),
             'country' => preg_match('/^[A-Z]{2}$/', $country) ? $country : '',
             'phone' => self::fit($fields['phone'], 'isPhoneNumber', self::size('phone', 32)),
-        );
+        ];
     }
 
     /**
@@ -514,7 +516,7 @@ class AmazonOrderReportImporter
         if ($size > 0 && Tools::strlen($value) > $size) {
             $value = trim(Tools::substr($value, 0, $size));
         }
-        if ($value === '' || !call_user_func(array('Validate', $validator), $value)) {
+        if ($value === '' || !call_user_func(['Validate', $validator], $value)) {
             return '';
         }
 
@@ -586,12 +588,12 @@ class AmazonOrderReportImporter
      */
     private static function mapColumns(array $header)
     {
-        $normal = array();
+        $normal = [];
         foreach ($header as $position => $name) {
             $normal[$position] = trim(preg_replace('/[\s_]+/', '-', strtolower(trim((string) $name))), '-');
         }
 
-        $index = array();
+        $index = [];
         foreach (self::$columns as $field => $aliases) {
             foreach ($aliases as $alias) {
                 $position = array_search($alias, $normal, true);

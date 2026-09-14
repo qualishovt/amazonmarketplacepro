@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * VAT invoice upload for VCS-enrolled sellers (UPLOAD_VAT_INVOICE feed).
  *
  * For each Amazon order that has a created PrestaShop order with an
@@ -37,8 +38,8 @@ class AmazonVcsInvoiceUploader
     private $client;
     private $marketplaceId;
     private $sellerId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
     private $useMock = false;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId)
@@ -84,15 +85,16 @@ class AmazonVcsInvoiceUploader
      * one on Amazon yet.
      *
      * @param int $limit
+     *
      * @return array Summary counts
      */
     public function uploadPendingInvoices($limit = 10)
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
         $this->ensureSchema();
 
-        $summary = array('candidates' => 0, 'uploaded' => 0, 'no_invoice' => 0, 'failed' => 0);
+        $summary = ['candidates' => 0, 'uploaded' => 0, 'no_invoice' => 0, 'failed' => 0];
 
         $rows = Db::getInstance()->executeS(
             'SELECT `amazon_order_id`, `id_order`
@@ -112,11 +114,11 @@ class AmazonVcsInvoiceUploader
         foreach ($rows as $row) {
             $result = $this->uploadInvoiceForOrder($row['amazon_order_id'], (int) $row['id_order']);
             if ($result === true) {
-                $summary['uploaded']++;
+                ++$summary['uploaded'];
             } elseif ($result === null) {
-                $summary['no_invoice']++;
+                ++$summary['no_invoice'];
             } else {
-                $summary['failed']++;
+                ++$summary['failed'];
                 $this->notices[] = $row['amazon_order_id'] . ': ' . $this->lastError;
             }
         }
@@ -128,7 +130,8 @@ class AmazonVcsInvoiceUploader
      * Render the PS invoice for one order and upload it as a VAT invoice.
      *
      * @param string $amazonOrderId
-     * @param int    $idOrder PrestaShop order id
+     * @param int $idOrder PrestaShop order id
+     *
      * @return bool|null true = uploaded, null = no invoice yet (skip), false = error
      */
     public function uploadInvoiceForOrder($amazonOrderId, $idOrder)
@@ -138,6 +141,7 @@ class AmazonVcsInvoiceUploader
         $order = new Order((int) $idOrder);
         if (!Validate::isLoadedObject($order)) {
             $this->lastError = 'PrestaShop order #' . (int) $idOrder . ' not found.';
+
             return false;
         }
         // The upload goes to this shop's seller account, so an order of
@@ -145,6 +149,7 @@ class AmazonVcsInvoiceUploader
         if (AmzproShop::isMultistore() && !AmzproShop::isAllShops()
             && (int) $order->id_shop !== AmzproShop::id()) {
             $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Its invoice is uploaded when that shop runs the task.', 'amazonvcsinvoiceuploader');
+
             return false;
         }
         $idShop = (int) $order->id_shop;
@@ -177,6 +182,7 @@ class AmazonVcsInvoiceUploader
             });
             if (!$pdfContent) {
                 $this->lastError = 'Could not render the invoice PDF.';
+
                 return false;
             }
         }
@@ -190,15 +196,16 @@ class AmazonVcsInvoiceUploader
             'application/pdf',
             $pdfContent,
             1,
-            array(
+            [
                 'metadata:orderid' => $amazonOrderId,
                 'metadata:invoicenumber' => $invoiceNumber,
                 'metadata:documenttype' => 'Invoice',
-            )
+            ]
         );
 
         if ($feedId === false) {
             $this->lastError = $feeds->getLastError();
+
             return false;
         }
 

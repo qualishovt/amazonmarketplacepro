@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -12,7 +13,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -22,71 +22,71 @@ require_once dirname(__FILE__) . '/classes/AmzproShop.php';
 class AmazonMarketplacePro extends Module
 {
     /** Amazon marketplace directory (id => label). */
-    private static $marketplaces = array(
-        'ATVPDKIKX0DER'  => 'Amazon.com (US)',
+    private static $marketplaces = [
+        'ATVPDKIKX0DER' => 'Amazon.com (US)',
         'A2EUQ1WTGCTBG2' => 'Amazon.ca (Canada)',
-        'A1AM78C64UM0Y8'  => 'Amazon.com.mx (Mexico)',
-        'A2Q3Y263D00KMC'  => 'Amazon.com.br (Brazil)',
-        'A1F83G8C2ARO7P'  => 'Amazon.co.uk (UK)',
-        'A1PA6795UKMFR9'  => 'Amazon.de (Germany)',
-        'A13V1IB3VIYZZH'  => 'Amazon.fr (France)',
-        'APJ6JRA9NG5V4'   => 'Amazon.it (Italy)',
-        'A1RKKUPIHCS9HS'  => 'Amazon.es (Spain)',
-        'A1805IZSGTT6HS'  => 'Amazon.nl (Netherlands)',
-        'A1C3SOZRARQ6R3'  => 'Amazon.pl (Poland)',
-        'A2NODRKZP88ZB9'  => 'Amazon.se (Sweden)',
-        'AMEN7PMS3EDWL'   => 'Amazon.com.be (Belgium)',
-        'A28R8C7NBKEWEA'  => 'Amazon.ie (Ireland)',
-        'ARBP9OOSHTCHU'   => 'Amazon.eg (Egypt)',
-        'AE08WJ6YKNBMC'   => 'Amazon.co.za (South Africa)',
-        'A33AVAJ2PDY3EV'  => 'Amazon.com.tr (Turkey)',
-        'A21TJRUUN4KGV'   => 'Amazon.in (India)',
-        'A2VIGQ35RCS4UG'  => 'Amazon.ae (UAE)',
-        'A17E79C6D8DWNP'  => 'Amazon.sa (Saudi Arabia)',
-        'A19VAU5U5O7RUS'  => 'Amazon.sg (Singapore)',
-        'A39IBJ37TRP1C6'  => 'Amazon.com.au (Australia)',
-        'A1VC38T7YXB528'  => 'Amazon.co.jp (Japan)',
-    );
+        'A1AM78C64UM0Y8' => 'Amazon.com.mx (Mexico)',
+        'A2Q3Y263D00KMC' => 'Amazon.com.br (Brazil)',
+        'A1F83G8C2ARO7P' => 'Amazon.co.uk (UK)',
+        'A1PA6795UKMFR9' => 'Amazon.de (Germany)',
+        'A13V1IB3VIYZZH' => 'Amazon.fr (France)',
+        'APJ6JRA9NG5V4' => 'Amazon.it (Italy)',
+        'A1RKKUPIHCS9HS' => 'Amazon.es (Spain)',
+        'A1805IZSGTT6HS' => 'Amazon.nl (Netherlands)',
+        'A1C3SOZRARQ6R3' => 'Amazon.pl (Poland)',
+        'A2NODRKZP88ZB9' => 'Amazon.se (Sweden)',
+        'AMEN7PMS3EDWL' => 'Amazon.com.be (Belgium)',
+        'A28R8C7NBKEWEA' => 'Amazon.ie (Ireland)',
+        'ARBP9OOSHTCHU' => 'Amazon.eg (Egypt)',
+        'AE08WJ6YKNBMC' => 'Amazon.co.za (South Africa)',
+        'A33AVAJ2PDY3EV' => 'Amazon.com.tr (Turkey)',
+        'A21TJRUUN4KGV' => 'Amazon.in (India)',
+        'A2VIGQ35RCS4UG' => 'Amazon.ae (UAE)',
+        'A17E79C6D8DWNP' => 'Amazon.sa (Saudi Arabia)',
+        'A19VAU5U5O7RUS' => 'Amazon.sg (Singapore)',
+        'A39IBJ37TRP1C6' => 'Amazon.com.au (Australia)',
+        'A1VC38T7YXB528' => 'Amazon.co.jp (Japan)',
+    ];
 
     /** Seller Central domain per marketplace (for the OAuth consent page). */
-    private static $sellerCentralDomains = array(
-        'ATVPDKIKX0DER'  => 'sellercentral.amazon.com',
+    private static $sellerCentralDomains = [
+        'ATVPDKIKX0DER' => 'sellercentral.amazon.com',
         'A2EUQ1WTGCTBG2' => 'sellercentral.amazon.ca',
         'A1AM78C64UM0Y8' => 'sellercentral.amazon.com.mx',
         'A2Q3Y263D00KMC' => 'sellercentral.amazon.com.br',
         'A1F83G8C2ARO7P' => 'sellercentral-europe.amazon.com',
         'A1PA6795UKMFR9' => 'sellercentral-europe.amazon.com',
         'A13V1IB3VIYZZH' => 'sellercentral-europe.amazon.com',
-        'APJ6JRA9NG5V4'  => 'sellercentral-europe.amazon.com',
+        'APJ6JRA9NG5V4' => 'sellercentral-europe.amazon.com',
         'A1RKKUPIHCS9HS' => 'sellercentral-europe.amazon.com',
         'A1805IZSGTT6HS' => 'sellercentral.amazon.nl',
         'A1C3SOZRARQ6R3' => 'sellercentral.amazon.pl',
         'A2NODRKZP88ZB9' => 'sellercentral.amazon.se',
-        'AMEN7PMS3EDWL'  => 'sellercentral.amazon.com.be',
+        'AMEN7PMS3EDWL' => 'sellercentral.amazon.com.be',
         'A28R8C7NBKEWEA' => 'sellercentral-europe.amazon.com',
-        'ARBP9OOSHTCHU'  => 'sellercentral.amazon.eg',
-        'AE08WJ6YKNBMC'  => 'sellercentral.amazon.co.za',
+        'ARBP9OOSHTCHU' => 'sellercentral.amazon.eg',
+        'AE08WJ6YKNBMC' => 'sellercentral.amazon.co.za',
         'A33AVAJ2PDY3EV' => 'sellercentral.amazon.com.tr',
-        'A21TJRUUN4KGV'  => 'sellercentral.amazon.in',
+        'A21TJRUUN4KGV' => 'sellercentral.amazon.in',
         'A2VIGQ35RCS4UG' => 'sellercentral.amazon.ae',
         'A17E79C6D8DWNP' => 'sellercentral.amazon.sa',
         'A19VAU5U5O7RUS' => 'sellercentral.amazon.sg',
         'A39IBJ37TRP1C6' => 'sellercentral.amazon.com.au',
         'A1VC38T7YXB528' => 'sellercentral.amazon.co.jp',
-    );
+    ];
 
     /** Map marketplace to SP-API regional endpoint. */
-    private static $marketplaceEndpoints = array(
-        'ATVPDKIKX0DER'  => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
+    private static $marketplaceEndpoints = [
+        'ATVPDKIKX0DER' => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
         'A2Q3Y263D00KMC' => 'NA',
         'A1F83G8C2ARO7P' => 'EU', 'A1PA6795UKMFR9' => 'EU', 'A13V1IB3VIYZZH' => 'EU',
-        'APJ6JRA9NG5V4'  => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
-        'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL'  => 'EU',
-        'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV'  => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
-        'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU'  => 'EU',
-        'AE08WJ6YKNBMC'  => 'EU', 'A19VAU5U5O7RUS' => 'FE',
+        'APJ6JRA9NG5V4' => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
+        'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL' => 'EU',
+        'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV' => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
+        'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU' => 'EU',
+        'AE08WJ6YKNBMC' => 'EU', 'A19VAU5U5O7RUS' => 'FE',
         'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
-    );
+    ];
 
     /** @var string feedback from the schedule screen, shown on the next render */
     protected $scheduleNotice = '';
@@ -96,23 +96,23 @@ class AmazonMarketplacePro extends Module
      * rules shared by every shop, or only read. Every other action works on
      * one shop's connection or data and is refused there.
      */
-    private static $allShopsAjax = array(
+    private static $allShopsAjax = [
         'runSaveCategoryMap', 'runDeleteCategoryMap',
         'runSavePricingRule', 'runDeletePricingRule',
         'runSaveShippingTemplate', 'runDeleteShippingTemplate',
         'runSaveProfile', 'runGetProfile', 'runDeleteProfile',
         'runSaveEntitySettings', 'runSaveProductRules',
         'runRefreshOrphans', 'runAuditCatalogue', 'runImportReferences',
-    );
+    ];
 
     /** Settings saved with the Amazon connection: one shop at a time. */
-    private static $connectionKeys = array(
+    private static $connectionKeys = [
         'AMZPRO_CLIENT_ID', 'AMZPRO_CLIENT_SECRET', 'AMZPRO_REFRESH_TOKEN',
         'AMZPRO_REFRESH_TOKEN_SANDBOX', 'AMZPRO_SELLER_ID', 'AMZPRO_AUTH_MODE',
-    );
+    ];
 
     /** @var string[] shop names by id, for the lists and notices of one request */
-    private $shopNames = array();
+    private $shopNames = [];
 
     public function __construct()
     {
@@ -137,7 +137,7 @@ class AmazonMarketplacePro extends Module
         // module was blocked from installing on the very version it named.
         // Padding would not save us either, because this property is assigned
         // after parent::__construct() and so is compared exactly as written.
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.6', 'max' => _PS_VERSION_];
     }
 
     /* ───────────────────── Install / Uninstall ───────────────────── */
@@ -150,7 +150,7 @@ class AmazonMarketplacePro extends Module
             Shop::setContext(Shop::CONTEXT_ALL);
         }
 
-        include(dirname(__FILE__) . '/sql/install.php');
+        include dirname(__FILE__) . '/sql/install.php';
         require_once dirname(__FILE__) . '/classes/AmzproShop.php';
         AmzproShop::ensureSchema();
 
@@ -238,11 +238,11 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_SEND_SALE_PRICE', '0');
         Configuration::updateValue('AMZPRO_SEND_LIST_PRICE', '0');
         Configuration::updateValue('AMZPRO_PREORDER', '0');
-        Configuration::updateValue('AMZPRO_CONDITION_MAP', json_encode(array(
+        Configuration::updateValue('AMZPRO_CONDITION_MAP', json_encode([
             'new' => 'new_new',
             'used' => 'used_good',
             'refurbished' => 'refurbished_refurbished',
-        )));
+        ]));
         // Shipping template ranges
         Configuration::updateValue('AMZPRO_SHIP_TPL_ENABLED', '0');
         Configuration::updateValue('AMZPRO_SHIP_TPL_BASIS', 'price');
@@ -312,9 +312,9 @@ class AmazonMarketplacePro extends Module
 
     public function uninstall()
     {
-        include(dirname(__FILE__) . '/sql/uninstall.php');
+        include dirname(__FILE__) . '/sql/uninstall.php';
 
-        $keys = array(
+        $keys = [
             'AMZPRO_CLIENT_ID', 'AMZPRO_CLIENT_SECRET', 'AMZPRO_REFRESH_TOKEN',
             'AMZPRO_REFRESH_TOKEN_SANDBOX',
             'AMZPRO_SELLER_ID', 'AMZPRO_MARKETPLACE_ID', 'AMZPRO_ENVIRONMENT',
@@ -352,7 +352,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_IMAP_USER', 'AMZPRO_IMAP_PASSWORD', 'AMZPRO_IMAP_FOLDER', 'AMZPRO_IMAP_SSL',
             'AMZPRO_CRON_MODE', 'AMZPRO_CRON_LOCK', 'AMZPRO_RELAY_REGISTERED', 'AMZPRO_RELAY_SINCE',
             'AMZPRO_RELAY_ERROR', 'AMZPRO_RELAY_CRON_URL', 'AMZPRO_SHOP_SCHEMA',
-        );
+        ];
         // deleteByName() removes the value for all shops and every shop's own.
         foreach ($keys as $k) {
             Configuration::deleteByName($k);
@@ -393,7 +393,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
         // Messages from the shop checks below, shown at the top of the page.
-        $shopErrors = array();
+        $shopErrors = [];
         // A form sent from a page that was opened for another shop is not
         // applied: it would save or run for the shop selected since.
         $formShopChanged = $this->formShopChanged();
@@ -419,12 +419,12 @@ class AmazonMarketplacePro extends Module
 
         if ($scheduleSubmit && $scheduleRefusal === null) {
             if (Tools::isSubmit('mkproScheduleSave')) {
-                $saved = AmazonScheduler::save(array(
+                $saved = AmazonScheduler::save([
                     'id_task' => (int) Tools::getValue('id_task'),
                     'task_key' => Tools::getValue('task_key'),
                     'interval_minutes' => (int) Tools::getValue('interval_minutes'),
                     'active' => (int) Tools::getValue('active'),
-                ));
+                ]);
                 $this->scheduleNotice = $saved
                     ? $this->l('Task saved.')
                     : $this->l('That task could not be saved: unknown task type.');
@@ -523,68 +523,68 @@ class AmazonMarketplacePro extends Module
         }
 
         // ── AJAX handlers (exit early with JSON) ──
-        $ajaxActions = array(
-            'ajaxTestAmazon'         => 'runAmazonConnectionTest',
-            'ajaxImportAmazonOrders'  => 'runAmazonOrderImport',
-            'ajaxCreatePsOrders'     => 'runCreatePsOrders',
-            'ajaxSyncProductsPs'     => 'runProductSync',
+        $ajaxActions = [
+            'ajaxTestAmazon' => 'runAmazonConnectionTest',
+            'ajaxImportAmazonOrders' => 'runAmazonOrderImport',
+            'ajaxCreatePsOrders' => 'runCreatePsOrders',
+            'ajaxSyncProductsPs' => 'runProductSync',
             'ajaxSyncProductsAmazon' => 'runProductSync',
             'ajaxListAmazonProducts' => 'runListAmazonProducts',
-            'ajaxPushProducts'       => 'runPushProducts',
-            'ajaxSendPending'        => 'runSendPending',
-            'ajaxImportReturns'      => 'runImportReturns',
-            'ajaxProcessReturns'     => 'runProcessReturns',
-            'ajaxSaveCategoryMap'    => 'runSaveCategoryMap',
-            'ajaxDeleteCategoryMap'  => 'runDeleteCategoryMap',
-            'ajaxSyncFbaInventory'   => 'runSyncFbaInventory',
-            'ajaxCreateMcfOrder'     => 'runCreateMcfOrder',
-            'ajaxSyncFbaStockToPs'   => 'runSyncFbaStockToPs',
-            'ajaxFetchPricing'       => 'runFetchPricing',
-            'ajaxApplyPricingRules'  => 'runApplyPricingRules',
-            'ajaxPushPrices'         => 'runPushPrices',
-            'ajaxSavePricingRule'    => 'runSavePricingRule',
-            'ajaxDeletePricingRule'  => 'runDeletePricingRule',
-            'ajaxFetchFees'          => 'runFetchFees',
-            'ajaxRequestReport'      => 'runRequestReport',
-            'ajaxPollReports'        => 'runPollReports',
-            'ajaxSaveMarketplace'    => 'runSaveMarketplace',
-            'ajaxDeleteMarketplace'  => 'runDeleteMarketplace',
-            'ajaxImportPromotions'   => 'runImportPromotions',
-            'ajaxExportPromotions'   => 'runExportPromotions',
+            'ajaxPushProducts' => 'runPushProducts',
+            'ajaxSendPending' => 'runSendPending',
+            'ajaxImportReturns' => 'runImportReturns',
+            'ajaxProcessReturns' => 'runProcessReturns',
+            'ajaxSaveCategoryMap' => 'runSaveCategoryMap',
+            'ajaxDeleteCategoryMap' => 'runDeleteCategoryMap',
+            'ajaxSyncFbaInventory' => 'runSyncFbaInventory',
+            'ajaxCreateMcfOrder' => 'runCreateMcfOrder',
+            'ajaxSyncFbaStockToPs' => 'runSyncFbaStockToPs',
+            'ajaxFetchPricing' => 'runFetchPricing',
+            'ajaxApplyPricingRules' => 'runApplyPricingRules',
+            'ajaxPushPrices' => 'runPushPrices',
+            'ajaxSavePricingRule' => 'runSavePricingRule',
+            'ajaxDeletePricingRule' => 'runDeletePricingRule',
+            'ajaxFetchFees' => 'runFetchFees',
+            'ajaxRequestReport' => 'runRequestReport',
+            'ajaxPollReports' => 'runPollReports',
+            'ajaxSaveMarketplace' => 'runSaveMarketplace',
+            'ajaxDeleteMarketplace' => 'runDeleteMarketplace',
+            'ajaxImportPromotions' => 'runImportPromotions',
+            'ajaxExportPromotions' => 'runExportPromotions',
             'ajaxCreatePromoCartRules' => 'runCreatePromoCartRules',
             'ajaxGetMessagingActions' => 'runGetMessagingActions',
-            'ajaxSendBuyerMessage'   => 'runSendBuyerMessage',
-            'ajaxRequestReview'      => 'runRequestReview',
-            'ajaxMatchCatalog'       => 'runMatchCatalog',
-            'ajaxImportCatalog'      => 'runImportCatalog',
-            'ajaxSubmitFeed'         => 'runSubmitFeed',
-            'ajaxPollFeeds'          => 'runPollFeeds',
+            'ajaxSendBuyerMessage' => 'runSendBuyerMessage',
+            'ajaxRequestReview' => 'runRequestReview',
+            'ajaxMatchCatalog' => 'runMatchCatalog',
+            'ajaxImportCatalog' => 'runImportCatalog',
+            'ajaxSubmitFeed' => 'runSubmitFeed',
+            'ajaxPollFeeds' => 'runPollFeeds',
             'ajaxSaveEntitySettings' => 'runSaveEntitySettings',
-            'ajaxSaveProductRules'   => 'runSaveProductRules',
-            'ajaxQueueAction'        => 'runQueueAction',
-            'ajaxRefreshOrphans'     => 'runRefreshOrphans',
+            'ajaxSaveProductRules' => 'runSaveProductRules',
+            'ajaxQueueAction' => 'runQueueAction',
+            'ajaxRefreshOrphans' => 'runRefreshOrphans',
             'ajaxPendingOrderAction' => 'runPendingOrderAction',
-            'ajaxSaveShippingTemplate'   => 'runSaveShippingTemplate',
+            'ajaxSaveShippingTemplate' => 'runSaveShippingTemplate',
             'ajaxDeleteShippingTemplate' => 'runDeleteShippingTemplate',
-            'ajaxSearchProductTypes'  => 'runSearchProductTypes',
+            'ajaxSearchProductTypes' => 'runSearchProductTypes',
             'ajaxLoadProductTypeSchema' => 'runLoadProductTypeSchema',
-            'ajaxSaveProfile'         => 'runSaveProfile',
-            'ajaxGetProfile'          => 'runGetProfile',
-            'ajaxDeleteProfile'       => 'runDeleteProfile',
-            'ajaxUpdateFromAmazon'    => 'runUpdateFromAmazon',
-            'ajaxFetchBuyerMessages'  => 'runFetchBuyerMessages',
-            'ajaxAuditCatalogue'      => 'runAuditCatalogue',
-            'ajaxImportReferences'    => 'runImportReferences',
+            'ajaxSaveProfile' => 'runSaveProfile',
+            'ajaxGetProfile' => 'runGetProfile',
+            'ajaxDeleteProfile' => 'runDeleteProfile',
+            'ajaxUpdateFromAmazon' => 'runUpdateFromAmazon',
+            'ajaxFetchBuyerMessages' => 'runFetchBuyerMessages',
+            'ajaxAuditCatalogue' => 'runAuditCatalogue',
+            'ajaxImportReferences' => 'runImportReferences',
             'ajaxImportOrderAddresses' => 'runImportOrderAddresses',
-            'ajaxListDeletions'       => 'runListDeletions',
-            'ajaxDeleteListings'      => 'runDeleteListings',
-        );
+            'ajaxListDeletions' => 'runListDeletions',
+            'ajaxDeleteListings' => 'runDeleteListings',
+        ];
         foreach ($ajaxActions as $submit => $method) {
             if (Tools::isSubmit($submit)) {
                 header('Content-Type: application/json');
                 $refusal = $this->ajaxShopRefusal($method);
                 if ($refusal !== null) {
-                    echo json_encode(array('success' => false, 'error' => $refusal));
+                    echo json_encode(['success' => false, 'error' => $refusal]);
                 } elseif ($submit === 'ajaxSyncProductsPs') {
                     echo json_encode($this->runProductSync('ps'));
                 } elseif ($submit === 'ajaxSyncProductsAmazon') {
@@ -598,15 +598,15 @@ class AmazonMarketplacePro extends Module
 
         // ── Save settings ──
         // Shown above the page. Plain text: the template escapes it.
-        $messages = array();
+        $messages = [];
         if (Tools::isSubmit('submitMkproSettings')) {
             if ($formShopChanged) {
                 $shopErrors[] = $this->shopChangedMessage();
             } else {
                 $saveError = $this->saveSettings();
-                $messages[] = array('type' => 'success', 'text' => $this->l('Settings saved.'));
+                $messages[] = ['type' => 'success', 'text' => $this->l('Settings saved.')];
                 if ($saveError !== '') {
-                    $messages[] = array('type' => 'error', 'text' => $saveError);
+                    $messages[] = ['type' => 'error', 'text' => $saveError];
                 }
 
                 // Runs after the save so it uses the window just entered.
@@ -618,22 +618,22 @@ class AmazonMarketplacePro extends Module
                     // automatic purge is switched on.
                     $done = $purger->purge(AmazonPiiPurger::DEFAULT_BATCH, AmzproShop::id());
                     if ($done === false) {
-                        $messages[] = array('type' => 'error', 'text' => $purger->getLastError());
+                        $messages[] = ['type' => 'error', 'text' => $purger->getLastError()];
                     } else {
-                        $messages[] = array('type' => 'success', 'text' => sprintf(
+                        $messages[] = ['type' => 'success', 'text' => sprintf(
                             $this->l('Buyer data cleared from %1$d order(s). %2$d still waiting.'),
                             (int) $done['orders'],
                             (int) $done['remaining']
-                        ));
+                        )];
                     }
                 }
             }
         }
         if (Tools::getValue('mkpro_connected')) {
-            $messages[] = array('type' => 'success', 'text' => $this->l('Your shop is now connected to Amazon. You can start syncing.'));
+            $messages[] = ['type' => 'success', 'text' => $this->l('Your shop is now connected to Amazon. You can start syncing.')];
         }
         foreach (array_unique($shopErrors) as $shopError) {
-            $messages[] = array('type' => 'error', 'text' => $shopError);
+            $messages[] = ['type' => 'error', 'text' => $shopError];
         }
 
         // ── Which shop the page is for ──
@@ -719,8 +719,8 @@ class AmazonMarketplacePro extends Module
 
         require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
         require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
-        $this->context->smarty->assign(array(
-            'module_dir'  => $this->_path,
+        $this->context->smarty->assign([
+            'module_dir' => $this->_path,
             // PrestaShop 1.6 returns translations HTML-escaped.
             'mkpro_messages' => array_map(function ($m) {
                 $m['text'] = html_entity_decode((string) $m['text'], ENT_QUOTES, 'UTF-8');
@@ -730,52 +730,52 @@ class AmazonMarketplacePro extends Module
 
             // The shop the page is for. 0 = "All shops" or a shop group,
             // where settings are the defaults and one-shop actions are off.
-            'mkpro_multistore'      => AmzproShop::isMultistore(),
-            'mkpro_all_shops'       => $allShops,
-            'mkpro_shop_id'         => $idShop,
-            'mkpro_shop_name'       => $idShop ? $this->shopName($idShop) : '',
-            'mkpro_group_name'      => $groupName,
+            'mkpro_multistore' => AmzproShop::isMultistore(),
+            'mkpro_all_shops' => $allShops,
+            'mkpro_shop_id' => $idShop,
+            'mkpro_shop_name' => $idShop ? $this->shopName($idShop) : '',
+            'mkpro_group_name' => $groupName,
             'mkpro_override_notes_json' => json_encode((object) $overrideNotes),
-            'mkpro_override_shops'  => $overrideShops,
+            'mkpro_override_shops' => $overrideShops,
 
             // Current settings
-            'mkpro_client_id'       => AmzproShop::get('AMZPRO_CLIENT_ID'),
+            'mkpro_client_id' => AmzproShop::get('AMZPRO_CLIENT_ID'),
             // Only whether one is stored: the secrets themselves never reach the page.
-            'mkpro_client_secret'   => (string) AmzproShop::get('AMZPRO_CLIENT_SECRET') !== '',
-            'mkpro_refresh_token'   => AmazonSpApiClient::storedRefreshToken() !== '',
-            'mkpro_seller_id'       => AmzproShop::get('AMZPRO_SELLER_ID'),
-            'mkpro_marketplace_id'  => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
-            'mkpro_environment'     => AmazonSpApiClient::environment(),
-            'mkpro_use_mock'        => AmzproShop::get('AMZPRO_USE_MOCK'),
+            'mkpro_client_secret' => (string) AmzproShop::get('AMZPRO_CLIENT_SECRET') !== '',
+            'mkpro_refresh_token' => AmazonSpApiClient::storedRefreshToken() !== '',
+            'mkpro_seller_id' => AmzproShop::get('AMZPRO_SELLER_ID'),
+            'mkpro_marketplace_id' => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
+            'mkpro_environment' => AmazonSpApiClient::environment(),
+            'mkpro_use_mock' => AmzproShop::get('AMZPRO_USE_MOCK'),
             'mkpro_default_carrier' => AmzproShop::get('AMZPRO_DEFAULT_CARRIER'),
             'mkpro_default_order_state' => AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE'),
             'mkpro_sync_stock_hook' => AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK'),
             'mkpro_sync_order_hook' => AmzproShop::get('AMZPRO_SYNC_ORDER_STATUS_HOOK'),
             'mkpro_sync_cancel_hook' => AmzproShop::get('AMZPRO_SYNC_CANCEL_HOOK'),
-            'mkpro_cron_token'      => $allShops ? '' : AmzproShop::get('AMZPRO_CRON_TOKEN'),
+            'mkpro_cron_token' => $allShops ? '' : AmzproShop::get('AMZPRO_CRON_TOKEN'),
             'mkpro_auto_review_request' => AmzproShop::get('AMZPRO_AUTO_REVIEW_REQUEST'),
-            'mkpro_stock_buffer'    => (int) AmzproShop::get('AMZPRO_STOCK_BUFFER'),
+            'mkpro_stock_buffer' => (int) AmzproShop::get('AMZPRO_STOCK_BUFFER'),
             'mkpro_delete_when_oos' => AmzproShop::get('AMZPRO_DELETE_WHEN_OOS'),
-            'mkpro_condition_type'  => AmzproShop::get('AMZPRO_CONDITION_TYPE'),
-            'mkpro_tax_mode'        => AmzproShop::get('AMZPRO_TAX_MODE'),
-            'mkpro_listing_lang'    => AmzproShop::get('AMZPRO_LISTING_LANG'),
-            'ps_languages'          => Language::getLanguages(true),
+            'mkpro_condition_type' => AmzproShop::get('AMZPRO_CONDITION_TYPE'),
+            'mkpro_tax_mode' => AmzproShop::get('AMZPRO_TAX_MODE'),
+            'mkpro_listing_lang' => AmzproShop::get('AMZPRO_LISTING_LANG'),
+            'ps_languages' => Language::getLanguages(true),
             'mkpro_shipping_template' => AmzproShop::get('AMZPRO_SHIPPING_TEMPLATE'),
-            'mkpro_b2b_discount'    => (float) AmzproShop::get('AMZPRO_B2B_DISCOUNT'),
-            'mkpro_vcs_enabled'     => AmzproShop::get('AMZPRO_VCS_ENABLED'),
-            'mkpro_dev_mode'        => (bool) AmzproShop::get('AMZPRO_DEV_MODE'),
+            'mkpro_b2b_discount' => (float) AmzproShop::get('AMZPRO_B2B_DISCOUNT'),
+            'mkpro_vcs_enabled' => AmzproShop::get('AMZPRO_VCS_ENABLED'),
+            'mkpro_dev_mode' => (bool) AmzproShop::get('AMZPRO_DEV_MODE'),
 
-            'mkpro_carrier_map'     => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true),
-            'amazon_carrier_codes'  => self::$amazonCarrierCodes,
+            'mkpro_carrier_map' => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true),
+            'amazon_carrier_codes' => self::$amazonCarrierCodes,
 
             // Connect with Amazon
-            'mkpro_auth_mode'       => AmazonSpApiClient::authMode(),
+            'mkpro_auth_mode' => AmazonSpApiClient::authMode(),
             // What the select shows: the stored choice, not the sandbox override.
             'mkpro_auth_mode_stored' => AmzproShop::get('AMZPRO_AUTH_MODE'),
-            'mkpro_lwa_app_id'      => AmazonSpApiClient::lwaAppId(),
-            'mkpro_relay_url'       => AmzproShop::get('AMZPRO_RELAY_URL'),
-            'mkpro_oauth_beta'      => AmazonSpApiClient::oauthBeta(),
-            'mkpro_connected'       => (AmazonSpApiClient::storedRefreshToken() != ''),
+            'mkpro_lwa_app_id' => AmazonSpApiClient::lwaAppId(),
+            'mkpro_relay_url' => AmzproShop::get('AMZPRO_RELAY_URL'),
+            'mkpro_oauth_beta' => AmazonSpApiClient::oauthBeta(),
+            'mkpro_connected' => (AmazonSpApiClient::storedRefreshToken() != ''),
             // Manual mode is "connected" as soon as a token is stored for the
             // active environment — the OAuth Connect flow is never used there.
             'mkpro_manual_connected' => (AmazonSpApiClient::authMode() === 'manual'
@@ -786,13 +786,13 @@ class AmazonMarketplacePro extends Module
                 !AmazonSpApiClient::isSandboxEnv()
             ) != ''),
             'mkpro_selling_partner_id' => AmzproShop::get('AMZPRO_SELLING_PARTNER_ID'),
-            'mkpro_oauth_error'     => Tools::getValue('mkpro_oauth_error', ''),
+            'mkpro_oauth_error' => Tools::getValue('mkpro_oauth_error', ''),
 
             // Select options
-            'marketplaces'   => $this->translatedMarketplaces(),
-            'carriers'       => $carriers,
-            'order_states'   => $orderStates,
-            'ps_categories'  => $categories,
+            'marketplaces' => $this->translatedMarketplaces(),
+            'carriers' => $carriers,
+            'order_states' => $orderStates,
+            'ps_categories' => $categories,
 
             // Category mappings
             'category_mappings' => $categoryMappings,
@@ -821,82 +821,82 @@ class AmazonMarketplacePro extends Module
             'promotion_stats' => $promotionStats,
 
             // SKU & export filters
-            'mkpro_sku_prefix'   => AmzproShop::get('AMZPRO_SKU_PREFIX'),
-            'mkpro_sku_source'   => AmzproShop::get('AMZPRO_SKU_SOURCE'),
-            'mkpro_price_min'    => (float) AmzproShop::get('AMZPRO_PRICE_MIN'),
-            'mkpro_price_max'    => (float) AmzproShop::get('AMZPRO_PRICE_MAX'),
-            'mkpro_qty_min'      => (int) AmzproShop::get('AMZPRO_QTY_MIN'),
+            'mkpro_sku_prefix' => AmzproShop::get('AMZPRO_SKU_PREFIX'),
+            'mkpro_sku_source' => AmzproShop::get('AMZPRO_SKU_SOURCE'),
+            'mkpro_price_min' => (float) AmzproShop::get('AMZPRO_PRICE_MIN'),
+            'mkpro_price_max' => (float) AmzproShop::get('AMZPRO_PRICE_MAX'),
+            'mkpro_qty_min' => (int) AmzproShop::get('AMZPRO_QTY_MIN'),
             'mkpro_use_specific_prices' => AmzproShop::get('AMZPRO_USE_SPECIFIC_PRICES'),
             'mkpro_specific_price_group' => (int) AmzproShop::get('AMZPRO_SPECIFIC_PRICE_GROUP'),
             'mkpro_report_email' => AmzproShop::get('AMZPRO_REPORT_EMAIL'),
 
             // Markup / delay / GPSR
             'mkpro_default_markup' => AmzproShop::get('AMZPRO_DEFAULT_MARKUP'),
-            'mkpro_default_delay'  => (int) AmzproShop::get('AMZPRO_DEFAULT_DELAY'),
+            'mkpro_default_delay' => (int) AmzproShop::get('AMZPRO_DEFAULT_DELAY'),
             'mkpro_markup_sources' => explode(',', (string) AmzproShop::get('AMZPRO_MARKUP_SOURCES')),
-            'mkpro_delay_sources'  => explode(',', (string) AmzproShop::get('AMZPRO_DELAY_SOURCES')),
-            'mkpro_gpsr_priority'  => AmzproShop::get('AMZPRO_GPSR_PRIORITY'),
+            'mkpro_delay_sources' => explode(',', (string) AmzproShop::get('AMZPRO_DELAY_SOURCES')),
+            'mkpro_gpsr_priority' => AmzproShop::get('AMZPRO_GPSR_PRIORITY'),
 
             // Sync options
-            'mkpro_sync_mode'      => AmzproShop::get('AMZPRO_SYNC_MODE'),
+            'mkpro_sync_mode' => AmzproShop::get('AMZPRO_SYNC_MODE'),
             'mkpro_force_zero_qty' => AmzproShop::get('AMZPRO_FORCE_ZERO_QTY'),
             'mkpro_only_with_asin' => AmzproShop::get('AMZPRO_ONLY_WITH_ASIN'),
-            'mkpro_export_limit'   => (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT'),
-            'mkpro_ean_as'         => AmzproShop::get('AMZPRO_EAN_AS'),
-            'mkpro_delta_hours'    => (int) AmzproShop::get('AMZPRO_DELTA_HOURS'),
-            'mkpro_cond_note_used'   => AmzproShop::get('AMZPRO_COND_NOTE_USED'),
+            'mkpro_export_limit' => (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT'),
+            'mkpro_ean_as' => AmzproShop::get('AMZPRO_EAN_AS'),
+            'mkpro_delta_hours' => (int) AmzproShop::get('AMZPRO_DELTA_HOURS'),
+            'mkpro_cond_note_used' => AmzproShop::get('AMZPRO_COND_NOTE_USED'),
             'mkpro_cond_note_refurb' => AmzproShop::get('AMZPRO_COND_NOTE_REFURB'),
             'mkpro_queue_ttl_days' => (int) AmzproShop::get('AMZPRO_QUEUE_TTL_DAYS'),
-            'mkpro_title_format'   => AmzproShop::get('AMZPRO_TITLE_FORMAT'),
+            'mkpro_title_format' => AmzproShop::get('AMZPRO_TITLE_FORMAT'),
 
             // Shipping template ranges
             'mkpro_ship_tpl_enabled' => AmzproShop::get('AMZPRO_SHIP_TPL_ENABLED'),
-            'mkpro_ship_tpl_basis'   => AmzproShop::get('AMZPRO_SHIP_TPL_BASIS'),
-            'shipping_templates'     => $shippingTemplates,
+            'mkpro_ship_tpl_basis' => AmzproShop::get('AMZPRO_SHIP_TPL_BASIS'),
+            'shipping_templates' => $shippingTemplates,
 
             // Extended order import
             'mkpro_order_lookback_value' => (int) AmzproShop::get('AMZPRO_ORDER_LOOKBACK_VALUE'),
-            'mkpro_order_lookback_unit'  => AmzproShop::get('AMZPRO_ORDER_LOOKBACK_UNIT'),
-            'mkpro_import_fba_orders'    => AmzproShop::get('AMZPRO_IMPORT_FBA_ORDERS'),
-            'mkpro_fba_order_state'      => (int) AmzproShop::get('AMZPRO_FBA_ORDER_STATE'),
-            'mkpro_order_state_shipped'  => (int) AmzproShop::get('AMZPRO_ORDER_STATE_SHIPPED'),
-            'mkpro_prioritize_asin'      => AmzproShop::get('AMZPRO_PRIORITIZE_ASIN'),
-            'mkpro_fake_email'           => AmzproShop::get('AMZPRO_FAKE_EMAIL'),
-            'mkpro_customer_group'       => (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP'),
-            'mkpro_skip_no_stock'        => AmzproShop::get('AMZPRO_SKIP_NO_STOCK'),
-            'mkpro_pii_purge'            => AmazonPiiPurger::isEnabled(),
-            'mkpro_pii_retention_days'   => AmazonPiiPurger::retentionDays(),
-            'mkpro_pii_purge_ps'         => AmzproShop::get('AMZPRO_PII_PURGE_PS'),
-            'pii_due_count'              => $piiDueCount,
-            'pii_purged_count'           => $piiPurgedCount,
-            'mkpro_order_match'          => AmzproShop::get('AMZPRO_ORDER_MATCH'),
-            'mkpro_rounding'             => AmzproShop::get('AMZPRO_ROUNDING'),
-            'mkpro_send_images'          => AmzproShop::get('AMZPRO_SEND_IMAGES'),
-            'mkpro_extended_data'        => AmzproShop::get('AMZPRO_EXTENDED_DATA'),
-            'mkpro_full_catalog'         => AmzproShop::get('AMZPRO_FULL_CATALOG'),
-            'mkpro_business_group'       => (int) AmzproShop::get('AMZPRO_BUSINESS_GROUP'),
-            'mkpro_imap_enabled'         => AmzproShop::get('AMZPRO_IMAP_ENABLED'),
-            'mkpro_imap_host'            => AmzproShop::get('AMZPRO_IMAP_HOST'),
-            'mkpro_imap_port'            => (int) AmzproShop::get('AMZPRO_IMAP_PORT'),
-            'mkpro_imap_user'            => AmzproShop::get('AMZPRO_IMAP_USER'),
-            'mkpro_imap_password_set'    => (AmzproShop::get('AMZPRO_IMAP_PASSWORD') != ''),
-            'mkpro_imap_folder'          => AmzproShop::get('AMZPRO_IMAP_FOLDER'),
-            'mkpro_imap_ssl'             => AmzproShop::get('AMZPRO_IMAP_SSL'),
-            'mkpro_imap_available'       => function_exists('imap_open'),
-            'mkpro_carrier_map_in'       => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true),
-            'amazon_ship_levels'         => array('Standard', 'Expedited', 'NextDay', 'SecondDay', 'Priority', 'SameDay', 'Scheduled'),
-            'mkpro_status_rules'         => (array) json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES'), true),
-            'mkpro_invoice_email'        => AmzproShop::get('AMZPRO_INVOICE_EMAIL'),
-            'mkpro_invoice_email_state'  => (int) AmzproShop::get('AMZPRO_INVOICE_EMAIL_STATE'),
-            'mkpro_invoice_attachment'   => AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT'),
-            'mkpro_send_sale_price'      => AmzproShop::get('AMZPRO_SEND_SALE_PRICE'),
-            'mkpro_send_list_price'      => AmzproShop::get('AMZPRO_SEND_LIST_PRICE'),
-            'mkpro_preorder'             => AmzproShop::get('AMZPRO_PREORDER'),
-            'mkpro_condition_map'        => array_merge(
-                array('new' => 'new_new', 'used' => 'used_good', 'refurbished' => 'refurbished_refurbished'),
+            'mkpro_order_lookback_unit' => AmzproShop::get('AMZPRO_ORDER_LOOKBACK_UNIT'),
+            'mkpro_import_fba_orders' => AmzproShop::get('AMZPRO_IMPORT_FBA_ORDERS'),
+            'mkpro_fba_order_state' => (int) AmzproShop::get('AMZPRO_FBA_ORDER_STATE'),
+            'mkpro_order_state_shipped' => (int) AmzproShop::get('AMZPRO_ORDER_STATE_SHIPPED'),
+            'mkpro_prioritize_asin' => AmzproShop::get('AMZPRO_PRIORITIZE_ASIN'),
+            'mkpro_fake_email' => AmzproShop::get('AMZPRO_FAKE_EMAIL'),
+            'mkpro_customer_group' => (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP'),
+            'mkpro_skip_no_stock' => AmzproShop::get('AMZPRO_SKIP_NO_STOCK'),
+            'mkpro_pii_purge' => AmazonPiiPurger::isEnabled(),
+            'mkpro_pii_retention_days' => AmazonPiiPurger::retentionDays(),
+            'mkpro_pii_purge_ps' => AmzproShop::get('AMZPRO_PII_PURGE_PS'),
+            'pii_due_count' => $piiDueCount,
+            'pii_purged_count' => $piiPurgedCount,
+            'mkpro_order_match' => AmzproShop::get('AMZPRO_ORDER_MATCH'),
+            'mkpro_rounding' => AmzproShop::get('AMZPRO_ROUNDING'),
+            'mkpro_send_images' => AmzproShop::get('AMZPRO_SEND_IMAGES'),
+            'mkpro_extended_data' => AmzproShop::get('AMZPRO_EXTENDED_DATA'),
+            'mkpro_full_catalog' => AmzproShop::get('AMZPRO_FULL_CATALOG'),
+            'mkpro_business_group' => (int) AmzproShop::get('AMZPRO_BUSINESS_GROUP'),
+            'mkpro_imap_enabled' => AmzproShop::get('AMZPRO_IMAP_ENABLED'),
+            'mkpro_imap_host' => AmzproShop::get('AMZPRO_IMAP_HOST'),
+            'mkpro_imap_port' => (int) AmzproShop::get('AMZPRO_IMAP_PORT'),
+            'mkpro_imap_user' => AmzproShop::get('AMZPRO_IMAP_USER'),
+            'mkpro_imap_password_set' => (AmzproShop::get('AMZPRO_IMAP_PASSWORD') != ''),
+            'mkpro_imap_folder' => AmzproShop::get('AMZPRO_IMAP_FOLDER'),
+            'mkpro_imap_ssl' => AmzproShop::get('AMZPRO_IMAP_SSL'),
+            'mkpro_imap_available' => function_exists('imap_open'),
+            'mkpro_carrier_map_in' => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true),
+            'amazon_ship_levels' => ['Standard', 'Expedited', 'NextDay', 'SecondDay', 'Priority', 'SameDay', 'Scheduled'],
+            'mkpro_status_rules' => (array) json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES'), true),
+            'mkpro_invoice_email' => AmzproShop::get('AMZPRO_INVOICE_EMAIL'),
+            'mkpro_invoice_email_state' => (int) AmzproShop::get('AMZPRO_INVOICE_EMAIL_STATE'),
+            'mkpro_invoice_attachment' => AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT'),
+            'mkpro_send_sale_price' => AmzproShop::get('AMZPRO_SEND_SALE_PRICE'),
+            'mkpro_send_list_price' => AmzproShop::get('AMZPRO_SEND_LIST_PRICE'),
+            'mkpro_preorder' => AmzproShop::get('AMZPRO_PREORDER'),
+            'mkpro_condition_map' => array_merge(
+                ['new' => 'new_new', 'used' => 'used_good', 'refurbished' => 'refurbished_refurbished'],
                 (array) json_decode((string) AmzproShop::get('AMZPRO_CONDITION_MAP'), true)
             ),
-            'amazon_conditions'          => array(
+            'amazon_conditions' => [
                 'new_new' => $this->l('New'),
                 'used_like_new' => $this->l('Used - Like New'),
                 'used_very_good' => $this->l('Used - Very Good'),
@@ -904,117 +904,117 @@ class AmazonMarketplacePro extends Module
                 'used_acceptable' => $this->l('Used - Acceptable'),
                 'collectible_like_new' => $this->l('Collectible - Like New'),
                 'refurbished_refurbished' => $this->l('Refurbished'),
-            ),
-            'customer_groups'            => $customerGroups,
+            ],
+            'customer_groups' => $customerGroups,
 
             // Listing profiles
-            'profiles'          => $profiles,
+            'profiles' => $profiles,
             'profile_ps_fields_json' => json_encode(AmazonProfile::getPsFields()),
-            'attribute_groups'  => is_array($attributeGroups) ? $attributeGroups : array(),
+            'attribute_groups' => is_array($attributeGroups) ? $attributeGroups : [],
 
             // Rules / queue / orphans / pending
-            'entity_categories'    => $entityCategories,
+            'entity_categories' => $entityCategories,
             'entity_manufacturers' => $entityManufacturers,
-            'entity_suppliers'     => $entitySuppliers,
-            'product_rules'        => $productRules,
-            'queue_rows'           => $queueRows,
-            'orphan_rows'          => $orphanRows,
-            'pending_orders'       => $pendingOrders,
-            'reservations'         => $reservations,
-            'mkpro_remote_cart'    => AmzproShop::get('AMZPRO_REMOTE_CART'),
+            'entity_suppliers' => $entitySuppliers,
+            'product_rules' => $productRules,
+            'queue_rows' => $queueRows,
+            'orphan_rows' => $orphanRows,
+            'pending_orders' => $pendingOrders,
+            'reservations' => $reservations,
+            'mkpro_remote_cart' => AmzproShop::get('AMZPRO_REMOTE_CART'),
             'mkpro_remote_cart_ttl' => (int) AmzproShop::get('AMZPRO_REMOTE_CART_TTL'),
 
             // AJAX URLs
-            'ajax_test_amazon_url'          => $baseUrl . '&ajaxTestAmazon=1',
-            'ajax_import_orders_url'        => $baseUrl . '&ajaxImportAmazonOrders=1',
-            'ajax_create_ps_orders_url'     => $baseUrl . '&ajaxCreatePsOrders=1',
-            'ajax_sync_products_ps_url'     => $baseUrl . '&ajaxSyncProductsPs=1',
+            'ajax_test_amazon_url' => $baseUrl . '&ajaxTestAmazon=1',
+            'ajax_import_orders_url' => $baseUrl . '&ajaxImportAmazonOrders=1',
+            'ajax_create_ps_orders_url' => $baseUrl . '&ajaxCreatePsOrders=1',
+            'ajax_sync_products_ps_url' => $baseUrl . '&ajaxSyncProductsPs=1',
             'ajax_sync_products_amazon_url' => $baseUrl . '&ajaxSyncProductsAmazon=1',
             'ajax_list_amazon_products_url' => $baseUrl . '&ajaxListAmazonProducts=1',
-            'ajax_push_products_url'        => $baseUrl . '&ajaxPushProducts=1',
-            'ajax_send_pending_url'         => $baseUrl . '&ajaxSendPending=1',
-            'ajax_import_returns_url'       => $baseUrl . '&ajaxImportReturns=1',
-            'ajax_process_returns_url'      => $baseUrl . '&ajaxProcessReturns=1',
-            'ajax_save_category_map_url'    => $baseUrl . '&ajaxSaveCategoryMap=1',
-            'ajax_delete_category_map_url'  => $baseUrl . '&ajaxDeleteCategoryMap=1',
-            'ajax_sync_fba_inventory_url'   => $baseUrl . '&ajaxSyncFbaInventory=1',
-            'ajax_create_mcf_order_url'     => $baseUrl . '&ajaxCreateMcfOrder=1',
-            'ajax_sync_fba_stock_ps_url'    => $baseUrl . '&ajaxSyncFbaStockToPs=1',
-            'ajax_fetch_pricing_url'        => $baseUrl . '&ajaxFetchPricing=1',
-            'ajax_apply_pricing_rules_url'  => $baseUrl . '&ajaxApplyPricingRules=1',
-            'ajax_push_prices_url'          => $baseUrl . '&ajaxPushPrices=1',
-            'ajax_save_pricing_rule_url'    => $baseUrl . '&ajaxSavePricingRule=1',
-            'ajax_delete_pricing_rule_url'  => $baseUrl . '&ajaxDeletePricingRule=1',
-            'ajax_fetch_fees_url'           => $baseUrl . '&ajaxFetchFees=1',
-            'ajax_request_report_url'       => $baseUrl . '&ajaxRequestReport=1',
-            'ajax_poll_reports_url'         => $baseUrl . '&ajaxPollReports=1',
-            'ajax_save_marketplace_url'     => $baseUrl . '&ajaxSaveMarketplace=1',
-            'ajax_delete_marketplace_url'   => $baseUrl . '&ajaxDeleteMarketplace=1',
-            'ajax_import_promotions_url'    => $baseUrl . '&ajaxImportPromotions=1',
-            'ajax_export_promotions_url'    => $baseUrl . '&ajaxExportPromotions=1',
+            'ajax_push_products_url' => $baseUrl . '&ajaxPushProducts=1',
+            'ajax_send_pending_url' => $baseUrl . '&ajaxSendPending=1',
+            'ajax_import_returns_url' => $baseUrl . '&ajaxImportReturns=1',
+            'ajax_process_returns_url' => $baseUrl . '&ajaxProcessReturns=1',
+            'ajax_save_category_map_url' => $baseUrl . '&ajaxSaveCategoryMap=1',
+            'ajax_delete_category_map_url' => $baseUrl . '&ajaxDeleteCategoryMap=1',
+            'ajax_sync_fba_inventory_url' => $baseUrl . '&ajaxSyncFbaInventory=1',
+            'ajax_create_mcf_order_url' => $baseUrl . '&ajaxCreateMcfOrder=1',
+            'ajax_sync_fba_stock_ps_url' => $baseUrl . '&ajaxSyncFbaStockToPs=1',
+            'ajax_fetch_pricing_url' => $baseUrl . '&ajaxFetchPricing=1',
+            'ajax_apply_pricing_rules_url' => $baseUrl . '&ajaxApplyPricingRules=1',
+            'ajax_push_prices_url' => $baseUrl . '&ajaxPushPrices=1',
+            'ajax_save_pricing_rule_url' => $baseUrl . '&ajaxSavePricingRule=1',
+            'ajax_delete_pricing_rule_url' => $baseUrl . '&ajaxDeletePricingRule=1',
+            'ajax_fetch_fees_url' => $baseUrl . '&ajaxFetchFees=1',
+            'ajax_request_report_url' => $baseUrl . '&ajaxRequestReport=1',
+            'ajax_poll_reports_url' => $baseUrl . '&ajaxPollReports=1',
+            'ajax_save_marketplace_url' => $baseUrl . '&ajaxSaveMarketplace=1',
+            'ajax_delete_marketplace_url' => $baseUrl . '&ajaxDeleteMarketplace=1',
+            'ajax_import_promotions_url' => $baseUrl . '&ajaxImportPromotions=1',
+            'ajax_export_promotions_url' => $baseUrl . '&ajaxExportPromotions=1',
             'ajax_create_promo_cart_rules_url' => $baseUrl . '&ajaxCreatePromoCartRules=1',
             'ajax_get_messaging_actions_url' => $baseUrl . '&ajaxGetMessagingActions=1',
-            'ajax_send_buyer_message_url'   => $baseUrl . '&ajaxSendBuyerMessage=1',
-            'ajax_request_review_url'       => $baseUrl . '&ajaxRequestReview=1',
-            'ajax_match_catalog_url'        => $baseUrl . '&ajaxMatchCatalog=1',
-            'ajax_import_catalog_url'       => $baseUrl . '&ajaxImportCatalog=1',
-            'ajax_submit_feed_url'          => $baseUrl . '&ajaxSubmitFeed=1',
-            'ajax_poll_feeds_url'           => $baseUrl . '&ajaxPollFeeds=1',
+            'ajax_send_buyer_message_url' => $baseUrl . '&ajaxSendBuyerMessage=1',
+            'ajax_request_review_url' => $baseUrl . '&ajaxRequestReview=1',
+            'ajax_match_catalog_url' => $baseUrl . '&ajaxMatchCatalog=1',
+            'ajax_import_catalog_url' => $baseUrl . '&ajaxImportCatalog=1',
+            'ajax_submit_feed_url' => $baseUrl . '&ajaxSubmitFeed=1',
+            'ajax_poll_feeds_url' => $baseUrl . '&ajaxPollFeeds=1',
             'ajax_save_entity_settings_url' => $baseUrl . '&ajaxSaveEntitySettings=1',
-            'ajax_save_product_rules_url'   => $baseUrl . '&ajaxSaveProductRules=1',
-            'ajax_queue_action_url'         => $baseUrl . '&ajaxQueueAction=1',
-            'ajax_refresh_orphans_url'      => $baseUrl . '&ajaxRefreshOrphans=1',
+            'ajax_save_product_rules_url' => $baseUrl . '&ajaxSaveProductRules=1',
+            'ajax_queue_action_url' => $baseUrl . '&ajaxQueueAction=1',
+            'ajax_refresh_orphans_url' => $baseUrl . '&ajaxRefreshOrphans=1',
             'ajax_pending_order_action_url' => $baseUrl . '&ajaxPendingOrderAction=1',
-            'ajax_save_shipping_template_url'   => $baseUrl . '&ajaxSaveShippingTemplate=1',
+            'ajax_save_shipping_template_url' => $baseUrl . '&ajaxSaveShippingTemplate=1',
             'ajax_delete_shipping_template_url' => $baseUrl . '&ajaxDeleteShippingTemplate=1',
-            'ajax_search_product_types_url'  => $baseUrl . '&ajaxSearchProductTypes=1',
-            'ajax_load_pt_schema_url'       => $baseUrl . '&ajaxLoadProductTypeSchema=1',
-            'ajax_save_profile_url'         => $baseUrl . '&ajaxSaveProfile=1',
-            'ajax_get_profile_url'          => $baseUrl . '&ajaxGetProfile=1',
-            'ajax_delete_profile_url'       => $baseUrl . '&ajaxDeleteProfile=1',
-            'ajax_update_from_amazon_url'   => $baseUrl . '&ajaxUpdateFromAmazon=1',
+            'ajax_search_product_types_url' => $baseUrl . '&ajaxSearchProductTypes=1',
+            'ajax_load_pt_schema_url' => $baseUrl . '&ajaxLoadProductTypeSchema=1',
+            'ajax_save_profile_url' => $baseUrl . '&ajaxSaveProfile=1',
+            'ajax_get_profile_url' => $baseUrl . '&ajaxGetProfile=1',
+            'ajax_delete_profile_url' => $baseUrl . '&ajaxDeleteProfile=1',
+            'ajax_update_from_amazon_url' => $baseUrl . '&ajaxUpdateFromAmazon=1',
             'ajax_fetch_buyer_messages_url' => $baseUrl . '&ajaxFetchBuyerMessages=1',
-            'ajax_audit_catalogue_url'      => $baseUrl . '&ajaxAuditCatalogue=1',
-            'ajax_import_references_url'    => $baseUrl . '&ajaxImportReferences=1',
+            'ajax_audit_catalogue_url' => $baseUrl . '&ajaxAuditCatalogue=1',
+            'ajax_import_references_url' => $baseUrl . '&ajaxImportReferences=1',
             'ajax_import_order_addresses_url' => $baseUrl . '&ajaxImportOrderAddresses=1',
-            'ajax_list_deletions_url'       => $baseUrl . '&ajaxListDeletions=1',
-            'ajax_delete_listings_url'      => $baseUrl . '&ajaxDeleteListings=1',
-            'export_references_url'         => $baseUrl . '&mkproExportReferences=1',
-            'download_feed_url'             => $baseUrl . '&mkproDownloadFeed=1',
+            'ajax_list_deletions_url' => $baseUrl . '&ajaxListDeletions=1',
+            'ajax_delete_listings_url' => $baseUrl . '&ajaxDeleteListings=1',
+            'export_references_url' => $baseUrl . '&mkproExportReferences=1',
+            'download_feed_url' => $baseUrl . '&mkproDownloadFeed=1',
 
             // Cron URLs
-            'cron_import_orders_url'   => $cronBase . '&action=import_orders',
-            'cron_create_orders_url'   => $cronBase . '&action=create_orders',
-            'cron_sync_stock_url'      => $cronBase . '&action=sync_stock',
-            'cron_sync_products_url'   => $cronBase . '&action=sync_products',
-            'cron_import_returns_url'  => $cronBase . '&action=import_returns',
+            'cron_import_orders_url' => $cronBase . '&action=import_orders',
+            'cron_create_orders_url' => $cronBase . '&action=create_orders',
+            'cron_sync_stock_url' => $cronBase . '&action=sync_stock',
+            'cron_sync_products_url' => $cronBase . '&action=sync_products',
+            'cron_import_returns_url' => $cronBase . '&action=import_returns',
             'cron_process_returns_url' => $cronBase . '&action=process_returns',
-            'cron_sync_fba_url'        => $cronBase . '&action=sync_fba',
-            'cron_reprice_url'         => $cronBase . '&action=reprice',
-            'cron_fetch_fees_url'      => $cronBase . '&action=fetch_fees',
-            'cron_poll_reports_url'    => $cronBase . '&action=poll_reports',
+            'cron_sync_fba_url' => $cronBase . '&action=sync_fba',
+            'cron_reprice_url' => $cronBase . '&action=reprice',
+            'cron_fetch_fees_url' => $cronBase . '&action=fetch_fees',
+            'cron_poll_reports_url' => $cronBase . '&action=poll_reports',
             'cron_sync_promotions_url' => $cronBase . '&action=sync_promotions',
-            'cron_multi_import_url'    => $cronBase . '&action=multi_import_orders',
-            'cron_multi_sync_url'      => $cronBase . '&action=multi_sync_products',
+            'cron_multi_import_url' => $cronBase . '&action=multi_import_orders',
+            'cron_multi_sync_url' => $cronBase . '&action=multi_sync_products',
             'cron_request_reviews_url' => $cronBase . '&action=request_reviews',
-            'cron_process_feeds_url'   => $cronBase . '&action=process_feeds',
-            'cron_purge_pii_url'       => $cronBase . '&action=purge_pii',
+            'cron_process_feeds_url' => $cronBase . '&action=process_feeds',
+            'cron_purge_pii_url' => $cronBase . '&action=purge_pii',
             'cron_upload_invoices_url' => $cronBase . '&action=upload_invoices',
-            'cron_remote_cart_url'     => $cronBase . '&action=remote_cart',
+            'cron_remote_cart_url' => $cronBase . '&action=remote_cart',
 
             // The schedule. One URL replaces the nineteen above; the old ones
             // stay assigned so an install that already uses them keeps working.
-            'cron_run_due_url'   => $cronBase . '&action=run_due',
-            'schedule_tasks'     => $allShops ? array() : $this->scheduleTasksForDisplay(),
+            'cron_run_due_url' => $cronBase . '&action=run_due',
+            'schedule_tasks' => $allShops ? [] : $this->scheduleTasksForDisplay(),
             'schedule_catalogue' => $this->translatedScheduleCatalogue(),
-            'schedule_mode'      => AmazonRelaySchedule::mode(),
-            'schedule_relay'     => AmazonRelaySchedule::status(),
-            'schedule_notice'    => $this->scheduleNotice,
-            'cron_fetch_messages_url'  => $cronBase . '&action=fetch_messages',
+            'schedule_mode' => AmazonRelaySchedule::mode(),
+            'schedule_relay' => AmazonRelaySchedule::status(),
+            'schedule_notice' => $this->scheduleNotice,
+            'cron_fetch_messages_url' => $cronBase . '&action=fetch_messages',
 
             // Log entries
             'log_entries' => $this->getRecentLogs(50),
-        ));
+        ]);
 
         return $this->context->smarty->fetch($this->local_path . 'views/templates/admin/configure.tpl');
     }
@@ -1030,100 +1030,100 @@ class AmazonMarketplacePro extends Module
      */
     protected function settingsFields($tokenKey)
     {
-        return array(
-            'AMZPRO_CLIENT_ID'       => 'mkpro_client_id',
-            'AMZPRO_CLIENT_SECRET'    => 'mkpro_client_secret',
-            $tokenKey                 => 'mkpro_refresh_token',
-            'AMZPRO_SELLER_ID'        => 'mkpro_seller_id',
-            'AMZPRO_MARKETPLACE_ID'   => 'mkpro_marketplace_id',
-            'AMZPRO_ENVIRONMENT'      => 'mkpro_environment',
-            'AMZPRO_USE_MOCK'         => 'mkpro_use_mock',
-            'AMZPRO_DEFAULT_CARRIER'         => 'mkpro_default_carrier',
-            'AMZPRO_DEFAULT_ORDER_STATE'     => 'mkpro_default_order_state',
-            'AMZPRO_SYNC_STOCK_HOOK'         => 'mkpro_sync_stock_hook',
-            'AMZPRO_SYNC_ORDER_STATUS_HOOK'  => 'mkpro_sync_order_hook',
-            'AMZPRO_SYNC_CANCEL_HOOK'        => 'mkpro_sync_cancel_hook',
-            'AMZPRO_AUTH_MODE'               => 'mkpro_auth_mode',
-            'AMZPRO_OAUTH_BETA'              => 'mkpro_oauth_beta',
-            'AMZPRO_AUTO_REVIEW_REQUEST'     => 'mkpro_auto_review_request',
-            'AMZPRO_STOCK_BUFFER'            => 'mkpro_stock_buffer',
-            'AMZPRO_DELETE_WHEN_OOS'         => 'mkpro_delete_when_oos',
-            'AMZPRO_CONDITION_TYPE'          => 'mkpro_condition_type',
-            'AMZPRO_TAX_MODE'                => 'mkpro_tax_mode',
-            'AMZPRO_LISTING_LANG'            => 'mkpro_listing_lang',
-            'AMZPRO_SHIPPING_TEMPLATE'       => 'mkpro_shipping_template',
-            'AMZPRO_B2B_DISCOUNT'            => 'mkpro_b2b_discount',
-            'AMZPRO_VCS_ENABLED'             => 'mkpro_vcs_enabled',
-            'AMZPRO_SKU_PREFIX'              => 'mkpro_sku_prefix',
-            'AMZPRO_SKU_SOURCE'              => 'mkpro_sku_source',
-            'AMZPRO_PRICE_MIN'               => 'mkpro_price_min',
-            'AMZPRO_PRICE_MAX'               => 'mkpro_price_max',
-            'AMZPRO_QTY_MIN'                 => 'mkpro_qty_min',
-            'AMZPRO_USE_SPECIFIC_PRICES'     => 'mkpro_use_specific_prices',
-            'AMZPRO_SPECIFIC_PRICE_GROUP'    => 'mkpro_specific_price_group',
-            'AMZPRO_REPORT_EMAIL'            => 'mkpro_report_email',
-            'AMZPRO_DEFAULT_MARKUP'          => 'mkpro_default_markup',
-            'AMZPRO_DEFAULT_DELAY'           => 'mkpro_default_delay',
-            'AMZPRO_GPSR_PRIORITY'           => 'mkpro_gpsr_priority',
-            'AMZPRO_SYNC_MODE'               => 'mkpro_sync_mode',
-            'AMZPRO_FORCE_ZERO_QTY'          => 'mkpro_force_zero_qty',
-            'AMZPRO_ONLY_WITH_ASIN'          => 'mkpro_only_with_asin',
-            'AMZPRO_EXPORT_LIMIT'            => 'mkpro_export_limit',
-            'AMZPRO_EAN_AS'                  => 'mkpro_ean_as',
-            'AMZPRO_DELTA_HOURS'             => 'mkpro_delta_hours',
-            'AMZPRO_COND_NOTE_USED'          => 'mkpro_cond_note_used',
-            'AMZPRO_COND_NOTE_REFURB'        => 'mkpro_cond_note_refurb',
-            'AMZPRO_QUEUE_TTL_DAYS'          => 'mkpro_queue_ttl_days',
-            'AMZPRO_TITLE_FORMAT'            => 'mkpro_title_format',
-            'AMZPRO_SHIP_TPL_ENABLED'        => 'mkpro_ship_tpl_enabled',
-            'AMZPRO_SHIP_TPL_BASIS'          => 'mkpro_ship_tpl_basis',
-            'AMZPRO_ORDER_LOOKBACK_VALUE'    => 'mkpro_order_lookback_value',
-            'AMZPRO_ORDER_LOOKBACK_UNIT'     => 'mkpro_order_lookback_unit',
-            'AMZPRO_IMPORT_FBA_ORDERS'       => 'mkpro_import_fba_orders',
-            'AMZPRO_FBA_ORDER_STATE'         => 'mkpro_fba_order_state',
-            'AMZPRO_ORDER_STATE_SHIPPED'     => 'mkpro_order_state_shipped',
-            'AMZPRO_PRIORITIZE_ASIN'         => 'mkpro_prioritize_asin',
-            'AMZPRO_FAKE_EMAIL'              => 'mkpro_fake_email',
-            'AMZPRO_CUSTOMER_GROUP'          => 'mkpro_customer_group',
-            'AMZPRO_SKIP_NO_STOCK'           => 'mkpro_skip_no_stock',
-            'AMZPRO_PII_PURGE'               => 'mkpro_pii_purge',
-            'AMZPRO_PII_RETENTION_DAYS'      => 'mkpro_pii_retention_days',
-            'AMZPRO_PII_PURGE_PS'            => 'mkpro_pii_purge_ps',
-            'AMZPRO_ORDER_MATCH'             => 'mkpro_order_match',
-            'AMZPRO_ROUNDING'                => 'mkpro_rounding',
-            'AMZPRO_SEND_IMAGES'             => 'mkpro_send_images',
-            'AMZPRO_EXTENDED_DATA'           => 'mkpro_extended_data',
-            'AMZPRO_FULL_CATALOG'            => 'mkpro_full_catalog',
-            'AMZPRO_BUSINESS_GROUP'          => 'mkpro_business_group',
-            'AMZPRO_IMAP_ENABLED'            => 'mkpro_imap_enabled',
-            'AMZPRO_IMAP_HOST'               => 'mkpro_imap_host',
-            'AMZPRO_IMAP_PORT'               => 'mkpro_imap_port',
-            'AMZPRO_IMAP_USER'               => 'mkpro_imap_user',
-            'AMZPRO_IMAP_FOLDER'             => 'mkpro_imap_folder',
-            'AMZPRO_IMAP_SSL'                => 'mkpro_imap_ssl',
-            'AMZPRO_IMAP_PASSWORD'           => 'mkpro_imap_password',
-            'AMZPRO_SEND_SALE_PRICE'         => 'mkpro_send_sale_price',
-            'AMZPRO_SEND_LIST_PRICE'         => 'mkpro_send_list_price',
-            'AMZPRO_PREORDER'                => 'mkpro_preorder',
-            'AMZPRO_INVOICE_EMAIL'           => 'mkpro_invoice_email',
-            'AMZPRO_INVOICE_EMAIL_STATE'     => 'mkpro_invoice_email_state',
-            'AMZPRO_INVOICE_ATTACHMENT'      => 'mkpro_invoice_attachment',
-            'AMZPRO_REMOTE_CART'             => 'mkpro_remote_cart',
-            'AMZPRO_REMOTE_CART_TTL'         => 'mkpro_remote_cart_ttl',
-        );
+        return [
+            'AMZPRO_CLIENT_ID' => 'mkpro_client_id',
+            'AMZPRO_CLIENT_SECRET' => 'mkpro_client_secret',
+            $tokenKey => 'mkpro_refresh_token',
+            'AMZPRO_SELLER_ID' => 'mkpro_seller_id',
+            'AMZPRO_MARKETPLACE_ID' => 'mkpro_marketplace_id',
+            'AMZPRO_ENVIRONMENT' => 'mkpro_environment',
+            'AMZPRO_USE_MOCK' => 'mkpro_use_mock',
+            'AMZPRO_DEFAULT_CARRIER' => 'mkpro_default_carrier',
+            'AMZPRO_DEFAULT_ORDER_STATE' => 'mkpro_default_order_state',
+            'AMZPRO_SYNC_STOCK_HOOK' => 'mkpro_sync_stock_hook',
+            'AMZPRO_SYNC_ORDER_STATUS_HOOK' => 'mkpro_sync_order_hook',
+            'AMZPRO_SYNC_CANCEL_HOOK' => 'mkpro_sync_cancel_hook',
+            'AMZPRO_AUTH_MODE' => 'mkpro_auth_mode',
+            'AMZPRO_OAUTH_BETA' => 'mkpro_oauth_beta',
+            'AMZPRO_AUTO_REVIEW_REQUEST' => 'mkpro_auto_review_request',
+            'AMZPRO_STOCK_BUFFER' => 'mkpro_stock_buffer',
+            'AMZPRO_DELETE_WHEN_OOS' => 'mkpro_delete_when_oos',
+            'AMZPRO_CONDITION_TYPE' => 'mkpro_condition_type',
+            'AMZPRO_TAX_MODE' => 'mkpro_tax_mode',
+            'AMZPRO_LISTING_LANG' => 'mkpro_listing_lang',
+            'AMZPRO_SHIPPING_TEMPLATE' => 'mkpro_shipping_template',
+            'AMZPRO_B2B_DISCOUNT' => 'mkpro_b2b_discount',
+            'AMZPRO_VCS_ENABLED' => 'mkpro_vcs_enabled',
+            'AMZPRO_SKU_PREFIX' => 'mkpro_sku_prefix',
+            'AMZPRO_SKU_SOURCE' => 'mkpro_sku_source',
+            'AMZPRO_PRICE_MIN' => 'mkpro_price_min',
+            'AMZPRO_PRICE_MAX' => 'mkpro_price_max',
+            'AMZPRO_QTY_MIN' => 'mkpro_qty_min',
+            'AMZPRO_USE_SPECIFIC_PRICES' => 'mkpro_use_specific_prices',
+            'AMZPRO_SPECIFIC_PRICE_GROUP' => 'mkpro_specific_price_group',
+            'AMZPRO_REPORT_EMAIL' => 'mkpro_report_email',
+            'AMZPRO_DEFAULT_MARKUP' => 'mkpro_default_markup',
+            'AMZPRO_DEFAULT_DELAY' => 'mkpro_default_delay',
+            'AMZPRO_GPSR_PRIORITY' => 'mkpro_gpsr_priority',
+            'AMZPRO_SYNC_MODE' => 'mkpro_sync_mode',
+            'AMZPRO_FORCE_ZERO_QTY' => 'mkpro_force_zero_qty',
+            'AMZPRO_ONLY_WITH_ASIN' => 'mkpro_only_with_asin',
+            'AMZPRO_EXPORT_LIMIT' => 'mkpro_export_limit',
+            'AMZPRO_EAN_AS' => 'mkpro_ean_as',
+            'AMZPRO_DELTA_HOURS' => 'mkpro_delta_hours',
+            'AMZPRO_COND_NOTE_USED' => 'mkpro_cond_note_used',
+            'AMZPRO_COND_NOTE_REFURB' => 'mkpro_cond_note_refurb',
+            'AMZPRO_QUEUE_TTL_DAYS' => 'mkpro_queue_ttl_days',
+            'AMZPRO_TITLE_FORMAT' => 'mkpro_title_format',
+            'AMZPRO_SHIP_TPL_ENABLED' => 'mkpro_ship_tpl_enabled',
+            'AMZPRO_SHIP_TPL_BASIS' => 'mkpro_ship_tpl_basis',
+            'AMZPRO_ORDER_LOOKBACK_VALUE' => 'mkpro_order_lookback_value',
+            'AMZPRO_ORDER_LOOKBACK_UNIT' => 'mkpro_order_lookback_unit',
+            'AMZPRO_IMPORT_FBA_ORDERS' => 'mkpro_import_fba_orders',
+            'AMZPRO_FBA_ORDER_STATE' => 'mkpro_fba_order_state',
+            'AMZPRO_ORDER_STATE_SHIPPED' => 'mkpro_order_state_shipped',
+            'AMZPRO_PRIORITIZE_ASIN' => 'mkpro_prioritize_asin',
+            'AMZPRO_FAKE_EMAIL' => 'mkpro_fake_email',
+            'AMZPRO_CUSTOMER_GROUP' => 'mkpro_customer_group',
+            'AMZPRO_SKIP_NO_STOCK' => 'mkpro_skip_no_stock',
+            'AMZPRO_PII_PURGE' => 'mkpro_pii_purge',
+            'AMZPRO_PII_RETENTION_DAYS' => 'mkpro_pii_retention_days',
+            'AMZPRO_PII_PURGE_PS' => 'mkpro_pii_purge_ps',
+            'AMZPRO_ORDER_MATCH' => 'mkpro_order_match',
+            'AMZPRO_ROUNDING' => 'mkpro_rounding',
+            'AMZPRO_SEND_IMAGES' => 'mkpro_send_images',
+            'AMZPRO_EXTENDED_DATA' => 'mkpro_extended_data',
+            'AMZPRO_FULL_CATALOG' => 'mkpro_full_catalog',
+            'AMZPRO_BUSINESS_GROUP' => 'mkpro_business_group',
+            'AMZPRO_IMAP_ENABLED' => 'mkpro_imap_enabled',
+            'AMZPRO_IMAP_HOST' => 'mkpro_imap_host',
+            'AMZPRO_IMAP_PORT' => 'mkpro_imap_port',
+            'AMZPRO_IMAP_USER' => 'mkpro_imap_user',
+            'AMZPRO_IMAP_FOLDER' => 'mkpro_imap_folder',
+            'AMZPRO_IMAP_SSL' => 'mkpro_imap_ssl',
+            'AMZPRO_IMAP_PASSWORD' => 'mkpro_imap_password',
+            'AMZPRO_SEND_SALE_PRICE' => 'mkpro_send_sale_price',
+            'AMZPRO_SEND_LIST_PRICE' => 'mkpro_send_list_price',
+            'AMZPRO_PREORDER' => 'mkpro_preorder',
+            'AMZPRO_INVOICE_EMAIL' => 'mkpro_invoice_email',
+            'AMZPRO_INVOICE_EMAIL_STATE' => 'mkpro_invoice_email_state',
+            'AMZPRO_INVOICE_ATTACHMENT' => 'mkpro_invoice_attachment',
+            'AMZPRO_REMOTE_CART' => 'mkpro_remote_cart',
+            'AMZPRO_REMOTE_CART_TTL' => 'mkpro_remote_cart_ttl',
+        ];
     }
 
     /** Settings saved as arrays or lists, with the form field each comes from. */
     protected function settingsArrayFields()
     {
-        return array(
-            'AMZPRO_CARRIER_MAP'     => 'mkpro_carrier_map',
-            'AMZPRO_CARRIER_MAP_IN'  => 'mkpro_carrier_map_in',
-            'AMZPRO_STATUS_RULES'    => 'mkpro_rule_state',
-            'AMZPRO_CONDITION_MAP'   => 'mkpro_cond_map_new',
-            'AMZPRO_MARKUP_SOURCES'  => 'mkpro_markup_sources',
-            'AMZPRO_DELAY_SOURCES'   => 'mkpro_delay_sources',
-        );
+        return [
+            'AMZPRO_CARRIER_MAP' => 'mkpro_carrier_map',
+            'AMZPRO_CARRIER_MAP_IN' => 'mkpro_carrier_map_in',
+            'AMZPRO_STATUS_RULES' => 'mkpro_rule_state',
+            'AMZPRO_CONDITION_MAP' => 'mkpro_cond_map_new',
+            'AMZPRO_MARKUP_SOURCES' => 'mkpro_markup_sources',
+            'AMZPRO_DELAY_SOURCES' => 'mkpro_delay_sources',
+        ];
     }
 
     /**
@@ -1143,7 +1143,7 @@ class AmazonMarketplacePro extends Module
         // merchant was actually looking at.
         $tokenKey = AmazonSpApiClient::refreshTokenKey();
         $fields = $this->settingsFields($tokenKey);
-        $errors = array();
+        $errors = [];
         $needShop = AmzproShop::requireShop();
 
         // Developer-only fields are hidden from the customer form; without
@@ -1207,7 +1207,7 @@ class AmazonMarketplacePro extends Module
         // Carrier map arrives as an array: mkpro_carrier_map[id_carrier] = code
         $carrierMap = Tools::getValue('mkpro_carrier_map');
         if (is_array($carrierMap)) {
-            $clean = array();
+            $clean = [];
             foreach ($carrierMap as $idCarrier => $code) {
                 $code = trim((string) $code);
                 if ($code !== '' && in_array($code, self::$amazonCarrierCodes)) {
@@ -1220,7 +1220,7 @@ class AmazonMarketplacePro extends Module
         // Incoming carrier map: Amazon shipping speed -> PrestaShop carrier.
         $carrierMapIn = Tools::getValue('mkpro_carrier_map_in');
         if (is_array($carrierMapIn)) {
-            $clean = array();
+            $clean = [];
             foreach ($carrierMapIn as $level => $idCarrier) {
                 if ((int) $idCarrier > 0) {
                     $clean[(string) $level] = (int) $idCarrier;
@@ -1232,7 +1232,7 @@ class AmazonMarketplacePro extends Module
         // Advanced status rules: parallel arrays of conditions + target state.
         $ruleStates = Tools::getValue('mkpro_rule_state');
         if (is_array($ruleStates)) {
-            $rules = array();
+            $rules = [];
             $primes = (array) Tools::getValue('mkpro_rule_prime');
             $fbas = (array) Tools::getValue('mkpro_rule_fba');
             $businesses = (array) Tools::getValue('mkpro_rule_business');
@@ -1240,36 +1240,36 @@ class AmazonMarketplacePro extends Module
                 if ((int) $state <= 0) {
                     continue; // a rule with no target state is not a rule
                 }
-                $rules[] = array(
+                $rules[] = [
                     'prime' => isset($primes[$i]) ? (int) $primes[$i] : -1,
                     'fba' => isset($fbas[$i]) ? (int) $fbas[$i] : -1,
                     'business' => isset($businesses[$i]) ? (int) $businesses[$i] : -1,
                     'state' => (int) $state,
-                );
+                ];
             }
             AmzproShop::set('AMZPRO_STATUS_RULES', json_encode($rules));
         }
 
         // PrestaShop condition -> Amazon condition map (three selects).
         if (Tools::getIsset('mkpro_cond_map_new')) {
-            AmzproShop::set('AMZPRO_CONDITION_MAP', json_encode(array(
+            AmzproShop::set('AMZPRO_CONDITION_MAP', json_encode([
                 'new' => (string) Tools::getValue('mkpro_cond_map_new'),
                 'used' => (string) Tools::getValue('mkpro_cond_map_used'),
                 'refurbished' => (string) Tools::getValue('mkpro_cond_map_refurbished'),
-            )));
+            ]));
         }
 
         // Markup / delay cascade sources arrive as checkbox arrays.
-        foreach (array('AMZPRO_MARKUP_SOURCES' => 'mkpro_markup_sources',
-                       'AMZPRO_DELAY_SOURCES' => 'mkpro_delay_sources') as $configKey => $formName) {
+        foreach (['AMZPRO_MARKUP_SOURCES' => 'mkpro_markup_sources',
+            'AMZPRO_DELAY_SOURCES' => 'mkpro_delay_sources'] as $configKey => $formName) {
             if (!Tools::getIsset($formName . '_present')) {
                 continue; // form section not on the submitted page
             }
             $sources = Tools::getValue($formName);
-            $clean = array();
+            $clean = [];
             if (is_array($sources)) {
                 foreach ($sources as $s) {
-                    if (in_array($s, array('category', 'manufacturer', 'supplier'))) {
+                    if (in_array($s, ['category', 'manufacturer', 'supplier'])) {
                         $clean[] = $s;
                     }
                 }
@@ -1422,10 +1422,10 @@ class AmazonMarketplacePro extends Module
      */
     protected function overrideNotes()
     {
-        $notes = array();
-        $perShop = array();
+        $notes = [];
+        $perShop = [];
         if (!AmzproShop::isAllShops()) {
-            return array($notes, $perShop);
+            return [$notes, $perShop];
         }
         $onlyGroup = (Shop::getContext() == Shop::CONTEXT_GROUP) ? (int) Shop::getContextShopGroupID() : 0;
         $fields = array_merge(
@@ -1436,7 +1436,7 @@ class AmazonMarketplacePro extends Module
             if (in_array($key, AmzproShop::$globalKeys, true) || in_array($key, AmzproShop::$ownKeys, true)) {
                 continue;
             }
-            $names = array();
+            $names = [];
             foreach (AmzproShop::overridingShops($key) as $idShop) {
                 if ($onlyGroup && AmzproShop::groupId($idShop) !== $onlyGroup) {
                     continue;
@@ -1450,7 +1450,7 @@ class AmazonMarketplacePro extends Module
             }
         }
 
-        return array($notes, $perShop);
+        return [$notes, $perShop];
     }
 
     /**
@@ -1525,25 +1525,25 @@ class AmazonMarketplacePro extends Module
 
         // Where the relay should send the merchant (and token) back to: the
         // oauth controller of this shop.
-        $returnUrl = $this->context->link->getModuleLink($this->name, 'oauth', array(), true, null, $idShop);
+        $returnUrl = $this->context->link->getModuleLink($this->name, 'oauth', [], true, null, $idShop);
 
         // 's' tells the relay which app client's secret to exchange the code with.
-        $state = rtrim(strtr(base64_encode(json_encode(array(
+        $state = rtrim(strtr(base64_encode(json_encode([
             'r' => $returnUrl,
             'n' => $nonce,
             's' => AmazonSpApiClient::isSandboxEnv() ? 1 : 0,
-        ))), '+/', '-_'), '=');
+        ])), '+/', '-_'), '=');
 
         $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID', $idShop);
         $domain = isset(self::$sellerCentralDomains[$mp])
             ? self::$sellerCentralDomains[$mp]
             : 'sellercentral-europe.amazon.com';
 
-        $params = array(
+        $params = [
             'application_id' => $appId,
             'state' => $state,
             'redirect_uri' => $relayUrl . '/callback.php',
-        );
+        ];
         // Draft (unpublished) apps can only be authorized with version=beta.
         // Decided by the shipped constant rather than a per-shop setting, so
         // publishing the app is a release rather than a support request to
@@ -1599,8 +1599,10 @@ class AmazonMarketplacePro extends Module
     {
         if ($this->isProduction()) {
             $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
+
             return $mp ? $mp : 'A1PA6795UKMFR9';
         }
+
         return 'ATVPDKIKX0DER'; // US sandbox
     }
 
@@ -1615,7 +1617,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
         $idShop = AmzproShop::actingId();
-        $clientId     = AmzproShop::get('AMZPRO_CLIENT_ID', $idShop);
+        $clientId = AmzproShop::get('AMZPRO_CLIENT_ID', $idShop);
         $clientSecret = AmzproShop::get('AMZPRO_CLIENT_SECRET', $idShop);
         $refreshToken = AmazonSpApiClient::storedRefreshToken(null, $idShop);
 
@@ -1691,7 +1693,8 @@ class AmazonMarketplacePro extends Module
                 WHERE c.`id_category` > 1 AND c.`active` = 1
                 ORDER BY cl.`name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -1732,10 +1735,10 @@ class AmazonMarketplacePro extends Module
                 ORDER BY cl.`name` ASC, cm.`id_shop` DESC';
         $rows = Db::getInstance()->executeS($sql);
         if (!is_array($rows)) {
-            return array();
+            return [];
         }
 
-        return AmzproShop::preferShopRows($rows, array('id_category', 'marketplace_id'));
+        return AmzproShop::preferShopRows($rows, ['id_category', 'marketplace_id']);
     }
 
     /**
@@ -1748,7 +1751,8 @@ class AmazonMarketplacePro extends Module
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     /* ─────────────────── Markup / rules / queue helpers ─────────────────── */
@@ -1790,7 +1794,7 @@ class AmazonMarketplacePro extends Module
 
         $rows = Db::getInstance()->executeS($sql);
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
         $settings = AmazonListingSettings::getEntitySettings($type);
@@ -1843,7 +1847,7 @@ class AmazonMarketplacePro extends Module
              LIMIT ' . (int) $limit
         );
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
         $settings = AmazonListingSettings::getProductSettings();
@@ -1873,7 +1877,7 @@ class AmazonMarketplacePro extends Module
              ORDER BY o.`purchase_date` ASC'
         );
 
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     /**
@@ -1885,12 +1889,12 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
 
         $type = trim((string) Tools::getValue('entity_type'));
-        if (!in_array($type, array('category', 'manufacturer', 'supplier'))) {
-            return array('success' => false, 'error' => $this->l('Unknown entity type.'));
+        if (!in_array($type, ['category', 'manufacturer', 'supplier'])) {
+            return ['success' => false, 'error' => $this->l('Unknown entity type.')];
         }
         $rows = json_decode((string) Tools::getValue('rows'), true);
         if (!is_array($rows)) {
-            return array('success' => false, 'error' => $this->l('Invalid rows payload.'));
+            return ['success' => false, 'error' => $this->l('Invalid rows payload.')];
         }
 
         $before = AmazonListingSettings::getEntitySettings($type);
@@ -1920,7 +1924,7 @@ class AmazonMarketplacePro extends Module
             }
 
             AmazonListingSettings::saveEntitySetting($type, $id, $markup, $delay, $gpsr, $coo, $sync);
-            $saved++;
+            ++$saved;
             if ($changed) {
                 $queued += AmazonListingSettings::enqueueEntityProducts(
                     $type, $id, $type . ' rules changed'
@@ -1930,7 +1934,7 @@ class AmazonMarketplacePro extends Module
 
         $this->logActivity('info', 'rules', 'Saved ' . $saved . ' ' . $type . ' rule(s), queued ' . $queued . ' product(s).');
 
-        return array('success' => true, 'saved' => $saved, 'queued' => $queued);
+        return ['success' => true, 'saved' => $saved, 'queued' => $queued];
     }
 
     protected function runSaveProductRules()
@@ -1939,7 +1943,7 @@ class AmazonMarketplacePro extends Module
 
         $rows = json_decode((string) Tools::getValue('rows'), true);
         if (!is_array($rows)) {
-            return array('success' => false, 'error' => $this->l('Invalid rows payload.'));
+            return ['success' => false, 'error' => $this->l('Invalid rows payload.')];
         }
 
         $before = AmazonListingSettings::getProductSettings();
@@ -1959,13 +1963,13 @@ class AmazonMarketplacePro extends Module
             $changed = !$old || (int) $old['sync'] !== $sync || $old['gpsr_contact'] !== $gpsr;
 
             AmazonListingSettings::saveProductSetting($id, $sync, $gpsr);
-            $saved++;
+            ++$saved;
             if ($changed) {
                 AmazonListingSettings::enqueueProduct($id, 'product rules changed');
             }
         }
 
-        return array('success' => true, 'saved' => $saved);
+        return ['success' => true, 'saved' => $saved];
     }
 
     protected function runQueueAction()
@@ -1975,13 +1979,13 @@ class AmazonMarketplacePro extends Module
         $op = trim((string) Tools::getValue('queue_op'));
         if ($op === 'purge') {
             AmazonListingSettings::purgeQueue();
-        } elseif (in_array($op, array('enable', 'disable', 'clear'))) {
+        } elseif (in_array($op, ['enable', 'disable', 'clear'])) {
             AmazonListingSettings::queueAction($op);
         } else {
-            return array('success' => false, 'error' => $this->l('Unknown queue action.'));
+            return ['success' => false, 'error' => $this->l('Unknown queue action.')];
         }
 
-        return array('success' => true, 'queue' => $this->withShopNames(AmazonListingSettings::getQueue(200)));
+        return ['success' => true, 'queue' => $this->withShopNames(AmazonListingSettings::getQueue(200))];
     }
 
     protected function runRefreshOrphans()
@@ -1990,12 +1994,12 @@ class AmazonMarketplacePro extends Module
 
         $orphans = AmazonListingSettings::getOrphanedProducts(500);
 
-        return array(
+        return [
             'success' => true,
             'orphans' => $this->withShopNames($orphans),
             'all_shops' => AmzproShop::isAllShops(),
             'notice' => $this->l('Orphans are computed from the last Amazon-side sync. Run the Amazon to PrestaShop sync on the Products tab first for an up-to-date list.'),
-        );
+        ];
     }
 
     /**
@@ -2009,35 +2013,35 @@ class AmazonMarketplacePro extends Module
      */
     protected function translatedScheduleCatalogue()
     {
-        $names = array(
-            'import_orders'       => $this->l('Import orders'),
-            'create_orders'       => $this->l('Create PrestaShop orders'),
-            'sync_stock'          => $this->l('Sync stock'),
-            'sync_products'       => $this->l('Full product sync'),
-            'import_returns'      => $this->l('Import returns'),
-            'process_returns'     => $this->l('Process returns'),
-            'sync_fba'            => $this->l('FBA inventory sync'),
-            'reprice'             => $this->l('Repricing cycle'),
-            'fetch_fees'          => $this->l('Fetch fees'),
-            'poll_reports'        => $this->l('Poll reports'),
-            'sync_promotions'     => $this->l('Sync promotions'),
+        $names = [
+            'import_orders' => $this->l('Import orders'),
+            'create_orders' => $this->l('Create PrestaShop orders'),
+            'sync_stock' => $this->l('Sync stock'),
+            'sync_products' => $this->l('Full product sync'),
+            'import_returns' => $this->l('Import returns'),
+            'process_returns' => $this->l('Process returns'),
+            'sync_fba' => $this->l('FBA inventory sync'),
+            'reprice' => $this->l('Repricing cycle'),
+            'fetch_fees' => $this->l('Fetch fees'),
+            'poll_reports' => $this->l('Poll reports'),
+            'sync_promotions' => $this->l('Sync promotions'),
             'multi_import_orders' => $this->l('Import orders, all marketplaces'),
             'multi_sync_products' => $this->l('Product sync, all marketplaces'),
-            'request_reviews'     => $this->l('Request reviews'),
-            'process_feeds'       => $this->l('Process feed queue'),
-            'remote_cart'         => $this->l('Settle remote carts'),
-            'fetch_messages'      => $this->l('Fetch buyer messages'),
-            'upload_invoices'     => $this->l('Upload invoices'),
-            'purge_pii'           => $this->l('Purge buyer data past retention'),
-        );
-        $groups = array(
-            'Orders'     => $this->l('Orders'),
-            'Catalogue'  => $this->l('Catalogue'),
+            'request_reviews' => $this->l('Request reviews'),
+            'process_feeds' => $this->l('Process feed queue'),
+            'remote_cart' => $this->l('Settle remote carts'),
+            'fetch_messages' => $this->l('Fetch buyer messages'),
+            'upload_invoices' => $this->l('Upload invoices'),
+            'purge_pii' => $this->l('Purge buyer data past retention'),
+        ];
+        $groups = [
+            'Orders' => $this->l('Orders'),
+            'Catalogue' => $this->l('Catalogue'),
             'Fulfilment' => $this->l('Fulfilment'),
-            'Pricing'    => $this->l('Pricing'),
-            'Money'      => $this->l('Money'),
-            'System'     => $this->l('System'),
-        );
+            'Pricing' => $this->l('Pricing'),
+            'Money' => $this->l('Money'),
+            'System' => $this->l('System'),
+        ];
 
         $catalogue = AmazonScheduler::catalogue();
         foreach ($catalogue as $key => $meta) {
@@ -2065,7 +2069,7 @@ class AmazonMarketplacePro extends Module
     {
         $tasks = AmazonScheduler::all();
         foreach ($tasks as $i => $task) {
-            if (isset($task['last_message']) && in_array($task['last_message'], array('OK', 'Failed'), true)) {
+            if (isset($task['last_message']) && in_array($task['last_message'], ['OK', 'Failed'], true)) {
                 $tasks[$i]['last_message'] = '';
             }
         }
@@ -2080,32 +2084,32 @@ class AmazonMarketplacePro extends Module
      */
     protected function translatedMarketplaces()
     {
-        $labels = array(
-            'ATVPDKIKX0DER'  => $this->l('Amazon.com (US)'),
+        $labels = [
+            'ATVPDKIKX0DER' => $this->l('Amazon.com (US)'),
             'A2EUQ1WTGCTBG2' => $this->l('Amazon.ca (Canada)'),
             'A1AM78C64UM0Y8' => $this->l('Amazon.com.mx (Mexico)'),
             'A2Q3Y263D00KMC' => $this->l('Amazon.com.br (Brazil)'),
             'A1F83G8C2ARO7P' => $this->l('Amazon.co.uk (UK)'),
             'A1PA6795UKMFR9' => $this->l('Amazon.de (Germany)'),
             'A13V1IB3VIYZZH' => $this->l('Amazon.fr (France)'),
-            'APJ6JRA9NG5V4'  => $this->l('Amazon.it (Italy)'),
+            'APJ6JRA9NG5V4' => $this->l('Amazon.it (Italy)'),
             'A1RKKUPIHCS9HS' => $this->l('Amazon.es (Spain)'),
             'A1805IZSGTT6HS' => $this->l('Amazon.nl (Netherlands)'),
             'A1C3SOZRARQ6R3' => $this->l('Amazon.pl (Poland)'),
             'A2NODRKZP88ZB9' => $this->l('Amazon.se (Sweden)'),
-            'AMEN7PMS3EDWL'  => $this->l('Amazon.com.be (Belgium)'),
+            'AMEN7PMS3EDWL' => $this->l('Amazon.com.be (Belgium)'),
             'A28R8C7NBKEWEA' => $this->l('Amazon.ie (Ireland)'),
-            'ARBP9OOSHTCHU'  => $this->l('Amazon.eg (Egypt)'),
-            'AE08WJ6YKNBMC'  => $this->l('Amazon.co.za (South Africa)'),
+            'ARBP9OOSHTCHU' => $this->l('Amazon.eg (Egypt)'),
+            'AE08WJ6YKNBMC' => $this->l('Amazon.co.za (South Africa)'),
             'A33AVAJ2PDY3EV' => $this->l('Amazon.com.tr (Turkey)'),
-            'A21TJRUUN4KGV'  => $this->l('Amazon.in (India)'),
+            'A21TJRUUN4KGV' => $this->l('Amazon.in (India)'),
             'A2VIGQ35RCS4UG' => $this->l('Amazon.ae (UAE)'),
             'A17E79C6D8DWNP' => $this->l('Amazon.sa (Saudi Arabia)'),
             'A19VAU5U5O7RUS' => $this->l('Amazon.sg (Singapore)'),
             'A39IBJ37TRP1C6' => $this->l('Amazon.com.au (Australia)'),
             'A1VC38T7YXB528' => $this->l('Amazon.co.jp (Japan)'),
-        );
-        $out = array();
+        ];
+        $out = [];
         foreach (self::$marketplaces as $id => $label) {
             $out[$id] = isset($labels[$id]) ? $labels[$id] : $label;
         }
@@ -2151,7 +2155,7 @@ class AmazonMarketplacePro extends Module
                AND ' . AmzproShop::sqlWhere()
         );
         if (!$row) {
-            return array('success' => false, 'error' => $this->l('Pending order not found.'));
+            return ['success' => false, 'error' => $this->l('Pending order not found.')];
         }
         $idRowShop = (int) $row['id_shop'];
 
@@ -2164,7 +2168,7 @@ class AmazonMarketplacePro extends Module
             );
             $this->logActivity('info', 'pending_orders', $row['amazon_order_id'] . ' removed from pending orders.');
 
-            return array('success' => true, 'message' => $this->l('Pending order removed.'));
+            return ['success' => true, 'message' => $this->l('Pending order removed.')];
         }
 
         if ($op === 'create') {
@@ -2176,15 +2180,15 @@ class AmazonMarketplacePro extends Module
             $creator = new AmazonOrderCreator($idCarrier, $idOrderState);
             $result = $creator->createOneOrder($row, true);
             if ($result === false || $result === 'pending_stock') {
-                return array('success' => false, 'error' => (string) $creator->getLastError());
+                return ['success' => false, 'error' => (string) $creator->getLastError()];
             }
             $this->logActivity('info', 'pending_orders',
                 $row['amazon_order_id'] . ' force-created as PS order #' . (int) $result . ' despite missing stock.');
 
-            return array('success' => true, 'message' => sprintf($this->l('PrestaShop order #%d created.'), (int) $result), 'id_order' => (int) $result);
+            return ['success' => true, 'message' => sprintf($this->l('PrestaShop order #%d created.'), (int) $result), 'id_order' => (int) $result];
         }
 
-        return array('success' => false, 'error' => $this->l('Unknown pending order action.'));
+        return ['success' => false, 'error' => $this->l('Unknown pending order action.')];
     }
 
     protected function runSaveShippingTemplate()
@@ -2193,7 +2197,7 @@ class AmazonMarketplacePro extends Module
 
         $name = trim((string) Tools::getValue('template_name'));
         if ($name === '') {
-            return array('success' => false, 'error' => $this->l('Template name is required.'));
+            return ['success' => false, 'error' => $this->l('Template name is required.')];
         }
         $saved = AmazonListingSettings::saveShippingTemplate(
             Tools::getValue('basis'),
@@ -2203,10 +2207,10 @@ class AmazonMarketplacePro extends Module
             (int) Tools::getValue('id_template')
         );
         if ($saved === false && AmazonListingSettings::getLastError()) {
-            return array('success' => false, 'error' => AmazonListingSettings::getLastError());
+            return ['success' => false, 'error' => AmazonListingSettings::getLastError()];
         }
 
-        return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
+        return ['success' => true, 'templates' => AmazonListingSettings::getShippingTemplates()];
     }
 
     protected function runDeleteShippingTemplate()
@@ -2215,11 +2219,11 @@ class AmazonMarketplacePro extends Module
 
         $deleted = AmazonListingSettings::deleteShippingTemplate((int) Tools::getValue('id_template'));
         if ($deleted === false && AmazonListingSettings::getLastError()) {
-            return array('success' => false, 'error' => AmazonListingSettings::getLastError(),
-                'templates' => AmazonListingSettings::getShippingTemplates());
+            return ['success' => false, 'error' => AmazonListingSettings::getLastError(),
+                'templates' => AmazonListingSettings::getShippingTemplates()];
         }
 
-        return array('success' => true, 'templates' => AmazonListingSettings::getShippingTemplates());
+        return ['success' => true, 'templates' => AmazonListingSettings::getShippingTemplates()];
     }
 
     /* ─────────────────── Listing profiles (product type schemas) ─────────────────── */
@@ -2231,10 +2235,10 @@ class AmazonMarketplacePro extends Module
         $defs = new AmazonProductTypeDefinitions($this->buildAmazonClient(), $this->getMarketplaceId());
         $types = $defs->searchProductTypes(Tools::getValue('keywords', ''));
         if ($types === false) {
-            return array('success' => false, 'error' => $defs->getLastError());
+            return ['success' => false, 'error' => $defs->getLastError()];
         }
 
-        return array('success' => true, 'product_types' => $types);
+        return ['success' => true, 'product_types' => $types];
     }
 
     protected function runLoadProductTypeSchema()
@@ -2246,24 +2250,24 @@ class AmazonMarketplacePro extends Module
         $defs = new AmazonProductTypeDefinitions($this->buildAmazonClient(), $this->getMarketplaceId());
         $definition = $defs->getDefinition($productType, (bool) Tools::getValue('refresh'));
         if ($definition === false) {
-            return array('success' => false, 'error' => $defs->getLastError());
+            return ['success' => false, 'error' => $defs->getLastError()];
         }
 
         $required = 0;
         foreach ($definition['attributes'] as $attr) {
             if (!empty($attr['required'])) {
-                $required++;
+                ++$required;
             }
         }
 
-        return array(
+        return [
             'success' => true,
             'product_type' => $productType,
             'display_name' => $definition['display_name'],
             'attributes' => $definition['attributes'],
             'required_count' => $required,
             'ps_fields' => AmazonProfile::getPsFields(),
-        );
+        ];
     }
 
     protected function runSaveProfile()
@@ -2274,27 +2278,27 @@ class AmazonMarketplacePro extends Module
         $name = trim((string) Tools::getValue('name'));
         $productType = trim((string) Tools::getValue('product_type'));
         if ($name === '' || $productType === '') {
-            return array('success' => false, 'error' => $this->l('A profile needs a name and an Amazon product type.'));
+            return ['success' => false, 'error' => $this->l('A profile needs a name and an Amazon product type.')];
         }
 
         $attributes = json_decode((string) Tools::getValue('attributes'), true);
         if (!is_array($attributes)) {
-            $attributes = array();
+            $attributes = [];
         }
         $categories = json_decode((string) Tools::getValue('categories'), true);
         if (!is_array($categories)) {
-            $categories = array();
+            $categories = [];
         }
 
         $raw = trim((string) Tools::getValue('raw_attributes_json'));
         if ($raw !== '') {
             json_decode($raw, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                return array('success' => false, 'error' => $this->l('Extra attributes must be valid JSON.'));
+                return ['success' => false, 'error' => $this->l('Extra attributes must be valid JSON.')];
             }
         }
 
-        $id = AmazonProfile::save(array(
+        $id = AmazonProfile::save([
             'id' => (int) Tools::getValue('id_profile'),
             'name' => $name,
             'product_type' => $productType,
@@ -2309,10 +2313,10 @@ class AmazonMarketplacePro extends Module
             'price_markup' => trim((string) Tools::getValue('price_markup')),
             'gtin_exemption' => (int) Tools::getValue('gtin_exemption'),
             'categories' => $categories,
-        ));
+        ]);
         if (!$id) {
-            return array('success' => false, 'error' => AmazonProfile::getLastError()
-                ? AmazonProfile::getLastError() : $this->l('Could not save the profile.'));
+            return ['success' => false, 'error' => AmazonProfile::getLastError()
+                ? AmazonProfile::getLastError() : $this->l('Could not save the profile.')];
         }
 
         // Products in the bound categories need resending with the new shape.
@@ -2325,12 +2329,12 @@ class AmazonMarketplacePro extends Module
 
         $this->logActivity('info', 'profiles', 'Saved profile "' . $name . '" (' . $productType . '), queued ' . $queued . ' product(s).');
 
-        return array(
+        return [
             'success' => true,
             'id_profile' => $id,
             'queued' => $queued,
             'profiles' => AmazonProfile::getAll($this->getMarketplaceId()),
-        );
+        ];
     }
 
     protected function runGetProfile()
@@ -2339,10 +2343,10 @@ class AmazonMarketplacePro extends Module
 
         $profile = AmazonProfile::get((int) Tools::getValue('id_profile'));
         if ($profile === false) {
-            return array('success' => false, 'error' => $this->l('Profile not found.'));
+            return ['success' => false, 'error' => $this->l('Profile not found.')];
         }
 
-        return array('success' => true, 'profile' => $profile);
+        return ['success' => true, 'profile' => $profile];
     }
 
     protected function runDeleteProfile()
@@ -2350,10 +2354,10 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonProfile.php';
 
         if (AmazonProfile::delete((int) Tools::getValue('id_profile')) === false && AmazonProfile::getLastError()) {
-            return array('success' => false, 'error' => AmazonProfile::getLastError());
+            return ['success' => false, 'error' => AmazonProfile::getLastError()];
         }
 
-        return array('success' => true, 'profiles' => AmazonProfile::getAll($this->getMarketplaceId()));
+        return ['success' => true, 'profiles' => AmazonProfile::getAll($this->getMarketplaceId())];
     }
 
     /* ─────────────────── Tools: references, deletions ─────────────────── */
@@ -2365,13 +2369,13 @@ class AmazonMarketplacePro extends Module
         $inbox = new AmazonBuyerInbox();
         $summary = $inbox->fetchNewMessages(50);
         if ($summary === false) {
-            return array('success' => false, 'error' => $inbox->getLastError());
+            return ['success' => false, 'error' => $inbox->getLastError()];
         }
 
         $this->logActivity('info', 'buyer_inbox',
             $summary['scanned'] . ' message(s) scanned, ' . $summary['filed'] . ' filed into Customer Service.');
 
-        return array('success' => true, 'summary' => $summary, 'notices' => $inbox->getNotices());
+        return ['success' => true, 'summary' => $summary, 'notices' => $inbox->getNotices()];
     }
 
     protected function runUpdateFromAmazon()
@@ -2380,13 +2384,13 @@ class AmazonMarketplacePro extends Module
 
         $operations = json_decode((string) Tools::getValue('operations'), true);
         if (!is_array($operations) || empty($operations)) {
-            return array('success' => false, 'error' => $this->l('Pick at least one thing to update.'));
+            return ['success' => false, 'error' => $this->l('Pick at least one thing to update.')];
         }
 
         $importer = new AmazonCatalogImporter();
         $summary = $importer->updateFromAmazon($operations, 500);
         if ($importer->getLastError()) {
-            return array('success' => false, 'error' => $importer->getLastError());
+            return ['success' => false, 'error' => $importer->getLastError()];
         }
 
         $this->logActivity('info', 'catalog_update',
@@ -2394,14 +2398,14 @@ class AmazonMarketplacePro extends Module
             . $summary['quantity'] . ' stock, ' . $summary['hidden'] . ' hidden, '
             . $summary['features'] . ' feature(s).');
 
-        return array('success' => true, 'summary' => $summary, 'notices' => $importer->getNotices());
+        return ['success' => true, 'summary' => $summary, 'notices' => $importer->getNotices()];
     }
 
     protected function runAuditCatalogue()
     {
         require_once dirname(__FILE__) . '/classes/AmazonReferenceTool.php';
 
-        return array('success' => true, 'audit' => AmazonReferenceTool::auditCatalogue());
+        return ['success' => true, 'audit' => AmazonReferenceTool::auditCatalogue()];
     }
 
     protected function runImportReferences()
@@ -2409,15 +2413,15 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonReferenceTool.php';
 
         if (!isset($_FILES['reference_file']) || !is_uploaded_file($_FILES['reference_file']['tmp_name'])) {
-            return array('success' => false, 'error' => $this->l('No file was uploaded.'));
+            return ['success' => false, 'error' => $this->l('No file was uploaded.')];
         }
         if ($_FILES['reference_file']['size'] > 10485760) {
-            return array('success' => false, 'error' => $this->l('The file is larger than 10 MB.'));
+            return ['success' => false, 'error' => $this->l('The file is larger than 10 MB.')];
         }
 
         $content = file_get_contents($_FILES['reference_file']['tmp_name']);
         if ($content === false) {
-            return array('success' => false, 'error' => $this->l('The uploaded file could not be read.'));
+            return ['success' => false, 'error' => $this->l('The uploaded file could not be read.')];
         }
 
         $summary = AmazonReferenceTool::importCsv($content);
@@ -2425,7 +2429,7 @@ class AmazonMarketplacePro extends Module
             'Reference import: ' . $summary['updated'] . ' updated, ' . $summary['skipped'] . ' skipped, '
             . count($summary['errors']) . ' error(s).');
 
-        return array('success' => true, 'summary' => $summary);
+        return ['success' => true, 'summary' => $summary];
     }
 
     /**
@@ -2440,15 +2444,15 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonOrderReportImporter.php';
 
         if (!isset($_FILES['order_report']) || !is_uploaded_file($_FILES['order_report']['tmp_name'])) {
-            return array('success' => false, 'error' => $this->l('No file was uploaded.'));
+            return ['success' => false, 'error' => $this->l('No file was uploaded.')];
         }
         if ($_FILES['order_report']['size'] > AmazonOrderReportImporter::MAX_BYTES) {
-            return array('success' => false, 'error' => $this->l('The file is larger than 10 MB.'));
+            return ['success' => false, 'error' => $this->l('The file is larger than 10 MB.')];
         }
 
         $content = file_get_contents($_FILES['order_report']['tmp_name']);
         if ($content === false) {
-            return array('success' => false, 'error' => $this->l('The uploaded file could not be read.'));
+            return ['success' => false, 'error' => $this->l('The uploaded file could not be read.')];
         }
 
         $importer = new AmazonOrderReportImporter();
@@ -2456,20 +2460,20 @@ class AmazonMarketplacePro extends Module
         unset($content);
 
         if ($parsed['error'] === 'no_order_id') {
-            return array('success' => false,
-                'error' => $this->l('This file is not an Amazon order report: it has no order-id column.'));
+            return ['success' => false,
+                'error' => $this->l('This file is not an Amazon order report: it has no order-id column.')];
         }
         if ($parsed['error'] === 'no_address') {
-            return array('success' => false,
-                'error' => $this->l('This report has no shipping address columns. Download the Unshipped Orders or New Orders report instead.'));
+            return ['success' => false,
+                'error' => $this->l('This report has no shipping address columns. Download the Unshipped Orders or New Orders report instead.')];
         }
         if (!$parsed['orders']) {
-            return array('success' => false, 'error' => $this->l('The report contains no orders.'));
+            return ['success' => false, 'error' => $this->l('The report contains no orders.')];
         }
 
         $s = $importer->apply($parsed['orders'], AmzproShop::actingId());
 
-        $messages = array(sprintf($this->l('%d order(s) filled in from the report.'), $s['updated']));
+        $messages = [sprintf($this->l('%d order(s) filled in from the report.'), $s['updated'])];
         if ($s['already'] > 0) {
             $messages[] = sprintf($this->l('%d order(s) already had a full address.'), $s['already']);
         }
@@ -2506,7 +2510,7 @@ class AmazonMarketplacePro extends Module
             isset($s['other_shop']) ? $s['other_shop'] : 0
         ));
 
-        return array('success' => true, 'summary' => $s, 'messages' => $messages);
+        return ['success' => true, 'summary' => $s, 'messages' => $messages];
     }
 
     protected function runListDeletions()
@@ -2517,7 +2521,7 @@ class AmazonMarketplacePro extends Module
             $this->buildAmazonClient(), $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID')
         );
 
-        return array('success' => true, 'candidates' => $sync->listDeletionCandidates(500));
+        return ['success' => true, 'candidates' => $sync->listDeletionCandidates(500)];
     }
 
     protected function runDeleteListings()
@@ -2526,7 +2530,7 @@ class AmazonMarketplacePro extends Module
 
         $skus = json_decode((string) Tools::getValue('skus'), true);
         if (!is_array($skus) || empty($skus)) {
-            return array('success' => false, 'error' => $this->l('Select at least one listing to delete.'));
+            return ['success' => false, 'error' => $this->l('Select at least one listing to delete.')];
         }
 
         $sync = new AmazonProductSync(
@@ -2541,7 +2545,7 @@ class AmazonMarketplacePro extends Module
             $summary['deleted'] . ' listing(s) deleted from Amazon, ' . $summary['failed'] . ' failed.'
         );
 
-        return array('success' => true, 'summary' => $summary, 'error' => $sync->getLastError());
+        return ['success' => true, 'summary' => $summary, 'error' => $sync->getLastError()];
     }
 
     /* ─────────────────── Feature: Connection Test ─────────────────── */
@@ -2556,11 +2560,11 @@ class AmazonMarketplacePro extends Module
      */
     protected function runAmazonConnectionTest()
     {
-        $result = array(
+        $result = [
             'success' => false,
-            'lines'   => array(),
-            'error'   => null,
-        );
+            'lines' => [],
+            'error' => null,
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
 
@@ -2576,6 +2580,7 @@ class AmazonMarketplacePro extends Module
             $result['error'] = $manual
                 ? $this->l('The Amazon credentials are not filled in. Enter them in the Manual SP-API Credentials panel.')
                 : $this->l('This shop is not connected to Amazon yet. Press Connect to Amazon.');
+
             return $result;
         }
 
@@ -2592,20 +2597,21 @@ class AmazonMarketplacePro extends Module
             ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-7 days'))
             : 'TEST_CASE_200';
 
-        $resp = $client->request('GET', '/orders/v0/orders', array(
+        $resp = $client->request('GET', '/orders/v0/orders', [
             'MarketplaceIds' => $this->getMarketplaceId(),
-            'CreatedAfter'   => $createdAfter,
-        ));
+            'CreatedAfter' => $createdAfter,
+        ]);
 
         if ($resp === false) {
             return $this->amazonTestError($result, $client->getLastError(), 'orders', $manual);
         }
         if ($resp['status'] >= 400) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
+
             return $this->amazonTestError($result, 'HTTP ' . $resp['status'] . ': ' . $body, 'orders', $manual);
         }
 
-        $orders = array();
+        $orders = [];
         if (is_array($resp['body']) && isset($resp['body']['payload']['Orders'])) {
             $orders = $resp['body']['payload']['Orders'];
         }
@@ -2615,6 +2621,7 @@ class AmazonMarketplacePro extends Module
         $result['success'] = true;
 
         $this->logActivity('info', 'connection_test', 'Connection test passed.');
+
         return $result;
     }
 
@@ -2622,10 +2629,11 @@ class AmazonMarketplacePro extends Module
      * Turns a failed step into plain advice for the merchant. The raw message
      * (HTTP status, Amazon's JSON, cURL's wording) is logged, not shown.
      *
-     * @param array  $result
+     * @param array $result
      * @param string $message raw error from the client
-     * @param string $step    'token' or 'orders': which call failed
-     * @param bool   $manual  manual credentials rather than Connect
+     * @param string $step 'token' or 'orders': which call failed
+     * @param bool $manual manual credentials rather than Connect
+     *
      * @return array
      */
     private function amazonTestError($result, $message, $step, $manual)
@@ -2659,6 +2667,7 @@ class AmazonMarketplacePro extends Module
         $result['error'] = $explain . "\n" . $this->l('The technical details are in the Logs tab.');
 
         $this->logActivity('error', 'connection_test', $message);
+
         return $result;
     }
 
@@ -2666,12 +2675,12 @@ class AmazonMarketplacePro extends Module
 
     protected function runAmazonOrderImport()
     {
-        $result = array(
+        $result = [
             'success' => false,
-            'error'   => null,
+            'error' => null,
             'summary' => null,
-            'orders'  => array(),
-        );
+            'orders' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonOrderImporter.php';
 
@@ -2702,6 +2711,7 @@ class AmazonMarketplacePro extends Module
             );
         }
         $result['orders'] = $importer->listStagedOrders();
+
         return $result;
     }
 
@@ -2709,12 +2719,12 @@ class AmazonMarketplacePro extends Module
 
     protected function runCreatePsOrders()
     {
-        $result = array(
+        $result = [
             'success' => false,
-            'error'   => null,
+            'error' => null,
             'summary' => null,
-            'notices' => array(),
-        );
+            'notices' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
 
@@ -2750,11 +2760,12 @@ class AmazonMarketplacePro extends Module
 
     protected function runGetMessagingActions()
     {
-        $result = array('success' => false, 'error' => null, 'actions' => array());
+        $result = ['success' => false, 'error' => null, 'actions' => []];
 
         $orderId = trim((string) Tools::getValue('amazon_order_id'));
         if ($orderId === '') {
             $result['error'] = $this->l('Amazon order id is required.');
+
             return $result;
         }
 
@@ -2766,6 +2777,7 @@ class AmazonMarketplacePro extends Module
         $actions = $messaging->getAllowedActions($orderId);
         if ($actions === false) {
             $result['error'] = $messaging->getLastError();
+
             return $result;
         }
 
@@ -2780,7 +2792,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runSendBuyerMessage()
     {
-        $result = array('success' => false, 'error' => null);
+        $result = ['success' => false, 'error' => null];
 
         $orderId = trim((string) Tools::getValue('amazon_order_id'));
         $actionName = trim((string) Tools::getValue('action_name'));
@@ -2793,6 +2805,7 @@ class AmazonMarketplacePro extends Module
 
         if (!$messaging->sendMessage($orderId, $actionName, $text)) {
             $result['error'] = $messaging->getLastError();
+
             return $result;
         }
 
@@ -2806,7 +2819,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runRequestReview()
     {
-        $result = array('success' => false, 'error' => null);
+        $result = ['success' => false, 'error' => null];
 
         $orderId = trim((string) Tools::getValue('amazon_order_id'));
 
@@ -2817,6 +2830,7 @@ class AmazonMarketplacePro extends Module
 
         if (!$requester->requestReview($orderId)) {
             $result['error'] = $requester->getLastError();
+
             return $result;
         }
 
@@ -2832,7 +2846,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runMatchCatalog()
     {
-        $result = array('success' => false, 'error' => null, 'summary' => null);
+        $result = ['success' => false, 'error' => null, 'summary' => null];
 
         require_once dirname(__FILE__) . '/classes/AmazonCatalogMatcher.php';
 
@@ -2843,6 +2857,7 @@ class AmazonMarketplacePro extends Module
         if ($summary === false) {
             $result['error'] = $matcher->getLastError();
             $this->logActivity('error', 'catalog_match', $result['error']);
+
             return $result;
         }
 
@@ -2862,7 +2877,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runImportCatalog()
     {
-        $result = array('success' => false, 'error' => null, 'summary' => null, 'notices' => array());
+        $result = ['success' => false, 'error' => null, 'summary' => null, 'notices' => []];
 
         require_once dirname(__FILE__) . '/classes/AmazonCatalogImporter.php';
 
@@ -2884,7 +2899,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runSubmitFeed()
     {
-        $result = array('success' => false, 'error' => null);
+        $result = ['success' => false, 'error' => null];
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
         require_once dirname(__FILE__) . '/classes/AmazonFeedManager.php';
@@ -2903,6 +2918,7 @@ class AmazonMarketplacePro extends Module
         if ($feedId === false) {
             $result['error'] = $feeds->getLastError();
             $result['skipped'] = $collected['skipped'];
+
             return $result;
         }
 
@@ -2930,7 +2946,7 @@ class AmazonMarketplacePro extends Module
 
     protected function runPollFeeds()
     {
-        $result = array('success' => false, 'error' => null);
+        $result = ['success' => false, 'error' => null];
 
         require_once dirname(__FILE__) . '/classes/AmazonFeedManager.php';
 
@@ -2951,13 +2967,13 @@ class AmazonMarketplacePro extends Module
 
     protected function runProductSync($direction)
     {
-        $result = array(
-            'success'  => false,
-            'error'    => null,
-            'summary'  => null,
-            'notices'  => array(),
-            'products' => array(),
-        );
+        $result = [
+            'success' => false,
+            'error' => null,
+            'summary' => null,
+            'notices' => [],
+            'products' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
@@ -2991,12 +3007,12 @@ class AmazonMarketplacePro extends Module
 
     protected function runListAmazonProducts()
     {
-        $result = array(
-            'success'  => false,
-            'error'    => null,
-            'notices'  => array(),
-            'products' => array(),
-        );
+        $result = [
+            'success' => false,
+            'error' => null,
+            'notices' => [],
+            'products' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
@@ -3039,11 +3055,11 @@ class AmazonMarketplacePro extends Module
             'Pushed ' . $summary['pushed'] . ', failed ' . $summary['failed']
         );
 
-        return array(
+        return [
             'success' => true,
             'summary' => $summary,
             'notices' => $sync->getNotices(),
-        );
+        ];
     }
 
     /** Above this many pending SKUs a send goes as one feed document. */
@@ -3068,16 +3084,16 @@ class AmazonMarketplacePro extends Module
         $pending = $sync->countPending();
 
         if ($pending === 0) {
-            return array(
+            return [
                 'success' => true,
                 'method' => 'none',
                 'pending' => 0,
-                'notices' => array(html_entity_decode(
+                'notices' => [html_entity_decode(
                     $this->l('Nothing to send. Press "Sync PS to Amazon" first: it marks what differs from Amazon.'),
                     ENT_QUOTES,
                     'UTF-8'
-                )),
-            );
+                )],
+            ];
         }
 
         if ($pending > self::SEND_AS_FEED_ABOVE) {
@@ -3096,13 +3112,13 @@ class AmazonMarketplacePro extends Module
 
     protected function runImportReturns()
     {
-        $result = array(
+        $result = [
             'success' => false,
-            'error'   => null,
+            'error' => null,
             'summary' => null,
-            'notices' => array(),
-            'returns' => array(),
-        );
+            'notices' => [],
+            'returns' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonReturnManager.php';
 
@@ -3132,12 +3148,12 @@ class AmazonMarketplacePro extends Module
 
     protected function runProcessReturns()
     {
-        $result = array(
+        $result = [
             'success' => false,
-            'error'   => null,
+            'error' => null,
             'summary' => null,
-            'notices' => array(),
-        );
+            'notices' => [],
+        ];
 
         require_once dirname(__FILE__) . '/classes/AmazonReturnManager.php';
 
@@ -3169,7 +3185,7 @@ class AmazonMarketplacePro extends Module
         $marketplaceId = $this->getMarketplaceId();
 
         if (!$idCategory || !$productType) {
-            return array('success' => false, 'error' => $this->l('Category and Amazon Product Type are required.'));
+            return ['success' => false, 'error' => $this->l('Category and Amazon Product Type are required.')];
         }
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
@@ -3179,21 +3195,21 @@ class AmazonMarketplacePro extends Module
         $attributesJson = trim((string) Tools::getValue('attributes_json', ''));
 
         if (!$sync->saveCategoryMapping($idCategory, $productType, $browseNode, $marketplaceId, $attributesJson)) {
-            return array('success' => false, 'error' => $sync->getLastError()
-                ? $sync->getLastError() : $this->l('The category mapping could not be saved.'));
+            return ['success' => false, 'error' => $sync->getLastError()
+                ? $sync->getLastError() : $this->l('The category mapping could not be saved.')];
         }
 
-        return array(
+        return [
             'success' => true,
             'mappings' => $sync->getCategoryMappings(),
-        );
+        ];
     }
 
     protected function runDeleteCategoryMap()
     {
         $idMap = (int) Tools::getValue('id_category_map');
         if (!$idMap) {
-            return array('success' => false, 'error' => $this->l('No mapping ID provided.'));
+            return ['success' => false, 'error' => $this->l('No mapping ID provided.')];
         }
 
         require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
@@ -3201,17 +3217,17 @@ class AmazonMarketplacePro extends Module
         $client = $this->buildAmazonClient();
         $sync = new AmazonProductSync($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         if ($sync->deleteCategoryMapping($idMap) === false) {
-            return array(
+            return [
                 'success' => false,
                 'error' => $sync->getLastError() ? $sync->getLastError() : $this->l('The category mapping could not be deleted.'),
                 'mappings' => $sync->getCategoryMappings(),
-            );
+            ];
         }
 
-        return array(
+        return [
             'success' => true,
             'mappings' => $sync->getCategoryMappings(),
-        );
+        ];
     }
 
     /* ─────────────────── Feature: FBA ─────────────────── */
@@ -3225,9 +3241,10 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'fba_inventory_sync',
             'Fetched: ' . $summary['fetched'] . ', updated: ' . $summary['updated'] . ', new: ' . $summary['new']
         );
-        return array('success' => ($fba->getLastError() === null), 'summary' => $summary,
+
+        return ['success' => ($fba->getLastError() === null), 'summary' => $summary,
             'error' => $fba->getLastError(), 'notices' => $fba->getNotices(),
-            'inventory' => $fba->listFbaInventory());
+            'inventory' => $fba->listFbaInventory()];
     }
 
     protected function runCreateMcfOrder()
@@ -3240,6 +3257,7 @@ class AmazonMarketplacePro extends Module
         $this->logActivity($result['success'] ? 'info' : 'error', 'mcf_order',
             'PS order #' . $idOrder . ': ' . ($result['success'] ? 'MCF created' : $result['error'])
         );
+
         return $result;
     }
 
@@ -3250,7 +3268,8 @@ class AmazonMarketplacePro extends Module
         $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
         $summary = $fba->syncFbaStockToPs();
         $this->logActivity('info', 'fba_stock_to_ps', 'Updated: ' . $summary['updated']);
-        return array('success' => true, 'summary' => $summary);
+
+        return ['success' => true, 'summary' => $summary];
     }
 
     /* ─────────────────── Feature: Repricing ─────────────────── */
@@ -3264,9 +3283,10 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'fetch_pricing',
             'Checked: ' . $summary['checked'] . ', BuyBox wins: ' . $summary['buybox_wins']
         );
-        return array('success' => ($engine->getLastError() === null), 'summary' => $summary,
+
+        return ['success' => ($engine->getLastError() === null), 'summary' => $summary,
             'error' => $engine->getLastError(), 'notices' => $engine->getNotices(),
-            'prices' => $engine->listCompetitivePrices());
+            'prices' => $engine->listCompetitivePrices()];
     }
 
     protected function runApplyPricingRules()
@@ -3275,8 +3295,9 @@ class AmazonMarketplacePro extends Module
         $client = $this->buildAmazonClient();
         $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $engine->applyPricingRules();
-        return array('success' => true, 'summary' => $summary, 'notices' => $engine->getNotices(),
-            'prices' => $engine->listCompetitivePrices());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $engine->getNotices(),
+            'prices' => $engine->listCompetitivePrices()];
     }
 
     protected function runPushPrices()
@@ -3286,7 +3307,8 @@ class AmazonMarketplacePro extends Module
         $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
         $summary = $engine->pushSuggestedPrices(25);
         $this->logActivity('info', 'push_prices', 'Pushed: ' . $summary['pushed'] . ', failed: ' . $summary['failed']);
-        return array('success' => true, 'summary' => $summary, 'notices' => $engine->getNotices());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $engine->getNotices()];
     }
 
     protected function runSavePricingRule()
@@ -3294,7 +3316,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonRepricingEngine.php';
         $client = $this->buildAmazonClient();
         $engine = new AmazonRepricingEngine($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
-        $data = array(
+        $data = [
             'id' => (int) Tools::getValue('rule_id', 0),
             'name' => Tools::getValue('rule_name', ''),
             'rule_type' => Tools::getValue('rule_type', 'match_lowest'),
@@ -3306,14 +3328,15 @@ class AmazonMarketplacePro extends Module
             'id_category' => (int) Tools::getValue('rule_category', 0),
             'marketplace_id' => $this->getMarketplaceId(),
             'active' => (int) Tools::getValue('rule_active', 1),
-        );
+        ];
         if (!$data['name']) {
-            return array('success' => false, 'error' => $this->l('Rule name is required.'));
+            return ['success' => false, 'error' => $this->l('Rule name is required.')];
         }
         if ($engine->savePricingRule($data) === false && $engine->getLastError()) {
-            return array('success' => false, 'error' => $engine->getLastError());
+            return ['success' => false, 'error' => $engine->getLastError()];
         }
-        return array('success' => true, 'rules' => $engine->listPricingRules());
+
+        return ['success' => true, 'rules' => $engine->listPricingRules()];
     }
 
     protected function runDeletePricingRule()
@@ -3324,9 +3347,10 @@ class AmazonMarketplacePro extends Module
         // The page has always posted id_pricing_rule; rule_id is kept for callers that send it.
         $id = (int) Tools::getValue('rule_id', Tools::getValue('id_pricing_rule'));
         if ($engine->deletePricingRule($id) === false && $engine->getLastError()) {
-            return array('success' => false, 'error' => $engine->getLastError());
+            return ['success' => false, 'error' => $engine->getLastError()];
         }
-        return array('success' => true, 'rules' => $engine->listPricingRules());
+
+        return ['success' => true, 'rules' => $engine->listPricingRules()];
     }
 
     /* ─────────────────── Feature: Fees ─────────────────── */
@@ -3340,9 +3364,10 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'fetch_fees',
             'Checked: ' . $summary['checked'] . ', updated: ' . $summary['updated']
         );
-        return array('success' => ($tracker->getLastError() === null), 'summary' => $summary,
+
+        return ['success' => ($tracker->getLastError() === null), 'summary' => $summary,
             'error' => $tracker->getLastError(), 'notices' => $tracker->getNotices(),
-            'fee_summary' => $tracker->getFeeSummary());
+            'fee_summary' => $tracker->getFeeSummary()];
     }
 
     /* ─────────────────── Feature: Reports ─────────────────── */
@@ -3357,6 +3382,7 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'request_report', 'Type: ' . $reportType . ', ID: '
             . (isset($result['report_id']) ? $result['report_id'] : 'n/a'));
         $result['reports'] = $manager->listReports();
+
         return $result;
     }
 
@@ -3366,8 +3392,9 @@ class AmazonMarketplacePro extends Module
         $client = $this->buildAmazonClient();
         $manager = new AmazonReportManager($client, $this->getMarketplaceId());
         $summary = $manager->pollPendingReports();
-        return array('success' => true, 'summary' => $summary, 'notices' => $manager->getNotices(),
-            'reports' => $manager->listReports());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $manager->getNotices(),
+            'reports' => $manager->listReports()];
     }
 
     /* ─────────────────── Feature: Multi-Marketplace ─────────────────── */
@@ -3376,7 +3403,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
         $mm = new AmazonMultiMarketplace();
-        $data = array(
+        $data = [
             'marketplace_id' => Tools::getValue('mp_marketplace_id', ''),
             'client_id' => Tools::getValue('mp_client_id', ''),
             'client_secret' => Tools::getValue('mp_client_secret', ''),
@@ -3388,10 +3415,11 @@ class AmazonMarketplacePro extends Module
             'sync_orders' => (int) Tools::getValue('mp_sync_orders', 1),
             'sync_products' => (int) Tools::getValue('mp_sync_products', 1),
             'sync_stock' => (int) Tools::getValue('mp_sync_stock', 1),
-        );
+        ];
         $success = $mm->saveMarketplaceConfig($data);
-        return array('success' => $success, 'error' => $mm->getLastError(),
-            'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
+
+        return ['success' => $success, 'error' => $mm->getLastError(),
+            'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs())];
     }
 
     protected function runDeleteMarketplace()
@@ -3401,10 +3429,11 @@ class AmazonMarketplacePro extends Module
         $mpId = Tools::getValue('mp_marketplace_id', '');
         $deleted = $mm->deleteMarketplaceConfig($mpId);
         if ($deleted === false) {
-            return array('success' => false, 'error' => $mm->getLastError(),
-                'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
+            return ['success' => false, 'error' => $mm->getLastError(),
+                'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs())];
         }
-        return array('success' => true, 'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs()));
+
+        return ['success' => true, 'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs())];
     }
 
     /* ─────────────────── Feature: Promotions ─────────────────── */
@@ -3418,8 +3447,9 @@ class AmazonMarketplacePro extends Module
         $this->logActivity('info', 'import_promotions',
             'Found: ' . $summary['promotions_found'] . ', new: ' . $summary['promotions_new']
         );
-        return array('success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
-            'promotions' => $sync->listPromotions(), 'stats' => $sync->getPromotionStats());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
+            'promotions' => $sync->listPromotions(), 'stats' => $sync->getPromotionStats()];
     }
 
     protected function runExportPromotions()
@@ -3428,8 +3458,9 @@ class AmazonMarketplacePro extends Module
         $client = $this->buildAmazonClient();
         $sync = new AmazonPromotionSync($client, $this->getMarketplaceId());
         $summary = $sync->exportPsCartRules();
-        return array('success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
-            'promotions' => $sync->listPromotions(), 'stats' => $sync->getPromotionStats());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
+            'promotions' => $sync->listPromotions(), 'stats' => $sync->getPromotionStats()];
     }
 
     protected function runCreatePromoCartRules()
@@ -3438,8 +3469,9 @@ class AmazonMarketplacePro extends Module
         $client = $this->buildAmazonClient();
         $sync = new AmazonPromotionSync($client, $this->getMarketplaceId());
         $summary = $sync->createPsCartRules();
-        return array('success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
-            'promotions' => $sync->listPromotions());
+
+        return ['success' => true, 'summary' => $summary, 'notices' => $sync->getNotices(),
+            'promotions' => $sync->listPromotions()];
     }
 
     /* ─────────────────── Data getters for template ─────────────────── */
@@ -3455,7 +3487,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `seller_sku` ASC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     private function getCompetitivePrices()
@@ -3467,7 +3500,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere('cp') . '
                 ORDER BY cp.`is_buybox_winner` ASC, cp.`seller_sku` ASC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     /** Pricing rules for all shops, plus the selected shop's own. */
@@ -3477,7 +3511,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlShared() . '
                 ORDER BY `name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     private function getFeeSummary()
@@ -3489,7 +3524,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere() . '
                 GROUP BY ' . $byShop . '`fee_type`, `currency` ORDER BY total_amount DESC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     private function getReports()
@@ -3498,7 +3534,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC LIMIT 50';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     private function getMarketplaceConfigs()
@@ -3507,7 +3544,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `marketplace_name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     private function getPromotions()
@@ -3516,7 +3554,8 @@ class AmazonMarketplacePro extends Module
                 WHERE ' . AmzproShop::sqlWhere() . '
                 ORDER BY `date_add` DESC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 
     private function getPromotionStats()
@@ -3531,8 +3570,9 @@ class AmazonMarketplacePro extends Module
              WHERE ' . AmzproShop::sqlWhere()
         );
         if (!$row) {
-            return array('total' => 0, 'from_amazon' => 0, 'from_ps' => 0, 'total_discount' => 0, 'with_cart_rule' => 0);
+            return ['total' => 0, 'from_amazon' => 0, 'from_ps' => 0, 'total_discount' => 0, 'with_cart_rule' => 0];
         }
+
         return $row;
     }
 
@@ -3585,7 +3625,7 @@ class AmazonMarketplacePro extends Module
         $multistore = AmzproShop::isMultistore();
         $idShop = AmzproShop::id();
 
-        $this->context->smarty->assign(array(
+        $this->context->smarty->assign([
             'amzpro' => $overrides,
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
             'amzpro_multistore' => $multistore,
@@ -3595,7 +3635,7 @@ class AmazonMarketplacePro extends Module
             // The shop already saved its own settings for this product.
             'amzpro_scope_own' => $multistore && $idShop
                 && isset($overrides['id_shop']) && (int) $overrides['id_shop'] === $idShop,
-        ));
+        ]);
 
         return $this->display(__FILE__, 'views/templates/admin/product_tab.tpl');
     }
@@ -3618,12 +3658,13 @@ class AmazonMarketplacePro extends Module
             && (int) Tools::getValue('amzpro_id_shop') !== AmzproShop::id()) {
             $this->logActivity('warning', 'product_overrides',
                 'Amazon settings of product #' . (int) $idProduct . ' not saved: the shop selection changed since the product page was opened.');
+
             return;
         }
         require_once dirname(__FILE__) . '/classes/AmazonProductOverride.php';
 
         $stockForce = Tools::getValue('amzpro_stock_force', '');
-        $data = array(
+        $data = [
             'sync' => (int) Tools::getValue('amzpro_sync', 1),
             'sync_price' => Tools::getIsset('amzpro_sync_price') ? 1 : 0,
             'sync_quantity' => Tools::getIsset('amzpro_sync_quantity') ? 1 : 0,
@@ -3643,14 +3684,14 @@ class AmazonMarketplacePro extends Module
             'gpsr_contact' => trim((string) Tools::getValue('amzpro_gpsr_contact', '')),
             'gift_option' => Tools::getIsset('amzpro_gift_option') ? 1 : 0,
             'transparency_code' => trim((string) Tools::getValue('amzpro_transparency_code', '')),
-        );
+        ];
 
         AmazonProductOverride::save($idProduct, $data);
 
         $scope = trim((string) Tools::getValue('amzpro_propagate_scope', ''));
         if ($scope !== '') {
             $fields = Tools::getValue('amzpro_propagate_fields');
-            $count = AmazonProductOverride::propagate($idProduct, $scope, is_array($fields) ? $fields : array());
+            $count = AmazonProductOverride::propagate($idProduct, $scope, is_array($fields) ? $fields : []);
             $this->logActivity('info', 'product_overrides',
                 'Propagated Amazon settings from product #' . (int) $idProduct . ' to ' . $count . ' product(s) (' . $scope . ').');
         }
@@ -3718,6 +3759,7 @@ class AmazonMarketplacePro extends Module
             $this->logActivity('warning', 'invoice_email',
                 $amazonId . ': invoice not e-mailed — this buyer has a placeholder address '
                 . '(the "anonymised e-mail" setting is on, or Amazon supplied no address).');
+
             return;
         }
 
@@ -3734,22 +3776,22 @@ class AmazonMarketplacePro extends Module
             $pdf = new PDF($invoices, PDF::TEMPLATE_INVOICE, $this->context->smarty);
             $content = $pdf->render(false);
 
-            $attachments = array(array(
+            $attachments = [[
                 'content' => $content,
                 'name' => 'invoice-' . $order->reference . '.pdf',
                 'mime' => 'application/pdf',
-            ));
+            ]];
 
             // Optional extra document (terms, returns policy) shipped by the merchant.
             $extra = trim((string) AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT', $idShop));
             if ($extra !== '') {
                 $path = _PS_MODULE_DIR_ . $this->name . '/docs/' . basename($extra);
                 if (file_exists($path)) {
-                    $attachments[] = array(
+                    $attachments[] = [
                         'content' => file_get_contents($path),
                         'name' => basename($extra),
                         'mime' => 'application/pdf',
-                    );
+                    ];
                 }
             }
 
@@ -3758,12 +3800,12 @@ class AmazonMarketplacePro extends Module
                 (int) $order->id_lang,
                 'contact',
                 $this->l('Your invoice for order') . ' ' . $amazonId,
-                array(
+                [
                     '{message}' => $this->l('Please find your invoice attached.') . "\n"
                         . $this->l('Amazon order') . ': ' . $amazonId,
                     '{email}' => (string) Configuration::get('PS_SHOP_EMAIL', null, AmzproShop::groupId($idShop), $idShop),
                     '{attached_file}' => '',
-                ),
+                ],
                 $customer->email,
                 null, null, null,
                 $attachments,
@@ -3809,13 +3851,13 @@ class AmazonMarketplacePro extends Module
     private function productShopIds($idProduct)
     {
         if (!AmzproShop::isMultistore()) {
-            return array(AmzproShop::actingId());
+            return [AmzproShop::actingId()];
         }
         $rows = Db::getInstance()->executeS(
             'SELECT `id_shop` FROM `' . _DB_PREFIX_ . 'product_shop`
              WHERE `id_product` = ' . (int) $idProduct
         );
-        $ids = array();
+        $ids = [];
         foreach ((array) $rows as $row) {
             $ids[] = (int) $row['id_shop'];
         }
@@ -3839,11 +3881,11 @@ class AmazonMarketplacePro extends Module
     private function stockPushShopIds($idProduct, $params)
     {
         if (!AmzproShop::isMultistore()) {
-            return array(AmzproShop::actingId());
+            return [AmzproShop::actingId()];
         }
         $productShops = $this->productShopIds($idProduct);
         if (isset($params['id_shop']) && (int) $params['id_shop'] > 0) {
-            $seed = array((int) $params['id_shop']);
+            $seed = [(int) $params['id_shop']];
         } else {
             $seed = array_values(array_intersect(
                 $productShops,
@@ -3851,7 +3893,7 @@ class AmazonMarketplacePro extends Module
             ));
         }
 
-        $ids = array();
+        $ids = [];
         foreach ($seed as $idShop) {
             foreach (Shop::getSharedShops((int) $idShop, Shop::SHARE_STOCK) as $idSibling) {
                 if (in_array((int) $idSibling, $productShops, true)) {
@@ -3970,7 +4012,7 @@ class AmazonMarketplacePro extends Module
      */
     private function pushProductStockToShops($idProduct, $params)
     {
-        $pushed = array();
+        $pushed = [];
         foreach ($this->stockPushShopIds($idProduct, $params) as $idShop) {
             if (!AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK', $idShop)) {
                 continue;
@@ -4027,7 +4069,7 @@ class AmazonMarketplacePro extends Module
         if (!$row) {
             return;
         }
-        $overrides = array((int) $idProduct => AmazonProductOverride::get($idProduct));
+        $overrides = [(int) $idProduct => AmazonProductOverride::get($idProduct)];
         $sku = (string) AmazonProductOverride::effectiveSku(
             $idProduct, AmazonListingSettings::buildSku($row), $overrides
         );
@@ -4055,42 +4097,43 @@ class AmazonMarketplacePro extends Module
             $resp = $client->request(
                 'DELETE',
                 '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-                array('marketplaceIds' => $marketplaceId)
+                ['marketplaceIds' => $marketplaceId]
             );
             $status = ($resp !== false && is_array($resp['body']) && isset($resp['body']['status']))
                 ? $resp['body']['status'] : 'unknown';
             $this->logActivity('info', 'hook_stock_push',
                 'SKU ' . $sku . ': out of stock, deletion requested, status=' . $status
             );
+
             return;
         }
 
-        $attributes = array(
-            'condition_type' => array(array('value' => AmazonSpApiClient::listingCondition($idShop))),
-            'purchasable_offer' => array(array(
+        $attributes = [
+            'condition_type' => [['value' => AmazonSpApiClient::listingCondition($idShop)]],
+            'purchasable_offer' => [[
                 'currency' => AmazonSpApiClient::currencyForMarketplace($marketplaceId),
                 'marketplace_id' => $marketplaceId,
-                'our_price' => array(array(
-                    'schedule' => array(array('value_with_tax' => $price)),
-                )),
-            )),
-            'fulfillment_availability' => array(array(
+                'our_price' => [[
+                    'schedule' => [['value_with_tax' => $price]],
+                ]],
+            ]],
+            'fulfillment_availability' => [[
                 'fulfillment_channel_code' => 'DEFAULT',
                 'quantity' => $effectiveQty,
-            )),
-        );
+            ]],
+        ];
         $attributes = AmazonSpApiClient::enrichOfferAttributes($attributes, $marketplaceId, $price, null, $idShop);
 
-        $body = array(
+        $body = [
             'productType' => 'PRODUCT',
             'requirements' => 'LISTING_OFFER_ONLY',
             'attributes' => $attributes,
-        );
+        ];
 
         $resp = $client->request(
             'PUT',
             '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-            array('marketplaceIds' => $marketplaceId),
+            ['marketplaceIds' => $marketplaceId],
             $body
         );
 
@@ -4167,14 +4210,14 @@ class AmazonMarketplacePro extends Module
         $resp = $client->request(
             'POST',
             '/orders/v0/orders/' . rawurlencode($amazonOrderId) . '/shipmentConfirmation',
-            array(),
-            array(
+            [],
+            [
                 'marketplaceId' => $this->getMarketplaceId(),
-                'packageDetail' => array(
+                'packageDetail' => [
                     'trackingNumber' => $trackingNumber,
                     'carrierCode' => $this->mapCarrierToAmazon($carrierName, $idCarrier),
-                ),
-            )
+                ],
+            ]
         );
 
         $status = ($resp !== false && $resp['status'] < 400) ? 'OK' : 'FAILED';
@@ -4225,12 +4268,12 @@ class AmazonMarketplacePro extends Module
     }
 
     /** Amazon carrier codes offered in the mapping UI. */
-    public static $amazonCarrierCodes = array(
+    public static $amazonCarrierCodes = [
         'DHL', 'DPD', 'GLS', 'Hermes', 'UPS', 'USPS', 'FedEx', 'Royal Mail',
         'TNT', 'Chronopost', 'Colissimo', 'La Poste', 'Colis Prive',
         'Mondial Relay', 'Deutsche Post', 'PostNL', 'bpost', 'Correos',
         'Poste Italiane', 'Aramex', 'Amazon Shipping', 'Other',
-    );
+    ];
 
     /**
      * Map a PS carrier to an Amazon carrier code: explicit merchant mapping
@@ -4246,7 +4289,7 @@ class AmazonMarketplacePro extends Module
         }
 
         $name = strtolower(trim($carrierName));
-        $map = array(
+        $map = [
             'dhl' => 'DHL', 'fedex' => 'FedEx', 'ups' => 'UPS',
             'usps' => 'USPS', 'royal mail' => 'Royal Mail',
             'dpd' => 'DPD', 'gls' => 'GLS', 'hermes' => 'Hermes',
@@ -4255,12 +4298,13 @@ class AmazonMarketplacePro extends Module
             'mondial relay' => 'Mondial Relay', 'postnl' => 'PostNL',
             'bpost' => 'bpost', 'correos' => 'Correos',
             'aramex' => 'Aramex', 'post' => 'Other',
-        );
+        ];
         foreach ($map as $key => $code) {
             if (strpos($name, $key) !== false) {
                 return $code;
             }
         }
+
         return 'Other';
     }
 
@@ -4298,6 +4342,7 @@ class AmazonMarketplacePro extends Module
                 ORDER BY `id_amazonmarketplacepro_log` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $this->withShopNames($rows) : array();
+
+        return is_array($rows) ? $this->withShopNames($rows) : [];
     }
 }

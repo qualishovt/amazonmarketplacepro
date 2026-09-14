@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -17,7 +18,7 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_1_1_0($module)
 {
-    $sql = array();
+    $sql = [];
 
     $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_entity_setting` (
         `id_amazonmarketplacepro_entity_setting` INT(11) NOT NULL AUTO_INCREMENT,
@@ -75,7 +76,7 @@ function upgrade_module_1_1_0($module)
         }
     }
 
-    $defaults = array(
+    $defaults = [
         'AMZPRO_SKU_PREFIX' => '',
         'AMZPRO_SKU_SOURCE' => 'reference',
         'AMZPRO_PRICE_MIN' => '0',
@@ -109,7 +110,7 @@ function upgrade_module_1_1_0($module)
         'AMZPRO_FAKE_EMAIL' => '0',
         'AMZPRO_CUSTOMER_GROUP' => '0',
         'AMZPRO_SKIP_NO_STOCK' => '0',
-    );
+    ];
     foreach ($defaults as $key => $value) {
         if (Configuration::get($key) === false) {
             Configuration::updateValue($key, $value);

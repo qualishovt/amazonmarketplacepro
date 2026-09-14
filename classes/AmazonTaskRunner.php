@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Cron front controller for MarketplacesPro.
  *
  * Provides URL endpoints for automated tasks (order import, stock sync,
@@ -103,7 +104,7 @@ class AmazonTaskRunner
                 return $this->actionPurgePii();
         }
 
-        return array('success' => false, 'error' => 'Unknown action: ' . $action);
+        return ['success' => false, 'error' => 'Unknown action: ' . $action];
     }
 
     /** Record the outcome of a run in the module log. */
@@ -111,6 +112,7 @@ class AmazonTaskRunner
     {
         $this->logCronRun($action, $result);
     }
+
     /**
      * Import new Amazon orders into staging.
      */
@@ -121,7 +123,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $importer = new AmazonOrderImporter($client, $this->getMarketplaceId());
@@ -133,15 +135,15 @@ class AmazonTaskRunner
 
         $summary = $importer->importNewOrders($createdAfter);
         if ($summary === false) {
-            return array('success' => false, 'error' => $importer->getLastError());
+            return ['success' => false, 'error' => $importer->getLastError()];
         }
 
-        $this->sendReportEmail('Order import', array(
+        $this->sendReportEmail('Order import', [
             'Fetched' => $summary['fetched'],
             'Imported new' => $summary['imported_new'],
             'Already staged' => $summary['already'],
             'Items unmatched' => $summary['items_unmatched'],
-        ));
+        ]);
 
         // Retention is a policy requirement, not a convenience, so it is
         // not left to the merchant scheduling a second cron entry: every
@@ -149,8 +151,9 @@ class AmazonTaskRunner
         // the purge_pii job is still compliant as long as orders import.
         $summary['pii_purged'] = $this->purgeAgedPii();
 
-        return array('success' => true, 'action' => 'import_orders', 'summary' => $summary);
+        return ['success' => true, 'action' => 'import_orders', 'summary' => $summary];
     }
+
     /**
      * Push current PrestaShop stock levels to Amazon for all synced products.
      */
@@ -161,7 +164,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
@@ -179,14 +182,15 @@ class AmazonTaskRunner
         $sync->syncPrestashopSide();
         $pushResult = $sync->pushToAmazon(100);
 
-        $this->sendReportEmail('Stock sync', array(
+        $this->sendReportEmail('Stock sync', [
             'Candidates' => isset($pushResult['candidates']) ? $pushResult['candidates'] : 0,
             'Pushed' => isset($pushResult['pushed']) ? $pushResult['pushed'] : 0,
             'Failed' => isset($pushResult['failed']) ? $pushResult['failed'] : 0,
-        ));
+        ]);
 
-        return array('success' => true, 'action' => 'sync_stock', 'summary' => $pushResult);
+        return ['success' => true, 'action' => 'sync_stock', 'summary' => $pushResult];
     }
+
     /**
      * Full bidirectional product sync.
      */
@@ -197,7 +201,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
@@ -210,13 +214,14 @@ class AmazonTaskRunner
         $psSummary = $sync->syncPrestashopSide();
         $azSummary = $sync->syncAmazonSide();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'sync_products',
             'ps_summary' => $psSummary,
             'amazon_summary' => $azSummary,
-        );
+        ];
     }
+
     /**
      * Create real PS orders from staged Amazon orders.
      */
@@ -235,8 +240,9 @@ class AmazonTaskRunner
         $creator = new AmazonOrderCreator($idCarrier, $idOrderState, (int) $this->shopConfig('PS_LANG_DEFAULT'), $idShop);
         $summary = $creator->createAllPending();
 
-        return array('success' => true, 'action' => 'create_orders', 'summary' => $summary);
+        return ['success' => true, 'action' => 'create_orders', 'summary' => $summary];
     }
+
     /**
      * Import returns/cancellations from Amazon.
      */
@@ -247,7 +253,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $manager = new AmazonReturnManager($client, $this->getMarketplaceId());
@@ -259,13 +265,14 @@ class AmazonTaskRunner
 
         $summary = $manager->importReturns($createdAfter);
 
-        return array(
+        return [
             'success' => ($manager->getLastError() === null),
             'action' => 'import_returns',
             'summary' => $summary,
             'error' => $manager->getLastError(),
-        );
+        ];
     }
+
     /**
      * Process imported returns (create credit slips, cancel orders).
      */
@@ -276,19 +283,20 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $manager = new AmazonReturnManager($client, $this->getMarketplaceId());
 
         $summary = $manager->processReturns();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'process_returns',
             'summary' => $summary,
-        );
+        ];
     }
+
     /**
      * Sync FBA inventory and optionally update PS stock.
      */
@@ -299,7 +307,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
@@ -307,14 +315,15 @@ class AmazonTaskRunner
         $invSummary = $fba->syncFbaInventory();
         $stockSummary = $fba->syncFbaStockToPs();
 
-        return array(
+        return [
             'success' => ($fba->getLastError() === null),
             'action' => 'sync_fba',
             'inventory' => $invSummary,
             'stock_sync' => $stockSummary,
             'error' => $fba->getLastError(),
-        );
+        ];
     }
+
     /**
      * Fetch competitive pricing, apply rules, and push new prices.
      */
@@ -325,7 +334,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
@@ -335,14 +344,15 @@ class AmazonTaskRunner
         $ruleSummary = $engine->applyPricingRules();
         $pushSummary = $engine->pushSuggestedPrices(50);
 
-        return array(
+        return [
             'success' => true,
             'action' => 'reprice',
             'fetch' => $fetchSummary,
             'rules' => $ruleSummary,
             'push' => $pushSummary,
-        );
+        ];
     }
+
     /**
      * Fetch Amazon fees/commissions for recent orders.
      */
@@ -353,19 +363,20 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $tracker = new AmazonFeesTracker($client);
         $summary = $tracker->fetchOrderFees(50);
 
-        return array(
+        return [
             'success' => ($tracker->getLastError() === null),
             'action' => 'fetch_fees',
             'summary' => $summary,
             'error' => $tracker->getLastError(),
-        );
+        ];
     }
+
     /**
      * Poll and download pending Amazon reports.
      */
@@ -376,18 +387,19 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $manager = new AmazonReportManager($client, $this->getMarketplaceId());
         $summary = $manager->pollPendingReports();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'poll_reports',
             'summary' => $summary,
-        );
+        ];
     }
+
     /**
      * Sync promotions from Amazon orders.
      */
@@ -398,7 +410,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $sync = new AmazonPromotionSync($client, $this->getMarketplaceId());
@@ -407,14 +419,15 @@ class AmazonTaskRunner
         $exportSummary = $sync->exportPsCartRules();
         $cartRuleSummary = $sync->createPsCartRules();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'sync_promotions',
             'import' => $importSummary,
             'export' => $exportSummary,
             'cart_rules' => $cartRuleSummary,
-        );
+        ];
     }
+
     /**
      * Import orders across all active marketplaces.
      */
@@ -426,12 +439,13 @@ class AmazonTaskRunner
         $mm = new AmazonMultiMarketplace();
         $results = $mm->importOrdersAllMarketplaces();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'multi_import_orders',
             'results' => $results,
-        );
+        ];
     }
+
     /**
      * Sync products across all active marketplaces.
      */
@@ -443,12 +457,13 @@ class AmazonTaskRunner
         $mm = new AmazonMultiMarketplace();
         $results = $mm->syncProductsAllMarketplaces();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'multi_sync_products',
             'results' => $results,
-        );
+        ];
     }
+
     /**
      * Send Amazon's standard review request for eligible delivered orders.
      * Only runs when the merchant enabled it in the module settings.
@@ -456,8 +471,8 @@ class AmazonTaskRunner
     private function actionRequestReviews()
     {
         if (!AmzproShop::get('AMZPRO_AUTO_REVIEW_REQUEST')) {
-            return array('success' => true, 'action' => 'request_reviews',
-                'summary' => AmazonI18n::get()->l('Skipped: automatic review requests are disabled in module settings.', 'amazontaskrunner'));
+            return ['success' => true, 'action' => 'request_reviews',
+                'summary' => AmazonI18n::get()->l('Skipped: automatic review requests are disabled in module settings.', 'amazontaskrunner')];
         }
 
         require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
@@ -465,7 +480,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $requester = new AmazonReviewRequester($client, $this->getMarketplaceId());
@@ -473,12 +488,13 @@ class AmazonTaskRunner
         $env = AmazonSpApiClient::environment();
         $requester->setMock(AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
-        return array(
+        return [
             'success' => true,
             'action' => 'request_reviews',
             'summary' => $requester->requestAllEligible(25),
-        );
+        ];
     }
+
     /**
      * Bulk feed cycle: submit pending listing changes as one feed, then
      * poll earlier feeds for results.
@@ -491,7 +507,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
@@ -511,15 +527,16 @@ class AmazonTaskRunner
             $submitted = $feeds->submitListingsFeed($collected['messages']);
         }
 
-        return array(
+        return [
             'success' => true,
             'action' => 'process_feeds',
             'submitted_feed' => $submitted,
             'messages' => count($collected['messages']),
             'skipped' => count($collected['skipped']),
             'poll' => $feeds->pollPendingFeeds(),
-        );
+        ];
     }
+
     /**
      * Settle Remote Cart reservations: hand over the ones whose order is now
      * payable, return the stock of the ones that expired.
@@ -529,22 +546,23 @@ class AmazonTaskRunner
         require_once dirname(__FILE__) . '/AmazonRemoteCart.php';
 
         if (!AmazonRemoteCart::isEnabled()) {
-            return array('success' => true, 'action' => 'remote_cart', 'summary' => array('disabled' => true));
+            return ['success' => true, 'action' => 'remote_cart', 'summary' => ['disabled' => true]];
         }
 
         $converted = AmazonRemoteCart::convertConfirmed();
         $expired = AmazonRemoteCart::releaseExpired();
 
-        return array(
+        return [
             'success' => true,
             'action' => 'remote_cart',
-            'summary' => array(
+            'summary' => [
                 'converted_orders' => $converted,
                 'expired_orders' => $expired['orders'],
                 'released_items' => $expired['items'],
-            ),
-        );
+            ],
+        ];
     }
+
     /** Read buyer replies from the configured mailbox into Customer Service. */
     private function actionFetchMessages()
     {
@@ -553,19 +571,20 @@ class AmazonTaskRunner
         $inbox = new AmazonBuyerInbox();
         $summary = $inbox->fetchNewMessages(50);
         if ($summary === false) {
-            return array('success' => false, 'error' => $inbox->getLastError());
+            return ['success' => false, 'error' => $inbox->getLastError()];
         }
 
-        return array('success' => true, 'action' => 'fetch_messages', 'summary' => $summary);
+        return ['success' => true, 'action' => 'fetch_messages', 'summary' => $summary];
     }
+
     /**
      * Upload PS invoices to Amazon for VCS-enrolled sellers.
      */
     private function actionUploadInvoices()
     {
         if (!AmzproShop::get('AMZPRO_VCS_ENABLED')) {
-            return array('success' => true, 'action' => 'upload_invoices',
-                'summary' => AmazonI18n::get()->l('Skipped: VCS invoice upload is disabled in module settings.', 'amazontaskrunner'));
+            return ['success' => true, 'action' => 'upload_invoices',
+                'summary' => AmazonI18n::get()->l('Skipped: VCS invoice upload is disabled in module settings.', 'amazontaskrunner')];
         }
 
         require_once dirname(__FILE__) . '/AmazonSpApiClient.php';
@@ -573,7 +592,7 @@ class AmazonTaskRunner
 
         $client = $this->buildClient();
         if (!$client) {
-            return array('success' => false, 'error' => $this->notConnected());
+            return ['success' => false, 'error' => $this->notConnected()];
         }
 
         $uploader = new AmazonVcsInvoiceUploader(
@@ -584,13 +603,14 @@ class AmazonTaskRunner
         $env = AmazonSpApiClient::environment();
         $uploader->setMock(AmzproShop::get('AMZPRO_USE_MOCK') && $env !== 'production');
 
-        return array(
+        return [
             'success' => true,
             'action' => 'upload_invoices',
             'summary' => $uploader->uploadPendingInvoices(10),
             'notices' => $uploader->getNotices(),
-        );
+        ];
     }
+
     /**
      * Delete buyer personal data from orders past the retention window.
      *
@@ -603,16 +623,16 @@ class AmazonTaskRunner
         require_once dirname(__FILE__) . '/AmazonPiiPurger.php';
 
         if (!AmazonPiiPurger::isEnabledInAnyShop()) {
-            return array('success' => true, 'action' => 'purge_pii', 'summary' => array('disabled' => true));
+            return ['success' => true, 'action' => 'purge_pii', 'summary' => ['disabled' => true]];
         }
 
         $purger = new AmazonPiiPurger();
         $summary = $purger->purge();
         if ($summary === false) {
-            return array('success' => false, 'error' => $purger->getLastError());
+            return ['success' => false, 'error' => $purger->getLastError()];
         }
 
-        return array('success' => true, 'action' => 'purge_pii', 'summary' => $summary);
+        return ['success' => true, 'action' => 'purge_pii', 'summary' => $summary];
     }
 
     /**
@@ -637,17 +657,17 @@ class AmazonTaskRunner
         $endpoint = AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
         if ($env === 'production') {
             $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
-            $regionMap = array(
+            $regionMap = [
                 'ATVPDKIKX0DER' => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
                 'A2Q3Y263D00KMC' => 'NA',
                 'A1F83G8C2ARO7P' => 'EU', 'A1PA6795UKMFR9' => 'EU', 'A13V1IB3VIYZZH' => 'EU',
                 'APJ6JRA9NG5V4' => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
                 'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL' => 'EU',
                 'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV' => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
-                'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU'  => 'EU',
-                'AE08WJ6YKNBMC'  => 'EU', 'A19VAU5U5O7RUS' => 'FE',
+                'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU' => 'EU',
+                'AE08WJ6YKNBMC' => 'EU', 'A19VAU5U5O7RUS' => 'FE',
                 'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
-            );
+            ];
             $region = isset($regionMap[$mp]) ? $regionMap[$mp] : 'EU';
             switch ($region) {
                 case 'NA':
@@ -681,8 +701,10 @@ class AmazonTaskRunner
         $env = AmazonSpApiClient::environment();
         if ($env === 'production') {
             $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
+
             return $mp ? $mp : 'A1PA6795UKMFR9';
         }
+
         return 'ATVPDKIKX0DER';
     }
 
@@ -718,6 +740,7 @@ class AmazonTaskRunner
              )'
         );
     }
+
     /**
      * Clear aged-out buyer data. Never fails the caller: a retention
      * problem should be visible in the module log, not turn a successful
@@ -751,7 +774,7 @@ class AmazonTaskRunner
         }
 
         $idShop = $this->shopId();
-        $lines = array();
+        $lines = [];
         foreach ($stats as $label => $value) {
             $lines[] = $label . ': ' . $value;
         }
@@ -772,9 +795,9 @@ class AmazonTaskRunner
                 (int) $this->shopConfig('PS_LANG_DEFAULT'),
                 'contact', // stock PS template: {message} in a plain wrapper
                 'Amazon Marketplace Pro: ' . $subject,
-                array('{message}' => $body,
-                      '{email}' => (string) $this->shopConfig('PS_SHOP_EMAIL'),
-                      '{attached_file}' => ''),
+                ['{message}' => $body,
+                    '{email}' => (string) $this->shopConfig('PS_SHOP_EMAIL'),
+                    '{attached_file}' => ''],
                 $to,
                 null,
                 null,

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Review requests via the SP-API Solicitations API (v1).
  *
@@ -14,7 +15,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -34,7 +34,7 @@ class AmazonReviewRequester
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
+    private $lastError;
     private $useMock = false;
 
     /** True when the last requestReview() failed because Amazon does not offer
@@ -77,6 +77,7 @@ class AmazonReviewRequester
      * Is the review solicitation currently available for this order?
      *
      * @param string $amazonOrderId
+     *
      * @return bool|null true/false, or null on API error (see getLastError())
      */
     public function isReviewRequestAvailable($amazonOrderId)
@@ -90,16 +91,18 @@ class AmazonReviewRequester
         $resp = $this->client->request(
             'GET',
             '/solicitations/v1/orders/' . rawurlencode($amazonOrderId),
-            array('marketplaceIds' => $this->marketplaceId)
+            ['marketplaceIds' => $this->marketplaceId]
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
+
             return null;
         }
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'getSolicitationActions HTTP ' . $resp['status'] . ': ' . $body;
+
             return null;
         }
 
@@ -118,6 +121,7 @@ class AmazonReviewRequester
      * Send the review request for one order (checks availability first).
      *
      * @param string $amazonOrderId
+     *
      * @return bool
      */
     public function requestReview($amazonOrderId)
@@ -128,10 +132,12 @@ class AmazonReviewRequester
         $amazonOrderId = trim((string) $amazonOrderId);
         if ($amazonOrderId === '') {
             $this->lastError = AmazonI18n::get()->l('Order id is required.', 'amazonreviewrequester');
+
             return false;
         }
         if ($this->isOtherShopsOrder($amazonOrderId)) {
             $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Select that shop at the top of the page to work on it.', 'amazonreviewrequester');
+
             return false;
         }
 
@@ -142,12 +148,14 @@ class AmazonReviewRequester
         if ($available === false) {
             $this->notAllowed = true;
             $this->lastError = AmazonI18n::get()->l('Amazon does not allow a review request for this order (already sent, outside the 5-30 day window, or buyer opted out).', 'amazonreviewrequester');
+
             return false;
         }
 
         if ($this->useMock) {
             $this->markOrder($amazonOrderId, self::STATE_SENT);
             $this->log('info', 'MOCK review request for ' . $amazonOrderId);
+
             return true;
         }
 
@@ -155,13 +163,14 @@ class AmazonReviewRequester
             'POST',
             '/solicitations/v1/orders/' . rawurlencode($amazonOrderId)
                 . '/solicitations/' . self::ACTION_NAME,
-            array('marketplaceIds' => $this->marketplaceId),
+            ['marketplaceIds' => $this->marketplaceId],
             new stdClass()
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
             $this->log('error', 'review request for ' . $amazonOrderId . ' failed: ' . $this->lastError);
+
             return false;
         }
         if ($resp['status'] >= 400) {
@@ -169,11 +178,13 @@ class AmazonReviewRequester
             $this->lastError = 'createProductReviewAndSellerFeedbackSolicitation HTTP '
                 . $resp['status'] . ': ' . $detail;
             $this->log('error', 'review request for ' . $amazonOrderId . ' failed: ' . $this->lastError);
+
             return false;
         }
 
         $this->markOrder($amazonOrderId, self::STATE_SENT);
         $this->log('info', 'review request sent for ' . $amazonOrderId);
+
         return true;
     }
 
@@ -182,13 +193,14 @@ class AmazonReviewRequester
      * eligible window that have not been solicited yet.
      *
      * @param int $limit Max orders to process this run (API is rate-limited)
+     *
      * @return array Summary counts
      */
     public function requestAllEligible($limit = 25)
     {
         $this->ensureSchema();
 
-        $summary = array('checked' => 0, 'sent' => 0, 'unavailable' => 0, 'errors' => 0);
+        $summary = ['checked' => 0, 'sent' => 0, 'unavailable' => 0, 'errors' => 0];
 
         // Purchase date is a proxy for the delivery-based window: skip orders
         // younger than 5 days; orders older than 35 days are marked ineligible
@@ -210,22 +222,22 @@ class AmazonReviewRequester
 
         foreach ($rows as $row) {
             $orderId = $row['amazon_order_id'];
-            $summary['checked']++;
+            ++$summary['checked'];
 
             $tooOld = (strtotime($row['purchase_date']) < strtotime('-35 days'));
 
             if ($this->requestReview($orderId)) {
-                $summary['sent']++;
+                ++$summary['sent'];
                 continue;
             }
 
             if ($this->notAllowed) {
-                $summary['unavailable']++;
+                ++$summary['unavailable'];
                 if ($tooOld) {
                     $this->markOrder($orderId, self::STATE_INELIGIBLE);
                 }
             } else {
-                $summary['errors']++;
+                ++$summary['errors'];
             }
         }
 
@@ -249,6 +261,7 @@ class AmazonReviewRequester
      * Amazon itself checks that it belongs to this shop's seller account.
      *
      * @param string $amazonOrderId
+     *
      * @return bool
      */
     private function isOtherShopsOrder($amazonOrderId)

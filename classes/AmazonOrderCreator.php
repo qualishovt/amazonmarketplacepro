@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Creates real PrestaShop orders from staged Amazon order data.
  *
  * Takes rows from amazonmarketplacepro_order / amazonmarketplacepro_order_item (populated
@@ -57,14 +58,14 @@ class AmazonOrderCreator
     /** Language the caller asked for; 0 = the default language of the order's shop. */
     private $idLang;
     private $idShop;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     /**
-     * @param int $idCarrier      Default carrier id for imported orders
-     * @param int $idOrderState   Initial order state (e.g. PS_OS_PAYMENT for "Payment accepted")
-     * @param int $idLang         Language id (0 = the shop's default language)
-     * @param int $idShop         Shop id (0 = the shop the request acts for)
+     * @param int $idCarrier Default carrier id for imported orders
+     * @param int $idOrderState Initial order state (e.g. PS_OS_PAYMENT for "Payment accepted")
+     * @param int $idLang Language id (0 = the shop's default language)
+     * @param int $idShop Shop id (0 = the shop the request acts for)
      */
     public function __construct($idCarrier, $idOrderState, $idLang = 0, $idShop = 0)
     {
@@ -94,7 +95,7 @@ class AmazonOrderCreator
     public function createAllPending()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
         $sql = 'SELECT o.*, GROUP_CONCAT(i.`match_status`) AS item_statuses
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
@@ -107,24 +108,24 @@ class AmazonOrderCreator
                 ORDER BY o.`purchase_date` ASC';
         $rows = Db::getInstance()->executeS($sql);
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
-        $summary = array(
+        $summary = [
             'total' => count($rows),
             'created' => 0,
             'skipped' => 0,
             'pending' => 0,
             'failed' => 0,
-            'errors' => array(),
-        );
+            'errors' => [],
+        ];
 
         foreach ($rows as $row) {
             $amazonId = $row['amazon_order_id'];
 
             // Skip orders with zero matched items
             if ((int) $row['items_matched'] === 0) {
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('%s: skipped (no matched products)', 'amazonordercreator'),
                     $amazonId
@@ -134,17 +135,17 @@ class AmazonOrderCreator
 
             $result = $this->createOneOrder($row);
             if ($result === 'pending_stock') {
-                $summary['pending']++;
+                ++$summary['pending'];
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('%1$s: moved to Pending Orders (%2$s)', 'amazonordercreator'),
                     $amazonId,
                     $this->lastError
                 );
             } elseif ($result === false) {
-                $summary['failed']++;
+                ++$summary['failed'];
                 $summary['errors'][] = $amazonId . ': ' . $this->lastError;
             } else {
-                $summary['created']++;
+                ++$summary['created'];
             }
         }
 
@@ -158,7 +159,8 @@ class AmazonOrderCreator
      * to be the creator's shop: an order of another shop is refused.
      *
      * @param array $stagedOrder Row from amazonmarketplacepro_order
-     * @param bool  $force       Skip the out-of-stock gate (Pending Orders "create anyway")
+     * @param bool $force Skip the out-of-stock gate (Pending Orders "create anyway")
+     *
      * @return int|string|false PS order ID on success, 'pending_stock' when the
      *                          order was parked in Pending Orders, false on failure
      */
@@ -205,6 +207,7 @@ class AmazonOrderCreator
      * rather than for the request's context.
      *
      * @param int $idShop
+     *
      * @return array id_shop, id_shop_group, share_customer (bool), id_lang,
      *               id_currency, id_country, id_carrier (the shop's default
      *               carrier, or its first carrier; 0 when it has none)
@@ -231,7 +234,7 @@ class AmazonOrderCreator
             );
         }
 
-        return array(
+        return [
             'id_shop' => $idShop,
             'id_shop_group' => $idGroup,
             'share_customer' => $group['share_customer'],
@@ -239,7 +242,7 @@ class AmazonOrderCreator
             'id_currency' => (int) Configuration::get('PS_CURRENCY_DEFAULT', null, $idGroup, $idShop),
             'id_country' => (int) Configuration::get('PS_COUNTRY_DEFAULT', null, $idGroup, $idShop),
             'id_carrier' => $idCarrier,
-        );
+        ];
     }
 
     /**
@@ -248,7 +251,8 @@ class AmazonOrderCreator
      * Deleted customers are never reused.
      *
      * @param string $email
-     * @param int    $idShop
+     * @param int $idShop
+     *
      * @return int Customer id, or 0
      */
     public static function findCustomerId($email, $idShop)
@@ -287,13 +291,13 @@ class AmazonOrderCreator
              WHERE s.`id_shop` = ' . (int) $idShop
         );
         if (!$row) {
-            return array('id_shop_group' => AmzproShop::groupId($idShop), 'share_customer' => false);
+            return ['id_shop_group' => AmzproShop::groupId($idShop), 'share_customer' => false];
         }
 
-        return array(
+        return [
             'id_shop_group' => (int) $row['id_shop_group'],
             'share_customer' => (bool) $row['share_customer'],
-        );
+        ];
     }
 
     /**
@@ -340,6 +344,7 @@ class AmazonOrderCreator
                 AmazonI18n::get()->l('No matched items for order %s', 'amazonordercreator'),
                 $amazonId
             );
+
             return false;
         }
 
@@ -361,6 +366,7 @@ class AmazonOrderCreator
                     AmazonI18n::get()->l('insufficient stock: %s', 'amazonordercreator'),
                     implode('; ', $shortages)
                 );
+
                 return 'pending_stock';
             }
         }
@@ -389,6 +395,7 @@ class AmazonOrderCreator
                 AmazonI18n::get()->l('Could not create customer for %s', 'amazonordercreator'),
                 $amazonId
             );
+
             return false;
         }
 
@@ -399,6 +406,7 @@ class AmazonOrderCreator
                 AmazonI18n::get()->l('Could not create address for %s', 'amazonordercreator'),
                 $amazonId
             );
+
             return false;
         }
 
@@ -434,6 +442,7 @@ class AmazonOrderCreator
                 AmazonI18n::get()->l('Could not create cart for %s', 'amazonordercreator'),
                 $amazonId
             );
+
             return false;
         }
 
@@ -526,6 +535,7 @@ class AmazonOrderCreator
                 AmazonI18n::get()->l('Could not save order for %s', 'amazonordercreator'),
                 $amazonId
             );
+
             return false;
         }
 
@@ -585,9 +595,10 @@ class AmazonOrderCreator
      * Amazon Business flags. The first match wins, which lets a merchant route
      * e.g. "Prime + Business" somewhere of its own.
      *
-     * @param array    $stagedOrder
-     * @param int      $defaultState
+     * @param array $stagedOrder
+     * @param int $defaultState
      * @param int|null $idShop the shop whose rules apply (default: the current one)
+     *
      * @return int
      */
     public static function resolveOrderState($stagedOrder, $defaultState, $idShop = null)
@@ -639,9 +650,10 @@ class AmazonOrderCreator
      * With a shop, the map is that shop's and a mapped carrier the shop does
      * not offer is passed over for the default.
      *
-     * @param array    $stagedOrder
-     * @param int      $defaultCarrier
+     * @param array $stagedOrder
+     * @param int $defaultCarrier
      * @param int|null $idShop (default: the current shop, carrier not checked)
+     *
      * @return int
      */
     public static function resolveCarrier($stagedOrder, $defaultCarrier, $idShop = null)
@@ -668,8 +680,9 @@ class AmazonOrderCreator
      *
      * @param string $email
      * @param string $fullName
-     * @param array  $env    shopEnvironment() of the order's shop
-     * @param int    $idLang
+     * @param array $env shopEnvironment() of the order's shop
+     * @param int $idLang
+     *
      * @return Customer|false
      */
     private function findOrCreateCustomer($email, $fullName, array $env, $idLang)
@@ -711,7 +724,8 @@ class AmazonOrderCreator
         $customer->is_guest = true;
 
         if ($customer->add()) {
-            $customer->addGroups(array($idGroup));
+            $customer->addGroups([$idGroup]);
+
             return $customer;
         }
 
@@ -723,13 +737,14 @@ class AmazonOrderCreator
      * does not allow out-of-stock orders).
      *
      * @param array $items Matched staged order items
-     * @param array $env   shopEnvironment() of the order's shop
+     * @param array $env shopEnvironment() of the order's shop
+     *
      * @return array Human-readable shortage descriptions, empty when fulfillable
      */
     private function stockShortages($items, array $env)
     {
         $idShop = $env['id_shop'];
-        $shortages = array();
+        $shortages = [];
         foreach ($items as $it) {
             $idProduct = (int) $it['id_product'];
             if (!$idProduct) {
@@ -770,8 +785,9 @@ class AmazonOrderCreator
      * Uses real Amazon shipping address when available, falls back to placeholder.
      *
      * @param Customer $customer
-     * @param array    $stagedOrder
-     * @param array    $env shopEnvironment() of the order's shop
+     * @param array $stagedOrder
+     * @param array $env shopEnvironment() of the order's shop
+     *
      * @return Address|false
      */
     private function createAddress($customer, $stagedOrder, array $env)
@@ -850,9 +866,10 @@ class AmazonOrderCreator
      * splits them using each product's PS tax rate for the delivery address.
      * Shipping follows the highest goods rate on the order (common EU rule).
      *
-     * @param array   $items       Normalized staged items
-     * @param Address $address     Delivery address (already saved)
-     * @param array   $stagedOrder Staged order row — shipping fields updated in place
+     * @param array $items Normalized staged items
+     * @param Address $address Delivery address (already saved)
+     * @param array $stagedOrder Staged order row — shipping fields updated in place
+     *
      * @return array Items with item_price (excl) / item_tax rewritten
      */
     private function applyPsTaxRules($items, $address, &$stagedOrder)
@@ -992,20 +1009,21 @@ class AmazonOrderCreator
      * report import has to split names the same way.
      *
      * @param string $fullName
+     *
      * @return array 'firstname', 'lastname'
      */
     public static function splitFullName($fullName)
     {
         $fullName = trim((string) $fullName);
-        $parts = $fullName === '' ? array() : explode(' ', $fullName, 2);
+        $parts = $fullName === '' ? [] : explode(' ', $fullName, 2);
 
         $firstname = self::cleanNamePart(isset($parts[0]) ? $parts[0] : '', 'firstname');
         $lastname = self::cleanNamePart(isset($parts[1]) ? $parts[1] : '', 'lastname');
 
-        return array(
+        return [
             'firstname' => $firstname !== '' ? $firstname : self::PLACEHOLDER_FIRSTNAME,
             'lastname' => $lastname !== '' ? $lastname : self::PLACEHOLDER_LASTNAME,
-        );
+        ];
     }
 
     /**
@@ -1019,6 +1037,7 @@ class AmazonOrderCreator
      *
      * @param string $part
      * @param string $field 'firstname' or 'lastname'
+     *
      * @return string
      */
     private static function cleanNamePart($part, $field)
@@ -1032,7 +1051,7 @@ class AmazonOrderCreator
         $clean = trim((string) $clean);
 
         $size = 0;
-        foreach (array('Customer', 'Address') as $class) {
+        foreach (['Customer', 'Address'] as $class) {
             $def = $class::$definition;
             if (isset($def['fields'][$field]['size'])) {
                 $limit = (int) $def['fields'][$field]['size'];

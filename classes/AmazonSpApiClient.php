@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Minimal Amazon Selling Partner API client.
  *
  * Deliberately written to run on PHP 5.6+ (no scalar type hints, no enums,
@@ -65,7 +66,7 @@ class AmazonSpApiClient
     const DEFAULT_RELAY_URL = 'https://intellipresta.com/spapi';
 
     /**
-     * @return bool Whether the module is configured for the SP-API sandbox.
+     * @return bool whether the module is configured for the SP-API sandbox
      */
     public static function isSandboxEnv()
     {
@@ -157,7 +158,8 @@ class AmazonSpApiClient
      * separate ids, so the consent page must be told which one is asking.
      *
      * @param bool|null $sandbox Null = read the configured environment
-     * @return string The configured app id, falling back to the built-in default.
+     *
+     * @return string the configured app id, falling back to the built-in default
      */
     public static function lwaAppId($sandbox = null)
     {
@@ -172,6 +174,7 @@ class AmazonSpApiClient
         if ($v !== '') {
             return $v;
         }
+
         return $sandbox ? self::DEFAULT_LWA_APP_ID_SANDBOX : self::DEFAULT_LWA_APP_ID;
     }
 
@@ -181,6 +184,7 @@ class AmazonSpApiClient
      * would silently disconnect the other.
      *
      * @param bool|null $sandbox Null = read the configured environment
+     *
      * @return string Configuration key holding the refresh token
      */
     public static function refreshTokenKey($sandbox = null)
@@ -188,13 +192,15 @@ class AmazonSpApiClient
         if ($sandbox === null) {
             $sandbox = self::isSandboxEnv();
         }
+
         return $sandbox ? 'AMZPRO_REFRESH_TOKEN_SANDBOX' : 'AMZPRO_REFRESH_TOKEN';
     }
 
     /**
      * @param bool|null $sandbox Null = read the configured environment
      * @param int|null $idShop Null = the shop the request acts for
-     * @return string The refresh token for the active environment ('' if not connected).
+     *
+     * @return string the refresh token for the active environment ('' if not connected)
      */
     public static function storedRefreshToken($sandbox = null, $idShop = null)
     {
@@ -236,6 +242,7 @@ class AmazonSpApiClient
      * app's secret is rejected as invalid_grant.
      *
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return bool True when the sandbox app's credentials should be used
      */
     public static function tokenIsSandbox($idShop = null)
@@ -253,11 +260,12 @@ class AmazonSpApiClient
      * The token relay base, the same for every shop. Not the shop's cron
      * address for the IntelliPresta scheduler: that is AMZPRO_RELAY_CRON_URL.
      *
-     * @return string The configured relay base URL, falling back to the built-in default.
+     * @return string the configured relay base URL, falling back to the built-in default
      */
     public static function relayUrl()
     {
         $v = trim((string) AmzproShop::get('AMZPRO_RELAY_URL'));
+
         return ($v !== '') ? rtrim($v, '/') : self::DEFAULT_RELAY_URL;
     }
 
@@ -267,6 +275,7 @@ class AmazonSpApiClient
      *
      * @param int $rawQuantity Real PrestaShop stock
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return int
      */
     public static function effectiveQuantity($rawQuantity, $idShop = null)
@@ -277,6 +286,7 @@ class AmazonSpApiClient
         }
         $buffer = (int) AmzproShop::get('AMZPRO_STOCK_BUFFER', $idShop);
         $qty = (int) $rawQuantity - max(0, $buffer);
+
         return ($qty > 0) ? $qty : 0;
     }
 
@@ -286,11 +296,13 @@ class AmazonSpApiClient
      * used_acceptable, refurbished_refurbished, collectible_*).
      *
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return string
      */
     public static function listingCondition($idShop = null)
     {
         $v = trim((string) AmzproShop::get('AMZPRO_CONDITION_TYPE', $idShop));
+
         return ($v !== '') ? $v : 'new_new';
     }
 
@@ -301,12 +313,13 @@ class AmazonSpApiClient
      *
      * Call this on every body that carries a purchasable_offer.
      *
-     * @param array  $attributes    Listing attributes (by reference semantics via return)
+     * @param array $attributes Listing attributes (by reference semantics via return)
      * @param string $marketplaceId
-     * @param float  $priceTaxIncl  The B2C price the B2B discount applies to
+     * @param float $priceTaxIncl The B2C price the B2B discount applies to
      * @param string|null $templateOverride Resolved shipping template name (e.g. from
      *                                      price/weight ranges); null = use the static config
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return array
      */
     public static function enrichOfferAttributes($attributes, $marketplaceId, $priceTaxIncl, $templateOverride = null, $idShop = null)
@@ -316,10 +329,10 @@ class AmazonSpApiClient
             ? trim((string) $templateOverride)
             : trim((string) AmzproShop::get('AMZPRO_SHIPPING_TEMPLATE', $idShop));
         if ($template !== '' && !isset($attributes['merchant_shipping_group'])) {
-            $attributes['merchant_shipping_group'] = array(array(
+            $attributes['merchant_shipping_group'] = [[
                 'value' => $template,
                 'marketplace_id' => $marketplaceId,
-            ));
+            ]];
         }
 
         // Amazon Business offer (price + quantity ladder) is built by
@@ -330,40 +343,40 @@ class AmazonSpApiClient
     }
 
     /** Listing currency per marketplace id (ISO 4217). */
-    private static $marketplaceCurrencies = array(
-        'ATVPDKIKX0DER'  => 'USD', // US
+    private static $marketplaceCurrencies = [
+        'ATVPDKIKX0DER' => 'USD', // US
         'A2EUQ1WTGCTBG2' => 'CAD', // Canada
         'A1AM78C64UM0Y8' => 'MXN', // Mexico
         'A2Q3Y263D00KMC' => 'BRL', // Brazil
         'A1F83G8C2ARO7P' => 'GBP', // UK
         'A1PA6795UKMFR9' => 'EUR', // Germany
         'A13V1IB3VIYZZH' => 'EUR', // France
-        'APJ6JRA9NG5V4'  => 'EUR', // Italy
+        'APJ6JRA9NG5V4' => 'EUR', // Italy
         'A1RKKUPIHCS9HS' => 'EUR', // Spain
         'A1805IZSGTT6HS' => 'EUR', // Netherlands
         'A1C3SOZRARQ6R3' => 'PLN', // Poland
         'A2NODRKZP88ZB9' => 'SEK', // Sweden
-        'AMEN7PMS3EDWL'  => 'EUR', // Belgium
+        'AMEN7PMS3EDWL' => 'EUR', // Belgium
         'A28R8C7NBKEWEA' => 'EUR', // Ireland
-        'ARBP9OOSHTCHU'  => 'EGP', // Egypt
-        'AE08WJ6YKNBMC'  => 'ZAR', // South Africa
+        'ARBP9OOSHTCHU' => 'EGP', // Egypt
+        'AE08WJ6YKNBMC' => 'ZAR', // South Africa
         'A33AVAJ2PDY3EV' => 'TRY', // Turkey
-        'A21TJRUUN4KGV'  => 'INR', // India
+        'A21TJRUUN4KGV' => 'INR', // India
         'A2VIGQ35RCS4UG' => 'AED', // UAE
         'A17E79C6D8DWNP' => 'SAR', // Saudi Arabia
         'A19VAU5U5O7RUS' => 'SGD', // Singapore
         'A39IBJ37TRP1C6' => 'AUD', // Australia
         'A1VC38T7YXB528' => 'JPY', // Japan
-    );
+    ];
 
     /** Marketplaces served by each Amazon FBA fulfilment network. */
-    private static $fbaChannels = array(
-        'AMAZON_NA' => array('ATVPDKIKX0DER', 'A2EUQ1WTGCTBG2', 'A1AM78C64UM0Y8', 'A2Q3Y263D00KMC'),
-        'AMAZON_JP' => array('A1VC38T7YXB528'),
-        'AMAZON_AU' => array('A39IBJ37TRP1C6'),
-        'AMAZON_SG' => array('A19VAU5U5O7RUS'),
-        'AMAZON_IN' => array('A21TJRUUN4KGV'),
-    );
+    private static $fbaChannels = [
+        'AMAZON_NA' => ['ATVPDKIKX0DER', 'A2EUQ1WTGCTBG2', 'A1AM78C64UM0Y8', 'A2Q3Y263D00KMC'],
+        'AMAZON_JP' => ['A1VC38T7YXB528'],
+        'AMAZON_AU' => ['A39IBJ37TRP1C6'],
+        'AMAZON_SG' => ['A19VAU5U5O7RUS'],
+        'AMAZON_IN' => ['A21TJRUUN4KGV'],
+    ];
 
     /**
      * The fulfilment channel code that marks a listing as Fulfilled by Amazon.
@@ -375,6 +388,7 @@ class AmazonSpApiClient
      *
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return string
      */
     public static function fbaChannelCode($marketplaceId, $idShop = null)
@@ -414,10 +428,10 @@ class AmazonSpApiClient
     private $caBundle;
 
     /** @var string|null Base URL of the IntelliPresta token relay (no client secret needed locally). */
-    private $tokenRelayUrl = null;
+    private $tokenRelayUrl;
 
-    private $accessToken = null;
-    private $lastError = null;
+    private $accessToken;
+    private $lastError;
 
     /**
      * Which app client's credentials the relay should use, when the caller
@@ -425,7 +439,7 @@ class AmazonSpApiClient
      *
      * @var bool|null
      */
-    private $credentialSetIsSandbox = null;
+    private $credentialSetIsSandbox;
 
     /**
      * The shop whose connection this client uses.
@@ -435,14 +449,14 @@ class AmazonSpApiClient
     private $idShop;
 
     /**
-     * @param string $clientId     LWA client id
+     * @param string $clientId LWA client id
      * @param string $clientSecret LWA client secret
      * @param string $refreshToken LWA refresh token
-     * @param string $endpoint     SP-API base host (use an ENDPOINT_* constant)
+     * @param string $endpoint SP-API base host (use an ENDPOINT_* constant)
      * @param string|null $caBundle Optional absolute path to a cacert.pem for SSL verification
-     * @param int|null $idShop     The shop the credentials belong to; null = the
-     *                             shop the request acts for (callers read the
-     *                             credentials for that shop at the same moment)
+     * @param int|null $idShop The shop the credentials belong to; null = the
+     *                         shop the request acts for (callers read the
+     *                         credentials for that shop at the same moment)
      */
     public function __construct($clientId, $clientSecret, $refreshToken, $endpoint, $caBundle = null, $idShop = null)
     {
@@ -467,6 +481,7 @@ class AmazonSpApiClient
      * exchange, independently of the endpoint being called.
      *
      * @param bool $isSandbox True for the sandbox app's credentials
+     *
      * @return void
      */
     public function setCredentialSet($isSandbox)
@@ -475,7 +490,7 @@ class AmazonSpApiClient
     }
 
     /**
-     * @return int The shop whose connection this client uses.
+     * @return int the shop whose connection this client uses
      */
     public function getShopId()
     {
@@ -483,7 +498,7 @@ class AmazonSpApiClient
     }
 
     /**
-     * @return string|null The last error message, or null if the last call succeeded.
+     * @return string|null the last error message, or null if the last call succeeded
      */
     public function getLastError()
     {
@@ -520,17 +535,17 @@ class AmazonSpApiClient
             return $this->authenticateViaRelay();
         }
 
-        $payload = http_build_query(array(
+        $payload = http_build_query([
             'grant_type' => 'refresh_token',
             'refresh_token' => $this->refreshToken,
             'client_id' => $this->clientId,
             'client_secret' => $this->clientSecret,
-        ));
+        ]);
 
-        $res = $this->httpRaw('POST', self::LWA_TOKEN_URL, $payload, array(
+        $res = $this->httpRaw('POST', self::LWA_TOKEN_URL, $payload, [
             'Content-Type: application/x-www-form-urlencoded',
             'Accept: application/json',
-        ));
+        ]);
 
         if ($res === false) {
             return false; // transport error, lastError already set
@@ -542,10 +557,12 @@ class AmazonSpApiClient
             $err = isset($data['error']) ? $data['error'] : 'token_error';
             $desc = isset($data['error_description']) ? $data['error_description'] : $res['body'];
             $this->lastError = 'LWA token exchange failed (' . $res['status'] . '): ' . $err . ' - ' . $desc;
+
             return false;
         }
 
         $this->accessToken = $data['access_token'];
+
         return true;
     }
 
@@ -558,6 +575,7 @@ class AmazonSpApiClient
     {
         if (trim((string) $this->refreshToken) === '') {
             $this->lastError = AmazonI18n::get()->l('Not connected to Amazon yet. Use the "Connect to Amazon" button in the module settings.', 'amazonspapiclient');
+
             return false;
         }
 
@@ -578,14 +596,14 @@ class AmazonSpApiClient
         $res = $this->httpRaw(
             'POST',
             $this->tokenRelayUrl . '/token.php',
-            http_build_query(array(
+            http_build_query([
                 'refresh_token' => $this->refreshToken,
                 'sandbox' => $sandbox ? '1' : '',
-            )),
-            array(
+            ]),
+            [
                 'Content-Type: application/x-www-form-urlencoded',
                 'Accept: application/json',
-            )
+            ]
         );
 
         if ($res === false) {
@@ -598,24 +616,26 @@ class AmazonSpApiClient
             $err = isset($data['error']) ? $data['error'] : 'relay_error';
             $desc = isset($data['error_description']) ? $data['error_description'] : $res['body'];
             $this->lastError = 'Token relay request failed (' . $res['status'] . '): ' . $err . ' - ' . $desc;
+
             return false;
         }
 
         $this->accessToken = $data['access_token'];
+
         return true;
     }
 
     /**
      * Make an authenticated SP-API request.
      *
-     * @param string     $method HTTP verb (GET, POST, PUT, DELETE...)
-     * @param string     $path   Path beginning with "/", e.g. "/orders/v0/orders"
-     * @param array      $query  Query-string parameters
+     * @param string $method HTTP verb (GET, POST, PUT, DELETE...)
+     * @param string $path Path beginning with "/", e.g. "/orders/v0/orders"
+     * @param array $query Query-string parameters
      * @param array|stdClass|null $body Body to JSON-encode (stdClass for {}), or null for none
      *
      * @return array|false array('status' => int, 'body' => mixed) or false on transport error
      */
-    public function request($method, $path, $query = array(), $body = null)
+    public function request($method, $path, $query = [], $body = null)
     {
         if (!$this->authenticate()) {
             return false;
@@ -626,10 +646,10 @@ class AmazonSpApiClient
             $url .= '?' . http_build_query($query);
         }
 
-        $headers = array(
+        $headers = [
             'x-amz-access-token: ' . $this->accessToken,
             'Accept: application/json',
-        );
+        ];
 
         $payload = null;
         if ($body !== null) {
@@ -644,11 +664,11 @@ class AmazonSpApiClient
 
         $decoded = json_decode($res['body'], true);
 
-        return array(
+        return [
             'status' => $res['status'],
             // Return the decoded array when possible, else the raw string.
             'body' => ($decoded === null && trim($res['body']) !== '') ? $res['body'] : $decoded,
-        );
+        ];
     }
 
     /**
@@ -659,11 +679,11 @@ class AmazonSpApiClient
      * resources.
      *
      * @param array $restrictedResources Array of arrays with 'method', 'path', 'dataElements'
-     *   Example: array(array(
-     *       'method' => 'GET',
-     *       'path' => '/orders/v0/orders/123-456/address',
-     *       'dataElements' => array('shippingAddress')
-     *   ))
+     *                                   Example: array(array(
+     *                                   'method' => 'GET',
+     *                                   'path' => '/orders/v0/orders/123-456/address',
+     *                                   'dataElements' => array('shippingAddress')
+     *                                   ))
      *
      * @return string|false The RDT token string, or false on failure
      */
@@ -673,11 +693,11 @@ class AmazonSpApiClient
             return false;
         }
 
-        $body = array(
+        $body = [
             'restrictedResources' => $restrictedResources,
-        );
+        ];
 
-        $resp = $this->request('POST', self::RDT_PATH, array(), $body);
+        $resp = $this->request('POST', self::RDT_PATH, [], $body);
 
         if ($resp === false) {
             return false;
@@ -686,6 +706,7 @@ class AmazonSpApiClient
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $bodyStr = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'RDT request failed (HTTP ' . $resp['status'] . '): ' . $bodyStr;
+
             return false;
         }
 
@@ -694,6 +715,7 @@ class AmazonSpApiClient
         }
 
         $this->lastError = 'RDT response missing restrictedDataToken field';
+
         return false;
     }
 
@@ -702,25 +724,25 @@ class AmazonSpApiClient
      * standard access token. Used for PII-restricted endpoints like buyer
      * shipping address.
      *
-     * @param string      $rdtToken The restricted data token
-     * @param string      $method   HTTP verb
-     * @param string      $path     API path
-     * @param array       $query    Query parameters
-     * @param array|null  $body     Body to JSON-encode
+     * @param string $rdtToken The restricted data token
+     * @param string $method HTTP verb
+     * @param string $path API path
+     * @param array $query Query parameters
+     * @param array|null $body Body to JSON-encode
      *
      * @return array|false Same as request()
      */
-    public function requestWithRDT($rdtToken, $method, $path, $query = array(), $body = null)
+    public function requestWithRDT($rdtToken, $method, $path, $query = [], $body = null)
     {
         $url = $this->endpoint . $path;
         if (!empty($query)) {
             $url .= '?' . http_build_query($query);
         }
 
-        $headers = array(
+        $headers = [
             'x-amz-access-token: ' . $rdtToken,
             'Accept: application/json',
-        );
+        ];
 
         $payload = null;
         if ($body !== null) {
@@ -735,31 +757,34 @@ class AmazonSpApiClient
 
         $decoded = json_decode($res['body'], true);
 
-        return array(
+        return [
             'status' => $res['status'],
             'body' => ($decoded === null && trim($res['body']) !== '') ? $res['body'] : $decoded,
-        );
+        ];
     }
 
     /**
      * Upload raw content to a presigned feed-document URL (no auth headers).
      *
-     * @param string $url         Presigned upload URL from createFeedDocument
-     * @param string $content     Raw document body
+     * @param string $url Presigned upload URL from createFeedDocument
+     * @param string $content Raw document body
      * @param string $contentType Must match the contentType the document was created with
+     *
      * @return bool
      */
     public function uploadDocument($url, $content, $contentType)
     {
-        $res = $this->httpRaw('PUT', $url, $content, array('Content-Type: ' . $contentType));
+        $res = $this->httpRaw('PUT', $url, $content, ['Content-Type: ' . $contentType]);
         if ($res === false) {
             return false;
         }
         if ($res['status'] >= 400) {
             $this->lastError = 'Document upload failed (HTTP ' . $res['status'] . '): '
                 . Tools::substr($res['body'], 0, 300);
+
             return false;
         }
+
         return true;
     }
 
@@ -769,16 +794,18 @@ class AmazonSpApiClient
      *
      * @param string $url
      * @param string $compressionAlgorithm '' or 'GZIP'
+     *
      * @return string|false
      */
     public function downloadDocument($url, $compressionAlgorithm = '')
     {
-        $res = $this->httpRaw('GET', $url, null, array());
+        $res = $this->httpRaw('GET', $url, null, []);
         if ($res === false) {
             return false;
         }
         if ($res['status'] >= 400) {
             $this->lastError = 'Document download failed (HTTP ' . $res['status'] . ')';
+
             return false;
         }
 
@@ -787,6 +814,7 @@ class AmazonSpApiClient
             $decoded = @gzdecode($body);
             if ($decoded === false) {
                 $this->lastError = AmazonI18n::get()->l('The file downloaded from Amazon could not be unpacked.', 'amazonspapiclient');
+
                 return false;
             }
             $body = $decoded;
@@ -806,6 +834,7 @@ class AmazonSpApiClient
 
         if (!function_exists('curl_init')) {
             $this->lastError = AmazonI18n::get()->l('This server cannot connect to Amazon because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonspapiclient');
+
             return false;
         }
 
@@ -832,12 +861,13 @@ class AmazonSpApiClient
         if ($body === false) {
             $this->lastError = 'cURL error: ' . curl_error($ch);
             curl_close($ch);
+
             return false;
         }
 
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return array('status' => $status, 'body' => $body);
+        return ['status' => $status, 'body' => $body];
     }
 }

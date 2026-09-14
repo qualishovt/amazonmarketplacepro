@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Multi-Marketplace Manager.
  *
  * Handles multiple simultaneous Amazon marketplace configurations.
@@ -40,47 +41,47 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonMultiMarketplace
 {
     /** Amazon marketplace directory (id => label). */
-    private static $marketplaceNames = array(
-        'ATVPDKIKX0DER'  => 'Amazon.com (US)',
+    private static $marketplaceNames = [
+        'ATVPDKIKX0DER' => 'Amazon.com (US)',
         'A2EUQ1WTGCTBG2' => 'Amazon.ca (Canada)',
-        'A1AM78C64UM0Y8'  => 'Amazon.com.mx (Mexico)',
-        'A2Q3Y263D00KMC'  => 'Amazon.com.br (Brazil)',
-        'A1F83G8C2ARO7P'  => 'Amazon.co.uk (UK)',
-        'A1PA6795UKMFR9'  => 'Amazon.de (Germany)',
-        'A13V1IB3VIYZZH'  => 'Amazon.fr (France)',
-        'APJ6JRA9NG5V4'   => 'Amazon.it (Italy)',
-        'A1RKKUPIHCS9HS'  => 'Amazon.es (Spain)',
-        'A1805IZSGTT6HS'  => 'Amazon.nl (Netherlands)',
-        'A1C3SOZRARQ6R3'  => 'Amazon.pl (Poland)',
-        'A2NODRKZP88ZB9'  => 'Amazon.se (Sweden)',
-        'AMEN7PMS3EDWL'   => 'Amazon.com.be (Belgium)',
-        'A28R8C7NBKEWEA'  => 'Amazon.ie (Ireland)',
-        'ARBP9OOSHTCHU'   => 'Amazon.eg (Egypt)',
-        'AE08WJ6YKNBMC'   => 'Amazon.co.za (South Africa)',
-        'A33AVAJ2PDY3EV'  => 'Amazon.com.tr (Turkey)',
-        'A21TJRUUN4KGV'   => 'Amazon.in (India)',
-        'A2VIGQ35RCS4UG'  => 'Amazon.ae (UAE)',
-        'A17E79C6D8DWNP'  => 'Amazon.sa (Saudi Arabia)',
-        'A19VAU5U5O7RUS'  => 'Amazon.sg (Singapore)',
-        'A39IBJ37TRP1C6'  => 'Amazon.com.au (Australia)',
-        'A1VC38T7YXB528'  => 'Amazon.co.jp (Japan)',
-    );
+        'A1AM78C64UM0Y8' => 'Amazon.com.mx (Mexico)',
+        'A2Q3Y263D00KMC' => 'Amazon.com.br (Brazil)',
+        'A1F83G8C2ARO7P' => 'Amazon.co.uk (UK)',
+        'A1PA6795UKMFR9' => 'Amazon.de (Germany)',
+        'A13V1IB3VIYZZH' => 'Amazon.fr (France)',
+        'APJ6JRA9NG5V4' => 'Amazon.it (Italy)',
+        'A1RKKUPIHCS9HS' => 'Amazon.es (Spain)',
+        'A1805IZSGTT6HS' => 'Amazon.nl (Netherlands)',
+        'A1C3SOZRARQ6R3' => 'Amazon.pl (Poland)',
+        'A2NODRKZP88ZB9' => 'Amazon.se (Sweden)',
+        'AMEN7PMS3EDWL' => 'Amazon.com.be (Belgium)',
+        'A28R8C7NBKEWEA' => 'Amazon.ie (Ireland)',
+        'ARBP9OOSHTCHU' => 'Amazon.eg (Egypt)',
+        'AE08WJ6YKNBMC' => 'Amazon.co.za (South Africa)',
+        'A33AVAJ2PDY3EV' => 'Amazon.com.tr (Turkey)',
+        'A21TJRUUN4KGV' => 'Amazon.in (India)',
+        'A2VIGQ35RCS4UG' => 'Amazon.ae (UAE)',
+        'A17E79C6D8DWNP' => 'Amazon.sa (Saudi Arabia)',
+        'A19VAU5U5O7RUS' => 'Amazon.sg (Singapore)',
+        'A39IBJ37TRP1C6' => 'Amazon.com.au (Australia)',
+        'A1VC38T7YXB528' => 'Amazon.co.jp (Japan)',
+    ];
 
     /** Marketplace to SP-API region mapping. */
-    private static $regionMap = array(
-        'ATVPDKIKX0DER'  => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
+    private static $regionMap = [
+        'ATVPDKIKX0DER' => 'NA', 'A2EUQ1WTGCTBG2' => 'NA', 'A1AM78C64UM0Y8' => 'NA',
         'A2Q3Y263D00KMC' => 'NA',
         'A1F83G8C2ARO7P' => 'EU', 'A1PA6795UKMFR9' => 'EU', 'A13V1IB3VIYZZH' => 'EU',
-        'APJ6JRA9NG5V4'  => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
-        'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL'  => 'EU',
-        'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV'  => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
-        'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU'  => 'EU',
-        'AE08WJ6YKNBMC'  => 'EU', 'A19VAU5U5O7RUS' => 'FE',
+        'APJ6JRA9NG5V4' => 'EU', 'A1RKKUPIHCS9HS' => 'EU', 'A1805IZSGTT6HS' => 'EU',
+        'A1C3SOZRARQ6R3' => 'EU', 'A2NODRKZP88ZB9' => 'EU', 'AMEN7PMS3EDWL' => 'EU',
+        'A33AVAJ2PDY3EV' => 'EU', 'A21TJRUUN4KGV' => 'EU', 'A2VIGQ35RCS4UG' => 'EU',
+        'A17E79C6D8DWNP' => 'EU', 'A28R8C7NBKEWEA' => 'EU', 'ARBP9OOSHTCHU' => 'EU',
+        'AE08WJ6YKNBMC' => 'EU', 'A19VAU5U5O7RUS' => 'FE',
         'A39IBJ37TRP1C6' => 'FE', 'A1VC38T7YXB528' => 'FE',
-    );
+    ];
 
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function getLastError()
     {
@@ -98,6 +99,7 @@ class AmazonMultiMarketplace
      * @param bool $activeOnly Only return active marketplaces
      * @param int|null $idShop Null = the current shop, or every shop in the
      *                         back office's "All shops" view
+     *
      * @return array
      */
     public function getMarketplaceConfigs($activeOnly = false, $idShop = null)
@@ -107,7 +109,8 @@ class AmazonMultiMarketplace
                 ' . $where . '
                 ORDER BY `id_shop` ASC, `marketplace_name` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -116,6 +119,7 @@ class AmazonMultiMarketplace
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for (the
      *                         default shop in "All shops")
+     *
      * @return array|false
      */
     public function getMarketplaceConfig($marketplaceId, $idShop = null)
@@ -136,6 +140,7 @@ class AmazonMultiMarketplace
      * to one shop's seller account.
      *
      * @param array $data Marketplace config fields
+     *
      * @return bool
      */
     public function saveMarketplaceConfig($data)
@@ -143,6 +148,7 @@ class AmazonMultiMarketplace
         $shopError = AmzproShop::requireShop();
         if ($shopError !== null) {
             $this->lastError = $shopError;
+
             return false;
         }
         $idShop = AmzproShop::actingId();
@@ -150,6 +156,7 @@ class AmazonMultiMarketplace
         $marketplaceId = isset($data['marketplace_id']) ? $data['marketplace_id'] : '';
         if ($marketplaceId === '') {
             $this->lastError = AmazonI18n::get()->l('Marketplace ID is required.', 'amazonmultimarketplace');
+
             return false;
         }
 
@@ -165,6 +172,7 @@ class AmazonMultiMarketplace
                     AmazonI18n::get()->l('This Amazon seller account already sells on this marketplace from the shop "%s". Each seller account and marketplace can be used by one shop only.', 'amazonmultimarketplace'),
                     AmzproShop::name($otherShop)
                 );
+
                 return false;
             }
         }
@@ -221,6 +229,7 @@ class AmazonMultiMarketplace
      * a click there cannot remove another shop's configuration.
      *
      * @param string $marketplaceId
+     *
      * @return bool
      */
     public function deleteMarketplaceConfig($marketplaceId)
@@ -228,6 +237,7 @@ class AmazonMultiMarketplace
         $shopError = AmzproShop::requireShop();
         if ($shopError !== null) {
             $this->lastError = $shopError;
+
             return false;
         }
 
@@ -246,6 +256,7 @@ class AmazonMultiMarketplace
      * @param string $sellerId
      * @param string $marketplaceId
      * @param int $exceptShop
+     *
      * @return int
      */
     public function shopUsingSellerOnMarketplace($sellerId, $marketplaceId, $exceptShop)
@@ -267,7 +278,7 @@ class AmazonMultiMarketplace
                AND `marketplace_id` = \'' . pSQL($marketplaceId) . '\'
              ORDER BY `id_shop` ASC'
         );
-        foreach ((is_array($rows) ? $rows : array()) as $row) {
+        foreach ((is_array($rows) ? $rows : []) as $row) {
             // A configuration without its own seller id uses its shop's.
             $rowSeller = (string) $row['seller_id'] !== ''
                 ? (string) $row['seller_id']
@@ -288,6 +299,7 @@ class AmazonMultiMarketplace
      *
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return AmazonSpApiClient
      */
     public function buildClientForMarketplace($marketplaceId, $idShop = null)
@@ -326,6 +338,7 @@ class AmazonMultiMarketplace
      * Resolve the SP-API endpoint for a marketplace.
      *
      * @param string $marketplaceId
+     *
      * @return string
      */
     public function resolveEndpoint($marketplaceId)
@@ -353,6 +366,7 @@ class AmazonMultiMarketplace
      *
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return string
      */
     public function getSellerIdForMarketplace($marketplaceId, $idShop = null)
@@ -362,6 +376,7 @@ class AmazonMultiMarketplace
         if ($config && !empty($config['seller_id'])) {
             return $config['seller_id'];
         }
+
         return (string) AmzproShop::get('AMZPRO_SELLER_ID', $idShop);
     }
 
@@ -370,6 +385,7 @@ class AmazonMultiMarketplace
      *
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return int
      */
     public function getCarrierForMarketplace($marketplaceId, $idShop = null)
@@ -379,6 +395,7 @@ class AmazonMultiMarketplace
         if ($config && (int) $config['default_carrier'] > 0) {
             return (int) $config['default_carrier'];
         }
+
         return (int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER', $idShop);
     }
 
@@ -387,6 +404,7 @@ class AmazonMultiMarketplace
      *
      * @param string $marketplaceId
      * @param int|null $idShop Null = the shop the request acts for
+     *
      * @return int
      */
     public function getOrderStateForMarketplace($marketplaceId, $idShop = null)
@@ -397,6 +415,7 @@ class AmazonMultiMarketplace
             return (int) $config['default_order_state'];
         }
         $state = (int) AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE', $idShop);
+
         return $state ? $state : (int) Configuration::get('PS_OS_PAYMENT', null, AmzproShop::groupId($idShop), $idShop);
     }
 
@@ -410,6 +429,7 @@ class AmazonMultiMarketplace
      * read and write that shop's rows as well.
      *
      * @param callable $job receives the shop id
+     *
      * @return mixed what $job returns
      */
     private function forOneShop($job)
@@ -436,12 +456,13 @@ class AmazonMultiMarketplace
 
     private function importOrdersForShop($idShop)
     {
-        $this->notices = array();
-        $results = array();
+        $this->notices = [];
+        $results = [];
 
         $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
             $this->notices[] = 'No active marketplace configurations found.';
+
             return $results;
         }
 
@@ -467,13 +488,13 @@ class AmazonMultiMarketplace
 
             $summary = $importer->importNewOrders($createdAfter);
 
-            $results[] = array(
+            $results[] = [
                 'marketplace_id' => $mpId,
                 'marketplace_name' => $mpName,
                 'success' => ($summary !== false),
                 'summary' => $summary,
                 'error' => $importer->getLastError(),
-            );
+            ];
         }
 
         return $results;
@@ -493,8 +514,8 @@ class AmazonMultiMarketplace
 
     private function syncProductsForShop($idShop)
     {
-        $this->notices = array();
-        $results = array();
+        $this->notices = [];
+        $results = [];
 
         $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
@@ -522,12 +543,12 @@ class AmazonMultiMarketplace
             $psSummary = $sync->syncPrestashopSide();
             $azSummary = $sync->syncAmazonSide();
 
-            $results[] = array(
+            $results[] = [
                 'marketplace_id' => $mpId,
                 'marketplace_name' => $mpName,
                 'ps_summary' => $psSummary,
                 'amazon_summary' => $azSummary,
-            );
+            ];
         }
 
         return $results;
@@ -547,8 +568,8 @@ class AmazonMultiMarketplace
 
     private function syncStockForShop($idShop)
     {
-        $this->notices = array();
-        $results = array();
+        $this->notices = [];
+        $results = [];
 
         $configs = $this->getMarketplaceConfigs(true, $idShop);
         if (empty($configs)) {
@@ -576,11 +597,11 @@ class AmazonMultiMarketplace
             $sync->syncPrestashopSide();
             $pushResult = $sync->pushToAmazon(100);
 
-            $results[] = array(
+            $results[] = [
                 'marketplace_id' => $mpId,
                 'marketplace_name' => $mpName,
                 'summary' => $pushResult,
-            );
+            ];
         }
 
         return $results;
@@ -600,6 +621,7 @@ class AmazonMultiMarketplace
      * Get the region for a marketplace.
      *
      * @param string $marketplaceId
+     *
      * @return string NA, EU, or FE
      */
     public static function getRegion($marketplaceId)

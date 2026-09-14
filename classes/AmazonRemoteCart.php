@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -24,7 +25,6 @@
  * Multistore: a reservation belongs to the shop of its staged order and moves
  * that shop's stock. Settling works on one shop's reservations at a time.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -89,8 +89,9 @@ class AmazonRemoteCart
      * re-import never double-books the same stock.
      *
      * @param string $amazonOrderId
-     * @param array  $items Resolved item rows (id_product, quantity, ...)
-     * @param int    $idShop The staged order's shop (0 = the shop the request acts for)
+     * @param array $items Resolved item rows (id_product, quantity, ...)
+     * @param int $idShop The staged order's shop (0 = the shop the request acts for)
+     *
      * @return int Number of items reserved
      */
     public static function reserve($amazonOrderId, $items, $idShop = 0)
@@ -127,7 +128,7 @@ class AmazonRemoteCart
             );
             if ($inserted && Db::getInstance()->Affected_Rows() > 0) {
                 self::moveStock($idProduct, $idPa, -$quantity, $idShop);
-                $reserved++;
+                ++$reserved;
             }
         }
 
@@ -139,8 +140,9 @@ class AmazonRemoteCart
      * created: order creation performs its own stock decrement, so leaving the
      * reservation in place would take the quantity twice.
      *
-     * @param string   $amazonOrderId
+     * @param string $amazonOrderId
      * @param int|null $idShop The order's shop (default: the shop the request acts for)
+     *
      * @return int Items handed over
      */
     public static function convert($amazonOrderId, $idShop = null)
@@ -164,8 +166,9 @@ class AmazonRemoteCart
      * Return the stock of an order that will never be paid (cancelled on
      * Amazon, or expired).
      *
-     * @param string   $amazonOrderId
+     * @param string $amazonOrderId
      * @param int|null $idShop The order's shop (default: the shop the request acts for)
+     *
      * @return int Items released
      */
     public static function release($amazonOrderId, $idShop = null)
@@ -190,13 +193,14 @@ class AmazonRemoteCart
      * order never left the Pending state.
      *
      * @param int|null $idShop default: the shop the request acts for
+     *
      * @return array array('orders' => int, 'items' => int)
      */
     public static function releaseExpired($idShop = null)
     {
         self::ensureTable();
         $idShop = self::shopFor($idShop);
-        $summary = array('orders' => 0, 'items' => 0);
+        $summary = ['orders' => 0, 'items' => 0];
         if (!self::isEnabled($idShop)) {
             return $summary;
         }
@@ -224,7 +228,7 @@ class AmazonRemoteCart
         foreach ($rows as $r) {
             $items = self::release($r['amazon_order_id'], $idShop);
             if ($items > 0) {
-                $summary['orders']++;
+                ++$summary['orders'];
                 $summary['items'] += $items;
             }
         }
@@ -237,6 +241,7 @@ class AmazonRemoteCart
      * over automatically, so a confirmed order never keeps a stale hold.
      *
      * @param int|null $idShop default: the shop the request acts for
+     *
      * @return int Orders converted
      */
     public static function convertConfirmed($idShop = null)
@@ -260,7 +265,7 @@ class AmazonRemoteCart
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 self::convert($r['amazon_order_id'], $idShop);
-                $count++;
+                ++$count;
             }
         }
 
@@ -290,7 +295,7 @@ class AmazonRemoteCart
              LIMIT ' . (int) $limit
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -328,7 +333,7 @@ class AmazonRemoteCart
                AND `id_shop` = ' . (int) $idShop
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     private static function setStatus($amazonOrderId, $status, $idShop)

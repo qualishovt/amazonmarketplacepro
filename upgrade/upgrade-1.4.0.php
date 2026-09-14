@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -28,11 +29,11 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_1_4_0($module)
 {
-    $defaults = array(
+    $defaults = [
         'AMZPRO_PII_PURGE' => '1',
         'AMZPRO_PII_RETENTION_DAYS' => '30',
         'AMZPRO_PII_PURGE_PS' => '0',
-    );
+    ];
 
     foreach ($defaults as $key => $value) {
         if (Configuration::get($key) === false) {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Report Manager.
  *
  * Handles requesting, polling, and downloading Amazon SP-API reports:
@@ -47,8 +48,8 @@ class AmazonReportManager
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
@@ -72,16 +73,17 @@ class AmazonReportManager
      * @param string $reportType One of the REPORT_* constants
      * @param string|null $startDate ISO8601 (optional, for date-ranged reports)
      * @param string|null $endDate ISO8601 (optional)
+     *
      * @return array Result with report_id
      */
     public function requestReport($reportType, $startDate = null, $endDate = null)
     {
         $this->lastError = null;
 
-        $body = array(
+        $body = [
             'reportType' => $reportType,
-            'marketplaceIds' => array($this->marketplaceId),
-        );
+            'marketplaceIds' => [$this->marketplaceId],
+        ];
 
         if ($startDate !== null) {
             $body['dataStartTime'] = $startDate;
@@ -93,19 +95,21 @@ class AmazonReportManager
         $resp = $this->client->request(
             'POST',
             '/reports/2021-06-30/reports',
-            array(),
+            [],
             $body
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         if ($resp['status'] >= 400) {
             $errorBody = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'Reports API HTTP ' . $resp['status'] . ': ' . $errorBody;
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         $reportId = '';
@@ -132,16 +136,17 @@ class AmazonReportManager
              )'
         );
 
-        return array(
+        return [
             'success' => true,
             'report_id' => $reportId,
-        );
+        ];
     }
 
     /**
      * Check status of a pending report and download if ready.
      *
      * @param string $reportId
+     *
      * @return array Status info
      */
     public function checkAndDownload($reportId)
@@ -152,17 +157,18 @@ class AmazonReportManager
         $resp = $this->client->request(
             'GET',
             '/reports/2021-06-30/reports/' . rawurlencode($reportId),
-            array()
+            []
         );
 
         if ($resp === false || $resp['status'] >= 400) {
             $this->lastError = $resp === false
                 ? $this->client->getLastError()
                 : 'HTTP ' . $resp['status'];
-            return array('success' => false, 'status' => 'ERROR', 'error' => $this->lastError);
+
+            return ['success' => false, 'status' => 'ERROR', 'error' => $this->lastError];
         }
 
-        $report = is_array($resp['body']) ? $resp['body'] : array();
+        $report = is_array($resp['body']) ? $resp['body'] : [];
         $status = isset($report['processingStatus']) ? $report['processingStatus'] : 'UNKNOWN';
         $now = date('Y-m-d H:i:s');
 
@@ -203,12 +209,12 @@ class AmazonReportManager
                            AND ' . AmzproShop::sqlWhere()
                     );
 
-                    return array(
+                    return [
                         'success' => true,
                         'status' => 'DONE',
                         'file_path' => $filePath,
                         'row_count' => $rowCount,
-                    );
+                    ];
                 }
             }
         } elseif ($status === 'FATAL' || $status === 'CANCELLED') {
@@ -223,16 +229,17 @@ class AmazonReportManager
                    AND ' . AmzproShop::sqlWhere()
             );
 
-            return array('success' => false, 'status' => $status, 'error' => $errorMsg);
+            return ['success' => false, 'status' => $status, 'error' => $errorMsg];
         }
 
-        return array('success' => true, 'status' => $status);
+        return ['success' => true, 'status' => $status];
     }
 
     /**
      * Download a report document.
      *
      * @param string $documentId
+     *
      * @return string|false Report content or false on error
      */
     private function downloadReportDocument($documentId)
@@ -240,19 +247,21 @@ class AmazonReportManager
         $resp = $this->client->request(
             'GET',
             '/reports/2021-06-30/documents/' . rawurlencode($documentId),
-            array()
+            []
         );
 
         if ($resp === false || $resp['status'] >= 400) {
             $this->lastError = 'Failed to get report document URL.';
+
             return false;
         }
 
-        $docInfo = is_array($resp['body']) ? $resp['body'] : array();
+        $docInfo = is_array($resp['body']) ? $resp['body'] : [];
         $url = isset($docInfo['url']) ? $docInfo['url'] : '';
 
         if ($url === '') {
             $this->lastError = 'Report document URL is empty.';
+
             return false;
         }
 
@@ -268,6 +277,7 @@ class AmazonReportManager
         if ($content === false) {
             $this->lastError = 'cURL error downloading report: ' . curl_error($ch);
             curl_close($ch);
+
             return false;
         }
 
@@ -276,6 +286,7 @@ class AmazonReportManager
 
         if ($httpCode >= 400) {
             $this->lastError = 'Report download HTTP ' . $httpCode;
+
             return false;
         }
 
@@ -296,6 +307,7 @@ class AmazonReportManager
      *
      * @param string $reportId
      * @param string $content
+     *
      * @return string File path
      */
     private function saveReportFile($reportId, $content)
@@ -327,12 +339,14 @@ class AmazonReportManager
      * Request a settlement report for a date range.
      *
      * @param int $daysBack Number of days to look back
+     *
      * @return array Result
      */
     public function requestSettlementReport($daysBack = 30)
     {
         $endDate = gmdate('Y-m-d\TH:i:s\Z');
         $startDate = gmdate('Y-m-d\TH:i:s\Z', strtotime('-' . (int) $daysBack . ' days'));
+
         return $this->requestReport(self::REPORT_SETTLEMENT, $startDate, $endDate);
     }
 
@@ -354,14 +368,14 @@ class AmazonReportManager
     public function pollPendingReports()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'pending' => 0,
             'completed' => 0,
             'failed' => 0,
             'still_processing' => 0,
-        );
+        ];
 
         $pending = Db::getInstance()->executeS(
             'SELECT `report_id`, `report_type`
@@ -405,6 +419,7 @@ class AmazonReportManager
      * Parse a merchant listings report into structured data.
      *
      * @param string $reportId
+     *
      * @return array List of listing rows
      */
     public function parseMerchantListingsReport($reportId)
@@ -417,26 +432,27 @@ class AmazonReportManager
 
         if (!$filePath || !file_exists($filePath)) {
             $this->lastError = 'Report file not found.';
-            return array();
+
+            return [];
         }
 
         $content = file_get_contents($filePath);
         $lines = explode("\n", $content);
         if (count($lines) < 2) {
-            return array();
+            return [];
         }
 
         // Parse TSV header
         $header = str_getcsv($lines[0], "\t");
-        $rows = array();
+        $rows = [];
 
-        for ($i = 1; $i < count($lines); $i++) {
+        for ($i = 1; $i < count($lines); ++$i) {
             $line = trim($lines[$i]);
             if ($line === '') {
                 continue;
             }
             $fields = str_getcsv($line, "\t");
-            $row = array();
+            $row = [];
             foreach ($header as $idx => $col) {
                 $row[trim($col)] = isset($fields[$idx]) ? trim($fields[$idx]) : '';
             }
@@ -450,6 +466,7 @@ class AmazonReportManager
      * Parse a settlement report and return summary data.
      *
      * @param string $reportId
+     *
      * @return array Settlement summary
      */
     public function parseSettlementReport($reportId)
@@ -462,17 +479,18 @@ class AmazonReportManager
 
         if (!$filePath || !file_exists($filePath)) {
             $this->lastError = 'Report file not found.';
-            return array();
+
+            return [];
         }
 
         $content = file_get_contents($filePath);
         $lines = explode("\n", $content);
         if (count($lines) < 2) {
-            return array();
+            return [];
         }
 
         $header = str_getcsv($lines[0], "\t");
-        $summary = array(
+        $summary = [
             'total_amount' => 0,
             'product_charges' => 0,
             'product_charge_refunds' => 0,
@@ -480,20 +498,20 @@ class AmazonReportManager
             'other_fees' => 0,
             'promotions' => 0,
             'rows' => 0,
-        );
+        ];
 
-        for ($i = 1; $i < count($lines); $i++) {
+        for ($i = 1; $i < count($lines); ++$i) {
             $line = trim($lines[$i]);
             if ($line === '') {
                 continue;
             }
             $fields = str_getcsv($line, "\t");
-            $row = array();
+            $row = [];
             foreach ($header as $idx => $col) {
                 $row[trim($col)] = isset($fields[$idx]) ? trim($fields[$idx]) : '';
             }
 
-            $summary['rows']++;
+            ++$summary['rows'];
 
             $amount = isset($row['total-amount']) ? (float) $row['total-amount'] : 0;
             $summary['total_amount'] += $amount;
@@ -527,6 +545,7 @@ class AmazonReportManager
      * shop's in "All shops"; each row carries its id_shop).
      *
      * @param int $limit
+     *
      * @return array
      */
     public function listReports($limit = 50)
@@ -536,6 +555,7 @@ class AmazonReportManager
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 }

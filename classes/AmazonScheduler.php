@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * The module's own schedule.
  *
  * Automation used to be a wall of nineteen URLs and the instruction "add these
@@ -70,27 +71,27 @@ class AmazonScheduler
      */
     public static function catalogue()
     {
-        return array(
-            'import_orders'       => array('Import orders', 15, 'Orders'),
-            'create_orders'       => array('Create PrestaShop orders', 15, 'Orders'),
-            'sync_stock'          => array('Sync stock', 30, 'Catalogue'),
-            'sync_products'       => array('Full product sync', 1440, 'Catalogue'),
-            'import_returns'      => array('Import returns', 60, 'Fulfilment'),
-            'process_returns'     => array('Process returns', 60, 'Fulfilment'),
-            'sync_fba'            => array('FBA inventory sync', 60, 'Fulfilment'),
-            'reprice'             => array('Repricing cycle', 60, 'Pricing'),
-            'fetch_fees'          => array('Fetch fees', 360, 'Money'),
-            'poll_reports'        => array('Poll reports', 30, 'Money'),
-            'sync_promotions'     => array('Sync promotions', 360, 'Pricing'),
-            'multi_import_orders' => array('Import orders, all marketplaces', 15, 'Orders'),
-            'multi_sync_products' => array('Product sync, all marketplaces', 1440, 'Catalogue'),
-            'request_reviews'     => array('Request reviews', 1440, 'Orders'),
-            'process_feeds'       => array('Process feed queue', 15, 'Catalogue'),
-            'remote_cart'         => array('Settle remote carts', 15, 'Orders'),
-            'fetch_messages'      => array('Fetch buyer messages', 60, 'Orders'),
-            'upload_invoices'     => array('Upload invoices', 360, 'Money'),
-            'purge_pii'           => array('Purge buyer data past retention', 1440, 'System'),
-        );
+        return [
+            'import_orders' => ['Import orders', 15, 'Orders'],
+            'create_orders' => ['Create PrestaShop orders', 15, 'Orders'],
+            'sync_stock' => ['Sync stock', 30, 'Catalogue'],
+            'sync_products' => ['Full product sync', 1440, 'Catalogue'],
+            'import_returns' => ['Import returns', 60, 'Fulfilment'],
+            'process_returns' => ['Process returns', 60, 'Fulfilment'],
+            'sync_fba' => ['FBA inventory sync', 60, 'Fulfilment'],
+            'reprice' => ['Repricing cycle', 60, 'Pricing'],
+            'fetch_fees' => ['Fetch fees', 360, 'Money'],
+            'poll_reports' => ['Poll reports', 30, 'Money'],
+            'sync_promotions' => ['Sync promotions', 360, 'Pricing'],
+            'multi_import_orders' => ['Import orders, all marketplaces', 15, 'Orders'],
+            'multi_sync_products' => ['Product sync, all marketplaces', 1440, 'Catalogue'],
+            'request_reviews' => ['Request reviews', 1440, 'Orders'],
+            'process_feeds' => ['Process feed queue', 15, 'Catalogue'],
+            'remote_cart' => ['Settle remote carts', 15, 'Orders'],
+            'fetch_messages' => ['Fetch buyer messages', 60, 'Orders'],
+            'upload_invoices' => ['Upload invoices', 360, 'Money'],
+            'purge_pii' => ['Purge buyer data past retention', 1440, 'System'],
+        ];
     }
 
     /** Human label for a task key, falling back to the key itself. */
@@ -112,7 +113,7 @@ class AmazonScheduler
 
         $rows = Db::getInstance()->executeS($sql);
 
-        return $rows ? $rows : array();
+        return $rows ? $rows : [];
     }
 
     /** @return array|false one task row */
@@ -135,6 +136,7 @@ class AmazonScheduler
      * Create or update a task.
      *
      * @param array $data task_key, interval_minutes, active, id_task (optional)
+     *
      * @return int|false the task id
      */
     public static function save(array $data)
@@ -238,7 +240,7 @@ class AmazonScheduler
              ORDER BY `next_run_at` ASC'
         );
 
-        return $rows ? $rows : array();
+        return $rows ? $rows : [];
     }
 
     /**
@@ -254,14 +256,14 @@ class AmazonScheduler
         // a task does to the context in between.
         $idShop = self::shopId();
         if (!self::acquireLock($idShop)) {
-            return array('success' => true, 'skipped' => 'another run is in progress');
+            return ['success' => true, 'skipped' => 'another run is in progress'];
         }
 
         require_once dirname(__FILE__) . '/AmazonTaskRunner.php';
 
         $started = time();
         $runner = new AmazonTaskRunner();
-        $ran = array();
+        $ran = [];
 
         foreach (self::due() as $task) {
             if (time() - $started >= $budgetSeconds) {
@@ -275,17 +277,17 @@ class AmazonScheduler
             $runner->log($task['task_key'], $result);
             self::recordRun($task, $result, $ms);
 
-            $ran[] = array(
+            $ran[] = [
                 'task' => $task['task_key'],
                 'success' => !empty($result['success']),
                 'ms' => $ms,
                 'error' => isset($result['error']) ? $result['error'] : null,
-            );
+            ];
         }
 
         self::releaseLock($idShop);
 
-        return array('success' => true, 'ran' => count($ran), 'tasks' => $ran);
+        return ['success' => true, 'ran' => count($ran), 'tasks' => $ran];
     }
 
     /** Write the outcome of one run and schedule the next. */
@@ -340,7 +342,7 @@ class AmazonScheduler
     {
         $task = self::get($idTask);
         if (!$task) {
-            return array('success' => false, 'error' => AmazonI18n::get()->l('No such task.', 'amazonscheduler'));
+            return ['success' => false, 'error' => AmazonI18n::get()->l('No such task.', 'amazonscheduler')];
         }
 
         require_once dirname(__FILE__) . '/AmazonTaskRunner.php';

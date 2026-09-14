@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon FBA (Fulfillment by Amazon) Manager.
  *
  * Handles:
@@ -41,8 +42,8 @@ class AmazonFbaManager
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
@@ -71,37 +72,39 @@ class AmazonFbaManager
     public function syncFbaInventory()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'fetched' => 0,
             'updated' => 0,
             'new' => 0,
             'errors' => 0,
-        );
+        ];
 
         $resp = $this->client->request(
             'GET',
             '/fba/inventory/v1/summaries',
-            array(
+            [
                 'granularityType' => 'Marketplace',
                 'granularityId' => $this->marketplaceId,
                 'marketplaceIds' => $this->marketplaceId,
                 'details' => 'true',
-            )
+            ]
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
+
             return $summary;
         }
         if ($resp['status'] >= 400) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
             $this->lastError = 'FBA Inventory API HTTP ' . $resp['status'] . ': ' . $body;
+
             return $summary;
         }
 
-        $inventories = array();
+        $inventories = [];
         if (is_array($resp['body']) && isset($resp['body']['payload']['inventorySummaries'])) {
             $inventories = $resp['body']['payload']['inventorySummaries'];
         }
@@ -166,7 +169,7 @@ class AmazonFbaManager
                        AND `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
                        AND `id_shop` = ' . $idShop
                 );
-                $summary['updated']++;
+                ++$summary['updated'];
             } else {
                 Db::getInstance()->execute(
                     'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_fba_inventory`
@@ -196,7 +199,7 @@ class AmazonFbaManager
                         \'' . pSQL($now) . '\'
                      )'
                 );
-                $summary['new']++;
+                ++$summary['new'];
             }
         }
 
@@ -215,6 +218,7 @@ class AmazonFbaManager
      * Used when the seller wants Amazon to ship an order from a non-Amazon channel.
      *
      * @param int $idOrder PrestaShop order ID
+     *
      * @return array Result
      */
     public function createMcfOrder($idOrder)
@@ -227,7 +231,8 @@ class AmazonFbaManager
                 AmazonI18n::get()->l('PrestaShop order #%d not found.', 'amazonfbamanager'),
                 (int) $idOrder
             );
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         // Amazon ships it from the stock of the seller account this shop is
@@ -238,7 +243,8 @@ class AmazonFbaManager
                 AmazonI18n::get()->l('PrestaShop order #%d belongs to another shop. Select that shop at the top of the page and try again.', 'amazonfbamanager'),
                 (int) $idOrder
             );
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         // Get delivery address
@@ -248,7 +254,8 @@ class AmazonFbaManager
                 AmazonI18n::get()->l('Delivery address not found for order #%d', 'amazonfbamanager'),
                 (int) $idOrder
             );
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         $country = new Country((int) $address->id_country);
@@ -267,11 +274,12 @@ class AmazonFbaManager
                 AmazonI18n::get()->l('No items in order #%d', 'amazonfbamanager'),
                 (int) $idOrder
             );
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         // Build MCF items
-        $items = array();
+        $items = [];
         foreach ($orderDetails as $detail) {
             $sku = $detail['product_reference'];
             if (empty($sku)) {
@@ -295,11 +303,11 @@ class AmazonFbaManager
                 );
             }
 
-            $items[] = array(
+            $items[] = [
                 'sellerSku' => $sku,
                 'sellerFulfillmentOrderItemId' => 'PS-' . $order->id . '-' . $detail['id_order_detail'],
                 'quantity' => (int) $detail['product_quantity'],
-            );
+            ];
         }
 
         if (empty($items)) {
@@ -307,7 +315,8 @@ class AmazonFbaManager
                 AmazonI18n::get()->l('No FBA-eligible items (no reference/SKU) in order #%d', 'amazonfbamanager'),
                 (int) $idOrder
             );
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         // Customer name
@@ -315,13 +324,13 @@ class AmazonFbaManager
         $displayName = $address->firstname . ' ' . $address->lastname;
 
         // Build the MCF fulfillment order request
-        $body = array(
+        $body = [
             'sellerFulfillmentOrderId' => 'PS-' . $order->id . '-' . date('Ymd'),
             'displayableOrderId' => $order->reference,
             'displayableOrderDate' => gmdate('Y-m-d\TH:i:s\Z', strtotime($order->date_add)),
             'displayableOrderComment' => 'PrestaShop order #' . $order->reference,
             'shippingSpeedCategory' => 'Standard',
-            'destinationAddress' => array(
+            'destinationAddress' => [
                 'name' => $displayName,
                 'addressLine1' => $address->address1,
                 'addressLine2' => $address->address2 ? $address->address2 : '',
@@ -330,40 +339,43 @@ class AmazonFbaManager
                 'postalCode' => $address->postcode,
                 'countryCode' => $countryCode,
                 'phone' => $address->phone ? $address->phone : $address->phone_mobile,
-            ),
+            ],
             'items' => $items,
             'marketplaceId' => $this->marketplaceId,
-        );
+        ];
 
         $resp = $this->client->request(
             'POST',
             '/fba/outbound/2020-07-01/fulfillmentOrders',
-            array(),
+            [],
             $body
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
         if ($resp['status'] >= 400) {
             $errorBody = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'MCF order HTTP ' . $resp['status'] . ': ' . $errorBody;
-            return array('success' => false, 'error' => $this->lastError);
+
+            return ['success' => false, 'error' => $this->lastError];
         }
 
-        return array(
+        return [
             'success' => true,
             'mcf_order_id' => 'PS-' . $order->id . '-' . date('Ymd'),
             'items_count' => count($items),
-        );
+        ];
     }
 
     /**
      * Get the status of an MCF fulfillment order.
      *
      * @param string $mcfOrderId
+     *
      * @return array|false
      */
     public function getMcfOrderStatus($mcfOrderId)
@@ -371,13 +383,14 @@ class AmazonFbaManager
         $resp = $this->client->request(
             'GET',
             '/fba/outbound/2020-07-01/fulfillmentOrders/' . rawurlencode($mcfOrderId),
-            array()
+            []
         );
 
         if ($resp === false || $resp['status'] >= 400) {
             $this->lastError = $resp === false
                 ? $this->client->getLastError()
                 : 'HTTP ' . $resp['status'];
+
             return false;
         }
 
@@ -389,23 +402,23 @@ class AmazonFbaManager
             ? $payload['fulfillmentOrder']['fulfillmentOrderStatus']
             : 'UNKNOWN';
 
-        $shipments = array();
+        $shipments = [];
         if (isset($payload['fulfillmentShipments']) && is_array($payload['fulfillmentShipments'])) {
             foreach ($payload['fulfillmentShipments'] as $ship) {
-                $shipments[] = array(
+                $shipments[] = [
                     'status' => isset($ship['fulfillmentShipmentStatus']) ? $ship['fulfillmentShipmentStatus'] : '',
                     'tracking' => isset($ship['fulfillmentShipmentPackage'][0]['trackingNumber'])
                         ? $ship['fulfillmentShipmentPackage'][0]['trackingNumber'] : '',
                     'carrier' => isset($ship['fulfillmentShipmentPackage'][0]['carrierCode'])
                         ? $ship['fulfillmentShipmentPackage'][0]['carrierCode'] : '',
-                );
+                ];
             }
         }
 
-        return array(
+        return [
             'status' => $status,
             'shipments' => $shipments,
-        );
+        ];
     }
 
     /**
@@ -416,7 +429,7 @@ class AmazonFbaManager
      */
     public function syncFbaStockToPs()
     {
-        $summary = array('updated' => 0, 'skipped' => 0);
+        $summary = ['updated' => 0, 'skipped' => 0];
         $idShop = (int) AmzproShop::actingId();
 
         $rows = Db::getInstance()->executeS(
@@ -441,9 +454,9 @@ class AmazonFbaManager
 
             if ($currentQty !== $fbaQty) {
                 StockAvailable::setQuantity($idProduct, $idPa, $fbaQty, $idShop);
-                $summary['updated']++;
+                ++$summary['updated'];
             } else {
-                $summary['skipped']++;
+                ++$summary['skipped'];
             }
         }
 
@@ -454,6 +467,7 @@ class AmazonFbaManager
      * List FBA inventory for admin display.
      *
      * @param int $limit
+     *
      * @return array
      */
     public function listFbaInventory($limit = 100)
@@ -466,7 +480,8 @@ class AmazonFbaManager
                 ORDER BY f.`seller_sku` ASC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -474,7 +489,7 @@ class AmazonFbaManager
      */
     private function resolveProduct($sku, $idShop)
     {
-        $res = array('id_product' => 0, 'id_product_attribute' => 0);
+        $res = ['id_product' => 0, 'id_product_attribute' => 0];
         $sku = trim((string) $sku);
         if ($sku === '') {
             return $res;
@@ -492,6 +507,7 @@ class AmazonFbaManager
         if ($row && (int) $row['id_product']) {
             $res['id_product'] = (int) $row['id_product'];
             $res['id_product_attribute'] = (int) $row['id_product_attribute'];
+
             return $res;
         }
 

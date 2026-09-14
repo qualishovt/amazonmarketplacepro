@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Fees & Commissions Tracker.
  *
  * Fetches financial event data from the SP-API Finances API to track
@@ -42,8 +43,8 @@ class AmazonFeesTracker
 {
     /** @var AmazonSpApiClient */
     private $client;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
     /** The shop whose orders are tracked. */
     private $idShop;
     /** The shop the caller named, or 0 for "the request's shop". */
@@ -51,7 +52,7 @@ class AmazonFeesTracker
 
     /**
      * @param AmazonSpApiClient $client
-     * @param int               $idShop 0 = the shop the request acts for
+     * @param int $idShop 0 = the shop the request acts for
      */
     public function __construct(AmazonSpApiClient $client, $idShop = 0)
     {
@@ -76,19 +77,20 @@ class AmazonFeesTracker
      * Processes orders that have amazon_fees = 0 and have been imported.
      *
      * @param int $limit Max orders to process per run
+     *
      * @return array Summary
      */
     public function fetchOrderFees($limit = 50)
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'checked' => 0,
             'updated' => 0,
             'no_fees' => 0,
             'errors' => 0,
-        );
+        ];
 
         // Get orders with no fees tracked yet
         $orders = Db::getInstance()->executeS(
@@ -103,21 +105,22 @@ class AmazonFeesTracker
 
         if (!is_array($orders) || empty($orders)) {
             $this->notices[] = AmazonI18n::get()->l('No orders pending fee tracking.', 'amazonfeestracker');
+
             return $summary;
         }
 
         foreach ($orders as $order) {
-            $summary['checked']++;
+            ++$summary['checked'];
             $amazonId = $order['amazon_order_id'];
 
             $fees = $this->fetchFeesForOrder($amazonId);
             if ($fees === false) {
-                $summary['errors']++;
+                ++$summary['errors'];
                 continue;
             }
 
             if (empty($fees)) {
-                $summary['no_fees']++;
+                ++$summary['no_fees'];
                 continue;
             }
 
@@ -155,7 +158,7 @@ class AmazonFeesTracker
                    AND `id_shop` = ' . (int) $order['id_shop']
             );
 
-            $summary['updated']++;
+            ++$summary['updated'];
         }
 
         return $summary;
@@ -165,6 +168,7 @@ class AmazonFeesTracker
      * Fetch fee breakdown for a single order via Finances API.
      *
      * @param string $amazonOrderId
+     *
      * @return array|false List of fee records, or false on error
      */
     private function fetchFeesForOrder($amazonOrderId)
@@ -172,25 +176,27 @@ class AmazonFeesTracker
         $resp = $this->client->request(
             'GET',
             '/finances/v0/orders/' . rawurlencode($amazonOrderId) . '/financialEvents',
-            array()
+            []
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
+
             return false;
         }
 
         if ($resp['status'] >= 400) {
             // 404 is normal for orders not yet settled
             if ($resp['status'] === 404) {
-                return array();
+                return [];
             }
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
             $this->lastError = 'Finances API HTTP ' . $resp['status'] . ': ' . $body;
+
             return false;
         }
 
-        $fees = array();
+        $fees = [];
 
         if (!is_array($resp['body'])) {
             return $fees;
@@ -221,13 +227,13 @@ class AmazonFeesTracker
                                 ? $feeEntry['FeeAmount']['CurrencyCode'] : '';
 
                             if ($amount != 0) {
-                                $fees[] = array(
+                                $fees[] = [
                                     'type' => $feeType,
                                     'amount' => $amount,
                                     'currency' => $currency,
                                     'order_item_id' => $orderItemId,
                                     'seller_sku' => $sku,
-                                );
+                                ];
                             }
                         }
                     }
@@ -242,13 +248,13 @@ class AmazonFeesTracker
                                 ? $feeEntry['FeeAmount']['CurrencyCode'] : '';
 
                             if ($amount != 0) {
-                                $fees[] = array(
+                                $fees[] = [
                                     'type' => $feeType . '_adjustment',
                                     'amount' => $amount,
                                     'currency' => $currency,
                                     'order_item_id' => $orderItemId,
                                     'seller_sku' => $sku,
-                                );
+                                ];
                             }
                         }
                     }
@@ -276,13 +282,13 @@ class AmazonFeesTracker
                                 ? $feeEntry['FeeAmount']['CurrencyCode'] : '';
 
                             if ($amount != 0) {
-                                $fees[] = array(
+                                $fees[] = [
                                     'type' => 'refund_' . $feeType,
                                     'amount' => $amount,
                                     'currency' => $currency,
                                     'order_item_id' => $orderItemId,
                                     'seller_sku' => $sku,
-                                );
+                                ];
                             }
                         }
                     }
@@ -308,13 +314,15 @@ class AmazonFeesTracker
                 GROUP BY `fee_type`, `currency`
                 ORDER BY total_amount DESC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
      * Get fees for a specific order.
      *
      * @param string $amazonOrderId
+     *
      * @return array
      */
     public function getFeesForOrder($amazonOrderId)
@@ -324,7 +332,8 @@ class AmazonFeesTracker
                   AND ' . $this->listScope() . '
                 ORDER BY `fee_type` ASC';
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -332,6 +341,7 @@ class AmazonFeesTracker
      *
      * @param string $startDate ISO8601
      * @param string $endDate ISO8601
+     *
      * @return array Summary of all financial events
      */
     public function fetchFinancialEventsByDate($startDate, $endDate)
@@ -341,33 +351,35 @@ class AmazonFeesTracker
         $resp = $this->client->request(
             'GET',
             '/finances/v0/financialEvents',
-            array(
+            [
                 'PostedAfter' => $startDate,
                 'PostedBefore' => $endDate,
-            )
+            ]
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
-            return array();
+
+            return [];
         }
         if ($resp['status'] >= 400) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
             $this->lastError = 'Finances API HTTP ' . $resp['status'] . ': ' . $body;
-            return array();
+
+            return [];
         }
 
         $events = isset($resp['body']['payload']['FinancialEvents'])
             ? $resp['body']['payload']['FinancialEvents']
-            : array();
+            : [];
 
-        $summary = array(
+        $summary = [
             'shipment_events' => 0,
             'refund_events' => 0,
             'total_revenue' => 0,
             'total_fees' => 0,
             'total_refunds' => 0,
-        );
+        ];
 
         if (isset($events['ShipmentEventList'])) {
             $summary['shipment_events'] = count($events['ShipmentEventList']);

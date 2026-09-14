@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -10,7 +11,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-$sql = array();
+$sql = [];
 
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amzpro_scheduled_task`';
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation`';

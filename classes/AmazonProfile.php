@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -25,7 +26,6 @@
  * that shop. A shop changes only its own profiles; shared ones are changed in
  * "All shops".
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -36,13 +36,13 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonProfile
 {
     /** @var string|null Why the last save or delete was refused */
-    private static $lastError = null;
+    private static $lastError;
 
     /**
      * PrestaShop fields offerable as an attribute source. The labels here are
      * the English originals; use getPsFields() to show them to the merchant.
      */
-    public static $psFields = array(
+    public static $psFields = [
         'name' => 'Product name',
         'description' => 'Description',
         'description_short' => 'Short description',
@@ -58,7 +58,7 @@ class AmazonProfile
         'height' => 'Height',
         'depth' => 'Depth',
         'category' => 'Default category name',
-    );
+    ];
 
     /**
      * The same keys as $psFields, with labels translated for display.
@@ -67,7 +67,7 @@ class AmazonProfile
      */
     public static function getPsFields()
     {
-        return array(
+        return [
             'name' => AmazonI18n::get()->l('Product name', 'amazonprofile'),
             'description' => AmazonI18n::get()->l('Description', 'amazonprofile'),
             'description_short' => AmazonI18n::get()->l('Short description', 'amazonprofile'),
@@ -83,14 +83,14 @@ class AmazonProfile
             'height' => AmazonI18n::get()->l('Height', 'amazonprofile'),
             'depth' => AmazonI18n::get()->l('Depth', 'amazonprofile'),
             'category' => AmazonI18n::get()->l('Default category name', 'amazonprofile'),
-        );
+        ];
     }
 
     /* ─────────────────── Schema ─────────────────── */
 
     public static function ensureTables()
     {
-        $sql = array();
+        $sql = [];
         $sql['amazonmarketplacepro_profile'] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` (
             `id_amazonmarketplacepro_profile` INT(11) NOT NULL AUTO_INCREMENT,
             `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
@@ -144,10 +144,10 @@ class AmazonProfile
         $id = (int) AmzproShop::sharedWriteId();
         if (!AmzproShop::isMultistore()) {
             // One shop: every row it sees is its own, as before shops were known.
-            return array_values(array_unique(array(0, $id)));
+            return array_values(array_unique([0, $id]));
         }
 
-        return array($id);
+        return [$id];
     }
 
     /**
@@ -185,7 +185,7 @@ class AmazonProfile
              ORDER BY p.`name` ASC'
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /** A profile the current shop can see, or false. */
@@ -203,7 +203,7 @@ class AmazonProfile
         $row['categories'] = self::getCategoryIds((int) $idProfile);
         $row['attributes'] = json_decode((string) $row['attributes_json'], true);
         if (!is_array($row['attributes'])) {
-            $row['attributes'] = array();
+            $row['attributes'] = [];
         }
 
         return $row;
@@ -217,7 +217,7 @@ class AmazonProfile
              WHERE pc.`id_profile` = ' . (int) $idProfile . '
                AND ' . self::sqlEffectiveBinding()
         );
-        $out = array();
+        $out = [];
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $out[] = (int) $r['id_category'];
@@ -234,9 +234,9 @@ class AmazonProfile
      *                    is_variation, variation_attributes, attributes (array),
      *                    raw_attributes_json, latency, shipping_template,
      *                    price_markup, gtin_exemption, categories (array of ids)
-     * In a shop a new profile belongs to that shop, in "All shops" to every
-     * shop. Returns false with getLastError() set when the profile cannot be
-     * changed here.
+     *                    In a shop a new profile belongs to that shop, in "All shops" to every
+     *                    shop. Returns false with getLastError() set when the profile cannot be
+     *                    changed here.
      *
      * @return int|false Profile id
      */
@@ -251,7 +251,7 @@ class AmazonProfile
         }
 
         $attributes = isset($data['attributes']) && is_array($data['attributes'])
-            ? $data['attributes'] : array();
+            ? $data['attributes'] : [];
         $latency = (isset($data['latency']) && $data['latency'] !== '') ? (int) $data['latency'] : -1;
 
         $fields = '`name` = \'' . pSQL(Tools::substr((string) $data['name'], 0, 128)) . '\',
@@ -368,15 +368,16 @@ class AmazonProfile
     /**
      * Resolve a profile's attribute map into Amazon listing attributes.
      *
-     * @param array  $profileAttributes Stored map: name => array('src' => ps|allowed|fixed, 'value' => ...)
-     * @param array  $row               Staged product row (ps_* columns, id_product)
+     * @param array $profileAttributes Stored map: name => array('src' => ps|allowed|fixed, 'value' => ...)
+     * @param array $row Staged product row (ps_* columns, id_product)
      * @param string $marketplaceId
      * @param callable|null $featureResolver function($idProduct, $featureName) for feature: sources
+     *
      * @return array Amazon-shaped attributes
      */
     public static function resolveAttributes($profileAttributes, $row, $marketplaceId, $featureResolver = null)
     {
-        $out = array();
+        $out = [];
         if (!is_array($profileAttributes)) {
             return $out;
         }
@@ -401,11 +402,11 @@ class AmazonProfile
                 continue;
             }
 
-            $entry = array('value' => $value, 'marketplace_id' => $marketplaceId);
+            $entry = ['value' => $value, 'marketplace_id' => $marketplaceId];
             if (!empty($spec['unit'])) {
                 $entry['unit'] = (string) $spec['unit'];
             }
-            $out[$name] = array($entry);
+            $out[$name] = [$entry];
         }
 
         return $out;
@@ -434,7 +435,7 @@ class AmazonProfile
 
         if (strpos($source, 'attribute:') === 0) {
             $group = Tools::strtolower(trim(Tools::substr($source, 10)));
-            $vars = array();
+            $vars = [];
             if (!empty($row['variation_attributes'])) {
                 $decoded = json_decode($row['variation_attributes'], true);
                 if (is_array($decoded)) {
@@ -446,11 +447,12 @@ class AmazonProfile
                     return (string) $v;
                 }
             }
+
             return '';
         }
 
         // Plain PrestaShop fields map onto the staged row's ps_* columns.
-        $map = array(
+        $map = [
             'name' => 'ps_name',
             'description' => 'ps_description',
             'description_short' => 'ps_description_short',
@@ -460,7 +462,7 @@ class AmazonProfile
             'upc' => 'ps_ean13',
             'price' => 'ps_price',
             'quantity' => 'ps_quantity',
-        );
+        ];
         if (isset($map[$source]) && isset($row[$map[$source]])) {
             return trim(strip_tags((string) $row[$map[$source]]));
         }
@@ -470,7 +472,7 @@ class AmazonProfile
         if (!$idProduct) {
             return '';
         }
-        if (in_array($source, array('weight', 'width', 'height', 'depth'))) {
+        if (in_array($source, ['weight', 'width', 'height', 'depth'])) {
             return (string) (float) Db::getInstance()->getValue(
                 'SELECT `' . bqSQL($source) . '` FROM `' . _DB_PREFIX_ . 'product`
                  WHERE `id_product` = ' . $idProduct

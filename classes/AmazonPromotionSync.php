@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Promotion/Coupon Sync.
  *
  * Handles bidirectional promotion synchronization:
@@ -44,8 +45,8 @@ class AmazonPromotionSync
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
@@ -74,14 +75,14 @@ class AmazonPromotionSync
     public function importPromotionsFromOrders()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'orders_scanned' => 0,
             'promotions_found' => 0,
             'promotions_new' => 0,
             'promotions_updated' => 0,
-        );
+        ];
 
         // Get recent order items with promotion discounts
         $items = Db::getInstance()->executeS(
@@ -99,20 +100,21 @@ class AmazonPromotionSync
 
         if (!is_array($items) || empty($items)) {
             $this->notices[] = AmazonI18n::get()->l('No orders with promotion discounts found.', 'amazonpromotionsync');
+
             return $summary;
         }
 
-        $seenOrders = array();
+        $seenOrders = [];
         $now = date('Y-m-d H:i:s');
 
         foreach ($items as $item) {
             $amazonOrderId = $item['amazon_order_id'];
             if (!isset($seenOrders[$amazonOrderId])) {
                 $seenOrders[$amazonOrderId] = true;
-                $summary['orders_scanned']++;
+                ++$summary['orders_scanned'];
             }
 
-            $summary['promotions_found']++;
+            ++$summary['promotions_found'];
 
             // The promotion belongs to the order's shop.
             $idShop = (int) $item['id_shop'];
@@ -142,7 +144,7 @@ class AmazonPromotionSync
                            AND `amazon_promotion_id` = \'' . pSQL($promoId) . '\'
                            AND `seller_sku` = \'' . pSQL($item['seller_sku']) . '\''
                     );
-                    $summary['promotions_updated']++;
+                    ++$summary['promotions_updated'];
                 } else {
                     Db::getInstance()->execute(
                         'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_promotion`
@@ -166,7 +168,7 @@ class AmazonPromotionSync
                             ' . $idShop . '
                          )'
                     );
-                    $summary['promotions_new']++;
+                    ++$summary['promotions_new'];
                 }
             }
 
@@ -203,7 +205,7 @@ class AmazonPromotionSync
                             ' . $idShop . '
                          )'
                     );
-                    $summary['promotions_new']++;
+                    ++$summary['promotions_new'];
                 }
             }
         }
@@ -222,14 +224,14 @@ class AmazonPromotionSync
     public function createPsCartRules()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'total' => 0,
             'created' => 0,
             'skipped' => 0,
             'errors' => 0,
-        );
+        ];
 
         // Get promotions without PS cart rules
         $promos = Db::getInstance()->executeS(
@@ -269,9 +271,9 @@ class AmazonPromotionSync
                      WHERE `id_amazonmarketplacepro_promotion` = ' . $idPromo . '
                        AND `id_shop` = ' . (int) $promo['id_shop']
                 );
-                $summary['created']++;
+                ++$summary['created'];
             } else {
-                $summary['errors']++;
+                ++$summary['errors'];
             }
         }
 
@@ -289,6 +291,7 @@ class AmazonPromotionSync
      *
      * @param array $promo promotion row
      * @param int $idShop
+     *
      * @return int the new cart rule id, or 0
      */
     private function addCartRule(array $promo, $idShop)
@@ -301,7 +304,7 @@ class AmazonPromotionSync
 
         // Create a cart rule
         $cartRule = new CartRule();
-        $cartRule->name = array($idLang => 'Amazon: ' . Tools::substr($promo['description'], 0, 200));
+        $cartRule->name = [$idLang => 'Amazon: ' . Tools::substr($promo['description'], 0, 200)];
         $cartRule->code = 'AMZPROMO_' . $idPromo;
         $cartRule->description = 'Imported from Amazon promotion: ' . $promo['amazon_promotion_id'];
         $cartRule->quantity = 0;
@@ -353,13 +356,13 @@ class AmazonPromotionSync
     public function exportPsCartRules()
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'scanned' => 0,
             'exported' => 0,
             'already' => 0,
-        );
+        ];
 
         $idShop = AmzproShop::actingId();
         $idLang = (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop);
@@ -401,7 +404,7 @@ class AmazonPromotionSync
         $now = date('Y-m-d H:i:s');
 
         foreach ($cartRules as $cr) {
-            $summary['scanned']++;
+            ++$summary['scanned'];
 
             $discountType = 'fixed';
             $discountValue = 0;
@@ -442,7 +445,7 @@ class AmazonPromotionSync
                  )'
             );
 
-            $summary['exported']++;
+            ++$summary['exported'];
         }
 
         if ($summary['exported'] > 0) {
@@ -460,23 +463,24 @@ class AmazonPromotionSync
      *
      * @param string $amazonOrderId
      * @param string $orderItemId
+     *
      * @return array List of promotion ID strings
      */
     private function fetchPromotionIds($amazonOrderId, $orderItemId)
     {
-        $ids = array();
+        $ids = [];
 
         $resp = $this->client->request(
             'GET',
             '/orders/v0/orders/' . rawurlencode($amazonOrderId) . '/orderItems',
-            array()
+            []
         );
 
         if ($resp === false || $resp['status'] >= 400) {
             return $ids;
         }
 
-        $items = array();
+        $items = [];
         if (is_array($resp['body']) && isset($resp['body']['payload']['OrderItems'])) {
             $items = $resp['body']['payload']['OrderItems'];
         }
@@ -501,6 +505,7 @@ class AmazonPromotionSync
      * "All shops"; each row carries its id_shop).
      *
      * @param int $limit
+     *
      * @return array
      */
     public function listPromotions($limit = 100)
@@ -510,7 +515,8 @@ class AmazonPromotionSync
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -520,13 +526,13 @@ class AmazonPromotionSync
      */
     public function getPromotionStats()
     {
-        $stats = array(
+        $stats = [
             'total' => 0,
             'from_amazon' => 0,
             'from_ps' => 0,
             'total_discount' => 0,
             'with_cart_rule' => 0,
-        );
+        ];
 
         $row = Db::getInstance()->getRow(
             'SELECT COUNT(*) AS total,

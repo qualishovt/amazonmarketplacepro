@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Buyer messaging via the SP-API Messaging API (v1).
  *
@@ -13,7 +14,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -24,7 +24,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonBuyerMessaging
 {
     /** Message types that carry a free-text body. */
-    private static $textActions = array(
+    private static $textActions = [
         'confirmCustomizationDetails',
         'confirmDeliveryDetails',
         'confirmOrderDetails',
@@ -34,12 +34,12 @@ class AmazonBuyerMessaging
         'warranty',
         'amazonMotors',
         'legalDisclosure',
-    );
+    ];
 
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
+    private $lastError;
     private $useMock = false;
 
     /**
@@ -68,6 +68,7 @@ class AmazonBuyerMessaging
      * Ask Amazon which message types may currently be sent for an order.
      *
      * @param string $amazonOrderId
+     *
      * @return array|false List of action names (possibly empty), or false on error
      */
     public function getAllowedActions($amazonOrderId)
@@ -76,30 +77,33 @@ class AmazonBuyerMessaging
 
         if ($this->isOtherShopsOrder($amazonOrderId)) {
             $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Select that shop at the top of the page to work on it.', 'amazonbuyermessaging');
+
             return false;
         }
 
         if ($this->useMock) {
-            return array('confirmOrderDetails', 'warranty', 'unexpectedProblem');
+            return ['confirmOrderDetails', 'warranty', 'unexpectedProblem'];
         }
 
         $resp = $this->client->request(
             'GET',
             '/messaging/v1/orders/' . rawurlencode($amazonOrderId),
-            array('marketplaceIds' => $this->marketplaceId)
+            ['marketplaceIds' => $this->marketplaceId]
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
+
             return false;
         }
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $body = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'getMessagingActions HTTP ' . $resp['status'] . ': ' . $body;
+
             return false;
         }
 
-        $actions = array();
+        $actions = [];
         if (isset($resp['body']['_links']['actions']) && is_array($resp['body']['_links']['actions'])) {
             foreach ($resp['body']['_links']['actions'] as $a) {
                 if (isset($a['name'])) {
@@ -116,7 +120,8 @@ class AmazonBuyerMessaging
      *
      * @param string $amazonOrderId
      * @param string $actionName One of the names returned by getAllowedActions()
-     * @param string $text       Message text (ignored for body-less types)
+     * @param string $text Message text (ignored for body-less types)
+     *
      * @return bool
      */
     public function sendMessage($amazonOrderId, $actionName, $text)
@@ -128,37 +133,42 @@ class AmazonBuyerMessaging
 
         if ($amazonOrderId === '' || $actionName === '') {
             $this->lastError = AmazonI18n::get()->l('Order id and message type are required.', 'amazonbuyermessaging');
+
             return false;
         }
         if (in_array($actionName, self::$textActions) && $text === '') {
             $this->lastError = AmazonI18n::get()->l('This message type requires a text body.', 'amazonbuyermessaging');
+
             return false;
         }
         if ($this->isOtherShopsOrder($amazonOrderId)) {
             $this->lastError = AmazonI18n::get()->l('This order belongs to another shop. Select that shop at the top of the page to work on it.', 'amazonbuyermessaging');
+
             return false;
         }
 
         if ($this->useMock) {
             $this->log('info', 'MOCK send ' . $actionName . ' for ' . $amazonOrderId);
+
             return true;
         }
 
         // Types like negativeFeedbackRemoval take an empty JSON object body.
         $body = in_array($actionName, self::$textActions)
-            ? array('text' => $text)
+            ? ['text' => $text]
             : new stdClass();
 
         $resp = $this->client->request(
             'POST',
             '/messaging/v1/orders/' . rawurlencode($amazonOrderId) . '/messages/' . rawurlencode($actionName),
-            array('marketplaceIds' => $this->marketplaceId),
+            ['marketplaceIds' => $this->marketplaceId],
             $body
         );
 
         if ($resp === false) {
             $this->lastError = $this->client->getLastError();
             $this->log('error', 'send ' . $actionName . ' for ' . $amazonOrderId . ' failed: ' . $this->lastError);
+
             return false;
         }
 
@@ -166,10 +176,12 @@ class AmazonBuyerMessaging
             $detail = is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body'];
             $this->lastError = 'sendMessage HTTP ' . $resp['status'] . ': ' . $detail;
             $this->log('error', 'send ' . $actionName . ' for ' . $amazonOrderId . ' failed: ' . $this->lastError);
+
             return false;
         }
 
         $this->log('info', 'sent ' . $actionName . ' to buyer of ' . $amazonOrderId);
+
         return true;
     }
 
@@ -178,6 +190,7 @@ class AmazonBuyerMessaging
      * (imported, with an order id). Every shop's in "All shops".
      *
      * @param int $limit
+     *
      * @return array
      */
     public function listMessagableOrders($limit = 100)
@@ -190,7 +203,7 @@ class AmazonBuyerMessaging
              LIMIT ' . (int) $limit
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 
     /**
@@ -199,6 +212,7 @@ class AmazonBuyerMessaging
      * Amazon itself checks that it belongs to this shop's seller account.
      *
      * @param string $amazonOrderId
+     *
      * @return bool
      */
     private function isOtherShopsOrder($amazonOrderId)

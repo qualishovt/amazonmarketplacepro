@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -12,7 +13,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -75,16 +75,16 @@ class AmazonPiiPurger
      * on purpose: those orders are still being fulfilled and the merchant
      * still needs the address.
      */
-    private static $finishedStatuses = array(
+    private static $finishedStatuses = [
         'Shipped',
         'Delivered',
         'Canceled',
         'Cancelled',
         'Unfulfillable',
-    );
+    ];
 
     /** Staging columns cleared to an empty string. */
-    private static $piiColumns = array(
+    private static $piiColumns = [
         'buyer_email',
         'buyer_name',
         'ship_address1',
@@ -94,10 +94,10 @@ class AmazonPiiPurger
         'ship_postal_code',
         'ship_phone',
         'ship_name',
-    );
+    ];
 
     /** @var string|null */
-    private $lastError = null;
+    private $lastError;
 
     /** @return string|null */
     public function getLastError()
@@ -107,11 +107,13 @@ class AmazonPiiPurger
 
     /**
      * @param int|null $idShop default: the current shop
+     *
      * @return bool
      */
     public static function isEnabled($idShop = null)
     {
         $v = AmzproShop::get('AMZPRO_PII_PURGE', $idShop);
+
         // Absent configuration means an install that predates this feature.
         // Default to on: the compliant behaviour is the safe one to assume.
         return ((string) $v === '') ? true : (bool) $v;
@@ -139,6 +141,7 @@ class AmazonPiiPurger
      * Retention window in days, clamped to a sane range.
      *
      * @param int|null $idShop default: the current shop
+     *
      * @return int
      */
     public static function retentionDays($idShop = null)
@@ -163,6 +166,7 @@ class AmazonPiiPurger
      * writes comes from PHP, so the comparison is at least self-consistent.
      *
      * @param int|null $idShop default: the current shop
+     *
      * @return string
      */
     public static function cutoff($idShop = null)
@@ -215,6 +219,7 @@ class AmazonPiiPurger
      * SQL condition for the staged rows one shop is responsible for.
      *
      * @param int $idShop
+     *
      * @return string
      */
     private function shopCondition($idShop)
@@ -234,11 +239,12 @@ class AmazonPiiPurger
      * leading WHERE.
      *
      * @param int $idShop
+     *
      * @return string
      */
     private function dueCondition($idShop)
     {
-        $quoted = array();
+        $quoted = [];
         foreach (self::$finishedStatuses as $s) {
             $quoted[] = '\'' . pSQL($s) . '\'';
         }
@@ -255,13 +261,14 @@ class AmazonPiiPurger
      * ("All shops" in the back office).
      *
      * @param int|null $idShop default: the current shop
+     *
      * @return int[]
      */
     private static function countShops($idShop)
     {
         $idShop = ($idShop === null) ? AmzproShop::id() : (int) $idShop;
 
-        return $idShop ? array($idShop) : AmzproShop::shopIds();
+        return $idShop ? [$idShop] : AmzproShop::shopIds();
     }
 
     /**
@@ -269,6 +276,7 @@ class AmazonPiiPurger
      * purge is on.
      *
      * @param int|null $idShop default: the current shop; 0 = every shop
+     *
      * @return int
      */
     public function dueCount($idShop = null)
@@ -291,6 +299,7 @@ class AmazonPiiPurger
      * How many orders have already had their buyer data cleared.
      *
      * @param int|null $idShop default: the current shop; 0 = every shop
+     *
      * @return int
      */
     public function purgedCount($idShop = null)
@@ -322,6 +331,7 @@ class AmazonPiiPurger
      *
      * @param int $limit Rows to process per shop this run
      * @param int|null $idShop see above
+     *
      * @return array|false Summary counts, or false when a shop failed
      */
     public function purge($limit = self::DEFAULT_BATCH, $idShop = null)
@@ -338,7 +348,7 @@ class AmazonPiiPurger
         $shops = $byHand ? self::countShops($idShop) : AmzproShop::shopIds();
         $settingsShop = ($byHand && (int) $idShop) ? (int) $idShop : AmzproShop::actingId();
 
-        $summary = array(
+        $summary = [
             'retention_days' => self::retentionDays($settingsShop),
             'cutoff' => self::cutoff($settingsShop),
             'orders' => 0,
@@ -346,13 +356,13 @@ class AmazonPiiPurger
             'customers' => 0,
             'addresses' => 0,
             'shop_side' => (bool) AmzproShop::get('AMZPRO_PII_PURGE_PS', $settingsShop),
-            'shops' => array(),
-        );
+            'shops' => [],
+        ];
 
         $failed = false;
         foreach ($shops as $id) {
             if (!$byHand && !self::isEnabled($id)) {
-                $summary['shops'][$id] = array('disabled' => true);
+                $summary['shops'][$id] = ['disabled' => true];
                 continue;
             }
 
@@ -365,7 +375,7 @@ class AmazonPiiPurger
             }
 
             $summary['shops'][$id] = $shopSummary;
-            foreach (array('orders', 'remaining', 'customers', 'addresses') as $k) {
+            foreach (['orders', 'remaining', 'customers', 'addresses'] as $k) {
                 $summary[$k] += $shopSummary[$k];
             }
         }
@@ -379,13 +389,14 @@ class AmazonPiiPurger
      *
      * @param int $idShop
      * @param int $limit
+     *
      * @return array|false
      */
     private function purgeShop($idShop, $limit)
     {
         $idShop = (int) $idShop;
 
-        $summary = array(
+        $summary = [
             'disabled' => false,
             'retention_days' => self::retentionDays($idShop),
             'cutoff' => self::cutoff($idShop),
@@ -394,7 +405,7 @@ class AmazonPiiPurger
             'customers' => 0,
             'addresses' => 0,
             'shop_side' => (bool) AmzproShop::get('AMZPRO_PII_PURGE_PS', $idShop),
-        );
+        ];
 
         // Collect the linked PrestaShop orders before clearing, because the
         // shop-side step needs them and the rows stop being identifiable as
@@ -411,8 +422,8 @@ class AmazonPiiPurger
             return $summary;
         }
 
-        $ids = array();
-        $psOrderIds = array();
+        $ids = [];
+        $psOrderIds = [];
         foreach ($rows as $r) {
             $ids[] = (int) $r['id_amazonmarketplacepro_order'];
             if ((int) $r['id_order'] > 0) {
@@ -421,7 +432,7 @@ class AmazonPiiPurger
         }
 
         $now = date('Y-m-d H:i:s');
-        $sets = array();
+        $sets = [];
         foreach (self::$piiColumns as $col) {
             $sets[] = '`' . bqSQL($col) . '` = \'\'';
         }
@@ -484,13 +495,14 @@ class AmazonPiiPurger
      *
      * @param array $psOrderIds
      * @param int $idShop the shop whose purge this is
+     *
      * @return array
      */
     private function purgeShopSide(array $psOrderIds, $idShop)
     {
-        $result = array('customers' => 0, 'addresses' => 0);
+        $result = ['customers' => 0, 'addresses' => 0];
 
-        $ids = array();
+        $ids = [];
         foreach ($psOrderIds as $id) {
             $ids[] = (int) $id;
         }
@@ -508,10 +520,10 @@ class AmazonPiiPurger
             return $result;
         }
 
-        $addressIds = array();
-        $customerIds = array();
+        $addressIds = [];
+        $customerIds = [];
         foreach ($orders as $o) {
-            foreach (array('id_address_delivery', 'id_address_invoice') as $k) {
+            foreach (['id_address_delivery', 'id_address_invoice'] as $k) {
                 if ((int) $o[$k] > 0) {
                     $addressIds[(int) $o[$k]] = true;
                 }
@@ -534,7 +546,7 @@ class AmazonPiiPurger
                  WHERE `id_address` = ' . (int) $idAddress
             );
             if ($ok) {
-                $result['addresses']++;
+                ++$result['addresses'];
             }
         }
 
@@ -551,7 +563,7 @@ class AmazonPiiPurger
                  WHERE `id_customer` = ' . (int) $idCustomer
             );
             if ($ok) {
-                $result['customers']++;
+                ++$result['customers'];
             }
         }
 
@@ -563,11 +575,12 @@ class AmazonPiiPurger
      * shop being purged.
      *
      * @param int $idShop
+     *
      * @return int[]
      */
     private function shopSideShopIds($idShop)
     {
-        $ids = array((int) $idShop);
+        $ids = [(int) $idShop];
         foreach (AmzproShop::shopIds() as $id) {
             if ($id !== (int) $idShop && AmzproShop::get('AMZPRO_PII_PURGE_PS', $id)) {
                 $ids[] = $id;
@@ -589,6 +602,7 @@ class AmazonPiiPurger
      *
      * @param int $idCustomer
      * @param int[] $shopIds shops whose purged orders count
+     *
      * @return bool
      */
     private function customerIsAmazonOnly($idCustomer, array $shopIds)
@@ -621,6 +635,7 @@ class AmazonPiiPurger
      * @param string $level
      * @param string $message
      * @param int $idShop
+     *
      * @return void
      */
     private function log($level, $message, $idShop)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Cron front controller for Amazon Marketplace Pro.
  *
  * This used to be nineteen endpoints and nineteen crontab lines, one per task,
@@ -61,7 +62,8 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         $expectedToken = AmzproShop::get('AMZPRO_CRON_TOKEN', $idShop);
 
         if (!$expectedToken || !hash_equals((string) $expectedToken, (string) $token)) {
-            $this->jsonResponse(array('success' => false, 'error' => 'Invalid or missing cron token.'), 403);
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid or missing cron token.'], 403);
+
             return;
         }
 
@@ -71,12 +73,13 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         // runs, because its whole purpose is to confirm the token without
         // causing a side effect.
         if ($action === 'verify') {
-            $this->jsonResponse(array(
+            $this->jsonResponse([
                 'success' => true,
                 'nonce' => (string) Tools::getValue('nonce'),
                 'shop' => Configuration::get('PS_SHOP_NAME', null, AmzproShop::groupId($idShop), $idShop),
                 'id_shop' => $idShop,
-            ));
+            ]);
+
             return;
         }
 
@@ -93,6 +96,7 @@ class AmazonMarketplaceProCronModuleFrontController extends ModuleFrontControlle
         if ($action === 'run_due' || $action === '') {
             $scheduler = new AmazonScheduler();
             $this->jsonResponse($scheduler->runDue());
+
             return;
         }
 

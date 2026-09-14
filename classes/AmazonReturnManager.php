@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Amazon Return/Refund Manager.
  *
  * Handles:
@@ -42,8 +43,8 @@ class AmazonReturnManager
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
     /** The shop returns are imported and processed for. */
     private $idShop;
     /** The shop the caller named, or 0 for "the request's shop". */
@@ -51,8 +52,8 @@ class AmazonReturnManager
 
     /**
      * @param AmazonSpApiClient $client
-     * @param string            $marketplaceId
-     * @param int               $idShop 0 = the shop the request acts for
+     * @param string $marketplaceId
+     * @param int $idShop 0 = the shop the request acts for
      */
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
     {
@@ -116,27 +117,28 @@ class AmazonReturnManager
      * previously imported orders.
      *
      * @param string $createdAfter ISO8601 date
+     *
      * @return array Summary
      */
     public function importReturns($createdAfter)
     {
         $this->ensureTables();
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'checked' => 0,
             'new_returns' => 0,
             'new_cancellations' => 0,
             'already' => 0,
-        );
+        ];
 
         // Fetch cancelled orders from Amazon (all pages, capped for safety)
-        $orders = array();
+        $orders = [];
         $nextToken = null;
         $pages = 0;
         do {
-            $query = array('MarketplaceIds' => $this->marketplaceId);
+            $query = ['MarketplaceIds' => $this->marketplaceId];
             if ($nextToken !== null) {
                 $query['NextToken'] = $nextToken;
             } else {
@@ -151,6 +153,7 @@ class AmazonReturnManager
                     break; // keep what we have
                 }
                 $this->lastError = $this->client->getLastError();
+
                 return $summary;
             }
             if ($resp['status'] === 429 && $pages > 0) {
@@ -159,11 +162,12 @@ class AmazonReturnManager
             if ($resp['status'] >= 400) {
                 $body = is_array($resp['body']) ? json_encode($resp['body']) : $resp['body'];
                 $this->lastError = 'getOrders (Canceled) HTTP ' . $resp['status'] . ': ' . $body;
+
                 return $summary;
             }
 
             $payload = (is_array($resp['body']) && isset($resp['body']['payload']))
-                ? $resp['body']['payload'] : array();
+                ? $resp['body']['payload'] : [];
             if (isset($payload['Orders']) && is_array($payload['Orders'])) {
                 foreach ($payload['Orders'] as $o) {
                     $orders[] = $o;
@@ -172,7 +176,7 @@ class AmazonReturnManager
 
             $nextToken = (isset($payload['NextToken']) && $payload['NextToken'] !== '')
                 ? $payload['NextToken'] : null;
-            $pages++;
+            ++$pages;
         } while ($nextToken !== null && $pages < 30);
 
         $summary['checked'] = count($orders);
@@ -191,7 +195,7 @@ class AmazonReturnManager
                    AND `id_shop` = ' . (int) $this->idShop
             );
             if ($exists) {
-                $summary['already']++;
+                ++$summary['already'];
                 continue;
             }
 
@@ -239,7 +243,7 @@ class AmazonReturnManager
                  )'
             );
 
-            $summary['new_cancellations']++;
+            ++$summary['new_cancellations'];
 
             // Update the staged order status
             if ($stagedOrder) {
@@ -286,14 +290,14 @@ class AmazonReturnManager
             $resp = $this->client->request(
                 'GET',
                 '/orders/v0/orders/' . rawurlencode($amazonId) . '/orderItems',
-                array()
+                []
             );
 
             if ($resp === false || $resp['status'] >= 400) {
                 continue;
             }
 
-            $items = array();
+            $items = [];
             if (is_array($resp['body']) && isset($resp['body']['payload']['OrderItems'])) {
                 $items = $resp['body']['payload']['OrderItems'];
             }
@@ -355,7 +359,7 @@ class AmazonReturnManager
                      )'
                 );
 
-                $summary['new_returns']++;
+                ++$summary['new_returns'];
             }
         }
     }
@@ -370,7 +374,7 @@ class AmazonReturnManager
     public function processReturns()
     {
         $this->ensureTables();
-        $this->notices = array();
+        $this->notices = [];
 
         return AmzproShop::runInShop($this->idShop, function () {
             return $this->processShopReturns();
@@ -385,13 +389,13 @@ class AmazonReturnManager
     private function processShopReturns()
     {
         $idShop = (int) $this->idShop;
-        $summary = array(
+        $summary = [
             'total' => 0,
             'processed' => 0,
             'skipped' => 0,
             'failed' => 0,
-            'errors' => array(),
-        );
+            'errors' => [],
+        ];
 
         // Get unprocessed returns that have a PS order
         $returns = Db::getInstance()->executeS(
@@ -403,7 +407,7 @@ class AmazonReturnManager
         );
 
         if (!is_array($returns)) {
-            $returns = array();
+            $returns = [];
         }
 
         $summary['total'] = count($returns);
@@ -414,7 +418,7 @@ class AmazonReturnManager
 
             $order = new Order($idOrder);
             if (!Validate::isLoadedObject($order)) {
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('Return #%1$d: PrestaShop order #%2$d not found', 'amazonreturnmanager'),
                     $idReturn,
@@ -424,7 +428,7 @@ class AmazonReturnManager
             }
             if ((int) $order->id_shop !== $idShop) {
                 // Never change another shop's order from here.
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 continue;
             }
 
@@ -456,8 +460,7 @@ class AmazonReturnManager
                      WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
                        AND `id_shop` = ' . $idShop
                 );
-                $summary['processed']++;
-
+                ++$summary['processed'];
             } elseif ($ret['status'] === 'Returned') {
                 // Item return — create credit slip
                 $slipId = $this->createCreditSlip($order, $ret);
@@ -471,7 +474,7 @@ class AmazonReturnManager
                          WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
                            AND `id_shop` = ' . $idShop
                     );
-                    $summary['processed']++;
+                    ++$summary['processed'];
                     $this->notices[] = sprintf(
                         AmazonI18n::get()->l('Credit slip #%1$d created for order #%2$d', 'amazonreturnmanager'),
                         (int) $slipId,
@@ -485,14 +488,14 @@ class AmazonReturnManager
                          WHERE `id_amazonmarketplacepro_return` = ' . $idReturn . '
                            AND `id_shop` = ' . $idShop
                     );
-                    $summary['processed']++;
+                    ++$summary['processed'];
                     $this->notices[] = sprintf(
                         AmazonI18n::get()->l('Return processed for order #%d (no credit slip — partial return)', 'amazonreturnmanager'),
                         $idOrder
                     );
                 }
             } else {
-                $summary['skipped']++;
+                ++$summary['skipped'];
             }
         }
 
@@ -504,6 +507,7 @@ class AmazonReturnManager
      *
      * @param Order $order
      * @param array $returnData
+     *
      * @return int|false Credit slip ID
      */
     private function createCreditSlip($order, $returnData)
@@ -579,6 +583,7 @@ class AmazonReturnManager
      * Called when a PrestaShop order (Amazon-imported) is set to Cancelled.
      *
      * @param string $amazonOrderId
+     *
      * @return bool
      */
     public function cancelOrderOnAmazon($amazonOrderId)
@@ -594,6 +599,7 @@ class AmazonReturnManager
         $sellerId = (string) AmzproShop::get('AMZPRO_SELLER_ID', $this->idShop);
         if ($sellerId === '') {
             $this->lastError = 'No seller id configured — cannot submit the cancellation feed.';
+
             return false;
         }
 
@@ -629,6 +635,7 @@ class AmazonReturnManager
             $this->lastError = 'Cancellation feed failed: ' . $feeds->getLastError();
             $this->notices[] = 'Cancellation feed could not be submitted. '
                 . 'Manual cancellation in Seller Central may be required.';
+
             return false;
         }
 
@@ -643,6 +650,7 @@ class AmazonReturnManager
      * shop's in "All shops" (each row carries its id_shop).
      *
      * @param int $limit
+     *
      * @return array
      */
     public function listReturns($limit = 50)
@@ -652,6 +660,7 @@ class AmazonReturnManager
                 ORDER BY `date_add` DESC
                 LIMIT ' . (int) $limit;
         $rows = Db::getInstance()->executeS($sql);
-        return is_array($rows) ? $rows : array();
+
+        return is_array($rows) ? $rows : [];
     }
 }

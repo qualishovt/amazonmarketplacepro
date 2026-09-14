@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -21,7 +22,6 @@
  * PrestaShop, so a change made from one shop shows in every shop that sells
  * the product.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -34,9 +34,9 @@ class AmazonReferenceTool
     const SEPARATOR = ';';
 
     /** Header of the exported file, in column order. */
-    public static $columns = array(
+    public static $columns = [
         'key', 'product_name', 'reference', 'ean13', 'upc', 'supplier_reference',
-    );
+    ];
 
     /**
      * Build the CSV of every product and combination.
@@ -93,19 +93,19 @@ class AmazonReferenceTool
             );
         }
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
 
         $out = "\xEF\xBB\xBF" . implode(self::SEPARATOR, self::$columns) . "\r\n";
         foreach ($rows as $r) {
-            $line = array(
+            $line = [
                 (int) $r['id_product'] . '_' . (int) $r['id_product_attribute'],
                 self::escape($r['name']),
                 self::escape($r['reference']),
                 self::escapeCode($r['ean13']),
                 self::escapeCode($r['upc']),
                 self::escape($r['supplier_reference']),
-            );
+            ];
             $out .= implode(self::SEPARATOR, $line) . "\r\n";
         }
 
@@ -119,33 +119,36 @@ class AmazonReferenceTool
      * and the name are there to orient the person editing the file.
      *
      * @param string $content Raw uploaded file
+     *
      * @return array array('updated' => int, 'skipped' => int, 'errors' => array)
      */
     public static function importCsv($content)
     {
-        $summary = array('updated' => 0, 'skipped' => 0, 'errors' => array());
+        $summary = ['updated' => 0, 'skipped' => 0, 'errors' => []];
 
         $content = str_replace("\xEF\xBB\xBF", '', (string) $content);
         $lines = preg_split('/\r\n|\r|\n/', $content);
         if (count($lines) < 2) {
             $summary['errors'][] = AmazonI18n::get()->l('The file has no data rows.', 'amazonreferencetool');
+
             return $summary;
         }
 
         $header = str_getcsv(array_shift($lines), self::SEPARATOR);
-        $index = array();
+        $index = [];
         foreach ($header as $i => $name) {
             $index[trim(Tools::strtolower($name))] = $i;
         }
         if (!isset($index['key'])) {
             $summary['errors'][] = AmazonI18n::get()->l('The first column must be \'key\' — export a fresh file and edit that.', 'amazonreferencetool');
+
             return $summary;
         }
 
         // With a shop selected only its products are written.
         $idShop = (int) AmzproShop::id();
 
-        $seenReferences = array();
+        $seenReferences = [];
         foreach ($lines as $lineNo => $line) {
             if (trim($line) === '') {
                 continue;
@@ -153,7 +156,7 @@ class AmazonReferenceTool
             $cells = str_getcsv($line, self::SEPARATOR);
             $key = isset($cells[$index['key']]) ? trim($cells[$index['key']]) : '';
             if (!preg_match('/^(\d+)_(\d+)$/', $key, $m)) {
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 continue;
             }
             $idProduct = (int) $m[1];
@@ -165,19 +168,19 @@ class AmazonReferenceTool
                     $lineNo + 2,
                     $key
                 );
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 continue;
             }
 
-            $values = array();
-            foreach (array('reference', 'ean13', 'upc', 'supplier_reference') as $field) {
+            $values = [];
+            foreach (['reference', 'ean13', 'upc', 'supplier_reference'] as $field) {
                 if (!isset($index[$field]) || !isset($cells[$index[$field]])) {
                     continue;
                 }
                 $values[$field] = self::unescapeCode($cells[$index[$field]]);
             }
             if (empty($values)) {
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 continue;
             }
 
@@ -192,13 +195,13 @@ class AmazonReferenceTool
                         $values['reference'],
                         $seenReferences[$ref]
                     );
-                    $summary['skipped']++;
+                    ++$summary['skipped'];
                     continue;
                 }
                 $seenReferences[$ref] = $key;
             }
 
-            $sets = array();
+            $sets = [];
             foreach ($values as $field => $value) {
                 $sets[] = '`' . bqSQL($field) . '` = \'' . pSQL($value) . '\'';
             }
@@ -216,7 +219,7 @@ class AmazonReferenceTool
             }
 
             if ($ok) {
-                $summary['updated']++;
+                ++$summary['updated'];
             } else {
                 $summary['errors'][] = sprintf(
                     AmazonI18n::get()->l('Line %1$d: could not update %2$s.', 'amazonreferencetool'),
@@ -290,17 +293,17 @@ class AmazonReferenceTool
              WHERE pa.`reference` IS NULL OR pa.`reference` = \'\''
         );
 
-        return array(
+        return [
             'no_reference' => $noReference,
             'no_barcode' => $noBarcode,
             'duplicate_references' => is_array($duplicates) ? count($duplicates) : 0,
             'combinations_no_reference' => $comboNoReference,
-        );
+        ];
     }
 
     private static function escape($value)
     {
-        $value = str_replace(array("\r", "\n", self::SEPARATOR), ' ', (string) $value);
+        $value = str_replace(["\r", "\n", self::SEPARATOR], ' ', (string) $value);
 
         return $value;
     }

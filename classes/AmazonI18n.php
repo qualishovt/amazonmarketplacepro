@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Translation for the module's plain classes.
  *
  * A class has no module of its own to call l() on, so it borrows this one:
@@ -40,10 +41,10 @@ if (!defined('_PS_VERSION_')) {
 class AmazonI18n
 {
     /** @var AmazonI18n|null */
-    private static $instance = null;
+    private static $instance;
 
     /** @var Module|false|null null until first use, false when unavailable */
-    private $module = null;
+    private $module;
 
     /** @return AmazonI18n */
     public static function get()

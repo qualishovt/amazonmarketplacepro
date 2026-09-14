@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -17,7 +18,6 @@
  * The cache is keyed by (product type, marketplace) because both the
  * attribute set and the allowed values differ per marketplace.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -31,7 +31,7 @@ class AmazonProductTypeDefinitions
     const CACHE_TTL_DAYS = 30;
 
     /** Attributes every listing carries; the profile form never asks for them. */
-    private static $handledInternally = array(
+    private static $handledInternally = [
         'item_name', 'brand', 'product_description', 'bullet_point',
         'purchasable_offer', 'fulfillment_availability', 'condition_type',
         'condition_note', 'merchant_suggested_asin', 'main_product_image_locator',
@@ -42,11 +42,11 @@ class AmazonProductTypeDefinitions
         'variation_theme', 'recommended_browse_nodes', 'supplier_declared_has_product_identifier_exemption',
         'list_price', 'country_of_origin', 'gpsr_manufacturer_email_address',
         'gpsr_manufacturer_reference',
-    );
+    ];
 
     private $client;
     private $marketplaceId;
-    private $lastError = null;
+    private $lastError;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
@@ -80,11 +80,12 @@ class AmazonProductTypeDefinitions
      * Search Amazon's product type catalogue.
      *
      * @param string $keywords Free text ("shirt", "ring"); empty lists all types
+     *
      * @return array|false List of array('name' => ..., 'displayName' => ...)
      */
     public function searchProductTypes($keywords = '')
     {
-        $query = array('marketplaceIds' => $this->marketplaceId);
+        $query = ['marketplaceIds' => $this->marketplaceId];
         $keywords = trim((string) $keywords);
         if ($keywords !== '') {
             $query['keywords'] = $keywords;
@@ -93,24 +94,26 @@ class AmazonProductTypeDefinitions
         $resp = $this->client->request('GET', '/definitions/2020-09-01/productTypes', $query);
         if ($resp === false) {
             $this->lastError = (string) $this->client->getLastError();
+
             return false;
         }
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $this->lastError = 'productTypes HTTP ' . $resp['status'] . ': '
                 . (is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body']);
+
             return false;
         }
 
-        $out = array();
+        $out = [];
         if (isset($resp['body']['productTypes']) && is_array($resp['body']['productTypes'])) {
             foreach ($resp['body']['productTypes'] as $pt) {
                 if (!isset($pt['name'])) {
                     continue;
                 }
-                $out[] = array(
+                $out[] = [
                     'name' => $pt['name'],
                     'displayName' => isset($pt['displayName']) ? $pt['displayName'] : $pt['name'],
-                );
+                ];
             }
         }
 
@@ -121,7 +124,8 @@ class AmazonProductTypeDefinitions
      * The flattened attribute list for a product type, from cache when fresh.
      *
      * @param string $productType e.g. SHIRT
-     * @param bool   $forceRefresh Bypass the cache
+     * @param bool $forceRefresh Bypass the cache
+     *
      * @return array|false array('display_name' => string, 'attributes' => array)
      */
     public function getDefinition($productType, $forceRefresh = false)
@@ -130,6 +134,7 @@ class AmazonProductTypeDefinitions
         $productType = trim((string) $productType);
         if ($productType === '') {
             $this->lastError = AmazonI18n::get()->l('No product type given.', 'amazonproducttypedefinitions');
+
             return false;
         }
 
@@ -142,11 +147,11 @@ class AmazonProductTypeDefinitions
 
         // Passing sellerId makes Amazon return the values THIS account may
         // use — notably the fulfilment channel codes it is enrolled in.
-        $query = array(
+        $query = [
             'marketplaceIds' => $this->marketplaceId,
             'requirements' => 'LISTING',
             'locale' => 'DEFAULT',
-        );
+        ];
         $sellerId = trim((string) AmzproShop::get('AMZPRO_SELLER_ID'));
         if ($sellerId !== '') {
             $query['sellerId'] = $sellerId;
@@ -159,11 +164,13 @@ class AmazonProductTypeDefinitions
         );
         if ($resp === false) {
             $this->lastError = (string) $this->client->getLastError();
+
             return false;
         }
         if ($resp['status'] >= 400 || !is_array($resp['body'])) {
             $this->lastError = 'productType definition HTTP ' . $resp['status'] . ': '
                 . (is_array($resp['body']) ? json_encode($resp['body']) : (string) $resp['body']);
+
             return false;
         }
 
@@ -175,6 +182,7 @@ class AmazonProductTypeDefinitions
                 AmazonI18n::get()->l('Amazon did not send the list of fields for product type %s.', 'amazonproducttypedefinitions'),
                 $productType
             );
+
             return false;
         }
 
@@ -184,11 +192,13 @@ class AmazonProductTypeDefinitions
                 AmazonI18n::get()->l('Could not download the list of fields for this product type from Amazon: %s', 'amazonproducttypedefinitions'),
                 (string) $this->client->getLastError()
             );
+
             return false;
         }
         $schema = json_decode($raw, true);
         if (!is_array($schema)) {
             $this->lastError = AmazonI18n::get()->l('The list of fields downloaded from Amazon could not be read. Please try again.', 'amazonproducttypedefinitions');
+
             return false;
         }
 
@@ -197,7 +207,7 @@ class AmazonProductTypeDefinitions
 
         $this->writeCache($productType, $displayName, $attributes);
 
-        return array('display_name' => $displayName, 'attributes' => $attributes);
+        return ['display_name' => $displayName, 'attributes' => $attributes];
     }
 
     /**
@@ -209,16 +219,16 @@ class AmazonProductTypeDefinitions
      * shows what the merchant actually has to decide.
      *
      * @return array List of array('name', 'title', 'description', 'required',
-     *                             'enum' => array('value' => label), 'has_unit')
+     *               'enum' => array('value' => label), 'has_unit')
      */
     private function flattenSchema($schema)
     {
         $properties = isset($schema['properties']) && is_array($schema['properties'])
-            ? $schema['properties'] : array();
+            ? $schema['properties'] : [];
         $required = (isset($schema['required']) && is_array($schema['required']))
-            ? array_flip($schema['required']) : array();
+            ? array_flip($schema['required']) : [];
 
-        $out = array();
+        $out = [];
         foreach ($properties as $name => $prop) {
             if (in_array($name, self::$handledInternally)) {
                 continue;
@@ -227,31 +237,31 @@ class AmazonProductTypeDefinitions
                 continue;
             }
 
-            $item = isset($prop['items']) && is_array($prop['items']) ? $prop['items'] : array();
+            $item = isset($prop['items']) && is_array($prop['items']) ? $prop['items'] : [];
             $itemProps = isset($item['properties']) && is_array($item['properties'])
-                ? $item['properties'] : array();
+                ? $item['properties'] : [];
 
             // Constrained attributes carry their allowed values on the "value"
             // sub-property (enum + human-readable enumNames).
-            $enum = array();
+            $enum = [];
             $valueProp = isset($itemProps['value']) && is_array($itemProps['value'])
-                ? $itemProps['value'] : array();
+                ? $itemProps['value'] : [];
             if (isset($valueProp['enum']) && is_array($valueProp['enum'])) {
                 $names = (isset($valueProp['enumNames']) && is_array($valueProp['enumNames']))
-                    ? $valueProp['enumNames'] : array();
+                    ? $valueProp['enumNames'] : [];
                 foreach ($valueProp['enum'] as $i => $v) {
                     $enum[(string) $v] = isset($names[$i]) ? $names[$i] : (string) $v;
                 }
             }
 
-            $out[] = array(
+            $out[] = [
                 'name' => $name,
                 'title' => isset($prop['title']) ? $prop['title'] : $name,
                 'description' => isset($prop['description']) ? Tools::substr($prop['description'], 0, 300) : '',
                 'required' => isset($required[$name]),
                 'enum' => $enum,
                 'has_unit' => isset($itemProps['unit']),
-            );
+            ];
         }
 
         // Required attributes first, then alphabetically by label.
@@ -259,6 +269,7 @@ class AmazonProductTypeDefinitions
             if ($a['required'] !== $b['required']) {
                 return $a['required'] ? -1 : 1;
             }
+
             return strcasecmp($a['title'], $b['title']);
         });
 
@@ -285,7 +296,7 @@ class AmazonProductTypeDefinitions
             return false;
         }
 
-        return array('display_name' => $row['display_name'], 'attributes' => $attributes);
+        return ['display_name' => $row['display_name'], 'attributes' => $attributes];
     }
 
     private function writeCache($productType, $displayName, $attributes)
@@ -315,6 +326,6 @@ class AmazonProductTypeDefinitions
              ORDER BY `display_name` ASC'
         );
 
-        return is_array($rows) ? $rows : array();
+        return is_array($rows) ? $rows : [];
     }
 }

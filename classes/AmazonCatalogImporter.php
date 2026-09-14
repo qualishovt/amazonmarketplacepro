@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Creates real PrestaShop products from staged Amazon-only listings
  * (sync_direction = 'amazon_only'): products the merchant sells on Amazon
@@ -19,7 +20,6 @@
  *  @copyright 2026 IntelliPresta
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -31,8 +31,8 @@ class AmazonCatalogImporter
 {
     private $idShop;
     private $idLang;
-    private $lastError = null;
-    private $notices = array();
+    private $lastError;
+    private $notices = [];
 
     public function __construct($idLang = 0, $idShop = 0)
     {
@@ -64,24 +64,26 @@ class AmazonCatalogImporter
      * from Amazon will not want its titles rewritten.
      *
      * @param array $operations Any of: content, price, quantity, hide, features
-     * @param int   $limit
+     * @param int $limit
+     *
      * @return array Per-operation counts
      */
     public function updateFromAmazon($operations, $limit = 500)
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array(
+        $summary = [
             'candidates' => 0, 'content' => 0, 'price' => 0,
             'quantity' => 0, 'hidden' => 0, 'features' => 0, 'failed' => 0,
-        );
+        ];
         $operations = array_intersect(
             (array) $operations,
-            array('content', 'price', 'quantity', 'hide', 'features')
+            ['content', 'price', 'quantity', 'hide', 'features']
         );
         if (empty($operations)) {
             $this->lastError = AmazonI18n::get()->l('No operation selected.', 'amazoncatalogimporter');
+
             return $summary;
         }
 
@@ -96,7 +98,7 @@ class AmazonCatalogImporter
              LIMIT ' . (int) $limit
         );
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
         $summary['candidates'] = count($rows);
 
@@ -107,11 +109,11 @@ class AmazonCatalogImporter
             try {
                 $product = new Product($idProduct, false, $this->idLang, $this->idShop);
                 if (!Validate::isLoadedObject($product)) {
-                    $summary['failed']++;
+                    ++$summary['failed'];
                     continue;
                 }
                 // Saves change this shop only, never the others.
-                $product->id_shop_list = array($this->idShop);
+                $product->id_shop_list = [$this->idShop];
 
                 if (in_array('content', $operations)) {
                     $summary['content'] += $this->applyContent($product, $r) ? 1 : 0;
@@ -124,20 +126,20 @@ class AmazonCatalogImporter
                         : (float) $r['amazon_price'];
                     $product->price = round($net, 6);
                     if ($product->update()) {
-                        $summary['price']++;
+                        ++$summary['price'];
                     }
                 }
                 if (in_array('quantity', $operations)) {
                     StockAvailable::setQuantity(
                         $idProduct, $idPa, (int) $r['amazon_quantity'], $this->idShop
                     );
-                    $summary['quantity']++;
+                    ++$summary['quantity'];
                 }
                 if (in_array('features', $operations)) {
                     $summary['features'] += $this->applyFeatures($product, $r);
                 }
             } catch (Exception $e) {
-                $summary['failed']++;
+                ++$summary['failed'];
                 $this->notices[] = $r['seller_sku'] . ': ' . $e->getMessage();
             }
         }
@@ -162,12 +164,12 @@ class AmazonCatalogImporter
 
         $title = trim((string) $row['amazon_title']);
         if ($title !== '') {
-            $product->name = array($this->idLang => Tools::substr($title, 0, 128));
+            $product->name = [$this->idLang => Tools::substr($title, 0, 128)];
             $changed = true;
         }
         $description = trim((string) $row['amazon_description']);
         if ($description !== '') {
-            $product->description = array($this->idLang => $description);
+            $product->description = [$this->idLang => $description];
             $changed = true;
         }
         $brand = trim((string) $row['amazon_brand']);
@@ -177,7 +179,7 @@ class AmazonCatalogImporter
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = $brand;
                 $manufacturer->active = true;
-                $manufacturer->id_shop_list = array($this->idShop);
+                $manufacturer->id_shop_list = [$this->idShop];
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;
                 }
@@ -215,7 +217,7 @@ class AmazonCatalogImporter
                 continue;
             }
             $featureName = 'Amazon highlight ' . $position;
-            $position++;
+            ++$position;
 
             $idFeature = (int) Db::getInstance()->getValue(
                 'SELECT `id_feature` FROM `' . _DB_PREFIX_ . 'feature_lang`
@@ -223,8 +225,8 @@ class AmazonCatalogImporter
             );
             if (!$idFeature) {
                 $feature = new Feature();
-                $feature->name = array($this->idLang => $featureName);
-                $feature->id_shop_list = array($this->idShop);
+                $feature->name = [$this->idLang => $featureName];
+                $feature->id_shop_list = [$this->idShop];
                 if (!$feature->add()) {
                     continue;
                 }
@@ -242,7 +244,7 @@ class AmazonCatalogImporter
                 $featureValue = new FeatureValue();
                 $featureValue->id_feature = $idFeature;
                 $featureValue->custom = false;
-                $featureValue->value = array($this->idLang => $value);
+                $featureValue->value = [$this->idLang => $value];
                 if (!$featureValue->add()) {
                     continue;
                 }
@@ -254,7 +256,7 @@ class AmazonCatalogImporter
                     (`id_feature`, `id_product`, `id_feature_value`)
                  VALUES (' . $idFeature . ', ' . (int) $product->id . ', ' . $idValue . ')'
             );
-            $added++;
+            ++$added;
         }
 
         return $added;
@@ -290,10 +292,10 @@ class AmazonCatalogImporter
             if (!Validate::isLoadedObject($product)) {
                 continue;
             }
-            $product->id_shop_list = array($this->idShop);
+            $product->id_shop_list = [$this->idShop];
             $product->active = false;
             if ($product->update()) {
-                $count++;
+                ++$count;
             }
         }
         if ($count > 0) {
@@ -311,14 +313,15 @@ class AmazonCatalogImporter
      *
      * @param int $idCategory Target category (0 = shop's Home category)
      * @param int $limit
+     *
      * @return array Summary counts
      */
     public function importAmazonOnlyProducts($idCategory = 0, $limit = 25)
     {
         $this->lastError = null;
-        $this->notices = array();
+        $this->notices = [];
 
-        $summary = array('candidates' => 0, 'created' => 0, 'skipped' => 0, 'failed' => 0, 'images_failed' => 0);
+        $summary = ['candidates' => 0, 'created' => 0, 'skipped' => 0, 'failed' => 0, 'images_failed' => 0];
 
         if (!$idCategory) {
             $idCategory = (int) Configuration::get(
@@ -338,7 +341,7 @@ class AmazonCatalogImporter
              LIMIT ' . (int) $limit
         );
         if (!is_array($rows)) {
-            $rows = array();
+            $rows = [];
         }
         $summary['candidates'] = count($rows);
 
@@ -358,7 +361,7 @@ class AmazonCatalogImporter
                      WHERE `reference` = \'' . pSQL($row['seller_sku']) . '\''
                 );
                 if ($elsewhere) {
-                    $summary['skipped']++;
+                    ++$summary['skipped'];
                     $this->notices[] = sprintf(
                         AmazonI18n::get()->l('SKU %1$s: product #%2$d already has this reference but is not in this shop. Add it to this shop, then sync again.', 'amazoncatalogimporter'),
                         $row['seller_sku'],
@@ -369,7 +372,7 @@ class AmazonCatalogImporter
             }
             if ($existing) {
                 $this->linkStagedRow($row['seller_sku'], $existing);
-                $summary['skipped']++;
+                ++$summary['skipped'];
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('SKU %1$s: already exists as product #%2$d — linked.', 'amazoncatalogimporter'),
                     $row['seller_sku'],
@@ -380,9 +383,9 @@ class AmazonCatalogImporter
 
             $idProduct = $this->createProduct($row, $idCategory, $summary);
             if ($idProduct) {
-                $summary['created']++;
+                ++$summary['created'];
             } else {
-                $summary['failed']++;
+                ++$summary['failed'];
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('SKU %1$s: %2$s', 'amazoncatalogimporter'),
                     $row['seller_sku'],
@@ -404,6 +407,7 @@ class AmazonCatalogImporter
         $name = trim((string) $row['amazon_title']);
         if ($name === '') {
             $this->lastError = AmazonI18n::get()->l('Amazon listing has no title.', 'amazoncatalogimporter');
+
             return false;
         }
         // PS product name limit is 128 chars and forbids some characters.
@@ -419,7 +423,7 @@ class AmazonCatalogImporter
         $product->id_category_default = (int) $idCategory;
         $product->id_shop_default = $this->idShop;
         // Created in this shop only.
-        $product->id_shop_list = array($this->idShop);
+        $product->id_shop_list = [$this->idShop];
         // Amazon prices are tax-inclusive; PS stores tax-exclusive. We import
         // the amount as-is with no tax group and flag it for review.
         $product->price = (float) $row['amazon_price'];
@@ -452,7 +456,7 @@ class AmazonCatalogImporter
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = Tools::substr($brand, 0, 64);
                 $manufacturer->active = true;
-                $manufacturer->id_shop_list = array($this->idShop);
+                $manufacturer->id_shop_list = [$this->idShop];
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;
                 }
@@ -464,10 +468,11 @@ class AmazonCatalogImporter
 
         if (!$product->add()) {
             $this->lastError = AmazonI18n::get()->l('Could not create the product.', 'amazoncatalogimporter');
+
             return false;
         }
 
-        $product->updateCategories(array_unique(array((int) $idCategory)));
+        $product->updateCategories(array_unique([(int) $idCategory]));
 
         // Stock
         StockAvailable::setQuantity((int) $product->id, 0, (int) $row['amazon_quantity'], $this->idShop);
@@ -478,7 +483,7 @@ class AmazonCatalogImporter
             $first = true;
             foreach (array_slice($images, 0, 6) as $url) {
                 if (!$this->importImage((int) $product->id, $url, $first)) {
-                    $summary['images_failed']++;
+                    ++$summary['images_failed'];
                 } else {
                     $first = false;
                 }
@@ -507,10 +512,12 @@ class AmazonCatalogImporter
             if ($tmpFile !== false) {
                 @unlink($tmpFile);
             }
+
             return false;
         }
         if (!filesize($tmpFile) || !ImageManager::isRealImage($tmpFile, null)) {
             @unlink($tmpFile);
+
             return false;
         }
 
@@ -518,9 +525,10 @@ class AmazonCatalogImporter
         $image->id_product = $idProduct;
         $image->position = Image::getHighestPosition($idProduct) + 1;
         $image->cover = $isCover;
-        $image->id_shop_list = array($this->idShop);
+        $image->id_shop_list = [$this->idShop];
         if (!$image->add()) {
             @unlink($tmpFile);
+
             return false;
         }
 
@@ -540,6 +548,7 @@ class AmazonCatalogImporter
 
         if (!$ok) {
             $image->delete();
+
             return false;
         }
 

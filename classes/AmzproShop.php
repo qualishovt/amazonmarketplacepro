@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Amazon Marketplace Pro
  *
@@ -13,7 +14,7 @@
  *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
  */
 
-/**
+/*
  * Which shop the module is working for, and the scope of what it stores.
  *
  * Every read and write of module settings and module tables goes through here
@@ -50,7 +51,7 @@ require_once dirname(__FILE__) . '/AmazonI18n.php';
 class AmzproShop
 {
     /** Settings that belong to the whole installation, never to one shop. */
-    public static $globalKeys = array(
+    public static $globalKeys = [
         'AMZPRO_DEV_MODE',
         'AMZPRO_ENVIRONMENT',
         'AMZPRO_USE_MOCK',
@@ -59,10 +60,10 @@ class AmzproShop
         'AMZPRO_LWA_APP_ID_SANDBOX',
         'AMZPRO_RELAY_URL',
         'AMZPRO_SHOP_SCHEMA',
-    );
+    ];
 
     /** Settings each shop holds for itself and never inherits. */
-    public static $ownKeys = array(
+    public static $ownKeys = [
         'AMZPRO_REFRESH_TOKEN',
         'AMZPRO_REFRESH_TOKEN_SANDBOX',
         'AMZPRO_AUTH_MODE',
@@ -79,102 +80,102 @@ class AmzproShop
         'AMZPRO_RELAY_SINCE',
         'AMZPRO_RELAY_CRON_URL',
         'AMZPRO_CRON_MODE',
-    );
+    ];
 
     /**
      * Tables whose rows each belong to one shop, with the unique keys that
      * must include the shop. Backfill says where existing rows come from.
      */
-    public static $shopTables = array(
-        'amazonmarketplacepro_order' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'import_status')),
+    public static $shopTables = [
+        'amazonmarketplacepro_order' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'import_status']],
             'backfill' => 'orders',
-        ),
-        'amazonmarketplacepro_product' => array(
-            'unique' => array('seller_sku' => array('seller_sku')),
-            'keys' => array(),
+        ],
+        'amazonmarketplacepro_product' => [
+            'unique' => ['seller_sku' => ['seller_sku']],
+            'keys' => [],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_return' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'return_status')),
+        ],
+        'amazonmarketplacepro_return' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'return_status']],
             'backfill' => 'amazon_order',
-        ),
-        'amazonmarketplacepro_order_fee' => array(
-            'unique' => array(),
-            'keys' => array('shop_order' => array('id_shop', 'amazon_order_id')),
+        ],
+        'amazonmarketplacepro_order_fee' => [
+            'unique' => [],
+            'keys' => ['shop_order' => ['id_shop', 'amazon_order_id']],
             'backfill' => 'amazon_order',
-        ),
-        'amazonmarketplacepro_fba_inventory' => array(
-            'unique' => array('sku_marketplace' => array('seller_sku', 'marketplace_id')),
-            'keys' => array(),
+        ],
+        'amazonmarketplacepro_fba_inventory' => [
+            'unique' => ['sku_marketplace' => ['seller_sku', 'marketplace_id']],
+            'keys' => [],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_competitive_price' => array(
-            'unique' => array('sku_marketplace' => array('seller_sku', 'marketplace_id')),
-            'keys' => array(),
+        ],
+        'amazonmarketplacepro_competitive_price' => [
+            'unique' => ['sku_marketplace' => ['seller_sku', 'marketplace_id']],
+            'keys' => [],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_report' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'status')),
+        ],
+        'amazonmarketplacepro_report' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'status']],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_feed' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'processing_status')),
+        ],
+        'amazonmarketplacepro_feed' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'processing_status']],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_promotion' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'status')),
+        ],
+        'amazonmarketplacepro_promotion' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'status']],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_marketplace_config' => array(
-            'unique' => array('marketplace_id' => array('marketplace_id')),
-            'keys' => array(),
+        ],
+        'amazonmarketplacepro_marketplace_config' => [
+            'unique' => ['marketplace_id' => ['marketplace_id']],
+            'keys' => [],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_queue' => array(
-            'unique' => array('id_product' => array('id_product')),
-            'keys' => array(),
+        ],
+        'amazonmarketplacepro_queue' => [
+            'unique' => ['id_product' => ['id_product']],
+            'keys' => [],
             'backfill' => 'default',
-        ),
-        'amazonmarketplacepro_reservation' => array(
-            'unique' => array(),
-            'keys' => array('shop_status' => array('id_shop', 'status')),
+        ],
+        'amazonmarketplacepro_reservation' => [
+            'unique' => [],
+            'keys' => ['shop_status' => ['id_shop', 'status']],
             'backfill' => 'exists',
-        ),
+        ],
         // 0 marks a system line that belongs to no shop.
-        'amazonmarketplacepro_log' => array(
-            'unique' => array(),
-            'keys' => array('shop_log' => array('id_shop', 'id_amazonmarketplacepro_log')),
+        'amazonmarketplacepro_log' => [
+            'unique' => [],
+            'keys' => ['shop_log' => ['id_shop', 'id_amazonmarketplacepro_log']],
             'backfill' => 'none',
-        ),
-    );
+        ],
+    ];
 
     /**
      * Tables whose rows are shared by every shop (id_shop 0) unless a shop
      * has its own. Existing rows stay shared.
      */
-    public static $sharedTables = array(
-        'amazonmarketplacepro_category_map' => array(
-            'unique' => array('cat_marketplace' => array('id_category', 'marketplace_id')),
-        ),
-        'amazonmarketplacepro_entity_setting' => array(
-            'unique' => array('entity' => array('entity_type', 'id_entity')),
-        ),
-        'amazonmarketplacepro_product_setting' => array(
-            'unique' => array('id_product' => array('id_product')),
-        ),
-        'amazonmarketplacepro_shipping_template' => array('unique' => array()),
-        'amazonmarketplacepro_pricing_rule' => array('unique' => array()),
-        'amazonmarketplacepro_profile' => array('unique' => array()),
-        'amazonmarketplacepro_profile_category' => array(
-            'unique' => array('cat_marketplace' => array('id_category', 'marketplace_id')),
-        ),
-    );
+    public static $sharedTables = [
+        'amazonmarketplacepro_category_map' => [
+            'unique' => ['cat_marketplace' => ['id_category', 'marketplace_id']],
+        ],
+        'amazonmarketplacepro_entity_setting' => [
+            'unique' => ['entity' => ['entity_type', 'id_entity']],
+        ],
+        'amazonmarketplacepro_product_setting' => [
+            'unique' => ['id_product' => ['id_product']],
+        ],
+        'amazonmarketplacepro_shipping_template' => ['unique' => []],
+        'amazonmarketplacepro_pricing_rule' => ['unique' => []],
+        'amazonmarketplacepro_profile' => ['unique' => []],
+        'amazonmarketplacepro_profile_category' => [
+            'unique' => ['cat_marketplace' => ['id_category', 'marketplace_id']],
+        ],
+    ];
 
     /** The schema version ensureSchema() brings the tables to. */
     const SCHEMA = '1.6.0';
@@ -248,7 +249,7 @@ class AmzproShop
     public static function shopIds()
     {
         if (!self::isMultistore()) {
-            return array(self::actingId());
+            return [self::actingId()];
         }
 
         return array_map('intval', array_values(Shop::getShops(false, null, true)));
@@ -353,9 +354,9 @@ class AmzproShop
     public static function overridingShops($key)
     {
         if (!self::isMultistore()) {
-            return array();
+            return [];
         }
-        $ids = array();
+        $ids = [];
         foreach (self::shopIds() as $idShop) {
             if (Configuration::hasKey($key, null, null, $idShop)) {
                 $ids[] = $idShop;
@@ -398,14 +399,14 @@ class AmzproShop
         $ok = true;
         if (!Configuration::hasKey($key, null, null, $idShop)) {
             $now = date('Y-m-d H:i:s');
-            $ok = Db::getInstance()->insert('configuration', array(
+            $ok = Db::getInstance()->insert('configuration', [
                 'name' => pSQL($key),
                 'value' => pSQL((string) $value, $html),
                 'id_shop_group' => $idGroup,
                 'id_shop' => $idShop,
                 'date_add' => $now,
                 'date_upd' => $now,
-            ));
+            ]);
             Configuration::set($key, (string) $value, $idGroup, $idShop);
         } else {
             $ok = Configuration::updateValue($key, $value, $html, $idGroup, $idShop);
@@ -463,7 +464,7 @@ class AmzproShop
     {
         $idShop = (int) $idShop;
         $context = Context::getContext();
-        $saved = array(
+        $saved = [
             'type' => Shop::getContext(),
             'shop_id' => Shop::getContextShopID(),
             'group_id' => Shop::getContextShopGroupID(),
@@ -471,7 +472,7 @@ class AmzproShop
             'currency' => $context->currency,
             'country' => $context->country,
             'link' => $context->link,
-        );
+        ];
         $switch = !$context->shop || (int) $context->shop->id !== $idShop || Shop::getContext() != Shop::CONTEXT_SHOP;
 
         try {
@@ -568,9 +569,9 @@ class AmzproShop
      */
     public static function preferShopRows(array $rows, array $keyFields)
     {
-        $out = array();
+        $out = [];
         foreach ($rows as $row) {
-            $parts = array();
+            $parts = [];
             foreach ($keyFields as $f) {
                 $parts[] = isset($row[$f]) ? (string) $row[$f] : '';
             }
@@ -619,7 +620,7 @@ class AmzproShop
             $ok = self::addShopColumn($table, $spec['unique'], $spec['keys']) && $ok;
         }
         foreach (self::$sharedTables as $table => $spec) {
-            $ok = self::addShopColumn($table, $spec['unique'], array()) && $ok;
+            $ok = self::addShopColumn($table, $spec['unique'], []) && $ok;
         }
         if (!$ok) {
             return false;
@@ -640,7 +641,7 @@ class AmzproShop
                     SET t.`id_shop` = o.`id_shop`
                     WHERE t.`id_shop` = 0');
             }
-            if (in_array($spec['backfill'], array('orders', 'amazon_order', 'default'), true)) {
+            if (in_array($spec['backfill'], ['orders', 'amazon_order', 'default'], true)) {
                 $db->execute('UPDATE `' . _DB_PREFIX_ . bqSQL($table) . '` SET `id_shop` = ' . (int) $default . ' WHERE `id_shop` = 0');
             }
         }
@@ -664,7 +665,7 @@ class AmzproShop
      */
     public static function ensureTableShop($table)
     {
-        static $checked = array();
+        static $checked = [];
         if (isset($checked[$table])) {
             return $checked[$table];
         }
@@ -672,7 +673,7 @@ class AmzproShop
             $spec = self::$shopTables[$table];
             $checked[$table] = self::addShopColumn($table, $spec['unique'], $spec['keys']);
         } elseif (isset(self::$sharedTables[$table])) {
-            $checked[$table] = self::addShopColumn($table, self::$sharedTables[$table]['unique'], array());
+            $checked[$table] = self::addShopColumn($table, self::$sharedTables[$table]['unique'], []);
         } else {
             $checked[$table] = true;
         }
@@ -709,13 +710,13 @@ class AmzproShop
             }
         }
 
-        $indexes = array();
+        $indexes = [];
         foreach ((array) $db->executeS('SHOW INDEX FROM `' . _DB_PREFIX_ . bqSQL($table) . '`') as $ix) {
             $indexes[$ix['Key_name']][(int) $ix['Seq_in_index']] = $ix['Column_name'];
         }
 
         foreach ($unique as $keyName => $cols) {
-            $want = array_merge(array('id_shop'), $cols);
+            $want = array_merge(['id_shop'], $cols);
             if (isset($indexes[$keyName]) && array_values($indexes[$keyName]) === $want) {
                 continue;
             }
@@ -726,7 +727,7 @@ class AmzproShop
             }
         }
         if (!$unique && !$keys && !isset($indexes['id_shop'])) {
-            $keys = array('id_shop' => array('id_shop'));
+            $keys = ['id_shop' => ['id_shop']];
         }
         foreach ($keys as $keyName => $cols) {
             if (isset($indexes[$keyName])) {
