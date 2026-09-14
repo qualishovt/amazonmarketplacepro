@@ -42,7 +42,6 @@ class AmazonFeesTracker
 {
     /** @var AmazonSpApiClient */
     private $client;
-    private $marketplaceId;
     private $lastError = null;
     private $notices = array();
     /** The shop whose orders are tracked. */
@@ -58,7 +57,6 @@ class AmazonFeesTracker
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
     {
         $this->client = $client;
-        $this->marketplaceId = $marketplaceId;
         $this->shopGiven = (int) $idShop;
         $this->idShop = $this->shopGiven ? $this->shopGiven : AmzproShop::actingId();
     }

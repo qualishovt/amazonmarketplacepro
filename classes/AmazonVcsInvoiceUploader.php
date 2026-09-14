@@ -158,6 +158,9 @@ class AmazonVcsInvoiceUploader
         foreach ($invoices as $inv) {
             $invoice = $inv; // most recent wins
         }
+        if (!$invoice instanceof OrderInvoice) {
+            return null;
+        }
         $invoiceNumber = $invoice->getInvoiceNumberFormatted(
             (int) Configuration::get('PS_LANG_DEFAULT', null, AmzproShop::groupId($idShop), $idShop),
             $idShop

@@ -176,7 +176,7 @@ class AmazonCatalogImporter
             if (!$idManufacturer) {
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = $brand;
-                $manufacturer->active = 1;
+                $manufacturer->active = true;
                 $manufacturer->id_shop_list = array($this->idShop);
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;
@@ -241,7 +241,7 @@ class AmazonCatalogImporter
             if (!$idValue) {
                 $featureValue = new FeatureValue();
                 $featureValue->id_feature = $idFeature;
-                $featureValue->custom = 0;
+                $featureValue->custom = false;
                 $featureValue->value = array($this->idLang => $value);
                 if (!$featureValue->add()) {
                     continue;
@@ -291,7 +291,7 @@ class AmazonCatalogImporter
                 continue;
             }
             $product->id_shop_list = array($this->idShop);
-            $product->active = 0;
+            $product->active = false;
             if ($product->update()) {
                 $count++;
             }
@@ -424,7 +424,7 @@ class AmazonCatalogImporter
         // the amount as-is with no tax group and flag it for review.
         $product->price = (float) $row['amazon_price'];
         $product->id_tax_rules_group = 0;
-        $product->active = 0; // merchant reviews before publishing
+        $product->active = false; // merchant reviews before publishing
         $product->visibility = 'both';
         $product->condition = 'new';
 
@@ -451,7 +451,7 @@ class AmazonCatalogImporter
             if (!$idManufacturer) {
                 $manufacturer = new Manufacturer();
                 $manufacturer->name = Tools::substr($brand, 0, 64);
-                $manufacturer->active = 1;
+                $manufacturer->active = true;
                 $manufacturer->id_shop_list = array($this->idShop);
                 if ($manufacturer->add()) {
                     $idManufacturer = (int) $manufacturer->id;

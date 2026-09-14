@@ -519,7 +519,7 @@ class AmazonOrderCreator
         }
         $order->date_upd = date('Y-m-d H:i:s');
 
-        $order->valid = 1;
+        $order->valid = true;
 
         if (!$order->add()) {
             $this->lastError = sprintf(
@@ -707,8 +707,8 @@ class AmazonOrderCreator
         $customer->id_lang = (int) $idLang;
         $customer->id_shop = $idShop;
         $customer->id_shop_group = $env['id_shop_group'];
-        $customer->active = 1;
-        $customer->is_guest = 1;
+        $customer->active = true;
+        $customer->is_guest = true;
 
         if ($customer->add()) {
             $customer->addGroups(array($idGroup));
@@ -904,8 +904,8 @@ class AmazonOrderCreator
 
         $itemPrice = (float) $item['item_price'];
         $itemTax = (float) $item['item_tax'];
-        $unitPriceTaxExcl = $qty > 0 ? ($itemPrice / $qty) : 0;
-        $unitPriceTaxIncl = $qty > 0 ? (($itemPrice + $itemTax) / $qty) : 0;
+        $unitPriceTaxExcl = $itemPrice / $qty;
+        $unitPriceTaxIncl = ($itemPrice + $itemTax) / $qty;
 
         // Compute effective tax rate
         $taxRate = ($itemPrice > 0) ? ($itemTax / $itemPrice * 100) : 0;

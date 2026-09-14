@@ -306,10 +306,10 @@ class AmazonPromotionSync
         $cartRule->description = 'Imported from Amazon promotion: ' . $promo['amazon_promotion_id'];
         $cartRule->quantity = 0;
         $cartRule->quantity_per_user = 0;
-        $cartRule->active = 0; // Inactive by default — informational only
+        $cartRule->active = false; // Inactive by default — informational only
         $cartRule->date_from = $promo['date_add'];
         $cartRule->date_to = date('Y-m-d H:i:s', strtotime('+1 year'));
-        $cartRule->shop_restriction = $restrict ? 1 : 0;
+        $cartRule->shop_restriction = (bool) $restrict;
 
         if ($promo['discount_type'] === 'percentage') {
             $cartRule->reduction_percent = (float) $promo['discount_value'];
@@ -317,7 +317,7 @@ class AmazonPromotionSync
         } else {
             $cartRule->reduction_percent = 0;
             $cartRule->reduction_amount = (float) $promo['discount_value'];
-            $cartRule->reduction_tax = 1;
+            $cartRule->reduction_tax = true;
 
             // Resolve currency
             $idCurrency = (int) Currency::getIdByIsoCode('EUR', $idShop);

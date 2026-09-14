@@ -244,7 +244,7 @@ class AmazonOrderReportImporter
                 $shop = $this->fillShopOrder((int) $row['id_order'], $clean, $idShop);
                 $summary['addresses'] += $shop['addresses'];
                 $summary['customers'] += $shop['customers'];
-                $shopChanged = ($shop['addresses'] + $shop['customers']) > 0;
+                $shopChanged = ((int) $shop['addresses'] + (int) $shop['customers']) > 0;
                 // Only worth mentioning when this upload brought a street the
                 // order did not have - otherwise an address that was complete
                 // all along would be reported as "edited".

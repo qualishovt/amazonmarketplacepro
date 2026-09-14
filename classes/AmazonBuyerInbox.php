@@ -267,8 +267,8 @@ class AmazonBuyerInbox
         $message->id_customer_thread = $idThread;
         $message->id_employee = 0;
         $message->message = Tools::substr(strip_tags($text), 0, 65000);
-        $message->private = 0;
-        $message->read = 0;
+        $message->private = false;
+        $message->read = false;
 
         return (bool) $message->add();
     }

@@ -601,7 +601,7 @@ class AmazonSpApiClient
      * @param string     $method HTTP verb (GET, POST, PUT, DELETE...)
      * @param string     $path   Path beginning with "/", e.g. "/orders/v0/orders"
      * @param array      $query  Query-string parameters
-     * @param array|null $body   Body to JSON-encode, or null for none
+     * @param array|stdClass|null $body Body to JSON-encode (stdClass for {}), or null for none
      *
      * @return array|false array('status' => int, 'body' => mixed) or false on transport error
      */

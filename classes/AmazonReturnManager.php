@@ -42,7 +42,6 @@ class AmazonReturnManager
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $sellerId;
     private $lastError = null;
     private $notices = array();
     /** The shop returns are imported and processed for. */
@@ -60,7 +59,6 @@ class AmazonReturnManager
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;
-        $this->sellerId = trim((string) $sellerId);
         $this->shopGiven = (int) $idShop;
         $this->idShop = $this->shopGiven ? $this->shopGiven : AmzproShop::actingId();
     }
@@ -545,7 +543,7 @@ class AmazonReturnManager
         $orderSlip->total_shipping_tax_excl = 0;
         $orderSlip->total_shipping_tax_incl = 0;
         $orderSlip->amount = $totalAmount;
-        $orderSlip->shipping_cost = 0;
+        $orderSlip->shipping_cost = false;
         $orderSlip->partial = ($qty < (int) Db::getInstance()->getValue(
             'SELECT `product_quantity` FROM `' . _DB_PREFIX_ . 'order_detail`
              WHERE `id_order_detail` = ' . (int) $orderDetail['id_order_detail']

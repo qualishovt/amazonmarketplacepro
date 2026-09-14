@@ -41,7 +41,6 @@ class AmazonFbaManager
     /** @var AmazonSpApiClient */
     private $client;
     private $marketplaceId;
-    private $sellerId;
     private $lastError = null;
     private $notices = array();
 
@@ -49,7 +48,6 @@ class AmazonFbaManager
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;
-        $this->sellerId = trim((string) $sellerId);
     }
 
     public function getLastError()

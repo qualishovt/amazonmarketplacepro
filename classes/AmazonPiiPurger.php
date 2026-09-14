@@ -114,7 +114,7 @@ class AmazonPiiPurger
         $v = AmzproShop::get('AMZPRO_PII_PURGE', $idShop);
         // Absent configuration means an install that predates this feature.
         // Default to on: the compliant behaviour is the safe one to assume.
-        return ($v === false || $v === null || $v === '') ? true : (bool) $v;
+        return ((string) $v === '') ? true : (bool) $v;
     }
 
     /**
@@ -147,9 +147,7 @@ class AmazonPiiPurger
         if ($days <= 0) {
             $days = self::DEFAULT_RETENTION_DAYS;
         }
-        if ($days < self::MIN_RETENTION_DAYS) {
-            $days = self::MIN_RETENTION_DAYS;
-        }
+        $days = max(self::MIN_RETENTION_DAYS, $days);
         if ($days > self::MAX_RETENTION_DAYS) {
             $days = self::MAX_RETENTION_DAYS;
         }
