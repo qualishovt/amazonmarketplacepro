@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">PrestaShop-Modul · Version 1.5.0</div>
+  <div class="kicker">PrestaShop-Modul · Version 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">Benutzerhandbuch: was das Modul leistet, wie jede Ansicht funktioniert und wie es ohne Aufsicht läuft.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    Für PrestaShop 1.6 bis 9 · Stand: 4. September 2026
+    Für PrestaShop 1.6 bis 9 · Stand: 14. September 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 Die geplanten Aufgaben</li>
   <li class="l2">11.3 Werkzeuge</li>
   <li class="l2">11.4 Protokolle</li>
+  <li class="l2">11.5 Mehrere Shops (Multistore)</li>
   <li><span class="n">12</span>Käuferdaten und Konformität</li>
   <li><span class="n">13</span>Fehlerbehebung</li>
   <li><span class="n">14</span>Glossar</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Voraussetzungen</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>1.6 bis 9. Die Oberfläche passt sich an die Back-Office-Designs von 1.6, 1.7–9 und der „Basic Edition“ an.</td></tr>
+  <tr><td class="k">PrestaShop</td><td>1.6 bis 9. Die Oberfläche passt sich an die Back-Office-Designs von 1.6, 1.7–9 und der „Basic Edition“ an. Multistore wird unterstützt: Jeder Shop verbindet sich mit seinem eigenen Amazon-Konto (Abschnitt 11.5).</td></tr>
   <tr><td class="k">Amazon-Konto</td><td>Ein aktives Konto mit dem Tarif Professional auf einem der 23 unterstützten Marktplätze (Europa, Nordamerika, Brasilien, Naher Osten, Afrika, Japan, Australien, Singapur, Indien).</td></tr>
   <tr><td class="k">Hosting</td><td>PHP mit cURL. Eine Crontab wird empfohlen; bietet Ihr Hosting keine, übernimmt das der IntelliPresta-Scheduler. Die optionale Funktion für Käuferantworten benötigt die PHP-Erweiterung IMAP.</td></tr>
   <tr><td class="k">Katalog</td><td>Jedes Produkt und jede Kombination braucht eine Artikelnummer (SKU) und einen Barcode (EAN oder UPC). Das Werkzeug Katalogprüfung (Abschnitt 11.3) findet die Produkte, bei denen etwas fehlt.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Protokolle</h2>
 <p>Die letzten 50 Einträge des Aktivitätsprotokolls des Moduls, mit Datum, Stufe, Quelle und Meldung. Fehler sind hervorgehoben. Hier sehen Sie als Erstes nach, wenn eine geplante Aufgabe „Fehlgeschlagen“ zeigt.</p>
+
+<h2>11.5 Mehrere Shops (Multistore)</h2>
+<p>Wenn PrestaShop mehr als einen Shop betreibt, arbeitet das Modul für jeden Shop getrennt. Wählen Sie den Shop in der Shop-Auswahl oben im Back-Office und öffnen Sie dann das Modul; seine Seite zeigt den Namen des Shops unter dem Titel.</p>
+<table>
+  <tr><th style="width:26%">Bereich</th><th>Bei mehreren Shops</th></tr>
+  <tr><td>Amazon-Verbindung</td><td>Jeder Shop verbindet sich über <span class="btn">Mit Amazon verbinden</span> mit seinem eigenen Amazon-Verkäuferkonto. Ein Verkäuferkonto kann für denselben Marktplatz nur mit einem Shop verbunden sein, sodass zwei Shops nie dieselben Bestellungen importieren.</td></tr>
+  <tr><td>Bestellungen, Produkte, Bestand und Preise</td><td>Jeder Shop importiert seine eigenen Amazon-Bestellungen, legt sie in diesem Shop an und sendet nur seine eigenen Produkte, Bestände und Preise.</td></tr>
+  <tr><td>Automatisierung</td><td>Jeder Shop hat seinen eigenen Zeitplan, seine eigene Cron-Zeile und sein eigenes Token (11.1). Tragen Sie je Shop eine Cron-Zeile ein oder registrieren Sie jeden Shop beim IntelliPresta-Scheduler.</td></tr>
+  <tr><td>Profile, Kategoriezuordnungen, Versandvorlagen, Preisregeln und Produktregeln</td><td>Werden von allen Shops gemeinsam genutzt. Ein Shop kann eine eigene Fassung speichern, die nur für diesen Shop gilt. Innerhalb eines Shops sind die gemeinsam genutzten mit <i>Alle Shops</i> gekennzeichnet.</td></tr>
+  <tr><td>Löschung der Käuferdaten</td><td>Läuft für jeden Shop, jeweils mit seiner eigenen Aufbewahrungsfrist (Abschnitt 12).</td></tr>
+</table>
+<div class="note"><b>Ist „Alle Shops“ ausgewählt</b>, werden die Einstellungen, die Sie speichern, zu Standardwerten für alle Shops. Ein Shop, der einen eigenen Wert gespeichert hat, behält ihn, und die Seite nennt diese Shops. Die Verbindung mit Amazon, der Bestellimport, das Senden von Produkten und das Ändern des Zeitplans funktionieren jeweils nur für einen Shop; wählen Sie also zuerst einen Shop. Listen zeigen alle Shops, mit einer Spalte „Onlineshop“.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Käuferdaten und Konformität</h1>

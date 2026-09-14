@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">Module PrestaShop · version 1.5.0</div>
+  <div class="kicker">Module PrestaShop · version 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">Guide d'utilisation&nbsp;: ce que fait le module, comment fonctionne chaque écran et comment le laisser tourner sans surveillance.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    Pour PrestaShop 1.6 à 9 · Date du document&nbsp;: 4 septembre 2026
+    Pour PrestaShop 1.6 à 9 · Date du document&nbsp;: 14 septembre 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 Les tâches planifiées</li>
   <li class="l2">11.3 Outils</li>
   <li class="l2">11.4 Journaux</li>
+  <li class="l2">11.5 Plusieurs boutiques (multiboutique)</li>
   <li><span class="n">12</span>Données acheteur et conformité</li>
   <li><span class="n">13</span>Dépannage</li>
   <li><span class="n">14</span>Glossaire</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Configuration requise</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>1.6 à 9. L'interface s'adapte aux présentations du back-office 1.6, 1.7–9 et «&nbsp;Basic Edition&nbsp;».</td></tr>
+  <tr><td class="k">PrestaShop</td><td>1.6 à 9. L'interface s'adapte aux présentations du back-office 1.6, 1.7–9 et «&nbsp;Basic Edition&nbsp;». Le mode multiboutique est pris en charge&nbsp;: chaque boutique connecte son propre compte Amazon (section 11.5).</td></tr>
   <tr><td class="k">Compte Amazon</td><td>Offre Vendeur Professionnel, active, sur l'une des 23 places de marché prises en charge (Europe, Amérique du Nord, Brésil, Moyen-Orient, Afrique, Japon, Australie, Singapour, Inde).</td></tr>
   <tr><td class="k">Hébergement</td><td>PHP avec cURL. Une crontab est recommandée&nbsp;; si votre hébergement n'en propose pas, le planificateur IntelliPresta prend le relais. La fonction facultative de réponses des acheteurs nécessite l'extension PHP IMAP.</td></tr>
   <tr><td class="k">Catalogue</td><td>Chaque produit et chaque déclinaison doivent avoir une référence (SKU) et un code-barres (EAN ou UPC). L'outil Contrôle du catalogue (section 11.3) repère ceux qui en manquent.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Journaux</h2>
 <p>Les 50 dernières entrées du journal d'activité du module, avec la date, le niveau, la source et le message. Les erreurs sont mises en évidence. C'est le premier endroit à consulter lorsqu'une tâche planifiée affiche «&nbsp;Échec&nbsp;».</p>
+
+<h2>11.5 Plusieurs boutiques (multiboutique)</h2>
+<p>Lorsque PrestaShop gère plus d'une boutique, le module fonctionne pour chaque boutique séparément. Choisissez la boutique dans le sélecteur de boutique en haut du back-office, puis ouvrez le module&nbsp;; sa page affiche le nom de la boutique sous le titre.</p>
+<table>
+  <tr><th style="width:26%">Domaine</th><th>Avec plusieurs boutiques</th></tr>
+  <tr><td>Connexion Amazon</td><td>Chaque boutique connecte son propre compte vendeur Amazon avec <span class="btn">Se connecter à Amazon</span>. Un compte vendeur ne peut être connecté qu'à une seule boutique pour une même place de marché, si bien que deux boutiques n'importent jamais les mêmes commandes.</td></tr>
+  <tr><td>Commandes, produits, stock et prix</td><td>Chaque boutique importe ses propres commandes Amazon et les crée dans cette boutique, et n'envoie que ses propres produits, son propre stock et ses propres prix.</td></tr>
+  <tr><td>Automatisation</td><td>Chaque boutique a sa propre planification, sa propre ligne cron et son propre jeton (11.1). Ajoutez une ligne cron par boutique, ou enregistrez chaque boutique auprès du planificateur IntelliPresta.</td></tr>
+  <tr><td>Profils, correspondances de catégories, modèles de livraison, règles tarifaires et règles par produit</td><td>Partagés par toutes les boutiques. Une boutique peut enregistrer sa propre version, qui ne s'applique qu'à elle. Dans une boutique, les éléments partagés par toutes les boutiques portent la mention <i>Toutes les boutiques</i>.</td></tr>
+  <tr><td>Suppression des données acheteur</td><td>S'exécute pour chaque boutique, chacune avec sa propre durée de conservation (section 12).</td></tr>
+</table>
+<div class="note"><b>Lorsque «&nbsp;Toutes les boutiques&nbsp;» est sélectionné</b>, les réglages que vous enregistrez deviennent les valeurs par défaut de toutes les boutiques. Une boutique ayant enregistré sa propre valeur la conserve, et la page nomme ces boutiques. La connexion à Amazon, l'import des commandes, l'envoi des produits et la modification de la planification se font boutique par boutique&nbsp;: choisissez donc d'abord une boutique. Les listes affichent toutes les boutiques, avec une colonne Boutique.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Données acheteur et conformité</h1>

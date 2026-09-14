@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">Modulo PrestaShop · versione 1.5.0</div>
+  <div class="kicker">Modulo PrestaShop · versione 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">Guida utente: cosa fa il modulo, come funziona ogni schermata e come farlo lavorare in automatico.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    Per PrestaShop dalla 1.6 alla 9 · Data del documento: 4 settembre 2026
+    Per PrestaShop dalla 1.6 alla 9 · Data del documento: 14 settembre 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 Le attività pianificate</li>
   <li class="l2">11.3 Strumenti</li>
   <li class="l2">11.4 Log</li>
+  <li class="l2">11.5 Più negozi (multinegozio)</li>
   <li><span class="n">12</span>Dati degli acquirenti e conformità</li>
   <li><span class="n">13</span>Risoluzione dei problemi</li>
   <li><span class="n">14</span>Glossario</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Requisiti</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>Dalla 1.6 alla 9. L'interfaccia si adatta ai design del back office 1.6, 1.7–9 e «Basic Edition».</td></tr>
+  <tr><td class="k">PrestaShop</td><td>Dalla 1.6 alla 9. L'interfaccia si adatta ai design del back office 1.6, 1.7–9 e «Basic Edition». La modalità multinegozio è supportata: ogni negozio collega il proprio account Amazon (sezione 11.5).</td></tr>
   <tr><td class="k">Account Amazon</td><td>Un piano di vendita Professionale, attivo, su uno qualsiasi dei 23 marketplace supportati (Europa, Nord America, Brasile, Medio Oriente, Africa, Giappone, Australia, Singapore, India).</td></tr>
   <tr><td class="k">Hosting</td><td>PHP con cURL. È consigliato un crontab; se il tuo hosting non lo offre, ci pensa lo scheduler IntelliPresta. La funzione facoltativa di lettura delle risposte degli acquirenti richiede l'estensione PHP IMAP.</td></tr>
   <tr><td class="k">Catalogo</td><td>Ogni prodotto e ogni combinazione devono avere un riferimento (SKU) e un codice a barre (EAN o UPC). Lo strumento Controllo del catalogo (sezione 11.3) trova quelli a cui mancano.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Log</h2>
 <p>Le ultime 50 voci del registro delle attività del modulo, con data, livello, origine e messaggio. Gli errori sono evidenziati. È il primo posto da controllare quando un'attività pianificata mostra «Non riuscita».</p>
+
+<h2>11.5 Più negozi (multinegozio)</h2>
+<p>Quando PrestaShop gestisce più di un negozio, il modulo lavora per ogni negozio separatamente. Scegli il negozio nel selettore dei negozi in alto nel back office, poi apri il modulo; la sua pagina mostra il nome del negozio sotto il titolo.</p>
+<table>
+  <tr><th style="width:26%">Cosa</th><th>Con più negozi</th></tr>
+  <tr><td>Connessione Amazon</td><td>Ogni negozio collega il proprio account venditore Amazon con <span class="btn">Connetti ad Amazon</span>. Un account venditore può essere connesso a un solo negozio per lo stesso marketplace, così due negozi non importano mai gli stessi ordini.</td></tr>
+  <tr><td>Ordini, prodotti, giacenze e prezzi</td><td>Ogni negozio importa i propri ordini Amazon e li crea in quel negozio, e invia solo i propri prodotti, le proprie giacenze e i propri prezzi.</td></tr>
+  <tr><td>Automazione</td><td>Ogni negozio ha la propria pianificazione, la propria riga cron e il proprio token (11.1). Aggiungi una riga cron per ogni negozio, oppure registra ogni negozio allo scheduler IntelliPresta.</td></tr>
+  <tr><td>Profili, corrispondenze delle categorie, modelli di spedizione, regole di prezzo e regole per prodotto</td><td>Condivisi da tutti i negozi. Un negozio può salvare una propria versione, che vale solo per quel negozio. All'interno di un negozio, gli elementi condivisi da tutti i negozi sono contrassegnati con <i>Tutti i negozi</i>.</td></tr>
+  <tr><td>Cancellazione dei dati dell'acquirente</td><td>Viene eseguita per ogni negozio, ciascuno con il proprio periodo di conservazione (sezione 12).</td></tr>
+</table>
+<div class="note"><b>Con «Tutti i negozi» selezionato</b>, le impostazioni che salvi diventano i valori predefiniti di tutti i negozi. Un negozio che ha salvato un proprio valore lo mantiene, e la pagina indica questi negozi per nome. La connessione ad Amazon, l'importazione degli ordini, l'invio dei prodotti e la modifica della pianificazione funzionano su un negozio alla volta, quindi scegli prima un negozio. Gli elenchi mostrano tutti i negozi, con una colonna Negozio.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Dati degli acquirenti e conformità</h1>

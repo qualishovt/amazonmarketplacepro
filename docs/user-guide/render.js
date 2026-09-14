@@ -34,7 +34,7 @@ const OUT = process.argv[2] || path.resolve(__dirname, 'Amazon-Marketplace-Pro-U
     headerTemplate: `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:8pt;color:#667077;width:100%;padding:0 18mm;display:flex;justify-content:space-between;">
         <span>Amazon Marketplace Pro · ${guide}</span><span>IntelliPresta</span></div>`,
     footerTemplate: `<div style="font-family:'Segoe UI',Arial,sans-serif;font-size:8pt;color:#667077;width:100%;padding:0 18mm;display:flex;justify-content:space-between;">
-        <span>${version} 1.5.0</span><span>${pageWord} <span class="pageNumber"></span> ${ofWord} <span class="totalPages"></span></span></div>`,
+        <span>${version} 1.6.0</span><span>${pageWord} <span class="pageNumber"></span> ${ofWord} <span class="totalPages"></span></span></div>`,
     margin: { top: '22mm', right: '18mm', bottom: '20mm', left: '18mm' },
   });
   await browser.close();

@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">PrestaShop module · version 1.5.0</div>
+  <div class="kicker">PrestaShop module · version 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">User guide: what the module does, how each screen works, and how to run it unattended.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    For PrestaShop 1.6 through 9 · Document date: 4 September 2026
+    For PrestaShop 1.6 through 9 · Document date: 14 September 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 The scheduled tasks</li>
   <li class="l2">11.3 Tools</li>
   <li class="l2">11.4 Logs</li>
+  <li class="l2">11.5 Several shops (multistore)</li>
   <li><span class="n">12</span>Buyer data and compliance</li>
   <li><span class="n">13</span>Troubleshooting</li>
   <li><span class="n">14</span>Glossary</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Requirements</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>1.6 through 9. The interface adapts to the 1.6, 1.7–9 and "Basic Edition" back-office designs.</td></tr>
+  <tr><td class="k">PrestaShop</td><td>1.6 through 9. The interface adapts to the 1.6, 1.7–9 and "Basic Edition" back-office designs. Multistore is supported: each shop connects its own Amazon account (section 11.5).</td></tr>
   <tr><td class="k">Amazon account</td><td>A Professional selling plan, active, on any of the 23 supported marketplaces (Europe, North America, Brazil, the Middle East, Africa, Japan, Australia, Singapore, India).</td></tr>
   <tr><td class="k">Hosting</td><td>PHP with cURL. A crontab is recommended; if your hosting has none, the IntelliPresta scheduler covers it. The optional buyer-reply feature needs the PHP IMAP extension.</td></tr>
   <tr><td class="k">Catalogue</td><td>Every product and combination needs a reference (SKU) and a barcode (EAN or UPC). The Catalogue Check tool (section 11.3) finds the ones that are missing.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Logs</h2>
 <p>The last 50 entries of the module's activity log, with date, level, source and message. Errors are highlighted. This is the first place to look when a scheduled task shows "Failed".</p>
+
+<h2>11.5 Several shops (multistore)</h2>
+<p>When PrestaShop runs more than one shop, the module works for each shop separately. Choose the shop in the shop list at the top of the back office, then open the module; its page shows the shop's name under the title.</p>
+<table>
+  <tr><th style="width:26%">What</th><th>With several shops</th></tr>
+  <tr><td>Amazon connection</td><td>Each shop connects its own Amazon seller account with <span class="btn">Connect to Amazon</span>. A seller account can be connected to only one shop for the same marketplace, so two shops never import the same orders.</td></tr>
+  <tr><td>Orders, products, stock and prices</td><td>Each shop imports its own Amazon orders and creates them in that shop, and sends only its own products, stock and prices.</td></tr>
+  <tr><td>Automation</td><td>Each shop has its own schedule, cron line and token (11.1). Add one cron line per shop, or register each shop with the IntelliPresta scheduler.</td></tr>
+  <tr><td>Profiles, category mappings, shipping templates, pricing rules and product rules</td><td>Shared by all shops. A shop can save its own version, which applies to that shop only. In a shop, the ones shared by all shops are marked <i>All shops</i>.</td></tr>
+  <tr><td>Buyer data deletion</td><td>Runs for every shop, each with its own retention period (section 12).</td></tr>
+</table>
+<div class="note"><b>With "All shops" selected</b>, the settings you save become the defaults for every shop. A shop that saved its own value keeps it, and the page names those shops. Connecting to Amazon, importing orders, sending products and changing the schedule work on one shop at a time, so choose a shop first. Lists show every shop, with a Shop column.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Buyer data and compliance</h1>

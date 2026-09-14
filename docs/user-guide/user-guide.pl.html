@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">Moduł PrestaShop · wersja 1.5.0</div>
+  <div class="kicker">Moduł PrestaShop · wersja 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">Podręcznik użytkownika: co robi moduł, jak działa każdy ekran i jak sprawić, by pracował bez Twojego udziału.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    Dla PrestaShop od 1.6 do 9 · Data dokumentu: 4 września 2026
+    Dla PrestaShop od 1.6 do 9 · Data dokumentu: 14 września 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 Zaplanowane zadania</li>
   <li class="l2">11.3 Narzędzia</li>
   <li class="l2">11.4 Dzienniki</li>
+  <li class="l2">11.5 Kilka sklepów (multisklep)</li>
   <li><span class="n">12</span>Dane kupujących i zgodność z przepisami</li>
   <li><span class="n">13</span>Rozwiązywanie problemów</li>
   <li><span class="n">14</span>Słownik</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Wymagania</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>Od 1.6 do 9. Interfejs dopasowuje się do wyglądu panelu administracyjnego w wersjach 1.6, 1.7–9 oraz „Basic Edition”.</td></tr>
+  <tr><td class="k">PrestaShop</td><td>Od 1.6 do 9. Interfejs dopasowuje się do wyglądu panelu administracyjnego w wersjach 1.6, 1.7–9 oraz „Basic Edition”. Multisklep jest obsługiwany: każdy sklep łączy się z własnym kontem Amazon (sekcja 11.5).</td></tr>
   <tr><td class="k">Konto Amazon</td><td>Aktywny plan sprzedaży Profesjonalny na dowolnym z 23 obsługiwanych marketplace'ów (Europa, Ameryka Północna, Brazylia, Bliski Wschód, Afryka, Japonia, Australia, Singapur, Indie).</td></tr>
   <tr><td class="k">Hosting</td><td>PHP z cURL. Zalecany jest crontab; jeśli Twój hosting go nie ma, zastąpi go harmonogram IntelliPresta. Opcjonalne odczytywanie odpowiedzi kupujących wymaga rozszerzenia PHP IMAP.</td></tr>
   <tr><td class="k">Katalog</td><td>Każdy produkt i każda kombinacja potrzebuje referencji (SKU) i kodu kreskowego (EAN lub UPC). Narzędzie Kontrola katalogu (sekcja 11.3) znajduje te, którym ich brakuje.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Dzienniki</h2>
 <p>Ostatnie 50 wpisów dziennika aktywności modułu, z datą, poziomem, źródłem i komunikatem. Błędy są wyróżnione. To pierwsze miejsce, które warto sprawdzić, gdy zaplanowane zadanie pokazuje „Niepowodzenie”.</p>
+
+<h2>11.5 Kilka sklepów (multisklep)</h2>
+<p>Gdy PrestaShop obsługuje więcej niż jeden sklep, moduł działa dla każdego sklepu osobno. Wybierz sklep z listy wyboru sklepu u góry panelu administracyjnego, a następnie otwórz moduł; jego strona pokazuje nazwę sklepu pod tytułem.</p>
+<table>
+  <tr><th style="width:26%">Obszar</th><th>Przy kilku sklepach</th></tr>
+  <tr><td>Połączenie z Amazon</td><td>Każdy sklep łączy się z własnym kontem sprzedawcy Amazon przyciskiem <span class="btn">Połącz z Amazon</span>. Konto sprzedawcy może być połączone tylko z jednym sklepem dla tego samego marketplace'u, więc dwa sklepy nigdy nie importują tych samych zamówień.</td></tr>
+  <tr><td>Zamówienia, produkty, stany magazynowe i ceny</td><td>Każdy sklep importuje własne zamówienia z Amazon i tworzy je w tym sklepie, a wysyła tylko własne produkty, stany magazynowe i ceny.</td></tr>
+  <tr><td>Automatyzacja</td><td>Każdy sklep ma własny harmonogram, własną linię crona i własny token (11.1). Dodaj jedną linię crona dla każdego sklepu albo zarejestruj każdy sklep w harmonogramie IntelliPresta.</td></tr>
+  <tr><td>Profile, mapowania kategorii, szablony wysyłki, reguły cenowe i reguły produktów</td><td>Wspólne dla wszystkich sklepów. Sklep może zapisać własną wersję, która dotyczy tylko tego sklepu. W widoku sklepu elementy wspólne dla wszystkich sklepów są oznaczone jako <i>Wszystkie sklepy</i>.</td></tr>
+  <tr><td>Usuwanie danych kupującego</td><td>Działa dla każdego sklepu, a każdy sklep ma własny okres przechowywania (sekcja 12).</td></tr>
+</table>
+<div class="note"><b>Gdy wybrano „Wszystkie sklepy”</b>, zapisane ustawienia stają się wartościami domyślnymi dla każdego sklepu. Sklep, który zapisał własną wartość, ją zachowuje, a strona wymienia te sklepy z nazwy. Łączenie z Amazon, import zamówień, wysyłanie produktów i zmiana harmonogramu działają dla jednego sklepu naraz, więc najpierw wybierz sklep. Listy pokazują wszystkie sklepy i mają kolumnę Sklep.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Dane kupujących i zgodność z przepisami</h1>

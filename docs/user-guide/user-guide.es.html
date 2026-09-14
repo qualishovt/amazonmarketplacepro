@@ -54,12 +54,12 @@
 <!-- ───────────────────────── COVER ───────────────────────── -->
 <div class="cover">
   <img class="logo" src="img/logo.png" alt="">
-  <div class="kicker">Módulo para PrestaShop · versión 1.5.0</div>
+  <div class="kicker">Módulo para PrestaShop · versión 1.6.0</div>
   <h1>Amazon Marketplace Pro</h1>
   <div class="sub">Guía del usuario: qué hace el módulo, cómo funciona cada pantalla y cómo dejarlo trabajando sin supervisión.</div>
   <div class="meta">
     IntelliPresta · support@intellipresta.com · https://intellipresta.com/marketplaces/marketplace-pro.html<br>
-    Para PrestaShop 1.6 a 9 · Fecha del documento: 4 de septiembre de 2026
+    Para PrestaShop 1.6 a 9 · Fecha del documento: 14 de septiembre de 2026
   </div>
 </div>
 
@@ -101,6 +101,7 @@
   <li class="l2">11.2 Las tareas programadas</li>
   <li class="l2">11.3 Herramientas</li>
   <li class="l2">11.4 Registros</li>
+  <li class="l2">11.5 Varias tiendas (multitienda)</li>
   <li><span class="n">12</span>Datos de los compradores y cumplimiento normativo</li>
   <li><span class="n">13</span>Solución de problemas</li>
   <li><span class="n">14</span>Glosario</li>
@@ -130,7 +131,7 @@
 
 <h2>1.2 Requisitos</h2>
 <table>
-  <tr><td class="k">PrestaShop</td><td>1.6 a 9. La interfaz se adapta a los diseños de back office de 1.6, de 1.7–9 y de «Basic Edition».</td></tr>
+  <tr><td class="k">PrestaShop</td><td>1.6 a 9. La interfaz se adapta a los diseños de back office de 1.6, de 1.7–9 y de «Basic Edition». Es compatible con multitienda: cada tienda conecta su propia cuenta de Amazon (sección 11.5).</td></tr>
   <tr><td class="k">Cuenta de Amazon</td><td>Un plan de venta Profesional, activo, en cualquiera de los 23 marketplaces compatibles (Europa, Norteamérica, Brasil, Oriente Medio, África, Japón, Australia, Singapur, India).</td></tr>
   <tr><td class="k">Alojamiento</td><td>PHP con cURL. Se recomienda un crontab; si tu alojamiento no lo tiene, el programador de IntelliPresta lo suple. La función opcional de respuestas de los compradores necesita la extensión IMAP de PHP.</td></tr>
   <tr><td class="k">Catálogo</td><td>Cada producto y cada combinación necesitan una referencia (SKU) y un código de barras (EAN o UPC). La herramienta Comprobación del catálogo (sección 11.3) encuentra los que faltan.</td></tr>
@@ -476,6 +477,18 @@
 
 <h2>11.4 Registros</h2>
 <p>Las últimas 50 entradas del registro de actividad del módulo, con fecha, nivel, origen y mensaje. Los errores aparecen resaltados. Es el primer sitio que debes mirar cuando una tarea programada muestra «Error».</p>
+
+<h2>11.5 Varias tiendas (multitienda)</h2>
+<p>Cuando PrestaShop gestiona más de una tienda, el módulo trabaja para cada tienda por separado. Elige la tienda en el selector de tiendas de la parte superior del back office y después abre el módulo; su página muestra el nombre de la tienda debajo del título.</p>
+<table>
+  <tr><th style="width:26%">Qué</th><th>Con varias tiendas</th></tr>
+  <tr><td>Conexión con Amazon</td><td>Cada tienda conecta su propia cuenta de vendedor de Amazon con <span class="btn">Conectar con Amazon</span>. Una cuenta de vendedor solo puede estar conectada a una tienda para el mismo marketplace, así que dos tiendas nunca importan los mismos pedidos.</td></tr>
+  <tr><td>Pedidos, productos, existencias y precios</td><td>Cada tienda importa sus propios pedidos de Amazon y los crea en esa tienda, y solo envía sus propios productos, existencias y precios.</td></tr>
+  <tr><td>Automatización</td><td>Cada tienda tiene su propia programación, su propia línea de cron y su propio token (11.1). Añade una línea de cron por tienda o registra cada tienda en el programador de IntelliPresta.</td></tr>
+  <tr><td>Perfiles, correspondencias de categorías, plantillas de envío, reglas de precio y reglas por producto</td><td>Compartidos por todas las tiendas. Una tienda puede guardar su propia versión, que solo se aplica a esa tienda. Dentro de una tienda, los compartidos por todas las tiendas aparecen marcados como <i>Todas las tiendas</i>.</td></tr>
+  <tr><td>Eliminación de los datos del comprador</td><td>Se ejecuta en todas las tiendas, cada una con su propio periodo de conservación (sección 12).</td></tr>
+</table>
+<div class="note"><b>Con «Todas las tiendas» seleccionado</b>, los ajustes que guardas pasan a ser los valores por defecto de todas las tiendas. Una tienda que guardó su propio valor lo conserva, y la página indica qué tiendas son. La conexión con Amazon, la importación de pedidos, el envío de productos y los cambios en la programación se hacen en una sola tienda a la vez, así que primero elige una tienda. Las listas muestran todas las tiendas, con una columna Tienda.</div>
 
 <!-- ───────────────────────── 12 COMPLIANCE ───────────────────────── -->
 <h1>12. Datos de los compradores y cumplimiento normativo</h1>
