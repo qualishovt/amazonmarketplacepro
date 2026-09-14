@@ -250,8 +250,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
-        $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $sellerId);
+        $manager = new AmazonReturnManager($client, $this->getMarketplaceId());
 
         $env = AmazonSpApiClient::environment();
         $createdAfter = ($env === 'production')
@@ -280,8 +279,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
-        $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $sellerId);
+        $manager = new AmazonReturnManager($client, $this->getMarketplaceId());
 
         $summary = $manager->processReturns();
 
@@ -304,8 +302,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $sellerId = AmzproShop::get('AMZPRO_SELLER_ID');
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), $sellerId);
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
 
         $invSummary = $fba->syncFbaInventory();
         $stockSummary = $fba->syncFbaStockToPs();
@@ -359,7 +356,7 @@ class AmazonTaskRunner
             return array('success' => false, 'error' => $this->notConnected());
         }
 
-        $tracker = new AmazonFeesTracker($client, $this->getMarketplaceId());
+        $tracker = new AmazonFeesTracker($client);
         $summary = $tracker->fetchOrderFees(50);
 
         return array(

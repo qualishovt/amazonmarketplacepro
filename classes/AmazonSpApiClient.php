@@ -120,7 +120,17 @@ class AmazonSpApiClient
             }
         }
 
-        return !self::PRODUCTION_APP_PUBLISHED;
+        return !self::productionAppPublished();
+    }
+
+    /**
+     * Whether the production app is published (see PRODUCTION_APP_PUBLISHED).
+     *
+     * @return bool
+     */
+    protected static function productionAppPublished()
+    {
+        return (bool) self::PRODUCTION_APP_PUBLISHED;
     }
 
     /**

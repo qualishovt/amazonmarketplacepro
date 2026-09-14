@@ -3107,12 +3107,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonReturnManager.php';
 
         $client = $this->buildAmazonClient();
-        $manager = new AmazonReturnManager(
-            $client,
-            $this->getMarketplaceId(),
-            AmzproShop::get('AMZPRO_SELLER_ID'),
-            AmzproShop::actingId()
-        );
+        $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), AmzproShop::actingId());
 
         $createdAfter = $this->isProduction()
             ? gmdate('Y-m-d\TH:i:s\Z', strtotime('-30 days'))
@@ -3147,12 +3142,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonReturnManager.php';
 
         $client = $this->buildAmazonClient();
-        $manager = new AmazonReturnManager(
-            $client,
-            $this->getMarketplaceId(),
-            AmzproShop::get('AMZPRO_SELLER_ID'),
-            AmzproShop::actingId()
-        );
+        $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), AmzproShop::actingId());
 
         $summary = $manager->processReturns();
 
@@ -3230,7 +3220,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
         $summary = $fba->syncFbaInventory();
         $this->logActivity('info', 'fba_inventory_sync',
             'Fetched: ' . $summary['fetched'] . ', updated: ' . $summary['updated'] . ', new: ' . $summary['new']
@@ -3244,7 +3234,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
         $idOrder = (int) Tools::getValue('id_order');
         $result = $fba->createMcfOrder($idOrder);
         $this->logActivity($result['success'] ? 'info' : 'error', 'mcf_order',
@@ -3257,7 +3247,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFbaManager.php';
         $client = $this->buildAmazonClient();
-        $fba = new AmazonFbaManager($client, $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        $fba = new AmazonFbaManager($client, $this->getMarketplaceId());
         $summary = $fba->syncFbaStockToPs();
         $this->logActivity('info', 'fba_stock_to_ps', 'Updated: ' . $summary['updated']);
         return array('success' => true, 'summary' => $summary);
@@ -3345,7 +3335,7 @@ class AmazonMarketplacePro extends Module
     {
         require_once dirname(__FILE__) . '/classes/AmazonFeesTracker.php';
         $client = $this->buildAmazonClient();
-        $tracker = new AmazonFeesTracker($client, $this->getMarketplaceId(), AmzproShop::actingId());
+        $tracker = new AmazonFeesTracker($client, AmzproShop::actingId());
         $summary = $tracker->fetchOrderFees(50);
         $this->logActivity('info', 'fetch_fees',
             'Checked: ' . $summary['checked'] . ', updated: ' . $summary['updated']
@@ -4211,12 +4201,7 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonReturnManager.php';
 
         $client = $this->buildAmazonClient();
-        $manager = new AmazonReturnManager(
-            $client,
-            $this->getMarketplaceId(),
-            AmzproShop::get('AMZPRO_SELLER_ID', $idShop),
-            $idShop
-        );
+        $manager = new AmazonReturnManager($client, $this->getMarketplaceId(), $idShop);
 
         $success = $manager->cancelOrderOnAmazon($amazonOrderId);
 

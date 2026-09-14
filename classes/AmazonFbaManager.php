@@ -44,7 +44,7 @@ class AmazonFbaManager
     private $lastError = null;
     private $notices = array();
 
-    public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '')
+    public function __construct(AmazonSpApiClient $client, $marketplaceId)
     {
         $this->client = $client;
         $this->marketplaceId = $marketplaceId;

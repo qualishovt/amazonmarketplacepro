@@ -51,10 +51,9 @@ class AmazonFeesTracker
 
     /**
      * @param AmazonSpApiClient $client
-     * @param string            $marketplaceId
      * @param int               $idShop 0 = the shop the request acts for
      */
-    public function __construct(AmazonSpApiClient $client, $marketplaceId, $idShop = 0)
+    public function __construct(AmazonSpApiClient $client, $idShop = 0)
     {
         $this->client = $client;
         $this->shopGiven = (int) $idShop;
