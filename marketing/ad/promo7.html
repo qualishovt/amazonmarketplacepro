@@ -188,10 +188,10 @@ $('s1x').innerHTML = XPOS.map((p,i)=>`<g class="mn" data-i="${i}" opacity="0">
     <path d="M -13 -13 L 13 13 M 13 -13 L -13 13" stroke="${C.red}" stroke-width="6" stroke-linecap="round"/></g>`).join('');
 
 // ── S2: one prop and one callout for each gap the voice names ────────────
-// "Stock sells twice. Prices drift. Orders get missed." - a falling sales
-// chart (overselling), the pile of orders nobody saw (missed orders) and the
-// rising cost of fixing it by hand (stale prices), each callout landing on
-// its own sentence.
+// "Stock sells twice. Prices drift. Orders get missed." - left to right in
+// the order the voice names them: a falling sales chart (overselling), the
+// rising cost of fixing it by hand (stale prices) and the pile of orders
+// nobody saw (missed orders), each prop and callout landing in that order.
 $('s2art').innerHTML = `
   <g id="s2chart" transform="translate(330,720)">
     <line x1="-40" y1="14" x2="330" y2="14" stroke="${C.line}" stroke-width="4"/>
@@ -199,7 +199,7 @@ $('s2art').innerHTML = `
     <text x="145" y="76" text-anchor="middle" font-family="Segoe UI" font-size="25"
           font-weight="600" fill="${C.grey}">Sales you could have had</text>
   </g>
-  <g id="s2orders" transform="translate(960,700)">
+  <g id="s2orders" transform="translate(1440,700)">
     <line x1="-130" y1="34" x2="130" y2="34" stroke="${C.line}" stroke-width="4"/>
     <g class="s2o" data-i="0" opacity="0">${A.receipt()}</g>
     <g class="s2o" data-i="1" opacity="0">${A.receipt()}</g>
@@ -211,7 +211,7 @@ $('s2art').innerHTML = `
     <text x="0" y="106" text-anchor="middle" font-family="Segoe UI" font-size="25"
           font-weight="600" fill="${C.grey}">Orders nobody saw</text>
   </g>
-  <g id="s2curve" transform="translate(1260,700)">
+  <g id="s2curve" transform="translate(780,700)">
     <line x1="-20" y1="34" x2="380" y2="34" stroke="${C.line}" stroke-width="4"/>
     <path id="s2line" d="M 0 -10 C 70 -40, 120 40, 190 -6 C 260 -50, 300 24, 370 -70"
           fill="none" stroke="${C.red}" stroke-width="7" stroke-linecap="round"/>
@@ -222,8 +222,8 @@ $('s2art').innerHTML = `
           font-weight="600" fill="${C.grey}">Time spent fixing it by hand</text>
   </g>
   <g id="s2call" transform="translate(520,420)" opacity="0">${A.callout('Overselling')}</g>
-  <g id="s2call2" transform="translate(1500,440)" opacity="0">${A.callout('Stale prices', C.amber)}</g>
-  <g id="s2call3" transform="translate(1010,450)" opacity="0">${A.callout('Missed orders')}</g>`;
+  <g id="s2call2" transform="translate(1010,440)" opacity="0">${A.callout('Stale prices', C.amber)}</g>
+  <g id="s2call3" transform="translate(1490,450)" opacity="0">${A.callout('Missed orders')}</g>`;
 
 // callout() in art.js draws a fixed 156px box, but "Overselling", "Stale
 // prices" and "Missed orders" all set wider than that at 30px bold, so the
@@ -435,7 +435,7 @@ window.render = function (t) {
     // then a cross lands on them and they fade back when the voice says so.
     const miss=seg(u,4.85,5.55,E.elastic);
     document.querySelectorAll('.s2o').forEach((g,i)=>{
-      const p=seg(u,1.0+i*.3,1.8+i*.3,E.outBack), b=[[-58,-40,-8],[0,-58,0],[58,-40,8]][i];
+      const p=seg(u,2.2+i*.3,3.0+i*.3,E.outBack), b=[[-58,-40,-8],[0,-58,0],[58,-40,8]][i];
       g.setAttribute('opacity',(cl(p)*(1-0.4*cl(miss))).toFixed(3));
       g.setAttribute('transform',
         `translate(${b[0]},${(b[1]-26*(1-p)).toFixed(1)}) rotate(${b[2]}) scale(${(0.7+0.3*p).toFixed(3)})`);
@@ -448,9 +448,9 @@ window.render = function (t) {
     $('s2call').setAttribute('opacity',cl(c1));
     $('s2call').setAttribute('transform',`translate(520,${(420-24*(1-c1)+fl(u,7,4.6)).toFixed(1)}) scale(${(0.7+0.3*c1).toFixed(3)})`);
     $('s2call2').setAttribute('opacity',cl(c2));
-    $('s2call2').setAttribute('transform',`translate(1500,${(440-24*(1-c2)+fl(u,7,5.2,.4)).toFixed(1)}) scale(${(0.7+0.3*c2).toFixed(3)})`);
+    $('s2call2').setAttribute('transform',`translate(1010,${(440-24*(1-c2)+fl(u,7,5.2,.4)).toFixed(1)}) scale(${(0.7+0.3*c2).toFixed(3)})`);
     $('s2call3').setAttribute('opacity',cl(c3));
-    $('s2call3').setAttribute('transform',`translate(1010,${(450-24*(1-c3)+fl(u,7,4.9,.2)).toFixed(1)}) scale(${(0.7+0.3*c3).toFixed(3)})`);
+    $('s2call3').setAttribute('transform',`translate(1490,${(450-24*(1-c3)+fl(u,7,4.9,.2)).toFixed(1)}) scale(${(0.7+0.3*c3).toFixed(3)})`);
   }
 
   { // S3
