@@ -1,3 +1,10 @@
+{**
+ * Amazon Marketplace Pro
+ *
+ *  @author    IntelliPresta
+ *  @copyright 2026 IntelliPresta
+ *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
+ *}
 {*
  * Amazon panel inside the PrestaShop product page.
  * Every control here overrides the profile / rules / global settings.

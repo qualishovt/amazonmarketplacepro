@@ -835,7 +835,6 @@ class AmazonOrderCreator
         $address->id_country = $idCountry;
         $address->id_state = $idState;
         $address->phone = $phone;
-        $address->active = 1;
 
         if ($address->add()) {
             return $address;

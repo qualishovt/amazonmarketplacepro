@@ -130,14 +130,7 @@ $rules = array(
  * where real findings get hidden, so anything added here needs a sentence
  * saying why, and should be re-checked if the variable's source changes.
  */
-$tplAllowVars = array(
-    'confirm_msg' => 'HTML from displayConfirmation() built from translated literals; escaping would break the markup',
-    'lim'         => 'loop value from a hardcoded integer array',
-    'psCond'      => 'PrestaShop condition key from a fixed map',
-    'flag'        => 'loop key from a fixed rule map',
-    'i'           => 'numeric loop index',
-    'etype'       => 'entity type from a fixed set',
-);
+$tplAllowVars = array();
 
 /** Template rules, applied to .tpl files. */
 $tplRules = array(

@@ -1089,14 +1089,14 @@ class AmazonProductSync
     /**
      * Path of a product image's large file below img/p/. PrestaShop keeps
      * images in one folder per digit ("1/2/3/123-large_default.jpg"); only
-     * installs still on the legacy layout have "5-123-large_default.jpg".
+     * installs still on the legacy layout have "5-123-large_default.jpg",
+     * which the original file in the img/p/ root gives away.
      */
     private function imagePath($idProduct, $idImage)
     {
         $idProduct = (int) $idProduct;
         $idImage = (int) $idImage;
-        if (Configuration::get('PS_LEGACY_IMAGES')
-            && file_exists(_PS_PROD_IMG_DIR_ . $idProduct . '-' . $idImage . '.jpg')) {
+        if (file_exists(_PS_IMG_DIR_ . 'p/' . $idProduct . '-' . $idImage . '.jpg')) {
             return $idProduct . '-' . $idImage . '-large_default.jpg';
         }
 

@@ -597,15 +597,16 @@ class AmazonMarketplacePro extends Module
         }
 
         // ── Save settings ──
-        $confirmMsg = '';
+        // Shown above the page. Plain text: the template escapes it.
+        $messages = array();
         if (Tools::isSubmit('submitMkproSettings')) {
             if ($formShopChanged) {
                 $shopErrors[] = $this->shopChangedMessage();
             } else {
                 $saveError = $this->saveSettings();
-                $confirmMsg = $this->displayConfirmation($this->l('Settings saved.'));
+                $messages[] = array('type' => 'success', 'text' => $this->l('Settings saved.'));
                 if ($saveError !== '') {
-                    $confirmMsg .= $this->displayError($saveError);
+                    $messages[] = array('type' => 'error', 'text' => $saveError);
                 }
 
                 // Runs after the save so it uses the window just entered.
@@ -617,9 +618,9 @@ class AmazonMarketplacePro extends Module
                     // automatic purge is switched on.
                     $done = $purger->purge(AmazonPiiPurger::DEFAULT_BATCH, AmzproShop::id());
                     if ($done === false) {
-                        $confirmMsg .= $this->displayError($purger->getLastError());
+                        $messages[] = array('type' => 'error', 'text' => $purger->getLastError());
                     } else {
-                        $confirmMsg .= $this->displayConfirmation(sprintf(
+                        $messages[] = array('type' => 'success', 'text' => sprintf(
                             $this->l('Buyer data cleared from %1$d order(s). %2$d still waiting.'),
                             (int) $done['orders'],
                             (int) $done['remaining']
@@ -629,10 +630,10 @@ class AmazonMarketplacePro extends Module
             }
         }
         if (Tools::getValue('mkpro_connected')) {
-            $confirmMsg .= $this->displayConfirmation($this->l('Your shop is now connected to Amazon. You can start syncing.'));
+            $messages[] = array('type' => 'success', 'text' => $this->l('Your shop is now connected to Amazon. You can start syncing.'));
         }
         foreach (array_unique($shopErrors) as $shopError) {
-            $confirmMsg .= $this->displayError($shopError);
+            $messages[] = array('type' => 'error', 'text' => $shopError);
         }
 
         // ── Which shop the page is for ──
@@ -720,7 +721,12 @@ class AmazonMarketplacePro extends Module
         require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
         $this->context->smarty->assign(array(
             'module_dir'  => $this->_path,
-            'confirm_msg' => $confirmMsg,
+            // PrestaShop 1.6 returns translations HTML-escaped.
+            'mkpro_messages' => array_map(function ($m) {
+                $m['text'] = html_entity_decode((string) $m['text'], ENT_QUOTES, 'UTF-8');
+
+                return $m;
+            }, $messages),
 
             // The shop the page is for. 0 = "All shops" or a shop group,
             // where settings are the defaults and one-shop actions are off.
@@ -903,7 +909,7 @@ class AmazonMarketplacePro extends Module
 
             // Listing profiles
             'profiles'          => $profiles,
-            'profile_ps_fields' => AmazonProfile::getPsFields(),
+            'profile_ps_fields_json' => json_encode(AmazonProfile::getPsFields()),
             'attribute_groups'  => is_array($attributeGroups) ? $attributeGroups : array(),
 
             // Rules / queue / orphans / pending
@@ -4121,7 +4127,7 @@ class AmazonMarketplacePro extends Module
      */
     private function shopPriceTaxIncl($idProduct, $idShop)
     {
-        $context = Context::getContext();
+        $context = $this->context;
         if (is_object($context->cart) || isset($context->employee)) {
             return (float) Product::getPriceStatic((int) $idProduct, true, 0, 6, null, false, false);
         }

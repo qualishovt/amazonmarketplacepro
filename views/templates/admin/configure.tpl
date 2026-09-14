@@ -1,10 +1,24 @@
+{**
+ * Amazon Marketplace Pro
+ *
+ *  @author    IntelliPresta
+ *  @copyright 2026 IntelliPresta
+ *  @license   Proprietary. See LICENSE.txt - redistribution prohibited.
+ *}
 {*
- * Amazon Marketplace Pro — admin configuration template
+ * Admin configuration template
  *
  * Settings | Orders | Products | Returns | FBA | Repricing | Fees | Reports | Promotions | Multi-Account | Automation | Logs
  *}
 
-{if $confirm_msg}{$confirm_msg}{/if}
+{foreach from=$mkpro_messages item=mkproMsg}
+<div class="bootstrap">
+    <div class="{if $mkproMsg.type == 'error'}module_error alert alert-danger{else}module_confirmation conf confirm alert alert-success{/if}">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {$mkproMsg.text|escape:'htmlall':'UTF-8'}
+    </div>
+</div>
+{/foreach}
 
 {* ── Which shop this page is for (multistore only) ──
    With "All shops" or a group selected the settings are the defaults every
@@ -619,7 +633,7 @@
                 <select name="mkpro_export_limit" class="form-control">
                     <option value="0"{if !$mkpro_export_limit} selected="selected"{/if}>{l s='No limit' mod='amazonmarketplacepro'}</option>
                     {foreach from=[100, 200, 300, 400, 500, 1000, 1500] item=lim}
-                        <option value="{$lim}"{if $mkpro_export_limit == $lim} selected="selected"{/if}>{$lim}</option>
+                        <option value="{$lim|intval}"{if $mkpro_export_limit == $lim} selected="selected"{/if}>{$lim|intval}</option>
                     {/foreach}
                 </select>
             </div>
@@ -708,7 +722,7 @@
                         <tr>
                             <td style="vertical-align:middle;">{$psCond|escape:'htmlall':'UTF-8'}</td>
                             <td>
-                                <select name="mkpro_cond_map_{$psCond}" class="form-control input-sm">
+                                <select name="mkpro_cond_map_{$psCond|escape:'htmlall':'UTF-8'}" class="form-control input-sm">
                                     {foreach from=$amazon_conditions key=azCode item=azLabel}
                                         <option value="{$azCode|escape:'htmlall':'UTF-8'}"{if $mkpro_condition_map[$psCond] == $azCode} selected="selected"{/if}>{$azLabel|escape:'htmlall':'UTF-8'}</option>
                                     {/foreach}
@@ -1122,7 +1136,7 @@
                 <tr>
                     {foreach from=['prime', 'fba', 'business'] item=flag}
                     <td>
-                        <select name="mkpro_rule_{$flag}[{$i}]" class="form-control input-sm">
+                        <select name="mkpro_rule_{$flag|escape:'htmlall':'UTF-8'}[{$i|intval}]" class="form-control input-sm">
                             <option value="-1"{if !isset($mkpro_status_rules[$i]) || $mkpro_status_rules[$i][$flag] == -1} selected="selected"{/if}>{l s='Any' mod='amazonmarketplacepro'}</option>
                             <option value="1"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i][$flag] == 1} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
                             <option value="0"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i][$flag] === 0} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
@@ -1130,7 +1144,7 @@
                     </td>
                     {/foreach}
                     <td>
-                        <select name="mkpro_rule_state[{$i}]" class="form-control input-sm">
+                        <select name="mkpro_rule_state[{$i|intval}]" class="form-control input-sm">
                             <option value="0">{l s='-- No rule --' mod='amazonmarketplacepro'}</option>
                             {foreach from=$order_states item=state}
                                 <option value="{$state.id_order_state|escape:'htmlall':'UTF-8'}"{if isset($mkpro_status_rules[$i]) && $mkpro_status_rules[$i].state == $state.id_order_state} selected="selected"{/if}>{$state.name|escape:'htmlall':'UTF-8'}</option>
@@ -2034,7 +2048,7 @@
             {else}{l s='Supplier Rules' mod='amazonmarketplacepro'}{/if}
         </div>
         <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
-            <table class="table entity-table" data-type="{$etype}">
+            <table class="table entity-table" data-type="{$etype|escape:'htmlall':'UTF-8'}">
                 <thead><tr>
                     <th>ID</th>
                     <th>{l s='Name' mod='amazonmarketplacepro'}</th>
@@ -2069,7 +2083,7 @@
             </table>
         </div>
         <div style="margin-top:10px;">
-            <button type="button" class="btn btn-primary entity-save" data-type="{$etype}"><i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}</button>
+            <button type="button" class="btn btn-primary entity-save" data-type="{$etype|escape:'htmlall':'UTF-8'}"><i class="icon-save"></i> {l s='Save' mod='amazonmarketplacepro'}</button>
             <span class="entity-result" style="margin-left:10px;"></span>
         </div>
         <p class="help-block" style="margin-top:8px;">{l s='Saving queues the affected products so the next delta sync resends them.' mod='amazonmarketplacepro'}</p>
@@ -4160,7 +4174,7 @@
         var editor = document.getElementById('profile-editor');
         if (!editor) return;
 
-        var psFields = {$profile_ps_fields|@json_encode nofilter};
+        var psFields = JSON.parse('{$profile_ps_fields_json|escape:'javascript':'UTF-8'}');
         var schemaAttributes = [];   // loaded schema
         var pendingValues = {};      // stored profile values while the schema loads
 

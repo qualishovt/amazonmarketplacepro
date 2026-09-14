@@ -1,0 +1,22 @@
+# Amazon Marketplace Pro
+#
+# No file of the module is meant to be opened directly: PrestaShop loads the
+# PHP files, and the cron and Amazon connection addresses go through the
+# shop's index.php. Only the logo and other static files stay reachable.
+
+# Apache 2.2
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+    <Files ~ "(?i)^.*\.(jpg|jpeg|gif|png|svg|webp|ico|css|js|woff|woff2|ttf|eot)$">
+        Allow from all
+    </Files>
+</IfModule>
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+    <Files ~ "(?i)^.*\.(jpg|jpeg|gif|png|svg|webp|ico|css|js|woff|woff2|ttf|eot)$">
+        Require all granted
+    </Files>
+</IfModule>
