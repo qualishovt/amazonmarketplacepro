@@ -5,7 +5,7 @@
 // step), with PrestaShop's / Symfony's settings - and nothing that would need
 // a newer PHP than the module supports (5.6): no const visibility, no
 // trailing commas outside arrays, and no non_printable_character (it writes
-// non-breaking spaces as {a0}, which PHP 5.6 does not read; the French
+// non-breaking spaces as "\u{a0}", which PHP 5.6 does not read; the French
 // texts use plain spaces instead).
 $root = dirname(__DIR__);
 
