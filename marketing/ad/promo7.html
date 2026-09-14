@@ -419,32 +419,37 @@ window.render = function (t) {
   { // S2
     const u=t-12.6, h=seg(u,.25,1.1);
     $('s2h').style.opacity=h; $('s2h').style.transform=`translateY(${(28*(1-h)+fl(u,5,7)).toFixed(1)}px)`;
-    const g=seg(u,.9,3.0,E.inOut);
+    // Each gap comes in with its own sentence - "Stock sells twice." 13.7s,
+    // "Prices drift." 15.8s, "Orders get missed." 17.6s - its prop, baseline and
+    // caption first, then its callout. Nothing is on screen before it is named.
+    $('s2chart').setAttribute('opacity', cl(seg(u,.85,1.3)));
+    $('s2curve').setAttribute('opacity', cl(seg(u,2.9,3.35)));
+    $('s2orders').setAttribute('opacity', cl(seg(u,4.7,5.15)));
+    const g=seg(u,.95,2.7,E.inOut);
     $('s2bars').innerHTML = A.bars([1,.86,.66,.44,.26,.12], g, C.green);
     document.querySelectorAll('#s2bars rect').forEach((r,i)=>{
-      r.setAttribute('opacity', cl(seg(u,.9+i*.12,1.5+i*.12)));
+      r.setAttribute('opacity', cl(seg(u,.95+i*.12,1.55+i*.12)));
     });
     const lp=$('s2line'), L=lp.getTotalLength();
     lp.setAttribute('stroke-dasharray',L);
-    const d=seg(u,1.4,3.4,E.inOut);
+    const d=seg(u,3.0,4.7,E.inOut);
     lp.setAttribute('stroke-dashoffset',(L*(1-d)).toFixed(1));
     lp.setAttribute('opacity',cl(d*4));
     document.querySelectorAll('.s2d').forEach((c,i)=>
-      c.setAttribute('opacity', cl(seg(u,2.0+i*.42,2.5+i*.42))));
+      c.setAttribute('opacity', cl(seg(u,3.45+i*.4,3.95+i*.4))));
     // The orders nobody saw: three receipts settle in with the other props,
     // then a cross lands on them and they fade back when the voice says so.
-    const miss=seg(u,4.85,5.55,E.elastic);
+    const miss=seg(u,5.75,6.45,E.elastic);
     document.querySelectorAll('.s2o').forEach((g,i)=>{
-      const p=seg(u,2.2+i*.3,3.0+i*.3,E.outBack), b=[[-58,-40,-8],[0,-58,0],[58,-40,8]][i];
+      const p=seg(u,4.75+i*.2,5.35+i*.2,E.outBack), b=[[-58,-40,-8],[0,-58,0],[58,-40,8]][i];
       g.setAttribute('opacity',(cl(p)*(1-0.4*cl(miss))).toFixed(3));
       g.setAttribute('transform',
         `translate(${b[0]},${(b[1]-26*(1-p)).toFixed(1)}) rotate(${b[2]}) scale(${(0.7+0.3*p).toFixed(3)})`);
     });
     $('s2miss').setAttribute('opacity',cl(miss));
     $('s2miss').setAttribute('transform',`translate(66,-112) scale(${(0.3+0.7*cl(miss)).toFixed(3)})`);
-    // One callout per sentence: "Stock sells twice." 13.7s, "Prices drift."
-    // 15.8s, "Orders get missed." 17.6s.
-    const c1=seg(u,1.3,2.1,E.outBack), c2=seg(u,3.25,4.05,E.outBack), c3=seg(u,5.05,5.85,E.outBack);
+    // The callout lands just after its prop.
+    const c1=seg(u,1.35,2.15,E.outBack), c2=seg(u,3.4,4.2,E.outBack), c3=seg(u,5.25,6.05,E.outBack);
     $('s2call').setAttribute('opacity',cl(c1));
     $('s2call').setAttribute('transform',`translate(520,${(420-24*(1-c1)+fl(u,7,4.6)).toFixed(1)}) scale(${(0.7+0.3*c1).toFixed(3)})`);
     $('s2call2').setAttribute('opacity',cl(c2));
