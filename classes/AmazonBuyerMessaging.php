@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Buyer messaging via the SP-API Messaging API (v1).
  *

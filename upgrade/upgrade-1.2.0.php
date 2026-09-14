@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Amazon Marketplace Pro
  *

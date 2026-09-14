@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Creates real PrestaShop products from staged Amazon-only listings
  * (sync_direction = 'amazon_only'): products the merchant sells on Amazon

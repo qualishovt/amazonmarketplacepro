@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Matches PrestaShop products to existing Amazon catalog entries (ASINs)
  * by EAN/UPC, using the Catalog Items API (2022-04-01).

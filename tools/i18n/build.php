@@ -92,8 +92,8 @@ if ($missing) {
     exit(1);
 }
 
-// Laid out the way PHP CS Fixer leaves it (the Addons validator's standard).
-$header = "<?php\n\n"
+// Laid out the way tools/php-cs-fixer.php leaves the module's files.
+$header = "<?php\n"
     . "/**\n"
     . " * Amazon Marketplace Pro\n"
     . " *\n"

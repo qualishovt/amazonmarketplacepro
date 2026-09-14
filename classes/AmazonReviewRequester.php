@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Review requests via the SP-API Solicitations API (v1).
  *

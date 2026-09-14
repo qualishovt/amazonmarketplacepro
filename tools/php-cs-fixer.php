@@ -7,6 +7,10 @@
 // trailing commas outside arrays, and no non_printable_character (it writes
 // non-breaking spaces as "\u{a0}", which PHP 5.6 does not read; the French
 // texts use plain spaces instead).
+//
+// blank_line_after_opening_tag is left out too: the validator's Licenses step,
+// which blocks a submission, refuses a blank line between <?php and the licence
+// header - the one rule the two steps disagree on.
 $root = dirname(__DIR__);
 
 $finder = PhpCsFixer\Finder::create()
@@ -21,7 +25,6 @@ return (new PhpCsFixer\Config())
     ->setUsingCache(false)
     ->setFinder($finder)
     ->setRules(array(
-        'blank_line_after_opening_tag' => true,
         'array_syntax' => array('syntax' => 'short'),
         'phpdoc_separation' => true,
         'blank_line_before_statement' => array('statements' => array('return')),
