@@ -1,6 +1,6 @@
 <?php
 /**
- * Mix and encode a translated cut, and write its subtitle sidecar.
+ * Mix and encode a translated cut.
  *
  *   php mix-locale.php <iso> [outDir]
  *
@@ -11,6 +11,11 @@
  * loudness) and brought to the English voice track's loudness before the
  * mix. The listener hears the same balance of voice and music in every
  * language.
+ *
+ * Two voices also get a tone correction ($tone below): the Italian and Polish
+ * narrators carry clearly more treble than the others, which the ear hears as
+ * louder even at matched loudness. Their highs are softened to the level of
+ * the other voices, and they sit a little lower in the mix.
  *
  * Needs frames-<iso>/ (render.js promo7.<iso>.html), vo-<iso>/ and
  * locale/fit.<iso>.json (locale/synth-fit.js).
@@ -27,6 +32,17 @@ $cfg = require $here . '/cues.php';
 $length = $cfg['length'];
 $fit = json_decode(file_get_contents("$here/locale/fit.$iso.json"), true);
 $frames = "$here/frames-$iso";
+
+// Treble cut (dB, shelf from 3 kHz) and trim after loudness matching (dB),
+// set after listening review on 14 Sep 2026. Each cut brings the voice's
+// energy above 2.5 kHz, relative to its loudness, to the average of the en,
+// fr, es and de voices.
+$tone = array(
+    'it' => array('treble' => -4, 'trim' => -1.5),
+    'pl' => array('treble' => -6, 'trim' => -1.5),
+);
+$eq = isset($tone[$iso]) ? 'treble=g=' . $tone[$iso]['treble'] . ':f=3000:t=s:w=0.7,' : '';
+$trim = isset($tone[$iso]) ? $tone[$iso]['trim'] : 0;
 
 if (count(glob("$frames/*.png")) < (int) floor($length * 30)) {
     fwrite(STDERR, "frames-$iso is incomplete\n");
@@ -49,7 +65,7 @@ function run($cmd)
 }
 
 /** The voice-only track of one set of takes, as it sits in the mix. */
-function voiceTrack($dir, $cues, $length, $wav)
+function voiceTrack($dir, $cues, $length, $wav, $eq = '')
 {
     $inputs = array();
     $f = array();
@@ -59,7 +75,7 @@ function voiceTrack($dir, $cues, $length, $wav)
         $inputs[] = '-i';
         $inputs[] = "$dir/$id/audio.mp3";
         $ms = (int) round($start * 1000);
-        $f[] = "[$i:a]adelay=$ms|$ms,volume=1.7[v$i]";
+        $f[] = "[$i:a]adelay=$ms|$ms,{$eq}volume=1.7[v$i]";
         $l[] = "[v$i]";
         $i++;
     }
@@ -80,11 +96,12 @@ function loudness($wav)
 
 $tmp = sys_get_temp_dir();
 voiceTrack("$here/vo", $cfg['cues'], $length, "$tmp/amz-vo-en.wav");
-voiceTrack("$here/vo-$iso", $cfg['cues'], $length, "$tmp/amz-vo-$iso.wav");
+voiceTrack("$here/vo-$iso", $cfg['cues'], $length, "$tmp/amz-vo-$iso.wav", $eq);
 $en = loudness("$tmp/amz-vo-en.wav");
 $loc = loudness("$tmp/amz-vo-$iso.wav");
 $gain = pow(10, ($en - $loc) / 20);
-printf("voice loudness: en %.1f LUFS, %s %.1f LUFS -> gain x%.3f\n", $en, $iso, $loc, $gain);
+$gain *= pow(10, $trim / 20);
+printf("voice loudness: en %.1f LUFS, %s %.1f LUFS -> gain x%.3f (trim %.1f dB)\n", $en, $iso, $loc, $gain, $trim);
 unlink("$tmp/amz-vo-en.wav");
 unlink("$tmp/amz-vo-$iso.wav");
 
@@ -97,7 +114,7 @@ foreach ($cfg['cues'] as $id => $start) {
     $inputs[] = '-i';
     $inputs[] = "$here/vo-$iso/$id/audio.mp3";
     $ms = (int) round($start * 1000);
-    $filters[] = "[$i:a]adelay=$ms|$ms,volume={$vol}[v$i]";
+    $filters[] = "[$i:a]adelay=$ms|$ms,{$eq}volume={$vol}[v$i]";
     $labels[] = "[v$i]";
     $i++;
 }
