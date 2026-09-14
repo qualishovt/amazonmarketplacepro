@@ -332,8 +332,16 @@ class AmzproShop
         if ($idShop === 0) {
             return Configuration::updateValue($key, $value, $html);
         }
+        $idGroup = self::groupId($idShop);
+        // The settings form posts every field, so without this one change
+        // saved in a shop would pin all the others to that shop.
+        if (!is_array($value)
+            && !Configuration::hasKey($key, null, null, $idShop)
+            && (string) Configuration::get($key, null, $idGroup, 0) === (string) $value) {
+            return true;
+        }
 
-        return Configuration::updateValue($key, $value, $html, self::groupId($idShop), $idShop);
+        return Configuration::updateValue($key, $value, $html, $idGroup, $idShop);
     }
 
     /**
