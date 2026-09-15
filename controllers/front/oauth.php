@@ -165,7 +165,7 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
 
     /**
      * Plain text from a translation. PrestaShop returns l() HTML-escaped;
-     * htmlPage() escapes everything it prints, so the escaping is undone
+     * the template escapes everything it prints, so the escaping is undone
      * here to keep quotes and accents from showing up twice-escaped.
      */
     private function text($translated)
@@ -174,18 +174,25 @@ class AmazonMarketplaceProOauthModuleFrontController extends ModuleFrontControll
     }
 
     /**
-     * Render a minimal standalone HTML page and stop (no theme dependencies).
-     * Both arguments are plain text and are escaped here, including anything
-     * that came back from Amazon in the query string.
+     * Show the end-of-flow page, views/templates/front/oauth_result.tpl, and
+     * stop (no theme dependencies). Both arguments are plain text; the
+     * template escapes them, including anything that came back from Amazon
+     * in the query string.
+     *
+     * @param string $title
+     * @param string $message
      */
     private function htmlPage($title, $message)
     {
+        $this->context->smarty->assign([
+            'mkpro_oauth_title' => $title,
+            'mkpro_oauth_message' => $message,
+        ]);
         header('Content-Type: text/html; charset=utf-8');
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>'
-            . '<style>body{font-family:sans-serif;max-width:620px;margin:80px auto;color:#333}'
-            . 'h1{font-size:20px}div{padding:16px;border:1px solid #ddd;border-radius:6px;background:#fafafa}</style>'
-            . '</head><body><div><h1>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h1><p>'
-            . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p></div></body></html>';
+        echo $this->module->display(
+            _PS_MODULE_DIR_ . 'amazonmarketplacepro/amazonmarketplacepro.php',
+            'views/templates/front/oauth_result.tpl'
+        );
         exit;
     }
 }

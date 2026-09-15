@@ -156,6 +156,42 @@ class AmazonCatalogImporter
         return $summary;
     }
 
+    /**
+     * The listing's bullet points as the summary's HTML list, rendered from
+     * views/templates/admin/bullet_list.tpl. PrestaShop caps the summary at
+     * 800 characters, so bullets are dropped from the end until the list fits
+     * rather than cutting through the markup.
+     *
+     * @param string[] $bullets
+     *
+     * @return string
+     */
+    private function bulletList(array $bullets)
+    {
+        $items = array_values(array_filter(array_map('trim', $bullets), 'strlen'));
+        while ($items) {
+            $template = Context::getContext()->smarty->createTemplate(
+                _PS_MODULE_DIR_ . 'amazonmarketplacepro/views/templates/admin/bullet_list.tpl'
+            );
+            $template->assign('mkpro_bullets', $items);
+            // Debug mode wraps rendered templates in HTML comments naming
+            // the file; they must not end up in the product's summary.
+            $html = trim(preg_replace('/<!--.*?-->/s', '', $template->fetch()));
+            if (Tools::strlen($html) <= 800) {
+                return $html;
+            }
+            if (count($items) > 1) {
+                array_pop($items);
+            } elseif (Tools::strlen($items[0]) > 20) {
+                $items[0] = Tools::substr($items[0], 0, (int) (Tools::strlen($items[0]) / 2));
+            } else {
+                break;
+            }
+        }
+
+        return '';
+    }
+
     /** Overwrite title and description from the Amazon listing. */
     private function applyContent($product, $row)
     {
@@ -433,11 +469,7 @@ class AmazonCatalogImporter
 
         $desc = trim((string) $row['amazon_description']);
         $bullets = trim((string) $row['amazon_bullet_points']);
-        $shortDesc = '';
-        if ($bullets !== '') {
-            $shortDesc = '<ul><li>' . implode('</li><li>', array_map('htmlspecialchars', explode("\n", $bullets))) . '</li></ul>';
-            $shortDesc = Tools::substr($shortDesc, 0, 800);
-        }
+        $shortDesc = $bullets !== '' ? $this->bulletList(explode("\n", $bullets)) : '';
         foreach (Language::getLanguages(false) as $lang) {
             if ($desc !== '') {
                 $product->description[$lang['id_lang']] = Tools::substr(htmlspecialchars($desc), 0, 21844);
