@@ -777,8 +777,12 @@ class AmazonMarketplacePro extends Module
             'mkpro_connected' => (AmazonSpApiClient::storedRefreshToken() != ''),
             // Manual mode is "connected" as soon as a token is stored for the
             // active environment — the OAuth Connect flow is never used there.
+            // The sandbox counts only its own token: the production token it
+            // would fall back to needs the relay, which manual mode never uses.
             'mkpro_manual_connected' => (AmazonSpApiClient::authMode() === 'manual'
-                && AmazonSpApiClient::storedRefreshToken() != ''),
+                && (AmazonSpApiClient::isSandboxEnv()
+                    ? (string) AmzproShop::get('AMZPRO_REFRESH_TOKEN_SANDBOX') !== ''
+                    : AmazonSpApiClient::storedRefreshToken() != '')),
             // Sandbox and production hold separate tokens; knowing the inactive
             // one is connected lets the UI promise that switching back is free.
             'mkpro_other_env_connected' => (AmazonSpApiClient::storedRefreshToken(
@@ -1146,10 +1150,10 @@ class AmazonMarketplacePro extends Module
         $needShop = AmzproShop::requireShop();
 
         // Developer-only fields are hidden from the customer form; without
-        // this, their absent POST values would wipe the stored settings.
+        // this, their absent POST values would wipe the stored settings. The
+        // environment (production or sandbox) is open to every merchant.
         if (!AmzproShop::get('AMZPRO_DEV_MODE')) {
             unset(
-                $fields['AMZPRO_ENVIRONMENT'],
                 $fields['AMZPRO_USE_MOCK'],
                 $fields['AMZPRO_OAUTH_BETA'],
                 $fields['AMZPRO_AUTH_MODE']

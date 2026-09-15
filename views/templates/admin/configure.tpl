@@ -200,7 +200,7 @@
             <div class="alert alert-danger">{l s='Amazon connection failed:' mod='amazonmarketplacepro'} {$mkpro_oauth_error|escape:'htmlall':'UTF-8'}</div>
         {/if}
 
-        {if $mkpro_dev_mode && $mkpro_environment == 'sandbox'}
+        {if $mkpro_environment == 'sandbox'}
             <div class="alert alert-warning">
                 <i class="icon-warning"></i> <strong>{l s='Sandbox mode.' mod='amazonmarketplacepro'}</strong>
                 {l s='Calls go to the SP-API sandbox, which returns fixed sample data. Nothing here touches a live seller account.' mod='amazonmarketplacepro'}
@@ -218,7 +218,7 @@
                     <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected to Amazon' mod='amazonmarketplacepro'}
-                {if $mkpro_dev_mode} ({if $mkpro_environment == 'sandbox'}{l s='sandbox app' mod='amazonmarketplacepro'}{else}{l s='production app' mod='amazonmarketplacepro'}{/if}){/if}
+                {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
                 {if $mkpro_selling_partner_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_selling_partner_id|escape:'htmlall':'UTF-8'}</strong>{/if}
             </div>
             <div id="amazon-connection-result" style="display:none; white-space:pre-line;"></div>
@@ -228,7 +228,7 @@
                             onclick="return confirm('{l s='Disconnect this shop from Amazon?' mod='amazonmarketplacepro' js=1}');">
                         <i class="icon-unlink"></i> {l s='Disconnect' mod='amazonmarketplacepro'}
                     </button>
-                    {if $mkpro_dev_mode && $mkpro_other_env_connected}
+                    {if $mkpro_other_env_connected}
                         <p class="help-block">{l s='Disconnects the active environment only — the other one stays connected.' mod='amazonmarketplacepro'}</p>
                     {/if}
                 </div>
@@ -239,7 +239,7 @@
                     <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected with manual SP-API credentials' mod='amazonmarketplacepro'}
-                {if $mkpro_dev_mode} ({if $mkpro_environment == 'sandbox'}{l s='sandbox app' mod='amazonmarketplacepro'}{else}{l s='production app' mod='amazonmarketplacepro'}{/if}){/if}
+                {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
                 {if $mkpro_seller_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_seller_id|escape:'htmlall':'UTF-8'}</strong>{/if}
                 <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Check connection" to verify the link.' mod='amazonmarketplacepro'}</small>
             </div>
@@ -253,19 +253,23 @@
                 </div>
             </div>
         {else}
-            {if $mkpro_dev_mode && $mkpro_other_env_connected}
+            {if $mkpro_other_env_connected}
                 <div class="alert alert-info">
                     <i class="icon-info-circle"></i>
                     {l s='Not connected in this environment yet. The other environment is still connected — switching back restores it without re-authorizing.' mod='amazonmarketplacepro'}
                 </div>
             {/if}
-            {if $mkpro_dev_mode && $mkpro_environment == 'sandbox'}
+            {if $mkpro_environment == 'sandbox'}
                 {* A sandbox app client has no OAuth fields in the Developer
                    Console, so Amazon's consent page answers MD9100 for it.
                    The only way to a sandbox token is Create Token there. *}
                 <div class="alert alert-warning">
                     <i class="icon-info-circle"></i>
-                    {l s='Sandbox apps cannot use "Connect to Amazon": Amazon gives them no consent page (error MD9100). In the Solution Provider Portal, open the sandbox app\'s menu next to Edit App, choose Create Token, and paste the refresh token with the sandbox client ID and secret into the Manual SP-API Credentials panel below, then Save Settings.' mod='amazonmarketplacepro'}
+                    {if $mkpro_dev_mode}
+                        {l s='Sandbox apps cannot use "Connect to Amazon": Amazon gives them no consent page (error MD9100). In the Solution Provider Portal, open the sandbox app\'s menu next to Edit App, choose Create Token, and paste the refresh token with the sandbox client ID and secret into the Manual SP-API Credentials panel below, then Save Settings.' mod='amazonmarketplacepro'}
+                    {else}
+                        {l s='The sandbox does not use "Connect to Amazon". Enter the client ID, client secret and refresh token of a sandbox app in the Manual SP-API Credentials panel below, then click Save Settings.' mod='amazonmarketplacepro'}
+                    {/if}
                 </div>
             {elseif $mkpro_auth_mode == 'manual'}
                 <div class="alert alert-info">
@@ -284,21 +288,25 @@
             {/if}
         {/if}
 
-        {if $mkpro_dev_mode}
+        {* Open to every merchant: reviewers and merchants without a seller
+           account test against the sandbox. Installs start on production. *}
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Environment' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_environment" class="form-control">
-                    <option value="sandbox"{if $mkpro_environment == 'sandbox'} selected="selected"{/if}>{l s='Sandbox app — canned data, test seller' mod='amazonmarketplacepro'}</option>
                     <option value="production"{if $mkpro_environment == 'production'} selected="selected"{/if}>{l s='Production app — live data, real seller' mod='amazonmarketplacepro'}</option>
+                    <option value="sandbox"{if $mkpro_environment == 'sandbox'} selected="selected"{/if}>{l s='Sandbox app — canned data, test seller' mod='amazonmarketplacepro'}</option>
                 </select>
                 <p class="help-block">
-                    {l s='Switches the whole stack at once: which registered app asks for consent, which SP-API host is called, and which stored token is used. The two connections are kept separately, so switching back does not require re-authorizing.' mod='amazonmarketplacepro'}
-                    <br>{l s='Active app id:' mod='amazonmarketplacepro'} <code>{$mkpro_lwa_app_id|escape:'htmlall':'UTF-8'}</code>
+                    {if $mkpro_dev_mode}
+                        {l s='Switches the whole stack at once: which registered app asks for consent, which SP-API host is called, and which stored token is used. The two connections are kept separately, so switching back does not require re-authorizing.' mod='amazonmarketplacepro'}
+                        <br>{l s='Active app id:' mod='amazonmarketplacepro'} <code>{$mkpro_lwa_app_id|escape:'htmlall':'UTF-8'}</code>
+                    {else}
+                        {l s='Keep Production to sell on Amazon. Sandbox is Amazon\'s test environment: it returns sample data and never touches a real seller account. Each environment keeps its own connection, so switching back does not require connecting again.' mod='amazonmarketplacepro'}
+                    {/if}
                 </p>
             </div>
         </div>
-        {/if}
 
         {if $mkpro_dev_mode && !$mkpro_all_shops}
         {* Hidden in sandbox: manual is the only mode that can work there, so
