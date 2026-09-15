@@ -120,6 +120,7 @@ class AmazonMarketplacePro extends Module
         $this->version = '1.6.0';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
+        $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
         $this->bootstrap = true;
 
         parent::__construct();
