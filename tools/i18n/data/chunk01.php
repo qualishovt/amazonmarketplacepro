@@ -114,13 +114,6 @@ return array(
     'it' => 'Modalità sandbox.',
     'pl' => 'Tryb sandbox.',
 ),
-'Calls go to the SP-API sandbox, which returns fixed sample data. Nothing here touches a live seller account.' => array(
-    'fr' => 'Les appels partent vers le bac à sable SP-API, qui renvoie des données d\'exemple figées. Rien ici ne touche un compte vendeur réel.',
-    'es' => 'Las llamadas van al sandbox de SP-API, que devuelve datos de ejemplo fijos. Nada de lo que hagas aquí afecta a una cuenta de vendedor real.',
-    'de' => 'Die Aufrufe gehen an die SP-API-Sandbox, die feste Beispieldaten zurückgibt. Nichts davon berührt ein echtes Verkäuferkonto.',
-    'it' => 'Le chiamate vengono inviate alla sandbox SP-API, che restituisce dati di esempio fissi. Nulla di ciò che avviene qui tocca un account venditore reale.',
-    'pl' => 'Wywołania trafiają do sandboksa SP-API, który zwraca stałe dane przykładowe. Nic tutaj nie dotyka prawdziwego konta sprzedawcy.',
-),
 'Connected to Amazon' => array(
     'fr' => 'Connecté à Amazon',
     'es' => 'Conectado con Amazon',
