@@ -143,7 +143,7 @@
   <li><b>Installez le module</b> depuis Modules &gt; Gestionnaire de modules, puis ouvrez Configurer. Tous les écrans du module se trouvent sur cette seule page, regroupés dans une barre latérale.</li>
   <li><b>Choisissez votre place de marché</b> dans Paramètres &gt; Connexion, panneau Place de marché, puis cliquez sur <span class="btn">Enregistrer les paramètres</span>. La place de marché détermine le site Amazon, la devise et la langue des offres.</li>
   <li><b>Connectez la boutique.</b> Cliquez sur <span class="btn">Se connecter à Amazon</span>. Vous êtes redirigé vers Seller Central pour approuver la connexion, puis renvoyé vers la boutique. Aucun identifiant à recopier. Vous pouvez révoquer l'autorisation depuis Seller Central à tout moment, ou cliquer sur <span class="btn">Déconnecter</span> dans le module.</li>
-  <li><b>Vérifiez la connexion.</b> Cliquez sur <span class="btn">Lancer un test</span> dans le bandeau vert. Le module lit vos commandes récentes et indique en termes simples si tout fonctionne. La section 13 explique les résultats possibles.</li>
+  <li><b>Vérifiez la connexion.</b> Cliquez sur <span class="btn">Tester la connexion</span> dans le bandeau vert. Le module lit vos commandes récentes et indique en termes simples si tout fonctionne. La section 13 explique les résultats possibles.</li>
   <li><b>Activez l'automatisation.</b> Dans Système &gt; Automatisation, ajoutez la ligne cron affichée dans le panneau de votre hébergeur, ou enregistrez la boutique auprès du planificateur IntelliPresta. Activez ensuite les tâches dont vous avez besoin dans le tableau situé en dessous. La section 11 détaille tout cela.</li>
 </ol>
 <p>Ensuite, l'ordre de travail habituel est le suivant&nbsp;: vérifiez les références de votre catalogue (11.3), créez un profil d'offre pour chaque famille de produits (5.4), lancez la synchronisation en deux étapes dans Catalogue &gt; Produits (5.1), puis laissez les tâches planifiées tout maintenir à jour.</p>
@@ -175,7 +175,7 @@
 <h2>4.1 Connexion</h2>
 <h3>Connexion Amazon</h3>
 <p>Indique si la boutique est connectée, et à quel vendeur. <span class="btn">Se connecter à Amazon</span> lance le parcours d'approbation dans Seller Central&nbsp;; <span class="btn">Déconnecter</span> efface l'autorisation enregistrée. Choisissez la place de marché avant de vous connecter, car la page de consentement en dépend.</p>
-<p>Le bandeau vert signifie seulement qu'une connexion est enregistrée. <span class="btn">Lancer un test</span>, dans le bandeau, montre qu'elle fonctionne toujours&nbsp;: le module se connecte à Amazon, lit vos commandes récentes et indique en termes simples que tout fonctionne ou ce qu'il faut faire. Lancez ce test après la connexion, ou chaque fois qu'une synchronisation signale une erreur d'autorisation. La section 13 en détaille les résultats.</p>
+<p>Le bandeau vert signifie seulement qu'une connexion est enregistrée. <span class="btn">Tester la connexion</span>, dans le bandeau, montre qu'elle fonctionne toujours&nbsp;: le module se connecte à Amazon, lit vos commandes récentes et indique en termes simples que tout fonctionne ou ce qu'il faut faire. Lancez ce test après la connexion, ou chaque fois qu'une synchronisation signale une erreur d'autorisation. La section 13 en détaille les résultats.</p>
 <h3>Place de marché</h3>
 <p><b>Place de marché Amazon.</b> Le site Amazon sur lequel vend cette boutique. Les places de marché supplémentaires s'ajoutent dans Logistique &gt; Multi-comptes (section 8).</p>
 
@@ -520,7 +520,7 @@
   <tr><td>Envoi accepté, mais seule l'offre (prix et stock) arrive sur Amazon</td><td>La catégorie du produit n'a ni profil ni correspondance de catégorie, ou «&nbsp;Envoyer toutes les données produit&nbsp;» est réglé sur Non (4.3).</td></tr>
   <tr><td>Offre rejetée avec une erreur d'attribut manquant</td><td>Amazon détermine les champs obligatoires de façon dynamique. Ouvrez le profil, trouvez l'attribut dans la liste facultative, renseignez-le, enregistrez et envoyez à nouveau. Le contenu du flux (11.3) montre exactement ce qui a été envoyé.</td></tr>
   <tr><td>Les commandes importées affichent 0&nbsp;% de TVA</td><td>Choisissez «&nbsp;Appliquer mes règles de taxes PrestaShop&nbsp;» en 4.5.</td></tr>
-  <tr><td>Une tâche planifiée affiche «&nbsp;Échec&nbsp;»</td><td>La colonne des messages et l'onglet Journaux en donnent la raison. Cliquez sur Exécuter pour réessayer après correction. Après des échecs répétés, cliquez sur Lancer un test (4.1).</td></tr>
+  <tr><td>Une tâche planifiée affiche «&nbsp;Échec&nbsp;»</td><td>La colonne des messages et l'onglet Journaux en donnent la raison. Cliquez sur Exécuter pour réessayer après correction. Après des échecs répétés, cliquez sur Tester la connexion (4.1).</td></tr>
   <tr><td>Rien ne s'exécute alors que des tâches sont activées</td><td>Aucun cron n'appelle la boutique. Vérifiez que la ligne cron existe bien dans le panneau de votre hébergeur, ou que la boutique est enregistrée auprès du planificateur IntelliPresta et accessible en HTTPS.</td></tr>
   <tr><td>E-mails aux acheteurs Amazon renvoyés en erreur</td><td>Les adresses relais d'Amazon expirent. Activez l'e-mail anonymisé (4.5).</td></tr>
 </table>

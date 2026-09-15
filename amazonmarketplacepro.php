@@ -2570,7 +2570,7 @@ class AmazonMarketplacePro extends Module
     /* ─────────────────── Feature: Connection Test ─────────────────── */
 
     /**
-     * "Run a test" in the Connected banner. The banner only says a
+     * "Test connection" in the Connected banner. The banner only says a
      * token is stored; this gets an access token and reads the last week's
      * orders, which proves the stored connection still works.
      *

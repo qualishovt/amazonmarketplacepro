@@ -18,7 +18,7 @@
  * PrestaShop's reviewers and merchants without a seller account can test
  * against the sandbox.
  *
- * Strings 3-6: "Check connection" renamed "Run a test", since the banner
+ * Strings 3-6: "Check connection" renamed "Test connection", since the banner
  * beside it already says the shop is connected; and the notes shown while
  * the Environment select differs from the saved environment.
  */
@@ -38,12 +38,12 @@ return array(
     'it' => 'Mantieni Produzione per vendere su Amazon. La sandbox è l\'ambiente di test di Amazon: restituisce dati di esempio e non tocca mai un vero account venditore. Ogni ambiente conserva la propria connessione, quindi tornare indietro non richiede di connettersi di nuovo.',
     'pl' => 'Pozostaw Produkcję, aby sprzedawać na Amazon. Sandbox to środowisko testowe Amazon: zwraca przykładowe dane i nigdy nie dotyka prawdziwego konta sprzedawcy. Każde środowisko zachowuje własne połączenie, więc powrót nie wymaga ponownego łączenia.',
 ),
-'Run a test' => array(
-    'fr' => 'Lancer un test',
-    'es' => 'Hacer una prueba',
-    'de' => 'Test ausführen',
-    'it' => 'Esegui un test',
-    'pl' => 'Uruchom test',
+'Test connection' => array(
+    'fr' => 'Tester la connexion',
+    'es' => 'Probar la conexión',
+    'de' => 'Verbindung testen',
+    'it' => 'Testa la connessione',
+    'pl' => 'Przetestuj połączenie',
 ),
 'Reads your recent orders from Amazon to show that the connection still works.' => array(
     'fr' => 'Lit vos commandes récentes sur Amazon pour montrer que la connexion fonctionne toujours.',

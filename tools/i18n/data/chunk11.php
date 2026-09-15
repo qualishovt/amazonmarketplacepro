@@ -14,7 +14,7 @@
  */
 
 /**
- * Strings 748-767: "Check connection" (renamed "Run a test" in chunk15) in
+ * Strings 748-767: "Check connection" (renamed "Test connection" in chunk15) in
  * the Connected banner, which replaced the Connection Test panel, and its
  * plain-language results.
  *
@@ -40,12 +40,12 @@ return array(
     'it' => 'Non è stato possibile completare la verifica. Riprova.',
     'pl' => 'Nie udało się dokończyć sprawdzania. Spróbuj ponownie.',
 ),
-'A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Run a test" to verify the link.' => array(
-    'fr' => 'Un jeton de rafraîchissement est enregistré pour cet environnement. Le bouton « Se connecter à Amazon » ne sert qu\'au parcours OAuth et n\'est pas utilisé en mode manuel — utilisez « Lancer un test » pour vérifier le lien.',
-    'es' => 'Hay un token de actualización guardado para este entorno. El botón «Conectar con Amazon» solo sirve para el flujo OAuth y no se usa en modo manual: utiliza «Hacer una prueba» para verificar el enlace.',
-    'de' => 'Für diese Umgebung ist ein Refresh-Token gespeichert. Die Schaltfläche „Mit Amazon verbinden“ gilt nur für den OAuth-Ablauf und wird im manuellen Modus nicht verwendet — prüfen Sie die Verbindung mit „Test ausführen“.',
-    'it' => 'Per questo ambiente è memorizzato un refresh token. Il pulsante «Connetti ad Amazon» serve solo al flusso OAuth e non viene usato in modalità manuale: usa «Esegui un test» per controllare il collegamento.',
-    'pl' => 'Dla tego środowiska zapisano token odświeżania. Przycisk „Połącz z Amazon” dotyczy wyłącznie procesu OAuth i nie jest używany w trybie ręcznym — użyj przycisku „Uruchom test”, aby sprawdzić powiązanie.',
+'A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Test connection" to verify the link.' => array(
+    'fr' => 'Un jeton de rafraîchissement est enregistré pour cet environnement. Le bouton « Se connecter à Amazon » ne sert qu\'au parcours OAuth et n\'est pas utilisé en mode manuel — utilisez « Tester la connexion » pour vérifier le lien.',
+    'es' => 'Hay un token de actualización guardado para este entorno. El botón «Conectar con Amazon» solo sirve para el flujo OAuth y no se usa en modo manual: utiliza «Probar la conexión» para verificar el enlace.',
+    'de' => 'Für diese Umgebung ist ein Refresh-Token gespeichert. Die Schaltfläche „Mit Amazon verbinden“ gilt nur für den OAuth-Ablauf und wird im manuellen Modus nicht verwendet — prüfen Sie die Verbindung mit „Verbindung testen“.',
+    'it' => 'Per questo ambiente è memorizzato un refresh token. Il pulsante «Connetti ad Amazon» serve solo al flusso OAuth e non viene usato in modalità manuale: usa «Testa la connessione» per controllare il collegamento.',
+    'pl' => 'Dla tego środowiska zapisano token odświeżania. Przycisk „Połącz z Amazon” dotyczy wyłącznie procesu OAuth i nie jest używany w trybie ręcznym — użyj przycisku „Przetestuj połączenie”, aby sprawdzić powiązanie.',
 ),
 'The Amazon credentials are not filled in. Enter them in the Manual SP-API Credentials panel.' => array(
     'fr' => 'Les identifiants Amazon ne sont pas renseignés. Saisissez-les dans le panneau Identifiants SP-API manuels.',

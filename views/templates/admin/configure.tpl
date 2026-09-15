@@ -221,7 +221,7 @@
             <div class="alert alert-success">
                 <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;"
                         title="{l s='Reads your recent orders from Amazon to show that the connection still works.' mod='amazonmarketplacepro'}">
-                    <i class="icon-refresh"></i> {l s='Run a test' mod='amazonmarketplacepro'}
+                    <i class="icon-refresh"></i> {l s='Test connection' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected to Amazon' mod='amazonmarketplacepro'}
                 {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
@@ -243,12 +243,12 @@
             <div class="alert alert-success">
                 <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;"
                         title="{l s='Reads your recent orders from Amazon to show that the connection still works.' mod='amazonmarketplacepro'}">
-                    <i class="icon-refresh"></i> {l s='Run a test' mod='amazonmarketplacepro'}
+                    <i class="icon-refresh"></i> {l s='Test connection' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected with manual SP-API credentials' mod='amazonmarketplacepro'}
                 {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
                 {if $mkpro_seller_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_seller_id|escape:'htmlall':'UTF-8'}</strong>{/if}
-                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Run a test" to verify the link.' mod='amazonmarketplacepro'}</small>
+                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Test connection" to verify the link.' mod='amazonmarketplacepro'}</small>
             </div>
             <div id="amazon-connection-result" style="display:none; white-space:pre-line;"></div>
             <div class="form-group">

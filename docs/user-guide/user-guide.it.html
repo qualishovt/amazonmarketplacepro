@@ -143,7 +143,7 @@
   <li><b>Installa il modulo</b> da Moduli &gt; Gestione moduli, poi apri Configura. Tutte le schermate del modulo si trovano in quell'unica pagina, raggruppate in una barra laterale.</li>
   <li><b>Scegli il tuo marketplace</b> in Impostazioni &gt; Connessione, nel pannello Marketplace, e premi <span class="btn">Salva le impostazioni</span>. Il marketplace determina il sito Amazon, la valuta e la lingua delle inserzioni.</li>
   <li><b>Connettiti.</b> Premi <span class="btn">Connetti ad Amazon</span>. Verrai indirizzato a Seller Central per approvare la connessione, poi riportato al negozio. Non ci sono credenziali da copiare. Puoi revocare l'autorizzazione da Seller Central in qualsiasi momento, oppure premere <span class="btn">Disconnetti</span> nel modulo.</li>
-  <li><b>Verifica la connessione.</b> Premi <span class="btn">Esegui un test</span> nel banner verde. Legge i tuoi ordini recenti e ti dice in parole semplici se tutto funziona. La sezione 13 spiega i possibili risultati.</li>
+  <li><b>Verifica la connessione.</b> Premi <span class="btn">Testa la connessione</span> nel banner verde. Legge i tuoi ordini recenti e ti dice in parole semplici se tutto funziona. La sezione 13 spiega i possibili risultati.</li>
   <li><b>Attiva l'automazione.</b> In Sistema &gt; Automazione, aggiungi l'unica riga cron mostrata nel pannello di controllo del tuo hosting oppure registrati allo scheduler IntelliPresta. Poi attiva le attività che ti servono nella tabella sottostante. La sezione 11 lo spiega in dettaglio.</li>
 </ol>
 <p>Dopodiché, l'ordine di lavoro abituale è: controlla i riferimenti del catalogo (11.3), crea un profilo di inserzione per ogni famiglia di prodotti (5.4), esegui la sincronizzazione in due passaggi in Catalogo &gt; Prodotti (5.1) e lascia che le attività pianificate mantengano tutto aggiornato.</p>
@@ -175,7 +175,7 @@
 <h2>4.1 Connessione</h2>
 <h3>Connessione Amazon</h3>
 <p>Mostra se il negozio è connesso e a quale venditore. <span class="btn">Connetti ad Amazon</span> avvia la procedura di approvazione in Seller Central; <span class="btn">Disconnetti</span> elimina l'autorizzazione memorizzata. Seleziona il marketplace prima di connetterti, perché la pagina di consenso dipende da esso.</p>
-<p>Il banner verde indica solo che una connessione è salvata. <span class="btn">Esegui un test</span>, all'interno del banner, dimostra che funziona ancora: si collega ad Amazon, legge i tuoi ordini recenti e ti dice in parole semplici che tutto funziona oppure cosa fare. Eseguilo dopo la connessione o ogni volta che una sincronizzazione segnala un errore di autorizzazione. La sezione 13 elenca i risultati.</p>
+<p>Il banner verde indica solo che una connessione è salvata. <span class="btn">Testa la connessione</span>, all'interno del banner, dimostra che funziona ancora: si collega ad Amazon, legge i tuoi ordini recenti e ti dice in parole semplici che tutto funziona oppure cosa fare. Eseguilo dopo la connessione o ogni volta che una sincronizzazione segnala un errore di autorizzazione. La sezione 13 elenca i risultati.</p>
 <h3>Marketplace</h3>
 <p><b>Marketplace Amazon.</b> Il sito Amazon su cui vende questo negozio. I marketplace aggiuntivi si aggiungono in Logistica &gt; Multi-account (sezione 8).</p>
 
@@ -520,7 +520,7 @@
   <tr><td>Invio accettato, ma su Amazon l'inserzione contiene solo l'offerta</td><td>La categoria del prodotto non ha né un profilo né una corrispondenza di categoria, oppure «Invia tutti i dati del prodotto» è impostato su No (4.3).</td></tr>
   <tr><td>Inserzione rifiutata con un errore di attributo mancante</td><td>Amazon decide i campi obbligatori in modo dinamico. Apri il profilo, trova l'attributo nell'elenco degli attributi facoltativi, compilalo, salva e invia di nuovo. Il contenuto del feed (11.3) mostra esattamente cosa è stato inviato.</td></tr>
   <tr><td>Gli ordini importati mostrano lo 0% di IVA</td><td>Scegli «Applica le mie regole fiscali PrestaShop» in 4.5.</td></tr>
-  <tr><td>Un'attività pianificata mostra «Non riuscita»</td><td>La colonna del messaggio e la scheda Log indicano il motivo. Dopo aver risolto, premi Esegui ora per riprovare. Dopo errori ripetuti, premi Esegui un test (4.1).</td></tr>
+  <tr><td>Un'attività pianificata mostra «Non riuscita»</td><td>La colonna del messaggio e la scheda Log indicano il motivo. Dopo aver risolto, premi Esegui ora per riprovare. Dopo errori ripetuti, premi Testa la connessione (4.1).</td></tr>
   <tr><td>Non viene eseguito nulla anche se le attività sono attive</td><td>Nessun cron sta chiamando il negozio. Verifica che la riga cron esista nel pannello del tuo hosting, oppure che il negozio sia registrato allo scheduler IntelliPresta e raggiungibile in HTTPS.</td></tr>
   <tr><td>E-mail agli acquirenti Amazon tornate indietro</td><td>Gli indirizzi relay di Amazon scadono. Attiva l'e-mail anonimizzata (4.5).</td></tr>
 </table>

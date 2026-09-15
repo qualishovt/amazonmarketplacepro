@@ -143,7 +143,7 @@
   <li><b>Zainstaluj moduł</b> w Moduły &gt; Menedżer modułów, a następnie kliknij Konfiguruj. Wszystkie ekrany modułu znajdują się na tej jednej stronie, pogrupowane na pasku bocznym.</li>
   <li><b>Wybierz marketplace</b> w Ustawienia &gt; Połączenie, w panelu Marketplace, i kliknij <span class="btn">Zapisz ustawienia</span>. Marketplace określa witrynę Amazon, walutę i język ofert.</li>
   <li><b>Połącz.</b> Kliknij <span class="btn">Połącz z Amazon</span>. Nastąpi przekierowanie do Seller Central, gdzie zatwierdzasz połączenie, a potem powrót do sklepu. Nie trzeba przepisywać żadnych danych dostępu. Autoryzację możesz w każdej chwili cofnąć w Seller Central albo kliknąć <span class="btn">Odłącz</span> w module.</li>
-  <li><b>Sprawdź połączenie.</b> Kliknij <span class="btn">Uruchom test</span> w zielonym banerze. Moduł odczyta Twoje ostatnie zamówienia i prostymi słowami poinformuje, czy wszystko działa. Możliwe wyniki opisuje sekcja 13.</li>
+  <li><b>Sprawdź połączenie.</b> Kliknij <span class="btn">Przetestuj połączenie</span> w zielonym banerze. Moduł odczyta Twoje ostatnie zamówienia i prostymi słowami poinformuje, czy wszystko działa. Możliwe wyniki opisuje sekcja 13.</li>
   <li><b>Włącz automatyzację.</b> W System &gt; Automatyzacja dodaj wyświetloną linię crona w panelu hostingu albo zarejestruj sklep w harmonogramie IntelliPresta. Następnie włącz potrzebne zadania w tabeli poniżej. Szczegóły opisuje sekcja 11.</li>
 </ol>
 <p>Potem zwykła kolejność pracy wygląda tak: sprawdź referencje w katalogu (11.3), utwórz profil oferty dla każdej rodziny produktów (5.4), uruchom dwuetapową synchronizację w Katalog &gt; Produkty (5.1) i pozwól zaplanowanym zadaniom utrzymywać wszystko w aktualnym stanie.</p>
@@ -175,7 +175,7 @@
 <h2>4.1 Połączenie</h2>
 <h3>Połączenie z Amazon</h3>
 <p>Pokazuje, czy sklep jest połączony i z którym sprzedawcą. <span class="btn">Połącz z Amazon</span> rozpoczyna proces zatwierdzania w Seller Central; <span class="btn">Odłącz</span> usuwa zapisaną autoryzację. Wybierz marketplace przed połączeniem, ponieważ od niego zależy strona zgody.</p>
-<p>Zielony baner oznacza tylko, że połączenie jest zapisane. Przycisk <span class="btn">Uruchom test</span> w banerze pokazuje, czy nadal działa: łączy się z Amazon, odczytuje Twoje ostatnie zamówienia i prostymi słowami informuje, że wszystko działa, albo podpowiada, co zrobić. Uruchom go po połączeniu lub zawsze, gdy synchronizacja zgłosi błąd autoryzacji. Możliwe wyniki wymienia sekcja 13.</p>
+<p>Zielony baner oznacza tylko, że połączenie jest zapisane. Przycisk <span class="btn">Przetestuj połączenie</span> w banerze pokazuje, czy nadal działa: łączy się z Amazon, odczytuje Twoje ostatnie zamówienia i prostymi słowami informuje, że wszystko działa, albo podpowiada, co zrobić. Uruchom go po połączeniu lub zawsze, gdy synchronizacja zgłosi błąd autoryzacji. Możliwe wyniki wymienia sekcja 13.</p>
 <h3>Marketplace</h3>
 <p><b>Marketplace Amazon.</b> Witryna Amazon, na której sprzedaje ten sklep. Dodatkowe marketplace'y dodajesz w Realizacja zamówień &gt; Wiele kont (sekcja 8).</p>
 
@@ -503,7 +503,7 @@
 
 <!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
 <h1>13. Rozwiązywanie problemów</h1>
-<h3>Jak odczytać wynik przycisku Uruchom test</h3>
+<h3>Jak odczytać wynik przycisku Przetestuj połączenie</h3>
 <p>Wynik pojawia się pod zielonym banerem w Ustawienia &gt; Połączenie. Gdy sprawdzanie się nie powiedzie, szczegóły techniczne są też zapisywane w zakładce Dzienniki (11.4); pomoc techniczna o nie poprosi.</p>
 <table>
   <tr><th style="width:38%">Wynik</th><th>Znaczenie i co zrobić</th></tr>
@@ -520,7 +520,7 @@
   <tr><td>Wysyłka zaakceptowana, ale do Amazon trafiła tylko oferta, bez danych produktu</td><td>Kategoria produktu nie ma ani profilu, ani mapowania kategorii albo opcja „Wysyłaj pełne dane produktu” jest ustawiona na Nie (4.3).</td></tr>
   <tr><td>Oferta odrzucona z błędem brakującego atrybutu</td><td>Amazon ustala pola wymagane dynamicznie. Otwórz profil, znajdź atrybut na liście opcjonalnej, wypełnij go, zapisz i wyślij ponownie. Zawartość feedu (11.3) pokazuje dokładnie, co zostało wysłane.</td></tr>
   <tr><td>Importowane zamówienia pokazują 0 % VAT</td><td>Wybierz „Stosuj moje reguły podatkowe PrestaShop” w sekcji 4.5.</td></tr>
-  <tr><td>Zaplanowane zadanie pokazuje „Niepowodzenie”</td><td>Komunikat w tabeli i zakładka Dzienniki podają przyczynę. Po usunięciu problemu kliknij Uruchom teraz, aby spróbować ponownie. Po powtarzających się niepowodzeniach kliknij Uruchom test (4.1).</td></tr>
+  <tr><td>Zaplanowane zadanie pokazuje „Niepowodzenie”</td><td>Komunikat w tabeli i zakładka Dzienniki podają przyczynę. Po usunięciu problemu kliknij Uruchom teraz, aby spróbować ponownie. Po powtarzających się niepowodzeniach kliknij Przetestuj połączenie (4.1).</td></tr>
   <tr><td>Nic się nie uruchamia, choć zadania są włączone</td><td>Żaden cron nie wywołuje sklepu. Sprawdź, czy linia crona istnieje w panelu hostingu albo czy sklep jest zarejestrowany w harmonogramie IntelliPresta i dostępny przez HTTPS.</td></tr>
   <tr><td>Odbite e-maile do kupujących z Amazon</td><td>Adresy przekierowujące Amazon wygasają. Włącz zanonimizowany adres e-mail (4.5).</td></tr>
 </table>

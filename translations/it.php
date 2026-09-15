@@ -53,7 +53,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_6a3953f1d547b3eae9e76fdcf3
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_37b6fcd50856c21ff9dfef3a70045c14'] = 'Le chiamate vengono inviate alla sandbox SP-API, che restituisce dati di esempio fissi. Nulla di ciò che avviene qui tocca un account venditore reale.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7cf778a07647610ab659e920ec30a78a'] = 'Ogni negozio collega un proprio account venditore Amazon. Scegli un negozio in alto nella pagina per collegarlo o per vedere la sua connessione.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_cedc0f5850f1b990a5473a1dd735f07e'] = 'Legge i tuoi ordini recenti da Amazon per mostrare che la connessione funziona ancora.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_407a320d521a25b2fcee20bd24359556'] = 'Esegui un test';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_39838db537c95bc8df810c5601601d5b'] = 'Testa la connessione';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2b3039153cfbc6e1cad43f6c74b946b6'] = 'Connesso ad Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_58141d29ad4e6f74e08209103b3a09fd'] = 'app sandbox';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4afce1dbda8853f828aeacebc51af101'] = 'app di produzione';
@@ -62,7 +62,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_83f0b8bc09ae5b941c5bb599fd
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_42ae25231906c83927831e0ef7c317ac'] = 'Disconnetti';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_86c81a7f0b647421a7a67afeacb092aa'] = 'Disconnette solo l\'ambiente attivo: l\'altro resta connesso.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_0a089b49ba525557db6aace1656619f0'] = 'Connesso con credenziali SP-API manuali';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_e7feba5b7b3018b99558ec9c3eabe3a7'] = 'Per questo ambiente è memorizzato un refresh token. Il pulsante «Connetti ad Amazon» serve solo al flusso OAuth e non viene usato in modalità manuale: usa «Esegui un test» per controllare il collegamento.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_197b49567322e65d0cc77876220404a6'] = 'Per questo ambiente è memorizzato un refresh token. Il pulsante «Connetti ad Amazon» serve solo al flusso OAuth e non viene usato in modalità manuale: usa «Testa la connessione» per controllare il collegamento.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1cad31a9caa007df11c28fd9e29895f1'] = 'Eliminare il token memorizzato per questo ambiente?';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec1057bc6517e497e3b604b2fa63f487'] = 'Non ancora connesso in questo ambiente. L\'altro ambiente è ancora connesso: tornandovi si ripristina senza dover autorizzare di nuovo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8994bb2874ea1a84a34bbd39508b5b3b'] = 'Le app sandbox non possono usare «Connetti ad Amazon»: Amazon non fornisce loro alcuna pagina di consenso (errore MD9100). Nel Solution Provider Portal apri il menu dell\'app sandbox accanto a Edit App, scegli Create Token e incolla il refresh token insieme a client ID e secret della sandbox nel pannello Credenziali SP-API manuali qui sotto, poi salva le impostazioni.';
