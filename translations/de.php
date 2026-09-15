@@ -52,7 +52,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_404c9501e255e0e85816e9a593
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6a3953f1d547b3eae9e76fdcf3bb36d0'] = 'Sandbox-Modus.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_37b6fcd50856c21ff9dfef3a70045c14'] = 'Die Aufrufe gehen an die SP-API-Sandbox, die feste Beispieldaten zurückgibt. Nichts davon berührt ein echtes Verkäuferkonto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7cf778a07647610ab659e920ec30a78a'] = 'Jeder Shop verbindet sich mit einem eigenen Amazon-Verkäuferkonto. Wählen Sie oben auf der Seite einen Shop, um ihn zu verbinden oder seine Verbindung anzusehen.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_adfd8457217a99457830c7e81add24f8'] = 'Verbindung prüfen';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_cedc0f5850f1b990a5473a1dd735f07e'] = 'Liest Ihre letzten Bestellungen bei Amazon, um zu zeigen, dass die Verbindung noch funktioniert.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_407a320d521a25b2fcee20bd24359556'] = 'Test ausführen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2b3039153cfbc6e1cad43f6c74b946b6'] = 'Mit Amazon verbunden';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_58141d29ad4e6f74e08209103b3a09fd'] = 'Sandbox-App';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4afce1dbda8853f828aeacebc51af101'] = 'Produktiv-App';
@@ -61,7 +62,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_83f0b8bc09ae5b941c5bb599fd
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_42ae25231906c83927831e0ef7c317ac'] = 'Trennen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_86c81a7f0b647421a7a67afeacb092aa'] = 'Trennt nur die aktive Umgebung — die andere bleibt verbunden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_0a089b49ba525557db6aace1656619f0'] = 'Mit manuellen SP-API-Zugangsdaten verbunden';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4670f62b40b5e8e923b179ae510de11'] = 'Für diese Umgebung ist ein Refresh-Token gespeichert. Die Schaltfläche „Mit Amazon verbinden“ gilt nur für den OAuth-Ablauf und wird im manuellen Modus nicht verwendet — prüfen Sie die Verbindung mit „Verbindung prüfen“.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_e7feba5b7b3018b99558ec9c3eabe3a7'] = 'Für diese Umgebung ist ein Refresh-Token gespeichert. Die Schaltfläche „Mit Amazon verbinden“ gilt nur für den OAuth-Ablauf und wird im manuellen Modus nicht verwendet — prüfen Sie die Verbindung mit „Test ausführen“.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1cad31a9caa007df11c28fd9e29895f1'] = 'Das gespeicherte Token für diese Umgebung löschen?';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec1057bc6517e497e3b604b2fa63f487'] = 'In dieser Umgebung noch nicht verbunden. Die andere Umgebung ist weiterhin verbunden — ein Zurückwechseln stellt sie ohne erneute Autorisierung wieder her.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8994bb2874ea1a84a34bbd39508b5b3b'] = 'Sandbox-Apps können „Mit Amazon verbinden“ nicht nutzen: Amazon stellt für sie keine Zustimmungsseite bereit (Fehler MD9100). Öffnen Sie im Solution Provider Portal das Menü der Sandbox-App neben Edit App, wählen Sie Create Token und tragen Sie das Refresh-Token zusammen mit Sandbox-Client-ID und -Secret unten in den Bereich Manuelle SP-API-Zugangsdaten ein. Danach Einstellungen speichern.';
@@ -69,6 +70,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_f76203b908ae64f857c51a01b6
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_47e89152f53db6f8f8843b6fafefef2a'] = 'Modus für manuelle Zugangsdaten: Füllen Sie unten den Bereich Manuelle SP-API-Zugangsdaten aus (Client-ID, Secret, Refresh-Token aus der Selbstautorisierung) und speichern Sie die Einstellungen. Die OAuth-Schaltfläche „Mit Amazon verbinden“ wird in diesem Modus nicht verwendet.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f23ed5ea89cb0f12c7d116283dcd29e7'] = 'Mit Amazon verbinden';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1ae2ac9796136dbcf28e591a444d69f4'] = 'Wählen Sie unten zuerst Ihren Marktplatz und klicken Sie dann auf Verbinden. Sie werden zu Amazon Seller Central geleitet, um die Verbindung zu bestätigen — es müssen keine Zugangsdaten kopiert werden.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3e99b72474b5365362e5b60a394a424a'] = 'Klicken Sie auf Einstellungen speichern, um zur Sandbox zu wechseln.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_da0648a716cce5774377bbb3d9dbf20d'] = 'Klicken Sie auf Einstellungen speichern, um zur Produktivumgebung zu wechseln.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_0ba29c6a1afacf586b03a26162c72274'] = 'Umgebung';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_594b8db77dc92437359ec44b993e0567'] = 'Produktiv-App — echte Daten, echter Verkäufer';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_66caf9de03a0c18af1e4697f07d1c531'] = 'Sandbox-App — vorgefertigte Daten, Testverkäufer';

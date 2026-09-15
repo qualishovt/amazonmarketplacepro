@@ -143,7 +143,7 @@
   <li><b>Installieren Sie das Modul</b> unter Module &gt; Modul-Verwaltung und klicken Sie dann auf Einstellungen. Alle Ansichten des Moduls liegen auf dieser einen Seite, gruppiert in einer Seitenleiste.</li>
   <li><b>Wählen Sie Ihren Marktplatz</b> unter Einstellungen &gt; Verbindung im Bereich Marktplatz und klicken Sie auf <span class="btn">Einstellungen speichern</span>. Der Marktplatz bestimmt die Amazon-Website, die Währung und die Sprache der Angebote.</li>
   <li><b>Verbinden.</b> Klicken Sie auf <span class="btn">Mit Amazon verbinden</span>. Sie werden zu Seller Central geleitet, um die Verbindung zu bestätigen, und danach zum Shop zurückgeführt. Es müssen keine Zugangsdaten kopiert werden. Sie können die Autorisierung jederzeit in Seller Central widerrufen oder im Modul auf <span class="btn">Trennen</span> klicken.</li>
-  <li><b>Verbindung prüfen.</b> Klicken Sie im grünen Banner auf <span class="btn">Verbindung prüfen</span>. Die Prüfung liest Ihre letzten Bestellungen und sagt in einfachen Worten, ob alles funktioniert. Abschnitt 13 erklärt die möglichen Ergebnisse.</li>
+  <li><b>Verbindung prüfen.</b> Klicken Sie im grünen Banner auf <span class="btn">Test ausführen</span>. Die Prüfung liest Ihre letzten Bestellungen und sagt in einfachen Worten, ob alles funktioniert. Abschnitt 13 erklärt die möglichen Ergebnisse.</li>
   <li><b>Automatisierung einschalten.</b> Tragen Sie unter System &gt; Automatisierung entweder die angezeigte Cron-Zeile im Kontrollpanel Ihres Hostings ein oder registrieren Sie den Shop beim IntelliPresta-Scheduler. Schalten Sie dann in der Tabelle darunter die Aufgaben ein, die Sie benötigen. Abschnitt 11 behandelt das im Detail.</li>
 </ol>
 <p>Danach ist die übliche Reihenfolge: die Artikelnummern im Katalog prüfen (11.3), für jede Produktfamilie ein Angebotsprofil anlegen (5.4), den zweistufigen Abgleich unter Katalog &gt; Produkte ausführen (5.1) und die geplanten Aufgaben alles aktuell halten lassen.</p>
@@ -175,7 +175,7 @@
 <h2>4.1 Verbindung</h2>
 <h3>Amazon-Verbindung</h3>
 <p>Zeigt, ob der Shop verbunden ist und mit welchem Verkäufer. <span class="btn">Mit Amazon verbinden</span> startet den Bestätigungsablauf in Seller Central; <span class="btn">Trennen</span> löscht die gespeicherte Autorisierung. Wählen Sie den Marktplatz vor dem Verbinden, denn die Zustimmungsseite hängt von ihm ab.</p>
-<p>Das grüne Banner bedeutet nur, dass eine Verbindung gespeichert ist. <span class="btn">Verbindung prüfen</span> im Banner zeigt, dass sie noch funktioniert: Die Prüfung verbindet sich mit Amazon, liest Ihre letzten Bestellungen und sagt in einfachen Worten, dass alles funktioniert oder was zu tun ist. Führen Sie sie nach dem Verbinden aus und immer dann, wenn eine Synchronisierung einen Autorisierungsfehler meldet. Abschnitt 13 listet die Ergebnisse auf.</p>
+<p>Das grüne Banner bedeutet nur, dass eine Verbindung gespeichert ist. <span class="btn">Test ausführen</span> im Banner zeigt, dass sie noch funktioniert: Die Prüfung verbindet sich mit Amazon, liest Ihre letzten Bestellungen und sagt in einfachen Worten, dass alles funktioniert oder was zu tun ist. Führen Sie sie nach dem Verbinden aus und immer dann, wenn eine Synchronisierung einen Autorisierungsfehler meldet. Abschnitt 13 listet die Ergebnisse auf.</p>
 <h3>Marktplatz</h3>
 <p><b>Amazon-Marktplatz.</b> Die Amazon-Website, auf der dieser Shop verkauft. Weitere Marktplätze fügen Sie unter Fulfillment &gt; Mehrere Konten hinzu (Abschnitt 8).</p>
 
@@ -503,7 +503,7 @@
 
 <!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
 <h1>13. Fehlerbehebung</h1>
-<h3>Das Ergebnis von „Verbindung prüfen“ lesen</h3>
+<h3>Das Ergebnis von „Test ausführen“ lesen</h3>
 <p>Das Ergebnis erscheint unter dem grünen Banner in Einstellungen &gt; Verbindung. Schlägt die Prüfung fehl, werden die technischen Details zusätzlich auf der Registerkarte Protokolle (11.4) festgehalten; der Support wird danach fragen.</p>
 <table>
   <tr><th style="width:38%">Ergebnis</th><th>Bedeutung und was zu tun ist</th></tr>
@@ -520,7 +520,7 @@
   <tr><td>Übertragung angenommen, aber bei Amazon erscheint nur das Angebot ohne Produktdaten</td><td>Die Kategorie des Produkts hat weder ein Profil noch eine Kategoriezuordnung, oder „Vollständige Produktdaten senden“ steht auf „Nein“ (4.3).</td></tr>
   <tr><td>Angebot wegen eines fehlenden Attributs abgelehnt</td><td>Amazon legt Pflichtfelder dynamisch fest. Öffnen Sie das Profil, suchen Sie das Attribut in der optionalen Liste, füllen Sie es aus, speichern Sie und senden Sie erneut. Der Feed-Inhalt (11.3) zeigt genau, was gesendet wurde.</td></tr>
   <tr><td>Importierte Bestellungen zeigen 0 % MwSt.</td><td>Wählen Sie in 4.5 „Meine PrestaShop-Steuerregeln anwenden“.</td></tr>
-  <tr><td>Eine geplante Aufgabe zeigt „Fehlgeschlagen“</td><td>Die Meldungsspalte und die Registerkarte Protokolle nennen den Grund. Klicken Sie nach der Behebung auf Jetzt ausführen, um es erneut zu versuchen. Nach wiederholten Fehlschlägen klicken Sie auf Verbindung prüfen (4.1).</td></tr>
+  <tr><td>Eine geplante Aufgabe zeigt „Fehlgeschlagen“</td><td>Die Meldungsspalte und die Registerkarte Protokolle nennen den Grund. Klicken Sie nach der Behebung auf Jetzt ausführen, um es erneut zu versuchen. Nach wiederholten Fehlschlägen klicken Sie auf Test ausführen (4.1).</td></tr>
   <tr><td>Nichts läuft, obwohl Aufgaben eingeschaltet sind</td><td>Kein Cron ruft den Shop auf. Prüfen Sie, ob die Cron-Zeile in Ihrem Hosting-Panel eingetragen ist oder ob der Shop beim IntelliPresta-Scheduler registriert und über HTTPS erreichbar ist.</td></tr>
   <tr><td>Unzustellbare E-Mails an Amazon-Käufer</td><td>Amazon-Relay-Adressen laufen ab. Aktivieren Sie die anonymisierte E-Mail-Adresse (4.5).</td></tr>
 </table>

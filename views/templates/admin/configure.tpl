@@ -200,22 +200,28 @@
             <div class="alert alert-danger">{l s='Amazon connection failed:' mod='amazonmarketplacepro'} {$mkpro_oauth_error|escape:'htmlall':'UTF-8'}</div>
         {/if}
 
-        {if $mkpro_environment == 'sandbox'}
-            <div class="alert alert-warning">
-                <i class="icon-warning"></i> <strong>{l s='Sandbox mode.' mod='amazonmarketplacepro'}</strong>
-                {l s='Calls go to the SP-API sandbox, which returns fixed sample data. Nothing here touches a live seller account.' mod='amazonmarketplacepro'}
-            </div>
-        {/if}
+        {* Elements marked data-mkpro-env follow the Environment select as soon
+           as it changes, before Save Settings. *}
+        <div class="alert alert-warning" data-mkpro-env="sandbox"{if $mkpro_environment != 'sandbox'} style="display:none;"{/if}>
+            <i class="icon-warning"></i> <strong>{l s='Sandbox mode.' mod='amazonmarketplacepro'}</strong>
+            {l s='Calls go to the SP-API sandbox, which returns fixed sample data. Nothing here touches a live seller account.' mod='amazonmarketplacepro'}
+        </div>
 
         {if $mkpro_all_shops}
             <div class="alert alert-info">
                 <i class="icon-info-circle"></i>
                 {l s='Each shop connects its own Amazon seller account. Choose a shop at the top of the page to connect it or to see its connection.' mod='amazonmarketplacepro'}
             </div>
-        {elseif $mkpro_connected && $mkpro_auth_mode != 'manual'}
+        {else}
+        {* The connection of the saved environment. While the select shows the
+           other environment it is hidden, and #mkpro-conn-pending says what
+           the switch needs. *}
+        <div id="mkpro-conn-saved">
+        {if $mkpro_connected && $mkpro_auth_mode != 'manual'}
             <div class="alert alert-success">
-                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;">
-                    <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
+                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;"
+                        title="{l s='Reads your recent orders from Amazon to show that the connection still works.' mod='amazonmarketplacepro'}">
+                    <i class="icon-refresh"></i> {l s='Run a test' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected to Amazon' mod='amazonmarketplacepro'}
                 {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
@@ -235,13 +241,14 @@
             </div>
         {elseif $mkpro_manual_connected}
             <div class="alert alert-success">
-                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;">
-                    <i class="icon-refresh"></i> {l s='Check connection' mod='amazonmarketplacepro'}
+                <button type="button" id="test-amazon-connection" class="btn btn-default btn-sm" style="float:right; margin:-5px 0 0 10px;"
+                        title="{l s='Reads your recent orders from Amazon to show that the connection still works.' mod='amazonmarketplacepro'}">
+                    <i class="icon-refresh"></i> {l s='Run a test' mod='amazonmarketplacepro'}
                 </button>
                 <i class="icon-check"></i> {l s='Connected with manual SP-API credentials' mod='amazonmarketplacepro'}
                 {if $mkpro_environment == 'sandbox'} ({l s='sandbox app' mod='amazonmarketplacepro'}){elseif $mkpro_dev_mode} ({l s='production app' mod='amazonmarketplacepro'}){/if}
                 {if $mkpro_seller_id} — {l s='Seller' mod='amazonmarketplacepro'} <strong>{$mkpro_seller_id|escape:'htmlall':'UTF-8'}</strong>{/if}
-                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Check connection" to verify the link.' mod='amazonmarketplacepro'}</small>
+                <br><small>{l s='A refresh token is stored for this environment. The "Connect to Amazon" button is only for the OAuth flow and is not used in manual mode — use "Run a test" to verify the link.' mod='amazonmarketplacepro'}</small>
             </div>
             <div id="amazon-connection-result" style="display:none; white-space:pre-line;"></div>
             <div class="form-group">
@@ -287,20 +294,42 @@
             </div>
             {/if}
         {/if}
+        </div>
+        <div id="mkpro-conn-pending" style="display:none;">
+            {if $mkpro_token_stored.sandbox}
+                <div class="alert alert-info" data-mkpro-env="sandbox">
+                    <i class="icon-info-circle"></i> {l s='Click Save Settings to switch to Sandbox.' mod='amazonmarketplacepro'}
+                </div>
+            {else}
+                <div class="alert alert-warning" data-mkpro-env="sandbox">
+                    <i class="icon-info-circle"></i>
+                    {if $mkpro_dev_mode}
+                        {l s='Sandbox apps cannot use "Connect to Amazon": Amazon gives them no consent page (error MD9100). In the Solution Provider Portal, open the sandbox app\'s menu next to Edit App, choose Create Token, and paste the refresh token with the sandbox client ID and secret into the Manual SP-API Credentials panel below, then Save Settings.' mod='amazonmarketplacepro'}
+                    {else}
+                        {l s='The sandbox does not use "Connect to Amazon". Enter the client ID, client secret and refresh token of a sandbox app in the Manual SP-API Credentials panel below, then click Save Settings.' mod='amazonmarketplacepro'}
+                    {/if}
+                </div>
+            {/if}
+            <div class="alert alert-info" data-mkpro-env="production">
+                <i class="icon-info-circle"></i> {l s='Click Save Settings to switch to Production.' mod='amazonmarketplacepro'}
+            </div>
+        </div>
+        {/if}
 
         {* Open to every merchant: reviewers and merchants without a seller
            account test against the sandbox. Installs start on production. *}
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='Environment' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
-                <select name="mkpro_environment" class="form-control">
+                <select name="mkpro_environment" class="form-control" data-saved-env="{$mkpro_environment|escape:'htmlall':'UTF-8'}">
                     <option value="production"{if $mkpro_environment == 'production'} selected="selected"{/if}>{l s='Production app — live data, real seller' mod='amazonmarketplacepro'}</option>
                     <option value="sandbox"{if $mkpro_environment == 'sandbox'} selected="selected"{/if}>{l s='Sandbox app — canned data, test seller' mod='amazonmarketplacepro'}</option>
                 </select>
                 <p class="help-block">
                     {if $mkpro_dev_mode}
                         {l s='Switches the whole stack at once: which registered app asks for consent, which SP-API host is called, and which stored token is used. The two connections are kept separately, so switching back does not require re-authorizing.' mod='amazonmarketplacepro'}
-                        <br>{l s='Active app id:' mod='amazonmarketplacepro'} <code>{$mkpro_lwa_app_id|escape:'htmlall':'UTF-8'}</code>
+                        <br>{l s='Active app id:' mod='amazonmarketplacepro'}
+                        {foreach from=$mkpro_lwa_app_ids key=mkpro_env item=mkpro_app_id}<code data-mkpro-env="{$mkpro_env|escape:'htmlall':'UTF-8'}"{if $mkpro_env != $mkpro_environment} style="display:none;"{/if}>{$mkpro_app_id|escape:'htmlall':'UTF-8'}</code>{/foreach}
                     {else}
                         {l s='Keep Production to sell on Amazon. Sandbox is Amazon\'s test environment: it returns sample data and never touches a real seller account. Each environment keeps its own connection, so switching back does not require connecting again.' mod='amazonmarketplacepro'}
                     {/if}
@@ -338,12 +367,19 @@
         {/if}
     </div>
     {* ── Amazon SP-API Credentials (manual mode) ──
-       Hidden from merchants: with Connect they never need these, and a
-       field for a secret invites someone to paste one. Still shown to an
+       Merchants on production never see it: with Connect they never need
+       these, and a field for a secret invites someone to paste one. The
+       sandbox needs them, so the panel opens as soon as Sandbox is selected
+       and closes again on Production; its fields are disabled while hidden,
+       so they are not saved. Always shown in developer mode and to an
        install already on manual mode, which would otherwise lose access to
        its own working configuration. *}
-    {if !$mkpro_all_shops && ($mkpro_dev_mode || $mkpro_auth_mode == 'manual')}
-    <div class="panel">
+    {if !$mkpro_all_shops}
+    {if $mkpro_dev_mode || $mkpro_auth_mode_stored == 'manual'}
+    <div class="panel" id="mkpro-creds-panel">
+    {else}
+    <div class="panel" id="mkpro-creds-panel" data-mkpro-sandbox-only="1"{if $mkpro_environment != 'sandbox'} style="display:none;"{/if}>
+    {/if}
         <div class="panel-heading"><i class="icon-key"></i> {l s='Manual SP-API Credentials (advanced — not needed with Connect)' mod='amazonmarketplacepro'}</div>
         <div class="alert alert-warning">
             <i class="icon-warning"></i>
@@ -353,9 +389,11 @@
         {if $mkpro_dev_mode}
             <p class="help-block">
                 {l s='Active environment:' mod='amazonmarketplacepro'}
-                <strong>{if $mkpro_environment == 'sandbox'}{l s='Sandbox app' mod='amazonmarketplacepro'}{else}{l s='Production app' mod='amazonmarketplacepro'}{/if}</strong>
+                <strong data-mkpro-env="sandbox"{if $mkpro_environment != 'sandbox'} style="display:none;"{/if}>{l s='Sandbox app' mod='amazonmarketplacepro'}</strong>
+                <strong data-mkpro-env="production"{if $mkpro_environment == 'sandbox'} style="display:none;"{/if}>{l s='Production app' mod='amazonmarketplacepro'}</strong>
                 — {l s='the credentials here must belong to that app.' mod='amazonmarketplacepro'}
-                {l s='Active app id:' mod='amazonmarketplacepro'} <code>{$mkpro_lwa_app_id|escape:'htmlall':'UTF-8'}</code>
+                {l s='Active app id:' mod='amazonmarketplacepro'}
+                {foreach from=$mkpro_lwa_app_ids key=mkpro_env item=mkpro_app_id}<code data-mkpro-env="{$mkpro_env|escape:'htmlall':'UTF-8'}"{if $mkpro_env != $mkpro_environment} style="display:none;"{/if}>{$mkpro_app_id|escape:'htmlall':'UTF-8'}</code>{/foreach}
             </p>
         {/if}
         <div class="form-group">
@@ -379,11 +417,17 @@
         <div class="form-group">
             <label class="control-label col-lg-3">{l s='LWA Refresh Token' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
+                {* Each environment has its own token slot; the placeholder and
+                   note follow the Environment select. *}
                 <input type="password" name="mkpro_refresh_token" value="" class="form-control" autocomplete="new-password"
-                       placeholder="{if $mkpro_refresh_token}{l s='Stored — leave empty to keep the current token' mod='amazonmarketplacepro'}{else}Atzr|...{/if}" />
+                       data-stored-sandbox="{if $mkpro_token_stored.sandbox}1{else}0{/if}"
+                       data-stored-production="{if $mkpro_token_stored.production}1{else}0{/if}"
+                       data-ph-stored="{l s='Stored — leave empty to keep the current token' mod='amazonmarketplacepro'}"
+                       data-ph-empty="Atzr|..."
+                       placeholder="{if $mkpro_token_stored[$mkpro_environment]}{l s='Stored — leave empty to keep the current token' mod='amazonmarketplacepro'}{else}Atzr|...{/if}" />
                 <p class="help-block">
                     {l s='Generated when you authorize your app in Seller Central.' mod='amazonmarketplacepro'}
-                    {if $mkpro_refresh_token} {l s='A token is stored for this environment; enter a new one only to replace it (use Disconnect to clear it).' mod='amazonmarketplacepro'}{/if}
+                    <span id="mkpro-token-stored-note"{if !$mkpro_token_stored[$mkpro_environment]} style="display:none;"{/if}>{l s='A token is stored for this environment; enter a new one only to replace it (use Disconnect to clear it).' mod='amazonmarketplacepro'}</span>
                 </p>
             </div>
         </div>
@@ -4736,19 +4780,49 @@
         });
     })();
 
-    /* ──────── Beta authorization visibility (production app only) ──────── */
+    /* ──────── Environment select: show what the selected environment needs ──────── */
     (function () {
         var envSel = document.querySelector('select[name="mkpro_environment"]');
+        if (!envSel) return;
+        var savedEnv = envSel.getAttribute('data-saved-env');
         var betaGroup = document.getElementById('mkpro-beta-group');
         var authGroup = document.getElementById('mkpro-authmode-group');
-        if (!envSel || !betaGroup) return;
+        var saved = document.getElementById('mkpro-conn-saved');
+        var pending = document.getElementById('mkpro-conn-pending');
+        var creds = document.getElementById('mkpro-creds-panel');
+        var token = document.querySelector('input[name="mkpro_refresh_token"]');
+        var tokenNote = document.getElementById('mkpro-token-stored-note');
 
         function toggle() {
+            var env = envSel.value;
+            var sandbox = (env === 'sandbox');
+            var parts = document.querySelectorAll('[data-mkpro-env]');
+            for (var i = 0; i < parts.length; i++) {
+                parts[i].style.display = (parts[i].getAttribute('data-mkpro-env') === env) ? '' : 'none';
+            }
             // Sandbox connects always send version=beta, so the choice only
             // exists for the production app.
-            betaGroup.style.display = (envSel.value === 'sandbox') ? 'none' : '';
+            if (betaGroup) betaGroup.style.display = sandbox ? 'none' : '';
             // Sandbox is always manual, so the mode selector has nothing to offer there.
-            if (authGroup) authGroup.style.display = (envSel.value === 'sandbox') ? 'none' : '';
+            if (authGroup) authGroup.style.display = sandbox ? 'none' : '';
+            // The banner and its buttons act on the saved environment, so they
+            // wait for Save Settings.
+            if (saved && pending) {
+                saved.style.display = (env === savedEnv) ? '' : 'none';
+                pending.style.display = (env === savedEnv) ? 'none' : '';
+            }
+            if (creds && creds.getAttribute('data-mkpro-sandbox-only')) {
+                creds.style.display = sandbox ? '' : 'none';
+                var inputs = creds.querySelectorAll('input');
+                for (var j = 0; j < inputs.length; j++) {
+                    inputs[j].disabled = !sandbox;
+                }
+            }
+            if (token) {
+                var stored = (token.getAttribute('data-stored-' + env) === '1');
+                token.placeholder = token.getAttribute(stored ? 'data-ph-stored' : 'data-ph-empty');
+                if (tokenNote) tokenNote.style.display = stored ? '' : 'none';
+            }
         }
         envSel.addEventListener('change', toggle);
         toggle();

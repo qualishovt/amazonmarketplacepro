@@ -741,7 +741,12 @@ class AmazonMarketplacePro extends Module
             'mkpro_client_id' => AmzproShop::get('AMZPRO_CLIENT_ID'),
             // Only whether one is stored: the secrets themselves never reach the page.
             'mkpro_client_secret' => (string) AmzproShop::get('AMZPRO_CLIENT_SECRET') !== '',
-            'mkpro_refresh_token' => AmazonSpApiClient::storedRefreshToken() !== '',
+            // Per environment, without the sandbox's fallback to the production
+            // token: the credentials panel follows the Environment select.
+            'mkpro_token_stored' => [
+                'production' => (string) AmzproShop::get('AMZPRO_REFRESH_TOKEN') !== '',
+                'sandbox' => (string) AmzproShop::get('AMZPRO_REFRESH_TOKEN_SANDBOX') !== '',
+            ],
             'mkpro_seller_id' => AmzproShop::get('AMZPRO_SELLER_ID'),
             'mkpro_marketplace_id' => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
             'mkpro_environment' => AmazonSpApiClient::environment(),
@@ -771,7 +776,10 @@ class AmazonMarketplacePro extends Module
             'mkpro_auth_mode' => AmazonSpApiClient::authMode(),
             // What the select shows: the stored choice, not the sandbox override.
             'mkpro_auth_mode_stored' => AmzproShop::get('AMZPRO_AUTH_MODE'),
-            'mkpro_lwa_app_id' => AmazonSpApiClient::lwaAppId(),
+            'mkpro_lwa_app_ids' => [
+                'production' => AmazonSpApiClient::lwaAppId(false),
+                'sandbox' => AmazonSpApiClient::lwaAppId(true),
+            ],
             'mkpro_relay_url' => AmzproShop::get('AMZPRO_RELAY_URL'),
             'mkpro_oauth_beta' => AmazonSpApiClient::oauthBeta(),
             'mkpro_connected' => (AmazonSpApiClient::storedRefreshToken() != ''),
@@ -785,9 +793,11 @@ class AmazonMarketplacePro extends Module
                     : AmazonSpApiClient::storedRefreshToken() != '')),
             // Sandbox and production hold separate tokens; knowing the inactive
             // one is connected lets the UI promise that switching back is free.
-            'mkpro_other_env_connected' => (AmazonSpApiClient::storedRefreshToken(
-                !AmazonSpApiClient::isSandboxEnv()
-            ) != ''),
+            // Its own slot only: the sandbox is always manual, where the
+            // fallback to the production token does not connect it.
+            'mkpro_other_env_connected' => (string) AmzproShop::get(
+                AmazonSpApiClient::refreshTokenKey(!AmazonSpApiClient::isSandboxEnv())
+            ) !== '',
             'mkpro_selling_partner_id' => AmzproShop::get('AMZPRO_SELLING_PARTNER_ID'),
             'mkpro_oauth_error' => Tools::getValue('mkpro_oauth_error', ''),
 
@@ -1141,10 +1151,13 @@ class AmazonMarketplacePro extends Module
      */
     private function saveSettings()
     {
-        // Env-aware, matching what the form displayed. Resolved before the
-        // new environment is written below, so it targets the slot the
-        // merchant was actually looking at.
-        $tokenKey = AmazonSpApiClient::refreshTokenKey();
+        // The slot of the environment the form was showing. The credentials
+        // panel follows the Environment select before a save, so a sandbox
+        // token entered while switching to Sandbox belongs to the sandbox
+        // slot, never over the production connection.
+        $tokenKey = Tools::getIsset('mkpro_environment')
+            ? AmazonSpApiClient::refreshTokenKey(Tools::getValue('mkpro_environment') === 'sandbox')
+            : AmazonSpApiClient::refreshTokenKey();
         $fields = $this->settingsFields($tokenKey);
         $errors = [];
         $needShop = AmzproShop::requireShop();
@@ -2554,7 +2567,7 @@ class AmazonMarketplacePro extends Module
     /* ─────────────────── Feature: Connection Test ─────────────────── */
 
     /**
-     * "Check connection" in the Connected banner. The banner only says a
+     * "Run a test" in the Connected banner. The banner only says a
      * token is stored; this gets an access token and reads the last week's
      * orders, which proves the stored connection still works.
      *

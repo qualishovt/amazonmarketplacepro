@@ -52,7 +52,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_404c9501e255e0e85816e9a593
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6a3953f1d547b3eae9e76fdcf3bb36d0'] = 'Mode bac à sable.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_37b6fcd50856c21ff9dfef3a70045c14'] = 'Les appels partent vers le bac à sable SP-API, qui renvoie des données d\'exemple figées. Rien ici ne touche un compte vendeur réel.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7cf778a07647610ab659e920ec30a78a'] = 'Chaque boutique connecte son propre compte vendeur Amazon. Choisissez une boutique en haut de la page pour la connecter ou pour voir sa connexion.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_adfd8457217a99457830c7e81add24f8'] = 'Vérifier la connexion';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_cedc0f5850f1b990a5473a1dd735f07e'] = 'Lit vos commandes récentes sur Amazon pour montrer que la connexion fonctionne toujours.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_407a320d521a25b2fcee20bd24359556'] = 'Lancer un test';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2b3039153cfbc6e1cad43f6c74b946b6'] = 'Connecté à Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_58141d29ad4e6f74e08209103b3a09fd'] = 'application bac à sable';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4afce1dbda8853f828aeacebc51af101'] = 'application de production';
@@ -61,7 +62,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_83f0b8bc09ae5b941c5bb599fd
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_42ae25231906c83927831e0ef7c317ac'] = 'Déconnecter';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_86c81a7f0b647421a7a67afeacb092aa'] = 'Déconnecte uniquement l\'environnement actif — l\'autre reste connecté.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_0a089b49ba525557db6aace1656619f0'] = 'Connecté avec des identifiants SP-API manuels';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4670f62b40b5e8e923b179ae510de11'] = 'Un jeton de rafraîchissement est enregistré pour cet environnement. Le bouton « Se connecter à Amazon » ne sert qu\'au parcours OAuth et n\'est pas utilisé en mode manuel — utilisez « Vérifier la connexion » pour vérifier le lien.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_e7feba5b7b3018b99558ec9c3eabe3a7'] = 'Un jeton de rafraîchissement est enregistré pour cet environnement. Le bouton « Se connecter à Amazon » ne sert qu\'au parcours OAuth et n\'est pas utilisé en mode manuel — utilisez « Lancer un test » pour vérifier le lien.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1cad31a9caa007df11c28fd9e29895f1'] = 'Effacer le jeton enregistré pour cet environnement ?';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec1057bc6517e497e3b604b2fa63f487'] = 'Pas encore connecté dans cet environnement. L\'autre environnement reste connecté — y revenir le rétablit sans nouvelle autorisation.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8994bb2874ea1a84a34bbd39508b5b3b'] = 'Les applications bac à sable ne peuvent pas utiliser « Se connecter à Amazon » : Amazon ne leur fournit aucune page de consentement (erreur MD9100). Dans le Solution Provider Portal, ouvrez le menu de l\'application bac à sable, à côté de Edit App, choisissez Create Token, puis collez le jeton de rafraîchissement avec l\'identifiant et le secret client du bac à sable dans le bloc Identifiants SP-API manuels ci-dessous, et enregistrez les paramètres.';
@@ -69,6 +70,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_f76203b908ae64f857c51a01b6
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_47e89152f53db6f8f8843b6fafefef2a'] = 'Mode identifiants manuels : renseignez le bloc Identifiants SP-API manuels ci-dessous (identifiant client, secret, jeton de rafraîchissement issu de l\'auto-autorisation) puis enregistrez les paramètres. Le bouton OAuth « Se connecter à Amazon » n\'est pas utilisé dans ce mode.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f23ed5ea89cb0f12c7d116283dcd29e7'] = 'Se connecter à Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1ae2ac9796136dbcf28e591a444d69f4'] = 'Choisissez d\'abord votre place de marché ci-dessous, puis cliquez sur Se connecter. Vous serez redirigé vers Amazon Seller Central pour approuver la connexion — aucun identifiant à recopier.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3e99b72474b5365362e5b60a394a424a'] = 'Cliquez sur Enregistrer les paramètres pour passer au bac à sable.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_da0648a716cce5774377bbb3d9dbf20d'] = 'Cliquez sur Enregistrer les paramètres pour passer en Production.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_0ba29c6a1afacf586b03a26162c72274'] = 'Environnement';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_594b8db77dc92437359ec44b993e0567'] = 'Application de production — données réelles, vendeur réel';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_66caf9de03a0c18af1e4697f07d1c531'] = 'Application bac à sable — données figées, vendeur de test';

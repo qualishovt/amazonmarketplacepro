@@ -17,6 +17,10 @@
  * Strings 1-2: the environment selector opened to every merchant, so that
  * PrestaShop's reviewers and merchants without a seller account can test
  * against the sandbox.
+ *
+ * Strings 3-6: "Check connection" renamed "Run a test", since the banner
+ * beside it already says the shop is connected; and the notes shown while
+ * the Environment select differs from the saved environment.
  */
 return array(
 
@@ -33,6 +37,34 @@ return array(
     'de' => 'Behalten Sie Produktiv bei, um auf Amazon zu verkaufen. Die Sandbox ist die Testumgebung von Amazon: Sie liefert Beispieldaten und berührt nie ein echtes Verkäuferkonto. Jede Umgebung behält ihre eigene Verbindung, ein Zurückwechseln erfordert also keine neue Verbindung.',
     'it' => 'Mantieni Produzione per vendere su Amazon. La sandbox è l\'ambiente di test di Amazon: restituisce dati di esempio e non tocca mai un vero account venditore. Ogni ambiente conserva la propria connessione, quindi tornare indietro non richiede di connettersi di nuovo.',
     'pl' => 'Pozostaw Produkcję, aby sprzedawać na Amazon. Sandbox to środowisko testowe Amazon: zwraca przykładowe dane i nigdy nie dotyka prawdziwego konta sprzedawcy. Każde środowisko zachowuje własne połączenie, więc powrót nie wymaga ponownego łączenia.',
+),
+'Run a test' => array(
+    'fr' => 'Lancer un test',
+    'es' => 'Hacer una prueba',
+    'de' => 'Test ausführen',
+    'it' => 'Esegui un test',
+    'pl' => 'Uruchom test',
+),
+'Reads your recent orders from Amazon to show that the connection still works.' => array(
+    'fr' => 'Lit vos commandes récentes sur Amazon pour montrer que la connexion fonctionne toujours.',
+    'es' => 'Lee tus pedidos recientes de Amazon para mostrar que la conexión sigue funcionando.',
+    'de' => 'Liest Ihre letzten Bestellungen bei Amazon, um zu zeigen, dass die Verbindung noch funktioniert.',
+    'it' => 'Legge i tuoi ordini recenti da Amazon per mostrare che la connessione funziona ancora.',
+    'pl' => 'Odczytuje Twoje ostatnie zamówienia z Amazon, aby pokazać, że połączenie nadal działa.',
+),
+'Click Save Settings to switch to Sandbox.' => array(
+    'fr' => 'Cliquez sur Enregistrer les paramètres pour passer au bac à sable.',
+    'es' => 'Pulsa Guardar los ajustes para cambiar al sandbox.',
+    'de' => 'Klicken Sie auf Einstellungen speichern, um zur Sandbox zu wechseln.',
+    'it' => 'Fai clic su Salva le impostazioni per passare alla sandbox.',
+    'pl' => 'Kliknij Zapisz ustawienia, aby przełączyć się na Sandbox.',
+),
+'Click Save Settings to switch to Production.' => array(
+    'fr' => 'Cliquez sur Enregistrer les paramètres pour passer en Production.',
+    'es' => 'Pulsa Guardar los ajustes para cambiar a Producción.',
+    'de' => 'Klicken Sie auf Einstellungen speichern, um zur Produktivumgebung zu wechseln.',
+    'it' => 'Fai clic su Salva le impostazioni per passare a Produzione.',
+    'pl' => 'Kliknij Zapisz ustawienia, aby przełączyć się na Produkcję.',
 ),
 
 );

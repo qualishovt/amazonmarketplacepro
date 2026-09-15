@@ -143,7 +143,7 @@
   <li><b>Instala el módulo</b> desde Módulos &gt; Gestor de módulos y abre Configurar. Todas las pantallas del módulo están en esa única página, agrupadas en una barra lateral.</li>
   <li><b>Elige tu marketplace</b> en Ajustes &gt; Conexión, en el panel Marketplace, y pulsa <span class="btn">Guardar los ajustes</span>. El marketplace determina el sitio de Amazon, la moneda y el idioma de los anuncios.</li>
   <li><b>Conecta.</b> Pulsa <span class="btn">Conectar con Amazon</span>. Te llevaremos a Seller Central para que apruebes la conexión y después volverás a la tienda. No hay credenciales que copiar. Puedes revocar la autorización desde Seller Central en cualquier momento, o pulsar <span class="btn">Desconectar</span> en el módulo.</li>
-  <li><b>Comprueba la conexión.</b> Pulsa <span class="btn">Comprobar la conexión</span> en el aviso verde. Lee tus pedidos recientes y te dice con palabras claras si todo funciona. La sección 13 explica los posibles resultados.</li>
+  <li><b>Comprueba la conexión.</b> Pulsa <span class="btn">Hacer una prueba</span> en el aviso verde. Lee tus pedidos recientes y te dice con palabras claras si todo funciona. La sección 13 explica los posibles resultados.</li>
   <li><b>Activa la automatización.</b> En Sistema &gt; Automatización, añade la línea de cron que se muestra en el panel de control de tu alojamiento o regístrate en el programador de IntelliPresta. Después activa las tareas que necesites en la tabla de debajo. La sección 11 lo explica en detalle.</li>
 </ol>
 <p>A partir de ahí, el orden de trabajo habitual es: revisar las referencias de tu catálogo (11.3), crear un perfil de anuncio para cada familia de productos (5.4), ejecutar la sincronización en dos pasos en Catálogo &gt; Productos (5.1) y dejar que las tareas programadas lo mantengan todo al día.</p>
@@ -175,7 +175,7 @@
 <h2>4.1 Conexión</h2>
 <h3>Conexión con Amazon</h3>
 <p>Muestra si la tienda está conectada y con qué vendedor. <span class="btn">Conectar con Amazon</span> inicia el proceso de aprobación en Seller Central; <span class="btn">Desconectar</span> borra la autorización guardada. Elige el marketplace antes de conectar, ya que la página de consentimiento depende de él.</p>
-<p>El aviso verde solo indica que hay una conexión guardada. <span class="btn">Comprobar la conexión</span>, dentro del aviso, demuestra que sigue funcionando: se conecta con Amazon, lee tus pedidos recientes y te dice con palabras claras que todo funciona o qué debes hacer. Úsalo después de conectar o cuando una sincronización informe de un error de autorización. La sección 13 enumera los resultados.</p>
+<p>El aviso verde solo indica que hay una conexión guardada. <span class="btn">Hacer una prueba</span>, dentro del aviso, demuestra que sigue funcionando: se conecta con Amazon, lee tus pedidos recientes y te dice con palabras claras que todo funciona o qué debes hacer. Úsalo después de conectar o cuando una sincronización informe de un error de autorización. La sección 13 enumera los resultados.</p>
 <h3>Marketplace</h3>
 <p><b>Marketplace de Amazon.</b> El sitio de Amazon en el que vende esta tienda. Los marketplaces adicionales se añaden en Logística &gt; Multicuenta (sección 8).</p>
 
@@ -503,7 +503,7 @@
 
 <!-- ───────────────────────── 13 TROUBLESHOOTING ───────────────────────── -->
 <h1>13. Solución de problemas</h1>
-<h3>Resultados de Comprobar la conexión</h3>
+<h3>Resultados de la prueba</h3>
 <p>El resultado aparece bajo el aviso verde en Ajustes &gt; Conexión. Cuando la comprobación falla, los detalles técnicos también se escriben en la pestaña Registros (11.4); el soporte te los pedirá.</p>
 <table>
   <tr><th style="width:38%">Resultado</th><th>Significado y qué hacer</th></tr>
@@ -520,7 +520,7 @@
   <tr><td>Envío aceptado, pero el anuncio en Amazon es solo de oferta</td><td>La categoría del producto no tiene perfil ni correspondencia de categoría, o «Enviar todos los datos del producto» está en No (4.3).</td></tr>
   <tr><td>Anuncio rechazado con un error por falta de un atributo</td><td>Amazon decide los campos obligatorios de forma dinámica. Abre el perfil, busca el atributo en la lista opcional, rellénalo, guarda y vuelve a enviar. El contenido del feed (11.3) muestra exactamente lo que se envió.</td></tr>
   <tr><td>Los pedidos importados muestran un 0 % de IVA</td><td>Elige «Aplicar mis reglas de impuestos de PrestaShop» en 4.5.</td></tr>
-  <tr><td>Una tarea programada muestra «Error»</td><td>La columna del mensaje y la pestaña Registros indican el motivo. Pulsa Ejecutar ahora para reintentarlo después de corregirlo. Si falla repetidamente, pulsa Comprobar la conexión (4.1).</td></tr>
+  <tr><td>Una tarea programada muestra «Error»</td><td>La columna del mensaje y la pestaña Registros indican el motivo. Pulsa Ejecutar ahora para reintentarlo después de corregirlo. Si falla repetidamente, pulsa Hacer una prueba (4.1).</td></tr>
   <tr><td>No se ejecuta nada aunque las tareas están activadas</td><td>Ningún cron está llamando a la tienda. Comprueba que la línea de cron existe en el panel de tu alojamiento, o que la tienda está registrada en el programador de IntelliPresta y es accesible por HTTPS.</td></tr>
   <tr><td>Correos rebotados a compradores de Amazon</td><td>Las direcciones de retransmisión de Amazon caducan. Activa el correo anonimizado (4.5).</td></tr>
 </table>
