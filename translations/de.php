@@ -326,7 +326,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_0d84dbaddeeaa73d7f3b69c533
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9c328b42885c2c4c03f59b544babe2f9'] = 'Optionaler PDF-Dateiname, der zusätzlich zur Rechnung angehängt wird (AGB, Rückgaberichtlinie). Legen Sie die Datei im Ordner docs/ des Moduls ab.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a312c11b402eecd6efa931e93a060066'] = 'Käuferantworten (eingehend)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d541b446d876bd80a0561642a5ad8df6'] = 'Amazon bietet keine API, um Käuferantworten zu lesen — sie kommen per E-Mail an Ihre Verkäuferadresse. Verweisen Sie das Modul auf dieses Postfach, dann legt es jede Nachricht, die eine Amazon-Bestellung nennt, im Kundenservice von PrestaShop bei der richtigen Bestellung ab.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_091197bcb9eebfd19f16abdc0638a36b'] = 'Die PHP-Erweiterung IMAP ist auf diesem Server nicht installiert, daher kann diese Funktion nicht laufen. Bitten Sie Ihren Hoster, ext-imap zu aktivieren; die Einstellungen unten werden inzwischen trotzdem gespeichert.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f7843ad939a65696e4d9c5a168a05f66'] = 'Die PHP-Erweiterung OpenSSL ist auf diesem Server nicht aktiviert, daher kann diese Funktion nicht laufen. Bitten Sie Ihren Hoster, sie zu aktivieren; die Einstellungen unten werden inzwischen trotzdem gespeichert.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_773679368a7c5bfe7821e4b08292edff'] = 'Dabei wird ein Postfachkennwort in der Datenbank Ihres Shops gespeichert. Verwenden Sie ein eigenes Postfach oder ein App-Passwort statt der Zugangsdaten Ihres Hauptkontos und gewähren Sie nur Lesezugriff.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b3a12842de33a58f24cd02987d69145'] = 'Käuferantworten lesen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_52a73c3aa9e7bd0dc4505e3d4d5e7cd3'] = 'IMAP-Host / -Port';
@@ -1075,7 +1075,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_a9ba6101f357952
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3730cfcc28f4449520e138d06c7d187b'] = 'Ihre Rechnung zur Bestellung';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_8449bbbf4c92d20947afb8cd81ba97f1'] = 'Ihre Rechnung finden Sie im Anhang.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1f9661c44455ed478596a2bfb382dfe5'] = 'Amazon-Bestellung';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_4a1501cf44faef2f1fc4995b38c7f639'] = 'Die PHP-Erweiterung IMAP ist auf diesem Server nicht installiert, daher können Antworten der Käufer nicht gelesen werden. Bitten Sie Ihren Hoster, ext-imap zu aktivieren.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_accfe788a2b9274498371347e10a067c'] = 'Die PHP-Erweiterung OpenSSL ist auf diesem Server nicht aktiviert, daher können Antworten der Käufer nicht gelesen werden. Bitten Sie Ihren Hoster, sie zu aktivieren.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_0cec433ecc2af918062b2d0f44d6a4a1'] = 'Eingehende Käufernachrichten sind in den Moduleinstellungen deaktiviert.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_3d1bc36bfdb05246096bb9efc4a6fc8f'] = 'Postfach-Host und -Benutzer müssen zuerst konfiguriert werden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_72ddec039cbd50e29be2abd0b99b73eb'] = 'Das Postfach konnte nicht geöffnet werden: %s';

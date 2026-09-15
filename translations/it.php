@@ -326,7 +326,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_0d84dbaddeeaa73d7f3b69c533
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9c328b42885c2c4c03f59b544babe2f9'] = 'Nome di un file PDF facoltativo da allegare insieme alla fattura (condizioni, politica di reso). Caricalo nella cartella docs/ del modulo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a312c11b402eecd6efa931e93a060066'] = 'Risposte degli acquirenti (in entrata)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d541b446d876bd80a0561642a5ad8df6'] = 'Amazon non offre alcuna API per leggere ciò che risponde un acquirente: le risposte arrivano via e-mail al tuo indirizzo venditore. Indica quella casella al modulo e archivierà ogni messaggio che cita un ordine Amazon nel Servizio clienti di PrestaShop, in corrispondenza dell\'ordine giusto.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_091197bcb9eebfd19f16abdc0638a36b'] = 'L\'estensione PHP IMAP non è installata su questo server, quindi questa funzione non può funzionare. Chiedi al tuo hosting di abilitare ext-imap; nel frattempo le impostazioni qui sotto verranno comunque salvate.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f7843ad939a65696e4d9c5a168a05f66'] = 'L\'estensione PHP OpenSSL non è abilitata su questo server, quindi questa funzione non può funzionare. Chiedi al tuo hosting di abilitarla; nel frattempo le impostazioni qui sotto verranno comunque salvate.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_773679368a7c5bfe7821e4b08292edff'] = 'Questa funzione salva una password di casella nel database del tuo negozio. Usa una casella dedicata o una password per app anziché le credenziali dell\'account principale, e concedi solo l\'accesso in lettura.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b3a12842de33a58f24cd02987d69145'] = 'Leggi le risposte degli acquirenti';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_52a73c3aa9e7bd0dc4505e3d4d5e7cd3'] = 'Host / porta IMAP';
@@ -1075,7 +1075,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_a9ba6101f357952
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3730cfcc28f4449520e138d06c7d187b'] = 'La tua fattura per l\'ordine';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_8449bbbf4c92d20947afb8cd81ba97f1'] = 'In allegato trovi la tua fattura.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1f9661c44455ed478596a2bfb382dfe5'] = 'Ordine Amazon';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_4a1501cf44faef2f1fc4995b38c7f639'] = 'L\'estensione PHP IMAP non è installata su questo server, quindi le risposte degli acquirenti non possono essere lette. Chiedi al tuo hosting di abilitare ext-imap.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_accfe788a2b9274498371347e10a067c'] = 'L\'estensione PHP OpenSSL non è abilitata su questo server, quindi le risposte degli acquirenti non possono essere lette. Chiedi al tuo hosting di abilitarla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_0cec433ecc2af918062b2d0f44d6a4a1'] = 'I messaggi in arrivo degli acquirenti sono disattivati nelle impostazioni del modulo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_3d1bc36bfdb05246096bb9efc4a6fc8f'] = 'Devi prima configurare l\'host e l\'utente della casella.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_72ddec039cbd50e29be2abd0b99b73eb'] = 'Non è stato possibile aprire la casella: %s';

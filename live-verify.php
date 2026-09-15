@@ -72,19 +72,19 @@ if ($token === '') {
 line('PASS', 'A refresh token is stored for this environment');
 
 /* ── 2. Access token ── */
-$endpoint = AmazonSpApiClient::ENDPOINT_EU;
+$endpoint = AmazonSpApiClient::$ENDPOINT_EU;
 $region = 'EU';
 $naMarketplaces = array('ATVPDKIKX0DER', 'A2EUQ1WTGCTBG2', 'A1AM78C64UM0Y8', 'A2Q3Y263D00KMC');
 $feMarketplaces = array('A1VC38T7YXB528', 'A39IBJ37TRP1C6', 'A19VAU5U5O7RUS');
 if (in_array($marketplaceId, $naMarketplaces)) {
-    $endpoint = AmazonSpApiClient::ENDPOINT_NA;
+    $endpoint = AmazonSpApiClient::$ENDPOINT_NA;
     $region = 'NA';
 } elseif (in_array($marketplaceId, $feMarketplaces)) {
-    $endpoint = AmazonSpApiClient::ENDPOINT_FE;
+    $endpoint = AmazonSpApiClient::$ENDPOINT_FE;
     $region = 'FE';
 }
 if ($environment !== 'production') {
-    $endpoint = AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
+    $endpoint = AmazonSpApiClient::$ENDPOINT_NA_SANDBOX;
 }
 
 $client = new AmazonSpApiClient(

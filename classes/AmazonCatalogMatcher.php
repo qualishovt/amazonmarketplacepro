@@ -25,7 +25,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonCatalogMatcher
 {
     /** Catalog Items API allows up to 20 identifiers per request. */
-    const BATCH_SIZE = 20;
+    public static $BATCH_SIZE = 20;
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -89,7 +89,7 @@ class AmazonCatalogMatcher
         }
 
         $eans = array_keys($skusByEan);
-        foreach (array_chunk($eans, self::BATCH_SIZE) as $chunk) {
+        foreach (array_chunk($eans, self::$BATCH_SIZE) as $chunk) {
             ++$summary['batches'];
 
             $found = $this->lookupAsinsByEan($chunk);
@@ -143,7 +143,7 @@ class AmazonCatalogMatcher
             'identifiersType' => $idType,
             'marketplaceIds' => $this->marketplaceId,
             'includedData' => 'identifiers,summaries',
-            'pageSize' => self::BATCH_SIZE,
+            'pageSize' => self::$BATCH_SIZE,
         ]);
 
         if ($resp === false) {

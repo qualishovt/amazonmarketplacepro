@@ -23,12 +23,12 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonReviewRequester
 {
-    const ACTION_NAME = 'productReviewAndSellerFeedback';
+    public static $ACTION_NAME = 'productReviewAndSellerFeedback';
 
     /** review_requested column states */
-    const STATE_PENDING = 0;
-    const STATE_SENT = 1;
-    const STATE_INELIGIBLE = 2; // window closed or Amazon refused; never retried
+    public static $STATE_PENDING = 0;
+    public static $STATE_SENT = 1;
+    public static $STATE_INELIGIBLE = 2; // window closed or Amazon refused; never retried
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -107,7 +107,7 @@ class AmazonReviewRequester
 
         if (isset($resp['body']['_links']['actions']) && is_array($resp['body']['_links']['actions'])) {
             foreach ($resp['body']['_links']['actions'] as $a) {
-                if (isset($a['name']) && $a['name'] === self::ACTION_NAME) {
+                if (isset($a['name']) && $a['name'] === self::$ACTION_NAME) {
                     return true;
                 }
             }
@@ -152,7 +152,7 @@ class AmazonReviewRequester
         }
 
         if ($this->useMock) {
-            $this->markOrder($amazonOrderId, self::STATE_SENT);
+            $this->markOrder($amazonOrderId, self::$STATE_SENT);
             $this->log('info', 'MOCK review request for ' . $amazonOrderId);
 
             return true;
@@ -161,7 +161,7 @@ class AmazonReviewRequester
         $resp = $this->client->request(
             'POST',
             '/solicitations/v1/orders/' . rawurlencode($amazonOrderId)
-                . '/solicitations/' . self::ACTION_NAME,
+                . '/solicitations/' . self::$ACTION_NAME,
             ['marketplaceIds' => $this->marketplaceId],
             new stdClass()
         );
@@ -181,7 +181,7 @@ class AmazonReviewRequester
             return false;
         }
 
-        $this->markOrder($amazonOrderId, self::STATE_SENT);
+        $this->markOrder($amazonOrderId, self::$STATE_SENT);
         $this->log('info', 'review request sent for ' . $amazonOrderId);
 
         return true;
@@ -208,7 +208,7 @@ class AmazonReviewRequester
             'SELECT `amazon_order_id`, `purchase_date`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE ' . AmzproShop::sqlWhere() . '
-               AND `review_requested` = ' . (int) self::STATE_PENDING . '
+               AND `review_requested` = ' . (int) self::$STATE_PENDING . '
                AND `order_status` NOT IN (\'Canceled\', \'Cancelled\')
                AND `purchase_date` IS NOT NULL
                AND `purchase_date` < \'' . pSQL(date('Y-m-d H:i:s', time() - 5 * 86400)) . '\'
@@ -233,7 +233,7 @@ class AmazonReviewRequester
             if ($this->notAllowed) {
                 ++$summary['unavailable'];
                 if ($tooOld) {
-                    $this->markOrder($orderId, self::STATE_INELIGIBLE);
+                    $this->markOrder($orderId, self::$STATE_INELIGIBLE);
                 }
             } else {
                 ++$summary['errors'];

@@ -34,22 +34,22 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonSpApiClient
 {
-    const LWA_TOKEN_URL = 'https://api.amazon.com/auth/o2/token';
+    public static $LWA_TOKEN_URL = 'https://api.amazon.com/auth/o2/token';
 
     /** SP-API regional hosts (production + sandbox). */
-    const ENDPOINT_NA = 'https://sellingpartnerapi-na.amazon.com';
-    const ENDPOINT_EU = 'https://sellingpartnerapi-eu.amazon.com';
-    const ENDPOINT_FE = 'https://sellingpartnerapi-fe.amazon.com';
-    const ENDPOINT_NA_SANDBOX = 'https://sandbox.sellingpartnerapi-na.amazon.com';
-    const ENDPOINT_EU_SANDBOX = 'https://sandbox.sellingpartnerapi-eu.amazon.com';
-    const ENDPOINT_FE_SANDBOX = 'https://sandbox.sellingpartnerapi-fe.amazon.com';
+    public static $ENDPOINT_NA = 'https://sellingpartnerapi-na.amazon.com';
+    public static $ENDPOINT_EU = 'https://sellingpartnerapi-eu.amazon.com';
+    public static $ENDPOINT_FE = 'https://sellingpartnerapi-fe.amazon.com';
+    public static $ENDPOINT_NA_SANDBOX = 'https://sandbox.sellingpartnerapi-na.amazon.com';
+    public static $ENDPOINT_EU_SANDBOX = 'https://sandbox.sellingpartnerapi-eu.amazon.com';
+    public static $ENDPOINT_FE_SANDBOX = 'https://sandbox.sellingpartnerapi-fe.amazon.com';
 
     /** RDT token endpoint (same base as Tokens API). */
-    const RDT_PATH = '/tokens/2021-03-01/restrictedDataToken';
+    public static $RDT_PATH = '/tokens/2021-03-01/restrictedDataToken';
 
     /** IntelliPresta app defaults for the "Connect with Amazon" flow. */
-    const DEFAULT_LWA_APP_ID = 'amzn1.sp.solution.fe7f779a-ff2e-4518-8d1a-fc48c44bdb69';
-    const DEFAULT_LWA_APP_ID_SANDBOX = 'amzn1.sp.solution.54283948-5e29-42ce-bfe0-1ef477384b87';
+    public static $DEFAULT_LWA_APP_ID = 'amzn1.sp.solution.fe7f779a-ff2e-4518-8d1a-fc48c44bdb69';
+    public static $DEFAULT_LWA_APP_ID_SANDBOX = 'amzn1.sp.solution.54283948-5e29-42ce-bfe0-1ef477384b87';
 
     /**
      * Is the production app published in the Amazon Appstore?
@@ -61,8 +61,8 @@ class AmazonSpApiClient
      * app ids above. Leaving it as a per-shop setting would strand every
      * install on the wrong value the day the app goes live.
      */
-    const PRODUCTION_APP_PUBLISHED = false;
-    const DEFAULT_RELAY_URL = 'https://intellipresta.com/spapi';
+    public static $PRODUCTION_APP_PUBLISHED = false;
+    public static $DEFAULT_RELAY_URL = 'https://intellipresta.com/spapi';
 
     /**
      * @return bool whether the module is configured for the SP-API sandbox
@@ -130,7 +130,7 @@ class AmazonSpApiClient
      */
     protected static function productionAppPublished()
     {
-        return (bool) self::PRODUCTION_APP_PUBLISHED;
+        return (bool) self::$PRODUCTION_APP_PUBLISHED;
     }
 
     /**
@@ -174,7 +174,7 @@ class AmazonSpApiClient
             return $v;
         }
 
-        return $sandbox ? self::DEFAULT_LWA_APP_ID_SANDBOX : self::DEFAULT_LWA_APP_ID;
+        return $sandbox ? self::$DEFAULT_LWA_APP_ID_SANDBOX : self::$DEFAULT_LWA_APP_ID;
     }
 
     /**
@@ -265,7 +265,7 @@ class AmazonSpApiClient
     {
         $v = trim((string) AmzproShop::get('AMZPRO_RELAY_URL'));
 
-        return ($v !== '') ? rtrim($v, '/') : self::DEFAULT_RELAY_URL;
+        return ($v !== '') ? rtrim($v, '/') : self::$DEFAULT_RELAY_URL;
     }
 
     /**
@@ -541,7 +541,7 @@ class AmazonSpApiClient
             'client_secret' => $this->clientSecret,
         ]);
 
-        $res = $this->httpRaw('POST', self::LWA_TOKEN_URL, $payload, [
+        $res = $this->httpRaw('POST', self::$LWA_TOKEN_URL, $payload, [
             'Content-Type: application/x-www-form-urlencoded',
             'Accept: application/json',
         ]);
@@ -696,7 +696,7 @@ class AmazonSpApiClient
             'restrictedResources' => $restrictedResources,
         ];
 
-        $resp = $this->request('POST', self::RDT_PATH, [], $body);
+        $resp = $this->request('POST', self::$RDT_PATH, [], $body);
 
         if ($resp === false) {
             return false;

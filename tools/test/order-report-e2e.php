@@ -186,8 +186,8 @@ function precreateCustomer($amazonId)
         'id_gender' => 0,
         'id_default_group' => $idGroup,
         'id_lang' => (int) $ctx->language->id,
-        'firstname' => pSQL(AmazonOrderCreator::PLACEHOLDER_FIRSTNAME),
-        'lastname' => pSQL(AmazonOrderCreator::PLACEHOLDER_LASTNAME),
+        'firstname' => pSQL(AmazonOrderCreator::$PLACEHOLDER_FIRSTNAME),
+        'lastname' => pSQL(AmazonOrderCreator::$PLACEHOLDER_LASTNAME),
         'email' => pSQL(testEmail($amazonId)),
         'passwd' => md5(uniqid('', true)),
         'secure_key' => md5(uniqid('', true)),
@@ -476,8 +476,8 @@ try {
 
     $oB = new Order($idOrderB);
     $aB = new Address((int) $oB->id_address_delivery);
-    check($aB->address1 === AmazonOrderCreator::PLACEHOLDER_ADDRESS1 && $aB->firstname === 'Amazon'
-        && $aB->phone === AmazonOrderCreator::PLACEHOLDER_PHONE, 'B starts with the placeholder address');
+    check($aB->address1 === AmazonOrderCreator::$PLACEHOLDER_ADDRESS1 && $aB->firstname === 'Amazon'
+        && $aB->phone === AmazonOrderCreator::$PLACEHOLDER_PHONE, 'B starts with the placeholder address');
 
     // The merchant corrects C by hand before the report arrives.
     $oC = new Order($idOrderC);

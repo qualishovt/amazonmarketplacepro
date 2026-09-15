@@ -60,12 +60,12 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonPiiPurger
 {
     /** Amazon's requirement, and the default. */
-    const DEFAULT_RETENTION_DAYS = 30;
-    const MIN_RETENTION_DAYS = 1;
-    const MAX_RETENTION_DAYS = 365;
+    public static $DEFAULT_RETENTION_DAYS = 30;
+    public static $MIN_RETENTION_DAYS = 1;
+    public static $MAX_RETENTION_DAYS = 365;
 
     /** Rows per shop per run, so a large backlog cannot exhaust a cron request. */
-    const DEFAULT_BATCH = 500;
+    public static $DEFAULT_BATCH = 500;
 
     /**
      * Order states in which Amazon is finished with the order.
@@ -147,11 +147,11 @@ class AmazonPiiPurger
     {
         $days = (int) AmzproShop::get('AMZPRO_PII_RETENTION_DAYS', $idShop);
         if ($days <= 0) {
-            $days = self::DEFAULT_RETENTION_DAYS;
+            $days = self::$DEFAULT_RETENTION_DAYS;
         }
-        $days = max(self::MIN_RETENTION_DAYS, $days);
-        if ($days > self::MAX_RETENTION_DAYS) {
-            $days = self::MAX_RETENTION_DAYS;
+        $days = max(self::$MIN_RETENTION_DAYS, $days);
+        if ($days > self::$MAX_RETENTION_DAYS) {
+            $days = self::$MAX_RETENTION_DAYS;
         }
 
         return $days;
@@ -328,19 +328,19 @@ class AmazonPiiPurger
      * by shop id. retention_days, cutoff and shop_side are the settings of
      * the shop the request acts for.
      *
-     * @param int $limit Rows to process per shop this run
+     * @param int $limit Rows to process per shop this run, 0 for the default
      * @param int|null $idShop see above
      *
      * @return array|false Summary counts, or false when a shop failed
      */
-    public function purge($limit = self::DEFAULT_BATCH, $idShop = null)
+    public function purge($limit = 0, $idShop = null)
     {
         $this->lastError = null;
         $this->ensureSchema();
 
         $limit = (int) $limit;
         if ($limit <= 0) {
-            $limit = self::DEFAULT_BATCH;
+            $limit = self::$DEFAULT_BATCH;
         }
 
         $byHand = ($idShop !== null);

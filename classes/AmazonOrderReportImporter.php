@@ -53,7 +53,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonOrderReportImporter
 {
     /** Largest file accepted, in bytes. */
-    const MAX_BYTES = 10485760;
+    public static $MAX_BYTES = 10485760;
 
     /** Report columns accepted for each field; the first one present wins. */
     private static $columns = [
@@ -370,7 +370,7 @@ class AmazonOrderReportImporter
         }
 
         $street = trim((string) $address->address1);
-        if ($street !== '' && $street !== AmazonOrderCreator::PLACEHOLDER_ADDRESS1) {
+        if ($street !== '' && $street !== AmazonOrderCreator::$PLACEHOLDER_ADDRESS1) {
             return $clean['address1'] !== '' ? 'kept' : 'unchanged';
         }
         if ($clean['address1'] === '') {
@@ -382,8 +382,8 @@ class AmazonOrderReportImporter
             $address->address2 = $clean['address2'];
         }
 
-        if ($address->firstname === AmazonOrderCreator::PLACEHOLDER_FIRSTNAME
-            && $address->lastname === AmazonOrderCreator::PLACEHOLDER_LASTNAME
+        if ($address->firstname === AmazonOrderCreator::$PLACEHOLDER_FIRSTNAME
+            && $address->lastname === AmazonOrderCreator::$PLACEHOLDER_LASTNAME
             && $recipient !== ''
         ) {
             $parts = AmazonOrderCreator::splitFullName($recipient);
@@ -392,9 +392,9 @@ class AmazonOrderReportImporter
         }
 
         $placeholders = [
-            'city' => ['city', AmazonOrderCreator::PLACEHOLDER_CITY],
-            'postcode' => ['postal_code', AmazonOrderCreator::PLACEHOLDER_POSTCODE],
-            'phone' => ['phone', AmazonOrderCreator::PLACEHOLDER_PHONE],
+            'city' => ['city', AmazonOrderCreator::$PLACEHOLDER_CITY],
+            'postcode' => ['postal_code', AmazonOrderCreator::$PLACEHOLDER_POSTCODE],
+            'phone' => ['phone', AmazonOrderCreator::$PLACEHOLDER_PHONE],
         ];
         foreach ($placeholders as $property => $pair) {
             $current = trim((string) $address->$property);
@@ -440,8 +440,8 @@ class AmazonOrderReportImporter
             return false;
         }
         $parts = AmazonOrderCreator::splitFullName($buyerName);
-        if ($parts['firstname'] === AmazonOrderCreator::PLACEHOLDER_FIRSTNAME
-            && $parts['lastname'] === AmazonOrderCreator::PLACEHOLDER_LASTNAME
+        if ($parts['firstname'] === AmazonOrderCreator::$PLACEHOLDER_FIRSTNAME
+            && $parts['lastname'] === AmazonOrderCreator::$PLACEHOLDER_LASTNAME
         ) {
             return false;
         }
@@ -453,8 +453,8 @@ class AmazonOrderReportImporter
                  `lastname` = \'' . pSQL($parts['lastname']) . '\',
                  `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
              WHERE `id_customer` = ' . (int) $idCustomer . '
-               AND `firstname` = \'' . pSQL(AmazonOrderCreator::PLACEHOLDER_FIRSTNAME) . '\'
-               AND `lastname` = \'' . pSQL(AmazonOrderCreator::PLACEHOLDER_LASTNAME) . '\''
+               AND `firstname` = \'' . pSQL(AmazonOrderCreator::$PLACEHOLDER_FIRSTNAME) . '\'
+               AND `lastname` = \'' . pSQL(AmazonOrderCreator::$PLACEHOLDER_LASTNAME) . '\''
         );
 
         if (!$ok || (int) $db->Affected_Rows() === 0) {

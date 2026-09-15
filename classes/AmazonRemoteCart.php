@@ -32,9 +32,9 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonRemoteCart
 {
-    const STATUS_RESERVED = 'reserved';
-    const STATUS_CONVERTED = 'converted';
-    const STATUS_RELEASED = 'released';
+    public static $STATUS_RESERVED = 'reserved';
+    public static $STATUS_CONVERTED = 'converted';
+    public static $STATUS_RELEASED = 'released';
 
     /** @param int|null $idShop default: the current shop */
     public static function isEnabled($idShop = null)
@@ -123,7 +123,7 @@ class AmazonRemoteCart
                  VALUES (\'' . pSQL($amazonOrderId) . '\', \'' . pSQL($orderItemId) . '\',
                      \'' . pSQL(isset($item['seller_sku']) ? $item['seller_sku'] : '') . '\',
                      ' . $idProduct . ', ' . $idPa . ', ' . $quantity . ', ' . $idShop . ',
-                     \'' . self::STATUS_RESERVED . '\', \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')'
+                     \'' . self::$STATUS_RESERVED . '\', \'' . pSQL($now) . '\', \'' . pSQL($now) . '\')'
             );
             if ($inserted && Db::getInstance()->Affected_Rows() > 0) {
                 self::moveStock($idProduct, $idPa, -$quantity, $idShop);
@@ -149,14 +149,14 @@ class AmazonRemoteCart
         self::ensureTable();
         $idShop = self::shopFor($idShop);
 
-        $rows = self::rowsFor($amazonOrderId, self::STATUS_RESERVED, $idShop);
+        $rows = self::rowsFor($amazonOrderId, self::$STATUS_RESERVED, $idShop);
         foreach ($rows as $r) {
             self::moveStock(
                 (int) $r['id_product'], (int) $r['id_product_attribute'],
                 (int) $r['quantity'], (int) $r['id_shop']
             );
         }
-        self::setStatus($amazonOrderId, self::STATUS_CONVERTED, $idShop);
+        self::setStatus($amazonOrderId, self::$STATUS_CONVERTED, $idShop);
 
         return count($rows);
     }
@@ -175,14 +175,14 @@ class AmazonRemoteCart
         self::ensureTable();
         $idShop = self::shopFor($idShop);
 
-        $rows = self::rowsFor($amazonOrderId, self::STATUS_RESERVED, $idShop);
+        $rows = self::rowsFor($amazonOrderId, self::$STATUS_RESERVED, $idShop);
         foreach ($rows as $r) {
             self::moveStock(
                 (int) $r['id_product'], (int) $r['id_product_attribute'],
                 (int) $r['quantity'], (int) $r['id_shop']
             );
         }
-        self::setStatus($amazonOrderId, self::STATUS_RELEASED, $idShop);
+        self::setStatus($amazonOrderId, self::$STATUS_RELEASED, $idShop);
 
         return count($rows);
     }
@@ -214,7 +214,7 @@ class AmazonRemoteCart
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation` r
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
                  ON (o.`amazon_order_id` = r.`amazon_order_id` AND o.`id_shop` = r.`id_shop`)
-             WHERE r.`status` = \'' . self::STATUS_RESERVED . '\'
+             WHERE r.`status` = \'' . self::$STATUS_RESERVED . '\'
                AND r.`id_shop` = ' . $idShop . '
                AND r.`date_add` < \'' . pSQL($cutoff) . '\'
                AND (o.`order_status` IS NULL OR o.`order_status` = \'Pending\'
@@ -256,7 +256,7 @@ class AmazonRemoteCart
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation` r
              INNER JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
                  ON (o.`amazon_order_id` = r.`amazon_order_id` AND o.`id_shop` = r.`id_shop`)
-             WHERE r.`status` = \'' . self::STATUS_RESERVED . '\'
+             WHERE r.`status` = \'' . self::$STATUS_RESERVED . '\'
                AND r.`id_shop` = ' . $idShop . '
                AND o.`order_status` NOT IN (\'Pending\', \'Canceled\')'
         );
@@ -287,7 +287,7 @@ class AmazonRemoteCart
                      AND pl.`id_lang` = ' . (int) Configuration::get('PS_LANG_DEFAULT') . ')
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` o
                  ON (o.`amazon_order_id` = r.`amazon_order_id` AND o.`id_shop` = r.`id_shop`)
-             WHERE r.`status` = \'' . self::STATUS_RESERVED . '\'
+             WHERE r.`status` = \'' . self::$STATUS_RESERVED . '\'
                AND ' . AmzproShop::sqlWhere('r') . '
              GROUP BY r.`id_amazonmarketplacepro_reservation`
              ORDER BY r.`date_add` DESC
@@ -308,7 +308,7 @@ class AmazonRemoteCart
 
         return (int) Db::getInstance()->getValue(
             'SELECT SUM(`quantity`) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation`
-             WHERE `status` = \'' . self::STATUS_RESERVED . '\'
+             WHERE `status` = \'' . self::$STATUS_RESERVED . '\'
                AND `id_product` = ' . (int) $idProduct . '
                AND `id_product_attribute` = ' . (int) $idProductAttribute . '
                AND ' . AmzproShop::sqlWhere('', $idShop)
@@ -341,7 +341,7 @@ class AmazonRemoteCart
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_reservation`
              SET `status` = \'' . pSQL($status) . '\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
              WHERE `amazon_order_id` = \'' . pSQL($amazonOrderId) . '\'
-               AND `status` = \'' . self::STATUS_RESERVED . '\'
+               AND `status` = \'' . self::$STATUS_RESERVED . '\'
                AND `id_shop` = ' . (int) $idShop
         );
     }

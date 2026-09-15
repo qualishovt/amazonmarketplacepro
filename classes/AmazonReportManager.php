@@ -39,10 +39,10 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonReportManager
 {
     /** Common report types */
-    const REPORT_MERCHANT_LISTINGS = 'GET_MERCHANT_LISTINGS_ALL_DATA';
-    const REPORT_SETTLEMENT = 'GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE';
-    const REPORT_FBA_INVENTORY = 'GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA';
-    const REPORT_ORDERS = 'GET_FLAT_FILE_ORDERS_DATA';
+    public static $REPORT_MERCHANT_LISTINGS = 'GET_MERCHANT_LISTINGS_ALL_DATA';
+    public static $REPORT_SETTLEMENT = 'GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE';
+    public static $REPORT_FBA_INVENTORY = 'GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA';
+    public static $REPORT_ORDERS = 'GET_FLAT_FILE_ORDERS_DATA';
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -331,7 +331,7 @@ class AmazonReportManager
      */
     public function requestMerchantListingsReport()
     {
-        return $this->requestReport(self::REPORT_MERCHANT_LISTINGS);
+        return $this->requestReport(self::$REPORT_MERCHANT_LISTINGS);
     }
 
     /**
@@ -346,7 +346,7 @@ class AmazonReportManager
         $endDate = gmdate('Y-m-d\TH:i:s\Z');
         $startDate = gmdate('Y-m-d\TH:i:s\Z', strtotime('-' . (int) $daysBack . ' days'));
 
-        return $this->requestReport(self::REPORT_SETTLEMENT, $startDate, $endDate);
+        return $this->requestReport(self::$REPORT_SETTLEMENT, $startDate, $endDate);
     }
 
     /**
@@ -356,7 +356,7 @@ class AmazonReportManager
      */
     public function requestFbaInventoryReport()
     {
-        return $this->requestReport(self::REPORT_FBA_INVENTORY);
+        return $this->requestReport(self::$REPORT_FBA_INVENTORY);
     }
 
     /**

@@ -41,11 +41,11 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonRepricingEngine
 {
     /** Rule types */
-    const RULE_MATCH_LOWEST = 'match_lowest';
-    const RULE_BEAT_LOWEST = 'beat_lowest';
-    const RULE_MATCH_BUYBOX = 'match_buybox';
-    const RULE_BEAT_BUYBOX = 'beat_buybox';
-    const RULE_FIXED_MARGIN = 'fixed_margin';
+    public static $RULE_MATCH_LOWEST = 'match_lowest';
+    public static $RULE_BEAT_LOWEST = 'beat_lowest';
+    public static $RULE_MATCH_BUYBOX = 'match_buybox';
+    public static $RULE_BEAT_BUYBOX = 'beat_buybox';
+    public static $RULE_FIXED_MARGIN = 'fixed_margin';
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -208,11 +208,20 @@ class AmazonRepricingEngine
                 }
 
                 // Upsert competitive price data
-                $this->upsertCompetitivePrice(
-                    $sku, $asin, $buyboxPrice, $buyboxShipping, $buyboxLanded,
-                    $buyboxSeller, $isBuyboxWinner, $lowestPrice, $lowestShipping,
-                    $lowestLanded, $numberOfOffers, $ourPrice, $now
-                );
+                $this->upsertCompetitivePrice([
+                    'sku' => $sku,
+                    'asin' => $asin,
+                    'buybox_price' => $buyboxPrice,
+                    'buybox_shipping' => $buyboxShipping,
+                    'buybox_landed' => $buyboxLanded,
+                    'buybox_seller' => $buyboxSeller,
+                    'is_buybox_winner' => $isBuyboxWinner,
+                    'lowest_price' => $lowestPrice,
+                    'lowest_shipping' => $lowestShipping,
+                    'lowest_landed' => $lowestLanded,
+                    'number_of_offers' => $numberOfOffers,
+                    'our_price' => $ourPrice,
+                ], $now);
                 ++$summary['updated'];
             }
         }
@@ -440,35 +449,35 @@ class AmazonRepricingEngine
         $targetPrice = 0;
 
         switch ($ruleType) {
-            case self::RULE_MATCH_LOWEST:
+            case self::$RULE_MATCH_LOWEST:
                 if ($lowestLanded <= 0) {
                     return false;
                 }
                 $targetPrice = $lowestLanded;
                 break;
 
-            case self::RULE_BEAT_LOWEST:
+            case self::$RULE_BEAT_LOWEST:
                 if ($lowestLanded <= 0) {
                     return false;
                 }
                 $targetPrice = $this->applyAdjustment($lowestLanded, $adjustment, $adjustmentType, 'below');
                 break;
 
-            case self::RULE_MATCH_BUYBOX:
+            case self::$RULE_MATCH_BUYBOX:
                 if ($buyboxLanded <= 0) {
                     return false;
                 }
                 $targetPrice = $buyboxLanded;
                 break;
 
-            case self::RULE_BEAT_BUYBOX:
+            case self::$RULE_BEAT_BUYBOX:
                 if ($buyboxLanded <= 0) {
                     return false;
                 }
                 $targetPrice = $this->applyAdjustment($buyboxLanded, $adjustment, $adjustmentType, 'below');
                 break;
 
-            case self::RULE_FIXED_MARGIN:
+            case self::$RULE_FIXED_MARGIN:
                 // Fixed margin above cost (use PS price as base cost)
                 $targetPrice = $this->applyAdjustment($ourPrice, $adjustment, $adjustmentType, 'above');
                 break;
@@ -581,12 +590,15 @@ class AmazonRepricingEngine
 
     /**
      * Upsert competitive price data.
+     *
+     * @param array $offer sku, asin, buybox_price, buybox_shipping,
+     *                     buybox_landed, buybox_seller, is_buybox_winner,
+     *                     lowest_price, lowest_shipping, lowest_landed,
+     *                     number_of_offers, our_price
+     * @param string $now
      */
-    private function upsertCompetitivePrice(
-        $sku, $asin, $buyboxPrice, $buyboxShipping, $buyboxLanded,
-        $buyboxSeller, $isBuyboxWinner, $lowestPrice, $lowestShipping,
-        $lowestLanded, $numberOfOffers, $ourPrice, $now
-    ) {
+    private function upsertCompetitivePrice(array $offer, $now)
+    {
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price`
             (`id_shop`, `seller_sku`, `asin`, `buybox_price`, `buybox_shipping`, `buybox_landed`,
              `buybox_seller`, `is_buybox_winner`, `lowest_price`, `lowest_shipping`,
@@ -594,18 +606,18 @@ class AmazonRepricingEngine
              `date_add`, `date_upd`)
             VALUES (
                 ' . (int) AmzproShop::actingId() . ',
-                \'' . pSQL($sku) . '\',
-                \'' . pSQL($asin) . '\',
-                ' . (float) $buyboxPrice . ',
-                ' . (float) $buyboxShipping . ',
-                ' . (float) $buyboxLanded . ',
-                \'' . pSQL($buyboxSeller) . '\',
-                ' . (int) $isBuyboxWinner . ',
-                ' . (float) $lowestPrice . ',
-                ' . (float) $lowestShipping . ',
-                ' . (float) $lowestLanded . ',
-                ' . (int) $numberOfOffers . ',
-                ' . (float) $ourPrice . ',
+                \'' . pSQL($offer['sku']) . '\',
+                \'' . pSQL($offer['asin']) . '\',
+                ' . (float) $offer['buybox_price'] . ',
+                ' . (float) $offer['buybox_shipping'] . ',
+                ' . (float) $offer['buybox_landed'] . ',
+                \'' . pSQL($offer['buybox_seller']) . '\',
+                ' . (int) $offer['is_buybox_winner'] . ',
+                ' . (float) $offer['lowest_price'] . ',
+                ' . (float) $offer['lowest_shipping'] . ',
+                ' . (float) $offer['lowest_landed'] . ',
+                ' . (int) $offer['number_of_offers'] . ',
+                ' . (float) $offer['our_price'] . ',
                 \'' . pSQL($this->marketplaceId) . '\',
                 \'' . pSQL($now) . '\',
                 \'' . pSQL($now) . '\'

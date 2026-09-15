@@ -54,11 +54,11 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonRelaySchedule
 {
     /** Where the scheduler lives. */
-    const ENDPOINT = 'https://intellipresta.com/spapi/schedule.php';
+    public static $ENDPOINT = 'https://intellipresta.com/spapi/schedule.php';
 
     /** Long enough for a shared host to answer, short enough not to hang the
      *  back office if the relay is down. */
-    const TIMEOUT = 15;
+    public static $TIMEOUT = 15;
 
     /**
      * @param int|null $idShop default: the shop the request acts for
@@ -115,7 +115,7 @@ class AmazonRelaySchedule
     public static function cronUrl($idShop = null)
     {
         $idShop = self::shopId($idShop);
-        $link = Context::getContext()->link;
+        $link = AmzproShop::context()->link;
         if (!$link) {
             $link = new Link();
         }
@@ -228,11 +228,11 @@ class AmazonRelaySchedule
             return ['success' => false, 'error' => AmazonI18n::get()->l('This server cannot reach the scheduler because the PHP cURL extension is missing. Ask your hosting provider to enable it.', 'amazonrelayschedule')];
         }
 
-        $ch = curl_init(self::ENDPOINT);
+        $ch = curl_init(self::$ENDPOINT);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, self::TIMEOUT);
+        curl_setopt($ch, CURLOPT_TIMEOUT, self::$TIMEOUT);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);

@@ -653,7 +653,7 @@ class AmazonTaskRunner
         }
 
         // Resolve endpoint by marketplace + region
-        $endpoint = AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
+        $endpoint = AmazonSpApiClient::$ENDPOINT_NA_SANDBOX;
         if ($env === 'production') {
             $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
             $regionMap = [
@@ -670,13 +670,13 @@ class AmazonTaskRunner
             $region = isset($regionMap[$mp]) ? $regionMap[$mp] : 'EU';
             switch ($region) {
                 case 'NA':
-                    $endpoint = AmazonSpApiClient::ENDPOINT_NA;
+                    $endpoint = AmazonSpApiClient::$ENDPOINT_NA;
                     break;
                 case 'FE':
-                    $endpoint = AmazonSpApiClient::ENDPOINT_FE;
+                    $endpoint = AmazonSpApiClient::$ENDPOINT_FE;
                     break;
                 default:
-                    $endpoint = AmazonSpApiClient::ENDPOINT_EU;
+                    $endpoint = AmazonSpApiClient::$ENDPOINT_EU;
                     break;
             }
         }

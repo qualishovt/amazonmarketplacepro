@@ -38,8 +38,8 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonFeedManager
 {
-    const FEED_TYPE = 'JSON_LISTINGS_FEED';
-    const CONTENT_TYPE = 'application/json; charset=UTF-8';
+    public static $FEED_TYPE = 'JSON_LISTINGS_FEED';
+    public static $CONTENT_TYPE = 'application/json; charset=UTF-8';
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -140,7 +140,7 @@ class AmazonFeedManager
             'messages' => $messages,
         ]);
 
-        return $this->submitFeed(self::FEED_TYPE, self::CONTENT_TYPE, $document, count($messages));
+        return $this->submitFeed(self::$FEED_TYPE, self::$CONTENT_TYPE, $document, count($messages));
     }
 
     /**

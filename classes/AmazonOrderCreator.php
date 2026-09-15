@@ -45,12 +45,12 @@ class AmazonOrderCreator
      * Public because AmazonOrderReportImporter recognises an unfilled address
      * by exactly these values; change them here and it follows.
      */
-    const PLACEHOLDER_FIRSTNAME = 'Amazon';
-    const PLACEHOLDER_LASTNAME = 'Buyer';
-    const PLACEHOLDER_ADDRESS1 = 'Amazon Marketplace Order';
-    const PLACEHOLDER_CITY = 'Amazon';
-    const PLACEHOLDER_POSTCODE = '00000';
-    const PLACEHOLDER_PHONE = '0000000000';
+    public static $PLACEHOLDER_FIRSTNAME = 'Amazon';
+    public static $PLACEHOLDER_LASTNAME = 'Buyer';
+    public static $PLACEHOLDER_ADDRESS1 = 'Amazon Marketplace Order';
+    public static $PLACEHOLDER_CITY = 'Amazon';
+    public static $PLACEHOLDER_POSTCODE = '00000';
+    public static $PLACEHOLDER_PHONE = '0000000000';
 
     private $idCarrier;
     private $idOrderState;
@@ -824,19 +824,19 @@ class AmazonOrderCreator
         // Use real address data when available, placeholder when not
         $address1 = !empty($stagedOrder['ship_address1'])
             ? $stagedOrder['ship_address1']
-            : self::PLACEHOLDER_ADDRESS1;
+            : self::$PLACEHOLDER_ADDRESS1;
         $address2 = !empty($stagedOrder['ship_address2'])
             ? $stagedOrder['ship_address2']
             : '';
         $city = !empty($stagedOrder['ship_city'])
             ? $stagedOrder['ship_city']
-            : self::PLACEHOLDER_CITY;
+            : self::$PLACEHOLDER_CITY;
         $postalCode = !empty($stagedOrder['ship_postal_code'])
             ? $stagedOrder['ship_postal_code']
-            : self::PLACEHOLDER_POSTCODE;
+            : self::$PLACEHOLDER_POSTCODE;
         $phone = !empty($stagedOrder['ship_phone'])
             ? $stagedOrder['ship_phone']
-            : self::PLACEHOLDER_PHONE;
+            : self::$PLACEHOLDER_PHONE;
 
         $address = new Address();
         $address->id_customer = (int) $customer->id;
@@ -1020,8 +1020,8 @@ class AmazonOrderCreator
         $lastname = self::cleanNamePart(isset($parts[1]) ? $parts[1] : '', 'lastname');
 
         return [
-            'firstname' => $firstname !== '' ? $firstname : self::PLACEHOLDER_FIRSTNAME,
-            'lastname' => $lastname !== '' ? $lastname : self::PLACEHOLDER_LASTNAME,
+            'firstname' => $firstname !== '' ? $firstname : self::$PLACEHOLDER_FIRSTNAME,
+            'lastname' => $lastname !== '' ? $lastname : self::$PLACEHOLDER_LASTNAME,
         ];
     }
 

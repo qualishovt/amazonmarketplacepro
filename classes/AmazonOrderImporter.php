@@ -40,7 +40,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonOrderImporter
 {
     /** Safety cap on NextToken pagination (100 orders per page). */
-    const MAX_ORDER_PAGES = 30;
+    public static $MAX_ORDER_PAGES = 30;
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -287,7 +287,7 @@ class AmazonOrderImporter
                 : null;
             ++$summary['pages'];
 
-            if ($nextToken !== null && $summary['pages'] >= self::MAX_ORDER_PAGES) {
+            if ($nextToken !== null && $summary['pages'] >= self::$MAX_ORDER_PAGES) {
                 $summary['truncated'] = true;
                 break;
             }

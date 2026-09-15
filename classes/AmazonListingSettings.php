@@ -28,9 +28,9 @@ require_once dirname(__FILE__) . '/AmazonProductOverride.php';
 
 class AmazonListingSettings
 {
-    const ENTITY_CATEGORY = 'category';
-    const ENTITY_MANUFACTURER = 'manufacturer';
-    const ENTITY_SUPPLIER = 'supplier';
+    public static $ENTITY_CATEGORY = 'category';
+    public static $ENTITY_MANUFACTURER = 'manufacturer';
+    public static $ENTITY_SUPPLIER = 'supplier';
 
     /** Cache: id_shop => entity_type => array(id_entity => row) */
     private static $entityCache = [];
@@ -335,11 +335,11 @@ class AmazonListingSettings
     {
         $ctx = self::productContext($idProduct);
         $map = [
-            self::ENTITY_CATEGORY => $ctx['id_category'],
-            self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
-            self::ENTITY_SUPPLIER => $ctx['id_supplier'],
+            self::$ENTITY_CATEGORY => $ctx['id_category'],
+            self::$ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
+            self::$ENTITY_SUPPLIER => $ctx['id_supplier'],
         ];
-        foreach ([self::ENTITY_CATEGORY, self::ENTITY_MANUFACTURER, self::ENTITY_SUPPLIER] as $type) {
+        foreach ([self::$ENTITY_CATEGORY, self::$ENTITY_MANUFACTURER, self::$ENTITY_SUPPLIER] as $type) {
             if (!in_array($type, $sources) || !$map[$type]) {
                 continue;
             }
@@ -633,8 +633,8 @@ class AmazonListingSettings
 
         $ctx = self::productContext($idProduct);
         $order = (AmzproShop::get('AMZPRO_GPSR_PRIORITY') === 'supplier')
-            ? [self::ENTITY_SUPPLIER => $ctx['id_supplier'], self::ENTITY_MANUFACTURER => $ctx['id_manufacturer']]
-            : [self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'], self::ENTITY_SUPPLIER => $ctx['id_supplier']];
+            ? [self::$ENTITY_SUPPLIER => $ctx['id_supplier'], self::$ENTITY_MANUFACTURER => $ctx['id_manufacturer']]
+            : [self::$ENTITY_MANUFACTURER => $ctx['id_manufacturer'], self::$ENTITY_SUPPLIER => $ctx['id_supplier']];
 
         foreach ($order as $type => $idEntity) {
             if (!$idEntity) {
@@ -656,7 +656,7 @@ class AmazonListingSettings
         if (!$ctx['id_manufacturer']) {
             return '';
         }
-        $settings = self::getEntitySettings(self::ENTITY_MANUFACTURER);
+        $settings = self::getEntitySettings(self::$ENTITY_MANUFACTURER);
         if (isset($settings[$ctx['id_manufacturer']])) {
             return trim((string) $settings[$ctx['id_manufacturer']]['country_of_origin']);
         }
@@ -679,9 +679,9 @@ class AmazonListingSettings
 
         $ctx = self::productContext($idProduct);
         $map = [
-            self::ENTITY_CATEGORY => $ctx['id_category'],
-            self::ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
-            self::ENTITY_SUPPLIER => $ctx['id_supplier'],
+            self::$ENTITY_CATEGORY => $ctx['id_category'],
+            self::$ENTITY_MANUFACTURER => $ctx['id_manufacturer'],
+            self::$ENTITY_SUPPLIER => $ctx['id_supplier'],
         ];
         foreach ($map as $type => $idEntity) {
             if (!$idEntity) {
@@ -979,13 +979,13 @@ class AmazonListingSettings
             ? ' INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
                     ON (ps.`id_product` = x.`id_product` AND ps.`id_shop` = ' . (int) $idShop . ')'
             : '';
-        if ($type === self::ENTITY_CATEGORY) {
+        if ($type === self::$ENTITY_CATEGORY) {
             $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'category_product` x' . $inShop . '
                     WHERE x.`id_category` = ' . $idEntity;
-        } elseif ($type === self::ENTITY_MANUFACTURER) {
+        } elseif ($type === self::$ENTITY_MANUFACTURER) {
             $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'product` x' . $inShop . '
                     WHERE x.`id_manufacturer` = ' . $idEntity;
-        } elseif ($type === self::ENTITY_SUPPLIER) {
+        } elseif ($type === self::$ENTITY_SUPPLIER) {
             $sql = 'SELECT x.`id_product` FROM `' . _DB_PREFIX_ . 'product` x' . $inShop . '
                     WHERE x.`id_supplier` = ' . $idEntity;
         } else {

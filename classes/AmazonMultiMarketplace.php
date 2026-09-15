@@ -345,18 +345,18 @@ class AmazonMultiMarketplace
         $env = AmazonSpApiClient::environment();
 
         if ($env !== 'production') {
-            return AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
+            return AmazonSpApiClient::$ENDPOINT_NA_SANDBOX;
         }
 
         $region = isset(self::$regionMap[$marketplaceId]) ? self::$regionMap[$marketplaceId] : 'EU';
 
         switch ($region) {
             case 'NA':
-                return AmazonSpApiClient::ENDPOINT_NA;
+                return AmazonSpApiClient::$ENDPOINT_NA;
             case 'FE':
-                return AmazonSpApiClient::ENDPOINT_FE;
+                return AmazonSpApiClient::$ENDPOINT_FE;
             default:
-                return AmazonSpApiClient::ENDPOINT_EU;
+                return AmazonSpApiClient::$ENDPOINT_EU;
         }
     }
 

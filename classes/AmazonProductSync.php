@@ -70,7 +70,7 @@ class AmazonProductSync
     ];
 
     /** Cap how many products we scan per run, to stay responsive. */
-    const MAX_PRODUCTS = 2000;
+    public static $MAX_PRODUCTS = 2000;
 
     /** @var AmazonSpApiClient */
     private $client;
@@ -686,7 +686,7 @@ class AmazonProductSync
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
                 WHERE ps.`active` = 1
                 ORDER BY p.`id_product`
-                LIMIT ' . (int) self::MAX_PRODUCTS;
+                LIMIT ' . (int) self::$MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {
@@ -769,7 +769,7 @@ class AmazonProductSync
                 LEFT JOIN `' . _DB_PREFIX_ . 'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
                 WHERE ps.`active` = 1
                 ORDER BY pa.`id_product_attribute`
-                LIMIT ' . (int) self::MAX_PRODUCTS;
+                LIMIT ' . (int) self::$MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
         if (is_array($rows)) {
             foreach ($rows as $r) {

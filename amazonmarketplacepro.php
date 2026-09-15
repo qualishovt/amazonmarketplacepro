@@ -124,6 +124,7 @@ class AmazonMarketplacePro extends Module
         $this->bootstrap = true;
 
         parent::__construct();
+        AmzproShop::setContext($this->context);
 
         $this->displayName = $this->l('Amazon Marketplace Pro');
         $this->description = $this->l('Full Amazon integration: sync products, import orders, update stock & prices, push shipments, handle returns — all automated.');
@@ -273,7 +274,7 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_LWA_APP_ID', '');
         Configuration::updateValue('AMZPRO_LWA_APP_ID_SANDBOX', '');
         Configuration::updateValue('AMZPRO_RELAY_URL', 'https://intellipresta.com/spapi');
-        // Deliberately not seeded: AmazonSpApiClient::PRODUCTION_APP_PUBLISHED
+        // Deliberately not seeded: AmazonSpApiClient::$PRODUCTION_APP_PUBLISHED
         // decides this, and a stored value would only shadow it.
         Configuration::updateValue('AMZPRO_OAUTH_NONCE', '');
         Configuration::updateValue('AMZPRO_OAUTH_RETURN_URL', '');
@@ -616,7 +617,7 @@ class AmazonMarketplacePro extends Module
                     // The button clears what is due for the page's shop (or
                     // every shop with "All shops"), whether or not the
                     // automatic purge is switched on.
-                    $done = $purger->purge(AmazonPiiPurger::DEFAULT_BATCH, AmzproShop::id());
+                    $done = $purger->purge(AmazonPiiPurger::$DEFAULT_BATCH, AmzproShop::id());
                     if ($done === false) {
                         $messages[] = ['type' => 'error', 'text' => $purger->getLastError()];
                     } else {
@@ -719,6 +720,7 @@ class AmazonMarketplacePro extends Module
 
         require_once dirname(__FILE__) . '/classes/AmazonScheduler.php';
         require_once dirname(__FILE__) . '/classes/AmazonRelaySchedule.php';
+        require_once dirname(__FILE__) . '/classes/AmazonBuyerInbox.php';
         $this->context->smarty->assign([
             'module_dir' => $this->_path,
             // PrestaShop 1.6 returns translations HTML-escaped.
@@ -896,7 +898,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_imap_password_set' => (AmzproShop::get('AMZPRO_IMAP_PASSWORD') != ''),
             'mkpro_imap_folder' => AmzproShop::get('AMZPRO_IMAP_FOLDER'),
             'mkpro_imap_ssl' => AmzproShop::get('AMZPRO_IMAP_SSL'),
-            'mkpro_imap_available' => function_exists('imap_open'),
+            'mkpro_imap_available' => AmazonBuyerInbox::isAvailable(),
             'mkpro_carrier_map_in' => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true),
             'amazon_ship_levels' => ['Standard', 'Expedited', 'NextDay', 'SecondDay', 'Priority', 'SameDay', 'Scheduled'],
             'mkpro_status_rules' => (array) json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES'), true),
@@ -1657,7 +1659,7 @@ class AmazonMarketplacePro extends Module
     private function resolveEndpoint()
     {
         if (!$this->isProduction()) {
-            return AmazonSpApiClient::ENDPOINT_NA_SANDBOX;
+            return AmazonSpApiClient::$ENDPOINT_NA_SANDBOX;
         }
 
         $mp = AmzproShop::get('AMZPRO_MARKETPLACE_ID');
@@ -1665,11 +1667,11 @@ class AmazonMarketplacePro extends Module
 
         switch ($region) {
             case 'NA':
-                return AmazonSpApiClient::ENDPOINT_NA;
+                return AmazonSpApiClient::$ENDPOINT_NA;
             case 'FE':
-                return AmazonSpApiClient::ENDPOINT_FE;
+                return AmazonSpApiClient::$ENDPOINT_FE;
             default:
-                return AmazonSpApiClient::ENDPOINT_EU;
+                return AmazonSpApiClient::$ENDPOINT_EU;
         }
     }
 
@@ -2340,7 +2342,7 @@ class AmazonMarketplacePro extends Module
         $queued = 0;
         foreach ($categories as $idCategory) {
             $queued += AmazonListingSettings::enqueueEntityProducts(
-                AmazonListingSettings::ENTITY_CATEGORY, (int) $idCategory, 'profile changed'
+                AmazonListingSettings::$ENTITY_CATEGORY, (int) $idCategory, 'profile changed'
             );
         }
 
@@ -2463,7 +2465,7 @@ class AmazonMarketplacePro extends Module
         if (!isset($_FILES['order_report']) || !is_uploaded_file($_FILES['order_report']['tmp_name'])) {
             return ['success' => false, 'error' => $this->l('No file was uploaded.')];
         }
-        if ($_FILES['order_report']['size'] > AmazonOrderReportImporter::MAX_BYTES) {
+        if ($_FILES['order_report']['size'] > AmazonOrderReportImporter::$MAX_BYTES) {
             return ['success' => false, 'error' => $this->l('The file is larger than 10 MB.')];
         }
 
@@ -3080,7 +3082,7 @@ class AmazonMarketplacePro extends Module
     }
 
     /** Above this many pending SKUs a send goes as one feed document. */
-    const SEND_AS_FEED_ABOVE = 25;
+    public static $SEND_AS_FEED_ABOVE = 25;
 
     /**
      * The one Send button. Small batches go SKU by SKU through the Listings
@@ -3113,7 +3115,7 @@ class AmazonMarketplacePro extends Module
             ];
         }
 
-        if ($pending > self::SEND_AS_FEED_ABOVE) {
+        if ($pending > self::$SEND_AS_FEED_ABOVE) {
             $result = $this->runSubmitFeed();
             $result['method'] = 'feed';
         } else {

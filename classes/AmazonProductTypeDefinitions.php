@@ -27,7 +27,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 class AmazonProductTypeDefinitions
 {
     /** Refetch a cached schema after this many days. */
-    const CACHE_TTL_DAYS = 30;
+    public static $CACHE_TTL_DAYS = 30;
 
     /** Attributes every listing carries; the profile form never asks for them. */
     private static $handledInternally = [
@@ -287,7 +287,7 @@ class AmazonProductTypeDefinitions
         if (!$row || empty($row['attributes_json'])) {
             return false;
         }
-        if (strtotime($row['date_upd']) < time() - self::CACHE_TTL_DAYS * 86400) {
+        if (strtotime($row['date_upd']) < time() - self::$CACHE_TTL_DAYS * 86400) {
             return false;
         }
         $attributes = json_decode($row['attributes_json'], true);

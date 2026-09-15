@@ -326,7 +326,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_0d84dbaddeeaa73d7f3b69c533
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9c328b42885c2c4c03f59b544babe2f9'] = 'Opcjonalna nazwa pliku PDF dołączanego obok faktury (regulamin, zasady zwrotów). Umieść go w folderze docs/ modułu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a312c11b402eecd6efa931e93a060066'] = 'Odpowiedzi kupujących (przychodzące)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d541b446d876bd80a0561642a5ad8df6'] = 'Amazon nie udostępnia API do odczytu odpowiedzi kupujących — trafiają one e-mailem na Twój adres sprzedawcy. Wskaż modułowi tę skrzynkę, a każdą wiadomość powołującą się na zamówienie Amazon zapisze w Obsłudze klienta PrestaShop, przy właściwym zamówieniu.';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_091197bcb9eebfd19f16abdc0638a36b'] = 'Rozszerzenie PHP IMAP nie jest zainstalowane na tym serwerze, więc ta funkcja nie może działać. Poproś hostingodawcę o włączenie ext-imap; ustawienia poniżej zostaną tymczasem zapisane.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f7843ad939a65696e4d9c5a168a05f66'] = 'Rozszerzenie PHP OpenSSL nie jest włączone na tym serwerze, więc ta funkcja nie może działać. Poproś hostingodawcę o jego włączenie; ustawienia poniżej zostaną tymczasem zapisane.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_773679368a7c5bfe7821e4b08292edff'] = 'Ta funkcja zapisuje hasło skrzynki w bazie danych sklepu. Użyj dedykowanej skrzynki lub hasła aplikacji zamiast danych konta głównego i nadaj wyłącznie dostęp do odczytu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b3a12842de33a58f24cd02987d69145'] = 'Czytaj odpowiedzi kupujących';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_52a73c3aa9e7bd0dc4505e3d4d5e7cd3'] = 'Host / port IMAP';
@@ -1075,7 +1075,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_a9ba6101f357952
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3730cfcc28f4449520e138d06c7d187b'] = 'Twoja faktura do zamówienia';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_8449bbbf4c92d20947afb8cd81ba97f1'] = 'W załączeniu przesyłamy Twoją fakturę.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_1f9661c44455ed478596a2bfb382dfe5'] = 'Zamówienie Amazon';
-$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_4a1501cf44faef2f1fc4995b38c7f639'] = 'Rozszerzenie PHP IMAP nie jest zainstalowane na tym serwerze, więc nie można odczytać odpowiedzi kupujących. Poproś hostingodawcę o włączenie ext-imap.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_accfe788a2b9274498371347e10a067c'] = 'Rozszerzenie PHP OpenSSL nie jest włączone na tym serwerze, więc nie można odczytać odpowiedzi kupujących. Poproś hostingodawcę o jego włączenie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_0cec433ecc2af918062b2d0f44d6a4a1'] = 'Wiadomości przychodzące od kupujących są wyłączone w ustawieniach modułu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_3d1bc36bfdb05246096bb9efc4a6fc8f'] = 'Najpierw skonfiguruj host i użytkownika skrzynki.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonbuyerinbox_72ddec039cbd50e29be2abd0b99b73eb'] = 'Nie udało się otworzyć skrzynki: %s';

@@ -175,7 +175,7 @@ class AmazonVcsInvoiceUploader
         } else {
             // Rendered as the order's shop: its address, logo and settings.
             $pdfContent = AmzproShop::runInShop($idShop, function () use ($invoices) {
-                $pdf = new PDF($invoices, PDF::TEMPLATE_INVOICE, Context::getContext()->smarty);
+                $pdf = new PDF($invoices, PDF::TEMPLATE_INVOICE, AmzproShop::context()->smarty);
 
                 return $pdf->render(false);
             });

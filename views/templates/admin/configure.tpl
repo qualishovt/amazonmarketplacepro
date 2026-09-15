@@ -1250,7 +1250,7 @@
         {if !$mkpro_imap_available}
             <div class="alert alert-warning">
                 <i class="icon-warning"></i>
-                {l s='The PHP IMAP extension is not installed on this server, so this feature cannot run. Ask your host to enable ext-imap; the settings below will be saved in the meantime.' mod='amazonmarketplacepro'}
+                {l s='PHP\'s OpenSSL extension is not enabled on this server, so this feature cannot run. Ask your host to enable it; the settings below will be saved in the meantime.' mod='amazonmarketplacepro'}
             </div>
         {/if}
         <div class="alert alert-info">

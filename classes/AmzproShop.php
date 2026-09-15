@@ -177,7 +177,37 @@ class AmzproShop
     ];
 
     /** The schema version ensureSchema() brings the tables to. */
-    const SCHEMA = '1.6.0';
+    public static $SCHEMA = '1.6.0';
+
+    /** @var Context|null The module's context, handed over by its constructor */
+    private static $context;
+
+    /* ─────────────────── Context ─────────────────── */
+
+    /**
+     * Called by the module constructor, which every entry point (hooks,
+     * front controllers, cron, upgrade scripts) goes through.
+     *
+     * @param Context $context
+     */
+    public static function setContext($context)
+    {
+        self::$context = $context;
+    }
+
+    /**
+     * The module's context: the shop, link and Smarty the request runs with.
+     *
+     * @return Context
+     */
+    public static function context()
+    {
+        if (self::$context === null) {
+            Module::getInstanceByName('amazonmarketplacepro');
+        }
+
+        return self::$context;
+    }
 
     /* ─────────────────── Which shop ─────────────────── */
 
@@ -196,14 +226,14 @@ class AmzproShop
     public static function id()
     {
         if (!self::isMultistore()) {
-            $shop = Context::getContext()->shop;
+            $shop = self::context()->shop;
 
             return ($shop && $shop->id) ? (int) $shop->id : self::defaultShopId();
         }
         if (self::isBackOffice()) {
             return Shop::getContext() == Shop::CONTEXT_SHOP ? (int) Shop::getContextShopID() : 0;
         }
-        $shop = Context::getContext()->shop;
+        $shop = self::context()->shop;
 
         return ($shop && $shop->id) ? (int) $shop->id : self::defaultShopId();
     }
@@ -462,7 +492,7 @@ class AmzproShop
     public static function runInShop($idShop, $callable)
     {
         $idShop = (int) $idShop;
-        $context = Context::getContext();
+        $context = self::context();
         $saved = [
             'type' => Shop::getContext(),
             'shop_id' => Shop::getContextShopID(),
@@ -604,7 +634,7 @@ class AmzproShop
     public static function ensureSchema()
     {
         static $done = false;
-        if ($done || Configuration::getGlobalValue('AMZPRO_SHOP_SCHEMA') === self::SCHEMA) {
+        if ($done || Configuration::getGlobalValue('AMZPRO_SHOP_SCHEMA') === self::$SCHEMA) {
             $done = true;
 
             return true;
@@ -645,7 +675,7 @@ class AmzproShop
             }
         }
 
-        Configuration::updateGlobalValue('AMZPRO_SHOP_SCHEMA', self::SCHEMA);
+        Configuration::updateGlobalValue('AMZPRO_SHOP_SCHEMA', self::$SCHEMA);
         $done = true;
 
         return true;

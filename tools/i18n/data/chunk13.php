@@ -247,13 +247,13 @@ return array(
     'it' => 'Non è stato possibile salvare la corrispondenza di categoria.',
     'pl' => 'Nie udało się zapisać mapowania kategorii.',
   ),
-  'The PHP IMAP extension is not installed on this server, so buyer replies cannot be read. Ask your host to enable ext-imap.' => 
+  'PHP\'s OpenSSL extension is not enabled on this server, so buyer replies cannot be read. Ask your host to enable it.' =>
   array(
-    'fr' => 'L\'extension PHP IMAP n\'est pas installée sur ce serveur, les réponses des acheteurs ne peuvent donc pas être lues. Demandez à votre hébergeur d\'activer ext-imap.',
-    'es' => 'La extensión IMAP de PHP no está instalada en este servidor, así que no se pueden leer las respuestas del comprador. Pide a tu proveedor que habilite ext-imap.',
-    'de' => 'Die PHP-Erweiterung IMAP ist auf diesem Server nicht installiert, daher können Antworten der Käufer nicht gelesen werden. Bitten Sie Ihren Hoster, ext-imap zu aktivieren.',
-    'it' => 'L\'estensione PHP IMAP non è installata su questo server, quindi le risposte degli acquirenti non possono essere lette. Chiedi al tuo hosting di abilitare ext-imap.',
-    'pl' => 'Rozszerzenie PHP IMAP nie jest zainstalowane na tym serwerze, więc nie można odczytać odpowiedzi kupujących. Poproś hostingodawcę o włączenie ext-imap.',
+    'fr' => 'L\'extension OpenSSL de PHP n\'est pas activée sur ce serveur, les réponses des acheteurs ne peuvent donc pas être lues. Demandez à votre hébergeur de l\'activer.',
+    'es' => 'La extensión OpenSSL de PHP no está habilitada en este servidor, así que no se pueden leer las respuestas del comprador. Pide a tu proveedor que la habilite.',
+    'de' => 'Die PHP-Erweiterung OpenSSL ist auf diesem Server nicht aktiviert, daher können Antworten der Käufer nicht gelesen werden. Bitten Sie Ihren Hoster, sie zu aktivieren.',
+    'it' => 'L\'estensione PHP OpenSSL non è abilitata su questo server, quindi le risposte degli acquirenti non possono essere lette. Chiedi al tuo hosting di abilitarla.',
+    'pl' => 'Rozszerzenie PHP OpenSSL nie jest włączone na tym serwerze, więc nie można odczytać odpowiedzi kupujących. Poproś hostingodawcę o jego włączenie.',
   ),
   'Inbound buyer messages are disabled in the module settings.' => 
   array(

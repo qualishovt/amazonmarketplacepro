@@ -219,12 +219,12 @@ return array(
     'it' => 'Amazon non offre alcuna API per leggere ciò che risponde un acquirente: le risposte arrivano via e-mail al tuo indirizzo venditore. Indica quella casella al modulo e archivierà ogni messaggio che cita un ordine Amazon nel Servizio clienti di PrestaShop, in corrispondenza dell\'ordine giusto.',
     'pl' => 'Amazon nie udostępnia API do odczytu odpowiedzi kupujących — trafiają one e-mailem na Twój adres sprzedawcy. Wskaż modułowi tę skrzynkę, a każdą wiadomość powołującą się na zamówienie Amazon zapisze w Obsłudze klienta PrestaShop, przy właściwym zamówieniu.',
 ),
-'The PHP IMAP extension is not installed on this server, so this feature cannot run. Ask your host to enable ext-imap; the settings below will be saved in the meantime.' => array(
-    'fr' => 'L\'extension PHP IMAP n\'est pas installée sur ce serveur, cette fonction ne peut donc pas fonctionner. Demandez à votre hébergeur d\'activer ext-imap ; les réglages ci-dessous seront enregistrés entre-temps.',
-    'es' => 'La extensión IMAP de PHP no está instalada en este servidor, así que esta función no puede funcionar. Pide a tu proveedor que habilite ext-imap; mientras tanto, los ajustes de abajo se guardarán igualmente.',
-    'de' => 'Die PHP-Erweiterung IMAP ist auf diesem Server nicht installiert, daher kann diese Funktion nicht laufen. Bitten Sie Ihren Hoster, ext-imap zu aktivieren; die Einstellungen unten werden inzwischen trotzdem gespeichert.',
-    'it' => 'L\'estensione PHP IMAP non è installata su questo server, quindi questa funzione non può funzionare. Chiedi al tuo hosting di abilitare ext-imap; nel frattempo le impostazioni qui sotto verranno comunque salvate.',
-    'pl' => 'Rozszerzenie PHP IMAP nie jest zainstalowane na tym serwerze, więc ta funkcja nie może działać. Poproś hostingodawcę o włączenie ext-imap; ustawienia poniżej zostaną tymczasem zapisane.',
+'PHP\'s OpenSSL extension is not enabled on this server, so this feature cannot run. Ask your host to enable it; the settings below will be saved in the meantime.' => array(
+    'fr' => 'L\'extension OpenSSL de PHP n\'est pas activée sur ce serveur, cette fonction ne peut donc pas fonctionner. Demandez à votre hébergeur de l\'activer ; les réglages ci-dessous seront enregistrés entre-temps.',
+    'es' => 'La extensión OpenSSL de PHP no está habilitada en este servidor, así que esta función no puede funcionar. Pide a tu proveedor que la habilite; mientras tanto, los ajustes de abajo se guardarán igualmente.',
+    'de' => 'Die PHP-Erweiterung OpenSSL ist auf diesem Server nicht aktiviert, daher kann diese Funktion nicht laufen. Bitten Sie Ihren Hoster, sie zu aktivieren; die Einstellungen unten werden inzwischen trotzdem gespeichert.',
+    'it' => 'L\'estensione PHP OpenSSL non è abilitata su questo server, quindi questa funzione non può funzionare. Chiedi al tuo hosting di abilitarla; nel frattempo le impostazioni qui sotto verranno comunque salvate.',
+    'pl' => 'Rozszerzenie PHP OpenSSL nie jest włączone na tym serwerze, więc ta funkcja nie może działać. Poproś hostingodawcę o jego włączenie; ustawienia poniżej zostaną tymczasem zapisane.',
 ),
 'This stores a mailbox password in your shop database. Use a dedicated mailbox or an app password rather than your main account credentials, and give it read access only.' => array(
     'fr' => 'Cette fonction enregistre un mot de passe de boîte mail dans la base de données de votre boutique. Utilisez une boîte dédiée ou un mot de passe d\'application plutôt que les identifiants de votre compte principal, et limitez-la à un accès en lecture.',

@@ -30,7 +30,7 @@ require_once dirname(__FILE__) . '/AmzproShop.php';
 
 class AmazonReferenceTool
 {
-    const SEPARATOR = ';';
+    public static $SEPARATOR = ';';
 
     /** Header of the exported file, in column order. */
     public static $columns = [
@@ -95,7 +95,7 @@ class AmazonReferenceTool
             $rows = [];
         }
 
-        $out = "\xEF\xBB\xBF" . implode(self::SEPARATOR, self::$columns) . "\r\n";
+        $out = "\xEF\xBB\xBF" . implode(self::$SEPARATOR, self::$columns) . "\r\n";
         foreach ($rows as $r) {
             $line = [
                 (int) $r['id_product'] . '_' . (int) $r['id_product_attribute'],
@@ -105,7 +105,7 @@ class AmazonReferenceTool
                 self::escapeCode($r['upc']),
                 self::escape($r['supplier_reference']),
             ];
-            $out .= implode(self::SEPARATOR, $line) . "\r\n";
+            $out .= implode(self::$SEPARATOR, $line) . "\r\n";
         }
 
         return $out;
@@ -133,7 +133,7 @@ class AmazonReferenceTool
             return $summary;
         }
 
-        $header = str_getcsv(array_shift($lines), self::SEPARATOR);
+        $header = str_getcsv(array_shift($lines), self::$SEPARATOR);
         $index = [];
         foreach ($header as $i => $name) {
             $index[trim(Tools::strtolower($name))] = $i;
@@ -152,7 +152,7 @@ class AmazonReferenceTool
             if (trim($line) === '') {
                 continue;
             }
-            $cells = str_getcsv($line, self::SEPARATOR);
+            $cells = str_getcsv($line, self::$SEPARATOR);
             $key = isset($cells[$index['key']]) ? trim($cells[$index['key']]) : '';
             if (!preg_match('/^(\d+)_(\d+)$/', $key, $m)) {
                 ++$summary['skipped'];
@@ -302,7 +302,7 @@ class AmazonReferenceTool
 
     private static function escape($value)
     {
-        $value = str_replace(["\r", "\n", self::SEPARATOR], ' ', (string) $value);
+        $value = str_replace(["\r", "\n", self::$SEPARATOR], ' ', (string) $value);
 
         return $value;
     }

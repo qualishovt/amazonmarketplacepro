@@ -55,11 +55,11 @@ class AmazonScheduler
 {
     /** A run in progress is considered dead after this long, so a fatal
      *  error during a task cannot wedge the schedule permanently. */
-    const LOCK_TIMEOUT = 900;
+    public static $LOCK_TIMEOUT = 900;
 
     /** How long a single runDue() pass may spend before stopping and leaving
      *  the rest for the next pass. Keeps one slow task from starving others. */
-    const DEFAULT_BUDGET = 240;
+    public static $DEFAULT_BUDGET = 240;
 
     /**
      * Every task the module can run, with the interval it ships with.
@@ -249,8 +249,11 @@ class AmazonScheduler
      * crontab and a page view arriving together - cannot run the same task
      * twice.
      */
-    public function runDue($budgetSeconds = self::DEFAULT_BUDGET)
+    public function runDue($budgetSeconds = null)
     {
+        if ($budgetSeconds === null) {
+            $budgetSeconds = self::$DEFAULT_BUDGET;
+        }
         // Taken once: the lock released at the end is this shop's, whatever
         // a task does to the context in between.
         $idShop = self::shopId();
@@ -379,7 +382,7 @@ class AmazonScheduler
     {
         $idShop = ($idShop === null) ? self::shopId() : (int) $idShop;
         $held = (int) AmzproShop::get('AMZPRO_CRON_LOCK', $idShop);
-        if ($held && (time() - $held) < self::LOCK_TIMEOUT) {
+        if ($held && (time() - $held) < self::$LOCK_TIMEOUT) {
             return false;
         }
         AmzproShop::set('AMZPRO_CRON_LOCK', time(), $idShop);

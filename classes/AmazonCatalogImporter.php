@@ -168,9 +168,11 @@ class AmazonCatalogImporter
      */
     private function bulletList(array $bullets)
     {
-        $items = array_values(array_filter(array_map('trim', $bullets), 'strlen'));
+        $items = array_values(array_filter(array_map('trim', $bullets), function ($bullet) {
+            return $bullet !== '';
+        }));
         while ($items) {
-            $template = Context::getContext()->smarty->createTemplate(
+            $template = AmzproShop::context()->smarty->createTemplate(
                 _PS_MODULE_DIR_ . 'amazonmarketplacepro/views/templates/admin/bullet_list.tpl'
             );
             $template->assign('mkpro_bullets', $items);
