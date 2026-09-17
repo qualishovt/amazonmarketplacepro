@@ -20,10 +20,23 @@ The key is
 strtolower('<{amazonmarketplacepro}prestashop>' . <source>) . '_' . md5(<english>)
 ```
 
-where `<source>` is the lower-case basename of the file the string is in
+where `<english>` has had its apostrophes backslash-escaped first, exactly as
+PrestaShop does before hashing, and `<source>` is where the string sits
 (`configure`, `product_tab`, `amazonmarketplacepro`, `amazonproductsync`,
-`oauth` ...), and `<english>` has had its apostrophes backslash-escaped first,
-exactly as PrestaShop does before hashing.
+`oauth` ...).
+
+All of that is read from PrestaShop's own source, which is open source
+(AFL/OSL):
+
+- `classes/Translate.php`, `Translate::getModuleTranslation()` — the escaping
+  (`preg_replace("/\\*'/", "\'", $string)`), the `md5()` and the
+  `strtolower('<{' . $name . '}prestashop>' . $source)` prefix, plus the
+  `stripslashes()` on the value. PrestaShop 1.6.1.24 lines 158-172 and
+  PrestaShop 9.1.5 lines 114-122 do the same thing.
+- `config/smartyadmin.config.inc.php`, `smartyTranslate()` — a template passes
+  `basename($filename, '.tpl')` as the source.
+- `classes/module/Module.php`, `Module::l()` — PHP passes the module name, or
+  the `$specific` argument when one is given (what `AmazonI18n` uses).
 
 ## Strings in the classes and front controllers
 

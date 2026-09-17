@@ -18,17 +18,27 @@
  *
  *     php tools/i18n/build.php
  *
- * The key PrestaShop looks up is
+ * The key and the escaping below are read from PrestaShop's own source, which
+ * is open source (AFL/OSL). In Translate::getModuleTranslation()
+ * (classes/Translate.php, PrestaShop 1.6.1.24 lines 158-172 and PrestaShop
+ * 9.1.5 lines 114-122, identical logic) each lookup is
  *
- *     strtolower('<{' . module . '}prestashop>' . source) . '_' . md5($string)
+ *     $string = preg_replace("/\\*'/", "\'", $string);
+ *     $key = md5($string);
+ *     $defaultKey = strtolower('<{' . $name . '}prestashop>' . $source) . '_' . $key;
  *
- * where `source` is the lower-case basename of the file the string is in (the
- * template, the module class, or the plain class), and `$string` has already
- * been through preg_replace("/\\*'/", "\'", ...) - so the md5 covers the text
- * with its apostrophes backslash-escaped. PS 1.6 (classes/Translate.php) and PS 9
- * (same file, same lines) build the key identically and both read
- * translations/<iso>.php, which is why one legacy file per language serves
- * every version the module supports.
+ * and the stored value is returned through stripslashes(). So the md5 covers
+ * the English text with its apostrophes backslash-escaped.
+ *
+ * `source` is where the string sits, and the callers decide it:
+ * - a template passes basename($filename, '.tpl') - smartyTranslate() in
+ *   config/smartyadmin.config.inc.php - so configure.tpl gives "configure";
+ * - Module::l() (classes/module/Module.php) passes the module name, or the
+ *   $specific argument when one is given, which is what AmazonI18n uses for
+ *   the plain classes.
+ *
+ * Both versions read translations/<iso>.php, which is why one legacy file per
+ * language serves every PrestaShop the module supports.
  *
  * Because the key is an md5 of the English source, editing an English string
  * in a template silently orphans its line here. Re-run this script after any
@@ -41,12 +51,25 @@ $root = dirname(dirname(__DIR__)) . '/';
 $dest = $root . 'translations/';
 $langs = array('fr', 'es', 'de', 'it', 'pl');
 
-/** The escaping PrestaShop applies before hashing. */
+/**
+ * The escaping PrestaShop applies before hashing, copied in behaviour from
+ * Translate::getModuleTranslation(): preg_replace("/\\*'/", "\'", $string).
+ *
+ * @param string $s the English string as written in the template or class
+ *
+ * @return string
+ */
 function amzproI18nNormalise($s)
 {
     return preg_replace("/\\\\*'/", "\\'", $s);
 }
 
+/**
+ * @param string $source template basename, or the source the caller passes to l()
+ * @param string $string the English string
+ *
+ * @return string the array key PrestaShop looks up in translations/<iso>.php
+ */
 function amzproI18nKey($source, $string)
 {
     return strtolower('<{' . AMZPRO_I18N_MODULE . '}prestashop>' . $source)
