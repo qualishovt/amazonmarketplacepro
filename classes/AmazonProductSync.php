@@ -737,9 +737,9 @@ class AmazonProductSync
      * real total, is the difference between "my catalogue is all there" and a
      * comparison that was quietly cut short.
      *
-     * @param int    $read       how many rows this pass returned
-     * @param string $countSql   counts everything the pass could have read
-     * @param bool   $isProducts products, or combinations
+     * @param int $read how many rows this pass returned
+     * @param string $countSql counts everything the pass could have read
+     * @param bool $isProducts products, or combinations
      */
     private function warnIfScanCapped($read, $countSql, $isProducts)
     {
