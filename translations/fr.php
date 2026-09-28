@@ -423,6 +423,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_d24108c0aacde48261c60e7a84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_78a52b1ee3dd9f2035a8a14237bd76cb'] = 'PrestaShop → Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea8ef906de784debc2f7ea71b1da256a'] = 'Publiez vos produits sur Amazon et maintenez le prix et le stock à jour. La première étape se contente de lire et de comparer ; rien n\'arrive sur Amazon tant que vous n\'avez pas envoyé.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_82bc17e96acf57785719059127ef87a0'] = 'Synchroniser PS vers Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6be20dab3a87609e5a84e1a7391588b4'] = 'Vide la liste ci-dessous. La prochaine synchronisation la reconstruit à partir de votre catalogue actuel. Rien ne change sur Amazon.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_0b481e2ab55983406da5b4f1542f8724'] = 'Réinitialiser la comparaison';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ad00d196cda52dc481df2a495dc5b8e2'] = 'Lit votre catalogue PrestaShop et signale, SKU par SKU, ce qui diffère d\'Amazon : description, points clés, marque, images, EAN et catégories. La comparaison s\'affiche ci-dessous.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4c1b4876ccaceb6a334a3d712076d859'] = 'Associer les ASIN via l\'EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46d9cde3daffdb463a8e3cca14a15d8e'] = 'Facultatif. Pour les produits qu\'Amazon vend déjà, retrouve la fiche existante grâce à l\'EAN afin que vous y ajoutiez une offre au lieu de créer une fiche en double.';
@@ -770,6 +772,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_6aa8f72298994968aa9ecdd26b
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_752e3fa23baef50cb2d1a107a40e2b7b'] = 'Récupération depuis Amazon...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_385958f38b7519396e43bdcb0f3ba3e8'] = 'Analyse de PrestaShop...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_121d98350b0512a6dc2cf2a013db5086'] = '%1$s produits · %2$s PS uniquement · %3$s Amazon uniquement · %4$s conflits · %5$s synchronisés';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_94fd686612b8b1444f960083ea2e4dde'] = 'Affichage des %1$s premières lignes sur %2$s. L\'envoi porte sur toutes, pas seulement sur celles affichées ici.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c40c3fe2cbdc8cd6602ccee8a409d25c'] = 'Vider la comparaison ? Le prochain « Synchroniser PS vers Amazon » la reconstruit à partir de votre catalogue actuel. Rien ne change sur Amazon.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a87521ff71f93de4ac263f6436ff6d32'] = 'Comparaison vidée : %1$s ligne(s) supprimée(s). Lancez « Synchroniser PS vers Amazon » pour la reconstruire.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b677d85a62b18a44cabcc2646011db3e'] = 'Envoi des modifications en attente vers Amazon...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_89ae2d195a6bb7a80d0cd5eb1899bbf3'] = '%1$s SKU ignoré(s)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_94bd9bcc28faaa6bb8412fb522fcf404'] = '%1$s SKU étaient en attente : ils sont donc partis en un seul flux. Le flux %2$s a été envoyé avec %3$s message(s). Amazon le traite en arrière-plan : utilisez « Vérifier l\'état du flux » ci-dessous.';
@@ -1125,10 +1130,13 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonordercreator_318d8fae099607977
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonorderimporter_3f2316e1ce24993a712b89955c385d24'] = '%1$s : ignoré, cette commande est déjà importée dans la boutique « %2$s ».';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonpiipurger_4c68662b43ee26668da9bc91d61249d8'] = 'Impossible d\'effacer les données acheteur des commandes Amazon importées.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_e64ec4c246c11e99dbbddc40c41c9e23'] = 'Aucun produit PrestaShop avec une référence (SKU) n\'a été trouvé.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4568a131bb29b6e338aeb74d76885dc1'] = '%d ligne(s) ne sont plus exportées (produit supprimé, désactivé, filtré ou exclu) et ne seront pas envoyées.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_86e0ad94ad96c0fc070419af96b14e97'] = 'Partie Amazon ignorée : votre identifiant vendeur est manquant. Cliquez sur « Se connecter à Amazon » dans Paramètres > Connexion pour le renseigner.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4991bcab7f1465c6f789054d50803712'] = 'Aucun SKU à vérifier pour le moment. Lancez d\'abord « Synchroniser PS vers Amazon » pour collecter vos SKU PrestaShop. La recherche des offres présentes uniquement sur Amazon arrive bientôt.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_58eca2949744db2b9995cba9cca059c0'] = 'Impossible de lister les produits Amazon : votre identifiant vendeur est manquant. Cliquez sur « Se connecter à Amazon » dans Paramètres > Connexion pour le renseigner.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_7eacf6c612ddbb8f1f663970efb9c838'] = 'Amazon n\'a renvoyé aucun produit pour ce vendeur/cette place de marché.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8e028d1833aa3de048edfbf15c400605'] = 'Seuls les %1$d premiers produits actifs sur %2$d ont été lus dans la comparaison. Désactivez sous Règles catalogue ce que vous ne vendez pas sur Amazon, ou demandez au support d\'augmenter cette limite.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4307108701dca0842380bc578e8ab95b'] = 'Seules les %1$d premières déclinaisons actives sur %2$d ont été lues dans la comparaison.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_bcbc3745cd538b8f2e4ed31fd1387c5c'] = 'Le produit #%d a des combinaisons de déclinaisons mais aucune référence (SKU) de base — envoyé sous forme d\'offres indépendantes, pas comme famille de déclinaisons Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_77b5dba20c184e480838d308ad22d0bb'] = '%d produit(s) exclu(s) par les filtres d\'export (prix min/max, quantité min, ou synchronisation désactivée).';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_9542cdb21635eddbf5b64899bc3c015f'] = 'Export différentiel : seuls les produits modifiés au cours des %d dernière(s) heure(s) ou mis en file d\'attente par un changement de règle ont été collectés.';

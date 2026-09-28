@@ -423,6 +423,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_d24108c0aacde48261c60e7a84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_78a52b1ee3dd9f2035a8a14237bd76cb'] = 'PrestaShop → Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea8ef906de784debc2f7ea71b1da256a'] = 'Pubblica i tuoi prodotti su Amazon e mantieni aggiornati prezzo e giacenza. Il primo passaggio si limita a leggere e confrontare: nulla arriva ad Amazon finché non invii.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_82bc17e96acf57785719059127ef87a0'] = 'Sincronizza PS verso Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6be20dab3a87609e5a84e1a7391588b4'] = 'Svuota l\'elenco qui sotto. La sincronizzazione successiva lo ricostruisce dal tuo catalogo attuale. Su Amazon non cambia nulla.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_0b481e2ab55983406da5b4f1542f8724'] = 'Reimposta il confronto';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ad00d196cda52dc481df2a495dc5b8e2'] = 'Legge il tuo catalogo PrestaShop e segnala, SKU per SKU, ciò che differisce da Amazon: descrizione, punti elenco, marca, immagini, EAN e categorie. Il confronto compare qui sotto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4c1b4876ccaceb6a334a3d712076d859'] = 'Abbina gli ASIN tramite EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46d9cde3daffdb463a8e3cca14a15d8e'] = 'Facoltativo. Per i prodotti che Amazon vende già, individua la scheda esistente tramite l\'EAN, così puoi aggiungervi un\'offerta invece di creare un\'inserzione duplicata.';
@@ -770,6 +772,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_6aa8f72298994968aa9ecdd26b
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_752e3fa23baef50cb2d1a107a40e2b7b'] = 'Lettura da Amazon in corso...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_385958f38b7519396e43bdcb0f3ba3e8'] = 'Analisi di PrestaShop in corso...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_121d98350b0512a6dc2cf2a013db5086'] = '%1$s prodotti · %2$s solo PS · %3$s solo Amazon · %4$s conflitti · %5$s sincronizzati';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_94fd686612b8b1444f960083ea2e4dde'] = 'Vengono mostrate le prime %1$s righe su %2$s. L\'invio riguarda tutte, non solo quelle elencate qui.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c40c3fe2cbdc8cd6602ccee8a409d25c'] = 'Svuotare il confronto? Il prossimo «Sincronizza PS con Amazon» lo ricostruisce dal tuo catalogo attuale. Su Amazon non cambia nulla.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a87521ff71f93de4ac263f6436ff6d32'] = 'Confronto svuotato: %1$s riga/righe rimosse. Esegui «Sincronizza PS con Amazon» per ricostruirlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b677d85a62b18a44cabcc2646011db3e'] = 'Invio ad Amazon delle modifiche in attesa in corso...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_89ae2d195a6bb7a80d0cd5eb1899bbf3'] = '%1$s SKU saltati';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_94bd9bcc28faaa6bb8412fb522fcf404'] = '%1$s SKU erano in attesa, quindi sono partiti con un unico feed. Il feed %2$s è stato inviato con %3$s messaggi. Amazon lo elabora in background: usa «Verifica lo stato del feed» qui sotto.';
@@ -1125,10 +1130,13 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonordercreator_318d8fae099607977
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonorderimporter_3f2316e1ce24993a712b89955c385d24'] = '%1$s: saltato, questo ordine è già importato nel negozio «%2$s».';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonpiipurger_4c68662b43ee26668da9bc91d61249d8'] = 'Non è stato possibile cancellare i dati dell\'acquirente dagli ordini Amazon importati.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_e64ec4c246c11e99dbbddc40c41c9e23'] = 'Nessun prodotto PrestaShop con riferimento (SKU) trovato.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4568a131bb29b6e338aeb74d76885dc1'] = '%d riga/righe non sono più esportate (prodotto eliminato, disattivato, filtrato o escluso) e non verranno inviate.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_86e0ad94ad96c0fc070419af96b14e97'] = 'Lato Amazon saltato: il tuo ID venditore manca. Fai clic su «Connetti ad Amazon» in Impostazioni > Connessione per completarlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4991bcab7f1465c6f789054d50803712'] = 'Nessuno SKU da controllare per ora. Esegui prima «Sincronizza PS verso Amazon» per raccogliere i tuoi SKU PrestaShop. La ricerca delle inserzioni presenti solo su Amazon è in arrivo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_58eca2949744db2b9995cba9cca059c0'] = 'Non è possibile elencare i prodotti Amazon: il tuo ID venditore manca. Fai clic su «Connetti ad Amazon» in Impostazioni > Connessione per completarlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_7eacf6c612ddbb8f1f663970efb9c838'] = 'Amazon non ha restituito prodotti per questo venditore/marketplace.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8e028d1833aa3de048edfbf15c400605'] = 'Sono stati letti nel confronto solo i primi %1$d prodotti attivi su %2$d. Disattiva nelle Regole catalogo ciò che non vendi su Amazon, oppure chiedi al supporto di aumentare questo limite.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4307108701dca0842380bc578e8ab95b'] = 'Sono state lette nel confronto solo le prime %1$d combinazioni attive su %2$d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_bcbc3745cd538b8f2e4ed31fd1387c5c'] = 'Il prodotto #%d ha combinazioni di varianti ma nessun riferimento di base (SKU) — pubblicato come inserzioni indipendenti, non come famiglia di varianti Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_77b5dba20c184e480838d308ad22d0bb'] = '%d prodotti esclusi dai filtri di esportazione (prezzo minimo/massimo, quantità minima o sincronizzazione disattivata).';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_9542cdb21635eddbf5b64899bc3c015f'] = 'Esportazione differenziale: sono stati raccolti solo i prodotti modificati nelle ultime %d ore o messi in coda da una modifica delle regole.';

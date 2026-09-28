@@ -579,6 +579,7 @@ class AmazonMarketplacePro extends Module
             'ajaxImportOrderAddresses' => 'runImportOrderAddresses',
             'ajaxListDeletions' => 'runListDeletions',
             'ajaxDeleteListings' => 'runDeleteListings',
+            'ajaxResetComparison' => 'runResetComparison',
         ];
         foreach ($ajaxActions as $submit => $method) {
             if (Tools::isSubmit($submit)) {
@@ -944,6 +945,7 @@ class AmazonMarketplacePro extends Module
             'ajax_test_amazon_url' => $baseUrl . '&ajaxTestAmazon=1',
             'ajax_import_orders_url' => $baseUrl . '&ajaxImportAmazonOrders=1',
             'ajax_create_ps_orders_url' => $baseUrl . '&ajaxCreatePsOrders=1',
+            'ajax_reset_comparison_url' => $baseUrl . '&ajaxResetComparison=1',
             'ajax_sync_products_ps_url' => $baseUrl . '&ajaxSyncProductsPs=1',
             'ajax_sync_products_amazon_url' => $baseUrl . '&ajaxSyncProductsAmazon=1',
             'ajax_list_amazon_products_url' => $baseUrl . '&ajaxListAmazonProducts=1',
@@ -3014,12 +3016,41 @@ class AmazonMarketplacePro extends Module
         $result['summary'] = $summary;
         $result['notices'] = $sync->getNotices();
         $result['products'] = $sync->listStaged();
+        // The table below the summary is only the head of the comparison.
+        $result['products_total'] = $sync->countStaged();
 
         $this->logActivity('info', 'product_sync_' . $direction,
             'Total: ' . (isset($summary['total']) ? $summary['total'] : 0)
         );
 
         return $result;
+    }
+
+    /* ─────────────────── Feature: Reset the comparison ─────────────────── */
+
+    /**
+     * Empty the staged comparison. Rows collected by an earlier scan outlive
+     * the rules that produced them, so a shop that narrows what it exports
+     * needs a way to start the comparison over. No listing is touched.
+     */
+    protected function runResetComparison()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
+
+        $sync = new AmazonProductSync(
+            $this->buildAmazonClient(),
+            $this->getMarketplaceId(),
+            AmzproShop::get('AMZPRO_SELLER_ID')
+        );
+        $removed = $sync->resetStaged();
+
+        $this->logActivity('info', 'reset_comparison', 'Removed ' . $removed . ' staged row(s)');
+
+        return [
+            'success' => true,
+            'removed' => $removed,
+            'notices' => [],
+        ];
     }
 
     /* ─────────────────── Feature: List Amazon Products ─────────────────── */

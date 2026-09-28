@@ -1679,6 +1679,10 @@
                 <button type="button" id="sync-products-ps" class="btn btn-primary">
                     <i class="icon-refresh"></i> {l s='Sync PS to Amazon' mod='amazonmarketplacepro'}
                 </button>
+                <button type="button" id="reset-comparison" class="btn btn-default" style="margin-left:8px;"
+                        title="{l s='Empties the list below. The next sync rebuilds it from your catalogue as it is now. Nothing on Amazon changes.' mod='amazonmarketplacepro'}">
+                    <i class="icon-eraser"></i> {l s='Reset comparison' mod='amazonmarketplacepro'}
+                </button>
                 <p class="help-block" style="margin:6px 0 0;">{l s='Reads your PrestaShop catalogue and marks, per SKU, what differs from Amazon: description, bullet points, brand, images, EAN and categories. The comparison appears below.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
@@ -3000,6 +3004,9 @@
         pullingAmazon: '{l s='Pulling from Amazon...' mod='amazonmarketplacepro' js=1}',
         scanningPs: '{l s='Scanning PrestaShop...' mod='amazonmarketplacepro' js=1}',
         syncSummary: '{l s='%1$s products · %2$s PS only · %3$s Amazon only · %4$s conflicts · %5$s in sync' mod='amazonmarketplacepro' js=1}',
+        rowsShown: '{l s='Showing the first %1$s of %2$s rows. The push works on all of them, not only the ones listed here.' mod='amazonmarketplacepro' js=1}',
+        confirmResetComparison: '{l s='Empty the comparison? The next "Sync PS to Amazon" rebuilds it from your catalogue as it is now. Nothing on Amazon changes.' mod='amazonmarketplacepro' js=1}',
+        comparisonReset: '{l s='Comparison emptied: %1$s row(s) removed. Run "Sync PS to Amazon" to rebuild it.' mod='amazonmarketplacepro' js=1}',
         sendingPending: '{l s='Sending pending changes to Amazon...' mod='amazonmarketplacepro' js=1}',
         skusSkipped: '{l s='%1$s SKU(s) skipped' mod='amazonmarketplacepro' js=1}',
         feedSubmitted: '{l s='%1$s SKUs were pending, so they went as one feed. Feed %2$s was submitted with %3$s message(s). Amazon processes it in the background: use Check feed status below.' mod='amazonmarketplacepro' js=1}',
@@ -3552,9 +3559,12 @@
             amazon: '{$ajax_sync_products_amazon_url|escape:'javascript':'UTF-8'}'
         };
 
-        function renderProducts(products) {
+        function renderProducts(products, total) {
             if (!products || !products.length) return '<div class="alert alert-info">'+esc(T.noProductsRef)+'</div>';
-            var h = '<table class="table"><thead><tr>'
+            // The table is the head of the comparison, not all of it.
+            var shown = (total && total > products.length)
+                ? '<p class="help-block">'+esc(fmt(T.rowsShown, products.length, total))+'</p>' : '';
+            var h = shown + '<table class="table"><thead><tr>'
                 +'<th>SKU</th><th>PrestaShop</th>'+th(T.thBrandMfr)+'<th>EAN</th>'
                 +'<th>Amazon</th>'+th(T.thBrand, T.thType, T.thDirection)
                 +'</tr></thead><tbody>';
@@ -3600,12 +3610,33 @@
                 if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                 if (data.notices) for (var n=0; n<data.notices.length; n++) html += '<div class="alert alert-warning">'+esc(data.notices[n])+'</div>';
                 if (html) { sumBox.style.display='block'; sumBox.className=''; sumBox.innerHTML=html; }
-                out.innerHTML = renderProducts(data.products);
+                out.innerHTML = renderProducts(data.products, parseInt(data.products_total, 10) || 0);
             });
         }
 
         if (btnPs) btnPs.addEventListener('click', function(){ run('ps'); });
         if (btnAz) btnAz.addEventListener('click', function(){ run('amazon'); });
+
+        // Rows staged by an earlier scan outlive the rules that produced them.
+        var btnReset = document.getElementById('reset-comparison');
+        if (btnReset) {
+            btnReset.addEventListener('click', function () {
+                if (!confirm(T.confirmResetComparison)) return;
+                setBusy(true);
+                btnReset.disabled = true;
+                ajaxPost('{$ajax_reset_comparison_url|escape:'javascript':'UTF-8'}', function (data) {
+                    setBusy(false);
+                    btnReset.disabled = false;
+                    var box = boxes.ps.sum, out = boxes.ps.out;
+                    box.style.display = 'block';
+                    box.className = '';
+                    box.innerHTML = (data && data.success)
+                        ? '<div class="alert alert-success">'+esc(fmt(T.comparisonReset, data.removed))+'</div>'
+                        : '<div class="alert alert-danger">'+esc((data && data.error) ? data.error : T.unexpected)+'</div>';
+                    if (data && data.success) { out.innerHTML = ''; boxes.amazon.out.innerHTML = ''; }
+                });
+            });
+        }
     })();
 
     /* ──────── SEND PENDING CHANGES ────────

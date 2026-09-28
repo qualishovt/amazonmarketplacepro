@@ -79,6 +79,8 @@ class AmazonProductSync
     private $lastError;
     private $notices = [];
     private $useMock = false;
+    /** Whether the last catalogue scan read the whole catalogue, not a delta window. */
+    private $lastScanWasFull = true;
 
     public function __construct(AmazonSpApiClient $client, $marketplaceId, $sellerId = '')
     {
@@ -155,6 +157,28 @@ class AmazonProductSync
      *
      * @return string
      */
+    /**
+     * The per-product sync switch, on its own, for queries that only need to
+     * know whether a row may be sent. Same `ov` alias as listingJoins().
+     *
+     * @param string $p alias of the staged product table
+     */
+    private function syncSwitchJoin($p)
+    {
+        return ' LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
+                 ON (' . self::preferShopJoin(
+            'amazonmarketplacepro_product_setting', 'ov',
+            ['id_product' => '`' . bqSQL($p) . '`.`id_product`'],
+            '`' . bqSQL($p) . '`.`id_shop`'
+        ) . ')';
+    }
+
+    /** A product switched off on its own settings is never pushed. */
+    private function syncSwitchWhere()
+    {
+        return ' AND (ov.`sync` IS NULL OR ov.`sync` = 1)';
+    }
+
     private function listingJoins($p)
     {
         $shopExpr = '`' . bqSQL($p) . '`.`id_shop`';
@@ -310,6 +334,25 @@ class AmazonProductSync
         $now = date('Y-m-d H:i:s');
 
         $psRows = $this->collectPrestashopProducts();
+
+        // A full scan is the whole truth about what this shop exports, so a
+        // staged row it does not collect must stop counting as pending —
+        // otherwise a product deleted, disabled or switched off after an
+        // earlier scan would still be pushed. Clearing the flag first and
+        // letting the upserts set it again marks exactly the rows this pass
+        // collected, whatever the clock does. A delta scan only looks at
+        // recent changes, so it may not judge the rest.
+        $reconcile = ($this->lastScanWasFull && !empty($psRows));
+        $presentBefore = 0;
+        if ($reconcile) {
+            $presentBefore = $this->countPresent();
+            Db::getInstance()->execute(
+                'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                 SET `ps_exists` = 0
+                 WHERE `id_shop` = ' . (int) $this->shopId() . ' AND `ps_exists` = 1'
+            );
+        }
+
         foreach ($psRows as $row) {
             $this->upsertPsSide($row, $now);
         }
@@ -318,12 +361,39 @@ class AmazonProductSync
             $this->notices[] = AmazonI18n::get()->l('No PrestaShop products with a reference (SKU) were found.', 'amazonproductsync');
         }
 
+        $dropped = 0;
+        if ($reconcile) {
+            $dropped = max(0, $presentBefore - $this->countPresent());
+            // A row that exists on neither side is noise in the comparison.
+            Db::getInstance()->execute(
+                'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                 WHERE `id_shop` = ' . (int) $this->shopId() . '
+                   AND `ps_exists` = 0 AND `amazon_exists` = 0'
+            );
+        }
+
         $this->recomputeDirections();
 
         $summary = $this->buildSummary(0, 0);
         $summary['ps_scanned'] = count($psRows);
+        $summary['ps_dropped'] = $dropped;
+        if ($dropped > 0) {
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('%d row(s) are no longer exported (product deleted, disabled, filtered out or switched off) and will not be pushed.', 'amazonproductsync'),
+                $dropped
+            );
+        }
 
         return $summary;
+    }
+
+    /** Staged rows this shop still exports. */
+    private function countPresent()
+    {
+        return (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE `id_shop` = ' . (int) $this->shopId() . ' AND `ps_exists` = 1'
+        );
     }
 
     /**
@@ -588,6 +658,36 @@ class AmazonProductSync
         return is_array($rows) ? $rows : [];
     }
 
+    /** How many rows the comparison holds — listStaged() returns only the first ones. */
+    public function countStaged()
+    {
+        $this->ensureTables();
+
+        return (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE ' . AmzproShop::sqlWhere()
+        );
+    }
+
+    /**
+     * Empty the comparison. The next "Sync PS to Amazon" rebuilds it from the
+     * catalogue as it stands, which is how a shop gets rid of rows staged
+     * before its export rules changed. Nothing on Amazon is touched.
+     *
+     * @return int rows removed
+     */
+    public function resetStaged()
+    {
+        $this->ensureTables();
+        $db = Db::getInstance();
+        $db->execute(
+            'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE ' . AmzproShop::sqlWhere()
+        );
+
+        return (int) $db->Affected_Rows();
+    }
+
     /**
      * Collect PrestaShop products and combinations that carry a reference (SKU).
      * Now captures full product data: description, images, manufacturer, EAN, category.
@@ -632,6 +732,33 @@ class AmazonProductSync
         return $default;
     }
 
+    /**
+     * One pass reads at most self::$MAX_PRODUCTS rows. Saying so, with the
+     * real total, is the difference between "my catalogue is all there" and a
+     * comparison that was quietly cut short.
+     *
+     * @param int    $read       how many rows this pass returned
+     * @param string $countSql   counts everything the pass could have read
+     * @param bool   $isProducts products, or combinations
+     */
+    private function warnIfScanCapped($read, $countSql, $isProducts)
+    {
+        if ((int) $read < (int) self::$MAX_PRODUCTS) {
+            return;
+        }
+        $total = (int) Db::getInstance()->getValue($countSql);
+        if ($total <= (int) $read) {
+            return;
+        }
+        $this->notices[] = sprintf(
+            $isProducts
+                ? AmazonI18n::get()->l('Only the first %1$d of %2$d active products were read into the comparison. Switch off what you do not sell on Amazon under Catalog rules, or ask support to raise this limit.', 'amazonproductsync')
+                : AmazonI18n::get()->l('Only the first %1$d of %2$d active combinations were read into the comparison.', 'amazonproductsync'),
+            (int) $read,
+            $total
+        );
+    }
+
     private function collectPrestashopProducts()
     {
         $idLang = $this->resolveListingLanguage();
@@ -659,6 +786,7 @@ class AmazonProductSync
         }
         $queuedIds = ($deltaHours > 0) ? AmazonListingSettings::getQueuedProductIds() : [];
         $deltaCutoff = ($deltaHours > 0) ? date('Y-m-d H:i:s', time() - $deltaHours * 3600) : null;
+        $this->lastScanWasFull = ($deltaCutoff === null);
         $filteredOut = 0;
 
         $out = [];
@@ -688,6 +816,12 @@ class AmazonProductSync
                 ORDER BY p.`id_product`
                 LIMIT ' . (int) self::$MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
+        $this->warnIfScanCapped(
+            is_array($rows) ? count($rows) : 0,
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product_shop` ps
+             WHERE ps.`id_shop` = ' . $idShop . ' AND ps.`active` = 1',
+            true
+        );
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 $idProduct = (int) $r['id_product'];
@@ -771,6 +905,16 @@ class AmazonProductSync
                 ORDER BY pa.`id_product_attribute`
                 LIMIT ' . (int) self::$MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
+        $this->warnIfScanCapped(
+            is_array($rows) ? count($rows) : 0,
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product_attribute_shop` pas
+             INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = (SELECT pa.`id_product` FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+                     WHERE pa.`id_product_attribute` = pas.`id_product_attribute`)
+                     AND ps.`id_shop` = ' . $idShop . ')
+             WHERE pas.`id_shop` = ' . $idShop . ' AND ps.`active` = 1',
+            false
+        );
         if (is_array($rows)) {
             foreach ($rows as $r) {
                 // Combination falls back to the base product's identifiers.
@@ -1501,9 +1645,11 @@ class AmazonProductSync
         $onlyWithAsin = (bool) AmzproShop::get('AMZPRO_ONLY_WITH_ASIN', $this->shopId());
 
         return (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
+            . $this->syncSwitchJoin('p') . '
              WHERE p.`id_shop` = ' . (int) $this->shopId() . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+            . $this->syncSwitchWhere()
             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '')
         );
     }
@@ -1552,6 +1698,7 @@ class AmazonProductSync
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . (int) $this->shopId() . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             . $this->syncSwitchWhere()
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . $limit
@@ -1873,6 +2020,7 @@ class AmazonProductSync
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . $idShop . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
+             . $this->syncSwitchWhere()
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . (int) $limit

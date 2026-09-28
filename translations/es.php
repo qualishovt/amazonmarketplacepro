@@ -423,6 +423,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_d24108c0aacde48261c60e7a84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_78a52b1ee3dd9f2035a8a14237bd76cb'] = 'PrestaShop → Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea8ef906de784debc2f7ea71b1da256a'] = 'Publica tus productos en Amazon y mantén el precio y las existencias al día. El primer paso solo lee y compara; nada llega a Amazon hasta que envías.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_82bc17e96acf57785719059127ef87a0'] = 'Sincronizar PS con Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6be20dab3a87609e5a84e1a7391588b4'] = 'Vacía la lista de abajo. La próxima sincronización la reconstruye con tu catálogo actual. En Amazon no cambia nada.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_0b481e2ab55983406da5b4f1542f8724'] = 'Reiniciar la comparación';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ad00d196cda52dc481df2a495dc5b8e2'] = 'Lee tu catálogo de PrestaShop y señala, SKU por SKU, lo que difiere de Amazon: descripción, puntos clave, marca, imágenes, EAN y categorías. La comparación aparece más abajo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4c1b4876ccaceb6a334a3d712076d859'] = 'Emparejar ASIN por EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46d9cde3daffdb463a8e3cca14a15d8e'] = 'Opcional. Para los productos que Amazon ya vende, localiza la ficha existente mediante el EAN para que añadas una oferta a ella en lugar de crear un anuncio duplicado.';
@@ -770,6 +772,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_6aa8f72298994968aa9ecdd26b
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_752e3fa23baef50cb2d1a107a40e2b7b'] = 'Trayendo los datos de Amazon...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_385958f38b7519396e43bdcb0f3ba3e8'] = 'Analizando PrestaShop...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_121d98350b0512a6dc2cf2a013db5086'] = '%1$s productos · %2$s solo en PS · %3$s solo en Amazon · %4$s conflictos · %5$s sincronizados';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_94fd686612b8b1444f960083ea2e4dde'] = 'Mostrando las primeras %1$s filas de %2$s. El envío afecta a todas, no solo a las que se ven aquí.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c40c3fe2cbdc8cd6602ccee8a409d25c'] = '¿Vaciar la comparación? El próximo «Sincronizar PS con Amazon» la reconstruye con tu catálogo actual. En Amazon no cambia nada.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a87521ff71f93de4ac263f6436ff6d32'] = 'Comparación vaciada: %1$s fila(s) eliminada(s). Ejecuta «Sincronizar PS con Amazon» para reconstruirla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b677d85a62b18a44cabcc2646011db3e'] = 'Enviando los cambios pendientes a Amazon...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_89ae2d195a6bb7a80d0cd5eb1899bbf3'] = '%1$s SKU omitido(s)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_94bd9bcc28faaa6bb8412fb522fcf404'] = 'Había %1$s SKU pendientes, así que se han enviado en un único feed. El feed %2$s se ha enviado con %3$s mensaje(s). Amazon lo procesa en segundo plano: usa Comprobar el estado del feed más abajo.';
@@ -1125,10 +1130,13 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonordercreator_318d8fae099607977
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonorderimporter_3f2316e1ce24993a712b89955c385d24'] = '%1$s: omitido, este pedido ya está importado en la tienda «%2$s».';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonpiipurger_4c68662b43ee26668da9bc91d61249d8'] = 'No se han podido borrar los datos del comprador de los pedidos de Amazon importados.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_e64ec4c246c11e99dbbddc40c41c9e23'] = 'No se han encontrado productos de PrestaShop con referencia (SKU).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4568a131bb29b6e338aeb74d76885dc1'] = '%d fila(s) ya no se exportan (producto eliminado, desactivado, filtrado o excluido) y no se enviarán.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_86e0ad94ad96c0fc070419af96b14e97'] = 'Se omite la parte de Amazon: falta tu ID de vendedor. Pulsa «Conectar con Amazon» en Ajustes > Conexión para completarlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4991bcab7f1465c6f789054d50803712'] = 'Todavía no hay SKU que comprobar. Ejecuta primero «Sincronizar PS con Amazon» para recopilar tus SKU de PrestaShop. Encontrar los anuncios que solo existen en Amazon llegará próximamente.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_58eca2949744db2b9995cba9cca059c0'] = 'No se pueden listar los productos de Amazon: falta tu ID de vendedor. Pulsa «Conectar con Amazon» en Ajustes > Conexión para completarlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_7eacf6c612ddbb8f1f663970efb9c838'] = 'Amazon no ha devuelto ningún producto para este vendedor/marketplace.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8e028d1833aa3de048edfbf15c400605'] = 'Solo se han leído los primeros %1$d productos activos de %2$d en la comparación. Desactiva en Reglas de catálogo lo que no vendes en Amazon, o pide al soporte que amplíe este límite.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4307108701dca0842380bc578e8ab95b'] = 'Solo se han leído las primeras %1$d combinaciones activas de %2$d en la comparación.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_bcbc3745cd538b8f2e4ed31fd1387c5c'] = 'El producto #%d tiene combinaciones de variación pero no tiene una referencia base (SKU) — se envía como anuncios independientes, no como una familia de variación de Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_77b5dba20c184e480838d308ad22d0bb'] = '%d producto(s) excluido(s) por los filtros de exportación (precio mínimo/máximo, cantidad mínima o sincronización desactivada).';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_9542cdb21635eddbf5b64899bc3c015f'] = 'Exportación diferencial: solo se recopilaron los productos modificados en las últimas %d hora(s) o encolados por un cambio de reglas.';
