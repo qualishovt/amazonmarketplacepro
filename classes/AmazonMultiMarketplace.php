@@ -575,7 +575,7 @@ class AmazonMultiMarketplace
             return ['method' => 'none', 'pending' => 0, 'sent' => 0];
         }
 
-        $feedAbove = class_exists('Amazonmarketplacepro') ? (int) Amazonmarketplacepro::$SEND_AS_FEED_ABOVE : 25;
+        $feedAbove = class_exists('AmazonMarketplacePro') ? (int) AmazonMarketplacePro::$SEND_AS_FEED_ABOVE : 25;
         if ($pending <= $feedAbove) {
             $summary = $sync->pushToAmazon($feedAbove);
 
