@@ -750,12 +750,12 @@ class AmzproShop
         // Columns the unique keys below need, added before a key is rebuilt.
         if ($columns) {
             $present = [];
-            foreach ((array) $db->executeS('SHOW COLUMNS FROM ' . $name) as $col) {
+            foreach ((array) $db->executeS('SHOW COLUMNS FROM `' . _DB_PREFIX_ . bqSQL($table) . '`') as $col) {
                 $present[$col['Field']] = true;
             }
             foreach ($columns as $column => $definition) {
                 if (!isset($present[$column])
-                    && !$db->execute('ALTER TABLE ' . $name . ' ADD `' . bqSQL($column) . '` ' . $definition)) {
+                    && !$db->execute('ALTER TABLE `' . _DB_PREFIX_ . bqSQL($table) . '` ADD `' . bqSQL($column) . '` ' . $definition)) {
                     return false;
                 }
             }
