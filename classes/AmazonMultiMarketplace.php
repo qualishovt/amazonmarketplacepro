@@ -540,17 +540,64 @@ class AmazonMultiMarketplace
             $sync->setMock($useMock);
 
             $psSummary = $sync->syncPrestashopSide();
+            $notices = $sync->getNotices();
             $azSummary = $sync->syncAmazonSide();
+            $sent = $this->sendPending($sync, $client, $mpId, $sellerId, $useMock);
+            foreach (array_merge($notices, $sync->getNotices()) as $notice) {
+                $this->notices[] = $mpName . ': ' . $notice;
+            }
 
             $results[] = [
                 'marketplace_id' => $mpId,
                 'marketplace_name' => $mpName,
                 'ps_summary' => $psSummary,
                 'amazon_summary' => $azSummary,
+                'sent' => $sent,
             ];
         }
 
         return $results;
+    }
+
+    /**
+     * Send what the comparison marks as pending on one marketplace, the way
+     * the main Send button does: a small batch SKU by SKU, a larger one as a
+     * single feed that Amazon processes in the background.
+     *
+     * @return array method ('none', 'listings' or 'feed'), pending, sent (what
+     *               actually left: pushed SKUs, or the feed's messages once
+     *               Amazon took the feed), and the push summary or feed id
+     */
+    private function sendPending(AmazonProductSync $sync, $client, $mpId, $sellerId, $useMock)
+    {
+        $pending = $sync->countPending();
+        if ($pending === 0) {
+            return ['method' => 'none', 'pending' => 0, 'sent' => 0];
+        }
+
+        $feedAbove = class_exists('Amazonmarketplacepro') ? (int) Amazonmarketplacepro::$SEND_AS_FEED_ABOVE : 25;
+        if ($pending <= $feedAbove) {
+            $summary = $sync->pushToAmazon($feedAbove);
+
+            return ['method' => 'listings', 'pending' => $pending, 'sent' => (int) $summary['pushed'], 'summary' => $summary];
+        }
+
+        require_once dirname(__FILE__) . '/AmazonFeedManager.php';
+        $collected = $sync->collectFeedMessages(500);
+        $feeds = new AmazonFeedManager($client, $mpId, $sellerId);
+        $feeds->setMock($useMock);
+        $feedId = empty($collected['messages']) ? false : $feeds->submitListingsFeed($collected['messages']);
+        if ($feedId === false && $feeds->getLastError()) {
+            $this->notices[] = $feeds->getLastError();
+        }
+
+        return [
+            'method' => 'feed',
+            'pending' => $pending,
+            'sent' => ($feedId === false) ? 0 : count($collected['messages']),
+            'feed_id' => $feedId,
+            'messages' => count($collected['messages']),
+        ];
     }
 
     /**

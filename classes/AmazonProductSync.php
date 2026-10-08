@@ -124,6 +124,35 @@ class AmazonProductSync
     }
 
     /**
+     * Which marketplace's comparison rows this sync works on: '' for the
+     * shop's main marketplace (Settings), the marketplace id for one added
+     * under Multi-Account. Each marketplace keeps its own rows, so a product
+     * live on one is still sent to the others.
+     *
+     * @return string
+     */
+    private function marketplaceKey()
+    {
+        $main = (string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $this->shopId());
+
+        return ($this->marketplaceId === '' || $this->marketplaceId === $main) ? '' : (string) $this->marketplaceId;
+    }
+
+    /**
+     * SQL condition limiting staged rows to this sync's marketplace.
+     *
+     * @param string $alias table alias, '' for none
+     *
+     * @return string
+     */
+    private function marketplaceWhere($alias = '')
+    {
+        $column = ($alias !== '' ? '`' . bqSQL($alias) . '`.' : '') . '`marketplace_id`';
+
+        return ' AND ' . $column . ' = \'' . pSQL($this->marketplaceKey()) . '\'';
+    }
+
+    /**
      * Join condition for a shared table keyed per shop: the row of the staged
      * row's shop when it has one, else the row for all shops.
      *
@@ -183,7 +212,13 @@ class AmazonProductSync
     {
         $shopExpr = '`' . bqSQL($p) . '`.`id_shop`';
         $category = '`' . bqSQL($p) . '`.`ps_id_category_default`';
-        $marketplace = '\'' . pSQL($this->marketplaceId) . '\'';
+        // Mappings and profiles are set up for the main marketplace; product
+        // types are the same on every Amazon marketplace, so the others use
+        // those too (adaptRowsForMarketplace() drops the browse nodes).
+        $mappingMarketplace = ($this->marketplaceKey() === '')
+            ? $this->marketplaceId
+            : (string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $this->shopId());
+        $marketplace = '\'' . pSQL($mappingMarketplace) . '\'';
 
         return ' LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_category_map` cm
                  ON (' . self::preferShopJoin(
@@ -206,6 +241,52 @@ class AmazonProductSync
             ['id_product' => '`' . bqSQL($p) . '`.`id_product`'],
             $shopExpr
         ) . ')';
+    }
+
+    /**
+     * Rows read for a marketplace added under Multi-Account: an ASIN found on
+     * the main marketplace is suggested here too (Amazon's catalogue is
+     * shared, so the page is the same), and the main marketplace's browse
+     * nodes are dropped, since node ids differ per marketplace.
+     *
+     * @param array $rows push/feed rows
+     *
+     * @return array
+     */
+    private function adaptRowsForMarketplace(array $rows)
+    {
+        if ($this->marketplaceKey() === '' || empty($rows)) {
+            return $rows;
+        }
+
+        $missing = [];
+        foreach ($rows as $r) {
+            if ((string) $r['amazon_asin'] === '') {
+                $missing[] = '\'' . pSQL($r['seller_sku']) . '\'';
+            }
+        }
+        $mainAsins = [];
+        if ($missing) {
+            $found = Db::getInstance()->executeS(
+                'SELECT `seller_sku`, `amazon_asin` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+                 WHERE `id_shop` = ' . (int) $this->shopId() . ' AND `marketplace_id` = \'\'
+                   AND `amazon_asin` <> \'\' AND `seller_sku` IN (' . implode(',', $missing) . ')'
+            );
+            foreach ((array) $found as $f) {
+                $mainAsins[$f['seller_sku']] = $f['amazon_asin'];
+            }
+        }
+
+        foreach ($rows as $i => $r) {
+            if ((string) $r['amazon_asin'] === '' && isset($mainAsins[$r['seller_sku']])) {
+                $rows[$i]['amazon_asin'] = $mainAsins[$r['seller_sku']];
+            }
+            $rows[$i]['amazon_browse_node'] = '';
+            $rows[$i]['profile_browse_nodes'] = '';
+            $rows[$i]['ov_browse_node'] = '';
+        }
+
+        return $rows;
     }
 
     public function ensureTables()
@@ -254,8 +335,9 @@ class AmazonProductSync
             `date_add` DATETIME NOT NULL,
             `date_upd` DATETIME NOT NULL,
             `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0,
+            `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
             PRIMARY KEY (`id_amazonmarketplacepro_product`),
-            UNIQUE KEY `seller_sku` (`id_shop`, `seller_sku`)
+            UNIQUE KEY `seller_sku` (`id_shop`, `marketplace_id`, `seller_sku`)
         ) ENGINE=' . $engine . ' DEFAULT CHARSET=utf8;';
 
         Db::getInstance()->execute($sql);
@@ -335,6 +417,29 @@ class AmazonProductSync
 
         $psRows = $this->collectPrestashopProducts();
 
+        // The main marketplace gets the shop's prices as they are, as it
+        // always has. A marketplace added under Multi-Account gets the same
+        // prices, converted at PrestaShop's own rate when it sells in another
+        // currency. Without that currency in the shop nothing is staged,
+        // rather than listing every product at a number in the wrong currency.
+        $rate = $this->marketplaceCurrencyRate();
+        if ($rate === null) {
+            $this->notices[] = sprintf(
+                AmazonI18n::get()->l('Prices for this marketplace are converted from %1$s to %2$s, and PrestaShop needs both currencies for that. Add the missing one under International > Localization > Currencies, then sync again.', 'amazonproductsync'),
+                AmazonSpApiClient::currencyForMarketplace((string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $this->shopId())),
+                AmazonSpApiClient::currencyForMarketplace($this->marketplaceId)
+            );
+            $psRows = [];
+        } elseif ($rate !== 1.0) {
+            foreach ($psRows as $i => $row) {
+                foreach (['price', 'list_price', 'sale_price'] as $field) {
+                    if (isset($row[$field]) && (float) $row[$field] > 0) {
+                        $psRows[$i][$field] = AmazonListingSettings::applyRounding((float) $row[$field] * $rate);
+                    }
+                }
+            }
+        }
+
         // A full scan is the whole truth about what this shop exports, so a
         // staged row it does not collect must stop counting as pending —
         // otherwise a product deleted, disabled or switched off after an
@@ -349,7 +454,7 @@ class AmazonProductSync
             Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
                  SET `ps_exists` = 0
-                 WHERE `id_shop` = ' . (int) $this->shopId() . ' AND `ps_exists` = 1'
+                 WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . ' AND `ps_exists` = 1'
             );
         }
 
@@ -357,7 +462,7 @@ class AmazonProductSync
             $this->upsertPsSide($row, $now);
         }
 
-        if (empty($psRows)) {
+        if (empty($psRows) && $rate !== null) {
             $this->notices[] = AmazonI18n::get()->l('No PrestaShop products with a reference (SKU) were found.', 'amazonproductsync');
         }
 
@@ -367,7 +472,7 @@ class AmazonProductSync
             // A row that exists on neither side is noise in the comparison.
             Db::getInstance()->execute(
                 'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-                 WHERE `id_shop` = ' . (int) $this->shopId() . '
+                 WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . '
                    AND `ps_exists` = 0 AND `amazon_exists` = 0'
             );
         }
@@ -387,12 +492,47 @@ class AmazonProductSync
         return $summary;
     }
 
+    /**
+     * The factor that turns a price sent to the main marketplace into one for
+     * this marketplace, from PrestaShop's exchange rates.
+     *
+     * @return float|null 1.0 for the main marketplace and for one in the same
+     *                    currency, null when either currency is not set up
+     *                    in the shop
+     */
+    private function marketplaceCurrencyRate()
+    {
+        if ($this->marketplaceKey() === '') {
+            return 1.0;
+        }
+        $idShop = $this->shopId();
+        $from = AmazonSpApiClient::currencyForMarketplace((string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $idShop));
+        $to = AmazonSpApiClient::currencyForMarketplace($this->marketplaceId);
+        if ($from === $to) {
+            return 1.0;
+        }
+
+        $rates = [];
+        foreach ([$from, $to] as $iso) {
+            $idCurrency = (int) Currency::getIdByIsoCode($iso, $idShop);
+            $currency = $idCurrency ? new Currency($idCurrency) : null;
+            if (!$currency || !Validate::isLoadedObject($currency) || $currency->deleted
+                || (float) $currency->conversion_rate <= 0) {
+                return null;
+            }
+            $rates[$iso] = (float) $currency->conversion_rate;
+        }
+
+        // conversion_rate is per unit of the shop's default currency.
+        return $rates[$to] / $rates[$from];
+    }
+
     /** Staged rows this shop still exports. */
     private function countPresent()
     {
         return (int) Db::getInstance()->getValue(
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `id_shop` = ' . (int) $this->shopId() . ' AND `ps_exists` = 1'
+             WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . ' AND `ps_exists` = 1'
         );
     }
 
@@ -465,7 +605,7 @@ class AmazonProductSync
                 WHEN `ps_price` <> `amazon_price` OR `ps_quantity` <> `amazon_quantity` THEN \'conflict\'
                 ELSE \'in_sync\'
             END
-            WHERE `id_shop` = ' . (int) $this->shopId()
+            WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere()
         );
     }
 
@@ -624,7 +764,7 @@ class AmazonProductSync
     {
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `id_shop` = ' . (int) $this->shopId()
+             WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere()
         );
 
         $out = [];
@@ -650,7 +790,7 @@ class AmazonProductSync
                        `amazon_status`, `amazon_brand`, `amazon_product_type`,
                        `sync_direction`, `parent_sku`, `is_parent`, `variation_theme`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-                WHERE ' . AmzproShop::sqlWhere() . '
+                WHERE ' . AmzproShop::sqlWhere() . $this->marketplaceWhere() . '
                 ORDER BY `sync_direction` ASC, `seller_sku` ASC
                 LIMIT ' . $limit;
         $rows = Db::getInstance()->executeS($sql);
@@ -665,7 +805,7 @@ class AmazonProductSync
 
         return (int) Db::getInstance()->getValue(
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE ' . AmzproShop::sqlWhere()
+             WHERE ' . AmzproShop::sqlWhere() . $this->marketplaceWhere()
         );
     }
 
@@ -682,7 +822,7 @@ class AmazonProductSync
         $db = Db::getInstance();
         $db->execute(
             'DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE ' . AmzproShop::sqlWhere()
+             WHERE ' . AmzproShop::sqlWhere() . $this->marketplaceWhere()
         );
 
         return (int) $db->Affected_Rows();
@@ -1313,7 +1453,7 @@ class AmazonProductSync
         );
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-            (`id_shop`, `seller_sku`, `id_product`, `id_product_attribute`, `ps_exists`, `ps_name`, `ps_price`,
+            (`id_shop`, `marketplace_id`, `seller_sku`, `id_product`, `id_product_attribute`, `ps_exists`, `ps_name`, `ps_price`,
              `ps_quantity`, `ps_description`, `ps_description_short`, `ps_manufacturer`,
              `ps_ean13`, `ps_id_category_default`, `ps_images`,
              `parent_sku`, `is_parent`, `variation_theme`, `variation_attributes`,
@@ -1322,6 +1462,7 @@ class AmazonProductSync
              `amazon_exists`, `sync_direction`, `date_add`, `date_upd`)
             VALUES (
                 ' . (int) $this->shopId() . ',
+                \'' . pSQL($this->marketplaceKey()) . '\',
                 \'' . pSQL($row['sku']) . '\',
                 ' . (int) $row['id_product'] . ',
                 ' . (int) $row['id_product_attribute'] . ',
@@ -1500,7 +1641,7 @@ class AmazonProductSync
                     `raw_amazon_json` = \'' . pSQL(isset($listing['raw']) ? $listing['raw'] : '', true) . '\',
                     `date_upd` = \'' . pSQL($now) . '\'
                 WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                  AND `id_shop` = ' . (int) $this->shopId();
+                  AND `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere();
         Db::getInstance()->execute($sql);
     }
 
@@ -1513,13 +1654,14 @@ class AmazonProductSync
         $imagesJson = json_encode(isset($listing['images']) ? $listing['images'] : []);
 
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-            (`id_shop`, `seller_sku`, `ps_exists`, `amazon_exists`, `amazon_asin`, `amazon_title`,
+            (`id_shop`, `marketplace_id`, `seller_sku`, `ps_exists`, `amazon_exists`, `amazon_asin`, `amazon_title`,
              `amazon_price`, `amazon_quantity`, `amazon_status`,
              `amazon_description`, `amazon_bullet_points`, `amazon_brand`, `amazon_images`,
              `amazon_product_type`, `amazon_browse_node`,
              `raw_amazon_json`, `sync_direction`, `date_add`, `date_upd`)
             VALUES (
                 ' . (int) $this->shopId() . ',
+                \'' . pSQL($this->marketplaceKey()) . '\',
                 \'' . pSQL($sku) . '\', 0, 1,
                 \'' . pSQL($listing['asin']) . '\',
                 \'' . pSQL($listing['title']) . '\',
@@ -1565,7 +1707,7 @@ class AmazonProductSync
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `ps_name`, `ps_price`, `ps_quantity`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `ps_exists` = 1 AND `id_shop` = ' . (int) $this->shopId() . '
+             WHERE `ps_exists` = 1 AND `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . '
              ORDER BY `seller_sku` ASC
              LIMIT 3'
         );
@@ -1647,7 +1789,7 @@ class AmazonProductSync
         return (int) Db::getInstance()->getValue(
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
             . $this->syncSwitchJoin('p') . '
-             WHERE p.`id_shop` = ' . (int) $this->shopId() . '
+             WHERE p.`id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere('p') . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
             . $this->syncSwitchWhere()
             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '')
@@ -1696,7 +1838,7 @@ class AmazonProductSync
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
-             WHERE p.`id_shop` = ' . (int) $this->shopId() . '
+             WHERE p.`id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere('p') . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . $this->syncSwitchWhere()
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
@@ -1706,6 +1848,7 @@ class AmazonProductSync
         if (!is_array($rows)) {
             $rows = [];
         }
+        $rows = $this->adaptRowsForMarketplace($rows);
 
         if (empty($rows)) {
             $notice = AmazonI18n::get()->l('Nothing to push. Run "Sync PS to Amazon" first, and make sure some rows are marked PS only or Conflict.', 'amazonproductsync');
@@ -1865,7 +2008,7 @@ class AmazonProductSync
                 ['id_product' => 'ap.`id_product`'],
                 'ap.`id_shop`'
             ) . ')
-             WHERE ' . AmzproShop::sqlWhere('ap') . '
+             WHERE ' . AmzproShop::sqlWhere('ap') . $this->marketplaceWhere('ap') . '
                AND ap.`amazon_exists` = 1
                AND (ap.`ps_exists` = 0
                     OR p.`id_product` IS NULL
@@ -1952,7 +2095,7 @@ class AmazonProductSync
                      SET `amazon_exists` = 0, `sync_direction` = \'\',
                          `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
                      WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-                       AND `id_shop` = ' . (int) $this->shopId()
+                       AND `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere()
                 );
             } else {
                 ++$summary['failed'];
@@ -2018,7 +2161,7 @@ class AmazonProductSync
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
-             WHERE p.`id_shop` = ' . $idShop . '
+             WHERE p.`id_shop` = ' . $idShop . $this->marketplaceWhere('p') . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . $this->syncSwitchWhere()
              . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
@@ -2028,6 +2171,8 @@ class AmazonProductSync
         if (!is_array($rows)) {
             $rows = [];
         }
+
+        $rows = $this->adaptRowsForMarketplace($rows);
 
         $messages = [];
         $skipped = [];
@@ -2944,7 +3089,7 @@ class AmazonProductSync
         $rows = Db::getInstance()->executeS(
             'SELECT `sync_direction`, COUNT(*) AS c
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `id_shop` = ' . (int) $this->shopId() . '
+             WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . '
              GROUP BY `sync_direction`'
         );
         if (is_array($rows)) {

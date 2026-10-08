@@ -642,6 +642,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_eb1af6f7f3c93a78fea6a92a67
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c89e2169c60e7f7519e8909929701e40'] = 'Marketplace attivi';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3126e180423b2256ea60fb1df8c9a8cf'] = 'ID venditore';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_008fc9f5b2aac515e7f30164bb1d0cca'] = 'Nessun marketplace aggiuntivo configurato. Il marketplace principale della scheda Impostazioni è sempre attivo.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_46cbf659d077130d195115c6fe841661'] = 'Invia i prodotti a questi marketplace';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9faab7ab55f8428bdf5a3fc310d5096a'] = 'Per ogni marketplace qui sopra con Prodotti attivo: confronta il tuo catalogo con quel marketplace e invia ciò che manca o è diverso. Valgono le stesse regole di esportazione, profili e associazioni di categoria. I prodotti che hanno già un ASIN sul tuo marketplace principale vengono offerti sulla stessa pagina Amazon. Quando il marketplace usa un\'altra valuta, i prezzi vengono convertiti con i tassi di cambio di PrestaShop. L\'attività cron «Sincronizzazione dei prodotti, tutti i marketplace» fa lo stesso automaticamente.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ca1440bb8617e45d505d84543ea57952'] = 'Repricing';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_006300efaf063e1705dd614ea0ae9e8b'] = 'Commissioni';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70719754b29b359a20c297898ee618f8'] = 'Promozioni';
@@ -774,6 +776,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_385958f38b7519396e43bdcb0f
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_121d98350b0512a6dc2cf2a013db5086'] = '%1$s prodotti · %2$s solo PS · %3$s solo Amazon · %4$s conflitti · %5$s sincronizzati';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_94fd686612b8b1444f960083ea2e4dde'] = 'Vengono mostrate le prime %1$s righe su %2$s. L\'invio riguarda tutte, non solo quelle elencate qui.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c40c3fe2cbdc8cd6602ccee8a409d25c'] = 'Svuotare il confronto? Il prossimo «Sincronizza PS con Amazon» lo ricostruisce dal tuo catalogo attuale. Su Amazon non cambia nulla.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_22242f4b4be68cd5c349cbeebbd3079c'] = '%1$s: %2$s prodotto/i confrontato/i, %3$s inviato/i.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_ec121f7adf425e1bf846df55e7541171'] = 'Inviato come feed %1$s - seguilo in Stato del feed.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6c330871870e06cf083faf438315a05c'] = 'Nessun marketplace ha Prodotti attivo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a87521ff71f93de4ac263f6436ff6d32'] = 'Confronto svuotato: %1$s riga/righe rimosse. Esegui «Sincronizza PS con Amazon» per ricostruirlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b677d85a62b18a44cabcc2646011db3e'] = 'Invio ad Amazon delle modifiche in attesa in corso...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_89ae2d195a6bb7a80d0cd5eb1899bbf3'] = '%1$s SKU saltati';
@@ -1129,6 +1134,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonordercreator_8128298cd7d3ede63
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonordercreator_318d8fae0996079779bdce1e145cb2cd'] = '%1$s: ordinati %2$d, disponibili %3$d';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonorderimporter_3f2316e1ce24993a712b89955c385d24'] = '%1$s: saltato, questo ordine è già importato nel negozio «%2$s».';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonpiipurger_4c68662b43ee26668da9bc91d61249d8'] = 'Non è stato possibile cancellare i dati dell\'acquirente dagli ordini Amazon importati.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_6b624e626d6dd5b17d7abaa11d84de66'] = 'I prezzi per questo marketplace vengono convertiti da %1$s a %2$s e PrestaShop ha bisogno di entrambe le valute. Aggiungi quella mancante in Internazionale > Localizzazione > Valute, poi sincronizza di nuovo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_e64ec4c246c11e99dbbddc40c41c9e23'] = 'Nessun prodotto PrestaShop con riferimento (SKU) trovato.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_4568a131bb29b6e338aeb74d76885dc1'] = '%d riga/righe non sono più esportate (prodotto eliminato, disattivato, filtrato o escluso) e non verranno inviate.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_86e0ad94ad96c0fc070419af96b14e97'] = 'Lato Amazon saltato: il tuo ID venditore manca. Fai clic su «Connetti ad Amazon» in Impostazioni > Connessione per completarlo.';

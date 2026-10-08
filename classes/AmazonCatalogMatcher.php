@@ -63,7 +63,7 @@ class AmazonCatalogMatcher
         $rows = Db::getInstance()->executeS(
             'SELECT `seller_sku`, `ps_ean13`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `id_shop` = ' . (int) AmzproShop::actingId() . '
+             WHERE `id_shop` = ' . (int) AmzproShop::actingId() . ' AND `marketplace_id` = \'\'
                AND `ps_exists` = 1
                AND `is_parent` = 0
                AND `amazon_asin` = \'\'
@@ -190,7 +190,7 @@ class AmazonCatalogMatcher
              SET `amazon_asin` = \'' . pSQL($asin) . '\',
                  `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
              WHERE `seller_sku` = \'' . pSQL($sku) . '\'
-               AND `id_shop` = ' . (int) AmzproShop::actingId()
+               AND `id_shop` = ' . (int) AmzproShop::actingId() . ' AND `marketplace_id` = \'\''
         );
     }
 }

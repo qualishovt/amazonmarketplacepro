@@ -91,8 +91,11 @@ class AmzproShop
             'keys' => ['shop_status' => ['id_shop', 'import_status']],
             'backfill' => 'orders',
         ],
+        // One comparison row per SKU and marketplace: '' is the shop's main
+        // marketplace (Settings), an id is one added under Multi-Account.
         'amazonmarketplacepro_product' => [
-            'unique' => ['seller_sku' => ['seller_sku']],
+            'columns' => ['marketplace_id' => 'VARCHAR(32) NOT NULL DEFAULT \'\''],
+            'unique' => ['seller_sku' => ['marketplace_id', 'seller_sku']],
             'keys' => [],
             'backfill' => 'default',
         ],
@@ -177,7 +180,7 @@ class AmzproShop
     ];
 
     /** The schema version ensureSchema() brings the tables to. */
-    public static $SCHEMA = '1.6.0';
+    public static $SCHEMA = '1.6.3';
 
     /** @var Context|null The module's context, handed over by its constructor */
     private static $context;
@@ -646,7 +649,7 @@ class AmzproShop
 
         // Orders first: returns and fees take their shop from them.
         foreach (self::$shopTables as $table => $spec) {
-            $ok = self::addShopColumn($table, $spec['unique'], $spec['keys']) && $ok;
+            $ok = self::addShopColumn($table, $spec['unique'], $spec['keys'], self::extraColumns($spec)) && $ok;
         }
         foreach (self::$sharedTables as $table => $spec) {
             $ok = self::addShopColumn($table, $spec['unique'], []) && $ok;
@@ -700,7 +703,7 @@ class AmzproShop
         }
         if (isset(self::$shopTables[$table])) {
             $spec = self::$shopTables[$table];
-            $checked[$table] = self::addShopColumn($table, $spec['unique'], $spec['keys']);
+            $checked[$table] = self::addShopColumn($table, $spec['unique'], $spec['keys'], self::extraColumns($spec));
         } elseif (isset(self::$sharedTables[$table])) {
             $checked[$table] = self::addShopColumn($table, self::$sharedTables[$table]['unique'], []);
         } else {
@@ -708,6 +711,12 @@ class AmzproShop
         }
 
         return $checked[$table];
+    }
+
+    /** Columns a table spec adds besides id_shop (see $shopTables). */
+    protected static function extraColumns(array $spec)
+    {
+        return isset($spec['columns']) ? $spec['columns'] : [];
     }
 
     protected static function tableExists($table)
@@ -719,7 +728,7 @@ class AmzproShop
      * Add id_shop to one table and rebuild its unique keys around it. A table
      * that does not exist yet is left for the class that creates it.
      */
-    protected static function addShopColumn($table, array $unique, array $keys)
+    protected static function addShopColumn($table, array $unique, array $keys, array $columns = [])
     {
         if (!self::tableExists($table)) {
             return true;
@@ -736,6 +745,19 @@ class AmzproShop
         if (!$hasColumn) {
             if (!$db->execute('ALTER TABLE `' . _DB_PREFIX_ . bqSQL($table) . '` ADD `id_shop` INT(11) UNSIGNED NOT NULL DEFAULT 0')) {
                 return false;
+            }
+        }
+        // Columns the unique keys below need, added before a key is rebuilt.
+        if ($columns) {
+            $present = [];
+            foreach ((array) $db->executeS('SHOW COLUMNS FROM ' . $name) as $col) {
+                $present[$col['Field']] = true;
+            }
+            foreach ($columns as $column => $definition) {
+                if (!isset($present[$column])
+                    && !$db->execute('ALTER TABLE ' . $name . ' ADD `' . bqSQL($column) . '` ' . $definition)) {
+                    return false;
+                }
             }
         }
 

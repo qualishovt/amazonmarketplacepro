@@ -1127,7 +1127,7 @@ class AmazonListingSettings
              LEFT JOIN `' . _DB_PREFIX_ . 'product_shop` ps
                  ON (ps.`id_product` = ap.`id_product` AND ps.`id_shop` = ap.`id_shop`)
              LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = ap.`id_shop`)
-             WHERE ap.`amazon_exists` = 1
+             WHERE ap.`amazon_exists` = 1 AND ap.`marketplace_id` = \'\'
                AND ' . AmzproShop::sqlWhere('ap') . '
                AND (ap.`ps_exists` = 0 OR p.`id_product` IS NULL OR ps.`id_product` IS NULL OR ps.`active` = 0)
              ORDER BY ap.`seller_sku` ASC

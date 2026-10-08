@@ -580,6 +580,7 @@ class AmazonMarketplacePro extends Module
             'ajaxListDeletions' => 'runListDeletions',
             'ajaxDeleteListings' => 'runDeleteListings',
             'ajaxResetComparison' => 'runResetComparison',
+            'ajaxMultiSyncProducts' => 'runMultiSyncProducts',
         ];
         foreach ($ajaxActions as $submit => $method) {
             if (Tools::isSubmit($submit)) {
@@ -967,6 +968,7 @@ class AmazonMarketplacePro extends Module
             'ajax_request_report_url' => $baseUrl . '&ajaxRequestReport=1',
             'ajax_poll_reports_url' => $baseUrl . '&ajaxPollReports=1',
             'ajax_save_marketplace_url' => $baseUrl . '&ajaxSaveMarketplace=1',
+            'ajax_multi_sync_products_url' => $baseUrl . '&ajaxMultiSyncProducts=1',
             'ajax_delete_marketplace_url' => $baseUrl . '&ajaxDeleteMarketplace=1',
             'ajax_import_promotions_url' => $baseUrl . '&ajaxImportPromotions=1',
             'ajax_export_promotions_url' => $baseUrl . '&ajaxExportPromotions=1',
@@ -3472,6 +3474,39 @@ class AmazonMarketplacePro extends Module
             'configs' => $this->translateMarketplaceNames($mm->getMarketplaceConfigs())];
     }
 
+    /**
+     * Compare and send the catalogue to every marketplace added under
+     * Multi-Account with Products on - what the "Product sync, all
+     * marketplaces" cron task does, on demand.
+     */
+    protected function runMultiSyncProducts()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
+        $mm = new AmazonMultiMarketplace();
+        $results = $mm->syncProductsAllMarketplaces();
+
+        $labels = $this->translatedMarketplaces();
+        $lines = [];
+        foreach ((array) $results as $r) {
+            $sent = isset($r['sent']) ? $r['sent'] : ['method' => 'none', 'pending' => 0, 'sent' => 0];
+            $lines[] = [
+                'marketplace' => isset($labels[$r['marketplace_id']]) ? $labels[$r['marketplace_id']] : $r['marketplace_name'],
+                'staged' => isset($r['ps_summary']['ps_scanned']) ? (int) $r['ps_summary']['ps_scanned'] : 0,
+                'pending' => (int) $sent['pending'],
+                'sent' => (int) $sent['sent'],
+                'method' => $sent['method'],
+                'feed_id' => isset($sent['feed_id']) ? $sent['feed_id'] : null,
+            ];
+        }
+        $this->logActivity('info', 'multi_sync_products', count($lines) . ' marketplace(s) synced');
+
+        return [
+            'success' => true,
+            'marketplaces' => $lines,
+            'notices' => $mm->getNotices(),
+        ];
+    }
+
     protected function runDeleteMarketplace()
     {
         require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
@@ -3546,7 +3581,7 @@ class AmazonMarketplacePro extends Module
         $sql = 'SELECT cp.*, p.`ps_name`
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop`)
+                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop` AND p.`marketplace_id` = \'\')
                 WHERE ' . AmzproShop::sqlWhere('cp') . '
                 ORDER BY cp.`is_buybox_winner` ASC, cp.`seller_sku` ASC LIMIT 100';
         $rows = Db::getInstance()->executeS($sql);

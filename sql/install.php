@@ -111,8 +111,9 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_pr
     `raw_amazon_json` LONGTEXT NULL,
     `date_add` DATETIME NOT NULL,
     `date_upd` DATETIME NOT NULL,
+    `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',
     PRIMARY KEY (`id_amazonmarketplacepro_product`),
-    UNIQUE KEY `seller_sku` (`seller_sku`),
+    UNIQUE KEY `seller_sku` (`marketplace_id`, `seller_sku`),
     KEY `sync_direction` (`sync_direction`),
     KEY `parent_sku` (`parent_sku`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';

@@ -91,7 +91,7 @@ class AmazonCatalogImporter
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
              INNER JOIN `' . _DB_PREFIX_ . 'product_shop` p
                  ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ' . (int) $this->idShop . ')
-             WHERE ap.`id_shop` = ' . (int) $this->idShop . '
+             WHERE ap.`id_shop` = ' . (int) $this->idShop . ' AND ap.`marketplace_id` = \'\'
                AND ap.`amazon_exists` = 1 AND ap.`id_product` > 0
              ORDER BY ap.`seller_sku` ASC
              LIMIT ' . (int) $limit
@@ -314,7 +314,7 @@ class AmazonCatalogImporter
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` ap
              INNER JOIN `' . _DB_PREFIX_ . 'product_shop` p
                  ON (p.`id_product` = ap.`id_product` AND p.`id_shop` = ' . (int) $this->idShop . ')
-             WHERE ap.`id_shop` = ' . (int) $this->idShop . '
+             WHERE ap.`id_shop` = ' . (int) $this->idShop . ' AND ap.`marketplace_id` = \'\'
                AND ap.`id_product` > 0 AND p.`active` = 1
                AND (ap.`amazon_exists` = 0 OR ap.`amazon_quantity` <= 0)
              LIMIT ' . (int) $limit
@@ -371,7 +371,7 @@ class AmazonCatalogImporter
 
         $rows = Db::getInstance()->executeS(
             'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `id_shop` = ' . (int) $this->idShop . '
+             WHERE `id_shop` = ' . (int) $this->idShop . ' AND `marketplace_id` = \'\'
                AND `sync_direction` = \'amazon_only\'
                AND `ps_exists` = 0 AND `id_product` = 0
              ORDER BY `seller_sku` ASC
@@ -611,7 +611,7 @@ class AmazonCatalogImporter
                  p.`sync_direction` = \'in_sync\',
                  p.`date_upd` = \'' . pSQL($now) . '\'
              WHERE p.`seller_sku` = \'' . pSQL($sku) . '\'
-               AND p.`id_shop` = ' . (int) $this->idShop
+               AND p.`id_shop` = ' . (int) $this->idShop . ' AND p.`marketplace_id` = \'\''
         );
     }
 }

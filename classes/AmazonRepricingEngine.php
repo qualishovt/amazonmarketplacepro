@@ -97,7 +97,7 @@ class AmazonRepricingEngine
             'SELECT `seller_sku`, `amazon_asin`, `ps_price`
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
              WHERE `amazon_asin` <> \'\'
-               AND `amazon_exists` = 1
+               AND `amazon_exists` = 1 AND `marketplace_id` = \'\'
                AND `id_shop` = ' . (int) AmzproShop::actingId() . '
              ORDER BY `seller_sku` ASC
              LIMIT 200'
@@ -278,7 +278,7 @@ class AmazonRepricingEngine
                 $where .= ' AND `seller_sku` IN (
                     SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
                     WHERE `ps_id_category_default` = ' . (int) $rule['id_category'] . '
-                      AND `id_shop` = ' . $idShop . ')';
+                      AND `id_shop` = ' . $idShop . ' AND `marketplace_id` = \'\')';
             }
 
             $prices = Db::getInstance()->executeS(
@@ -758,7 +758,7 @@ class AmazonRepricingEngine
         $sql = 'SELECT cp.*, p.`ps_name`, s.`name` AS shop_name
                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
-                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop`)
+                    ON (p.`seller_sku` = cp.`seller_sku` AND p.`id_shop` = cp.`id_shop` AND p.`marketplace_id` = \'\')
                 LEFT JOIN `' . _DB_PREFIX_ . 'shop` s ON (s.`id_shop` = cp.`id_shop`)
                 WHERE cp.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\'
                   AND ' . AmzproShop::sqlWhere('cp') . '

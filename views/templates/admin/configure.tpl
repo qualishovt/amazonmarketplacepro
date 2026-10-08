@@ -2656,6 +2656,11 @@
             {/if}
             </tbody>
         </table>
+        {if $marketplace_configs}
+        <button type="button" id="btn-multi-sync-products" class="btn btn-primary"><i class="icon-upload"></i> {l s='Send products to these marketplaces' mod='amazonmarketplacepro'}</button>
+        <p class="help-block">{l s='For each marketplace above with Products on: compares your catalogue with that marketplace and sends what is missing or different. The same export rules, profiles and category mappings apply. Products that already have an ASIN on your main marketplace are offered on the same Amazon page. Prices are converted with the exchange rates in PrestaShop when the marketplace uses another currency. The cron task "Product sync, all marketplaces" does the same automatically.' mod='amazonmarketplacepro'}</p>
+        <div id="multi-sync-result"></div>
+        {/if}
     </div>
 </div>
     </div>{* /section tab-content *}
@@ -3006,6 +3011,9 @@
         syncSummary: '{l s='%1$s products · %2$s PS only · %3$s Amazon only · %4$s conflicts · %5$s in sync' mod='amazonmarketplacepro' js=1}',
         rowsShown: '{l s='Showing the first %1$s of %2$s rows. The push works on all of them, not only the ones listed here.' mod='amazonmarketplacepro' js=1}',
         confirmResetComparison: '{l s='Empty the comparison? The next "Sync PS to Amazon" rebuilds it from your catalogue as it is now. Nothing on Amazon changes.' mod='amazonmarketplacepro' js=1}',
+        multiSyncLine: '{l s='%1$s: %2$s product(s) compared, %3$s sent.' mod='amazonmarketplacepro' js=1}',
+        multiSyncFeed: '{l s='Sent as feed %1$s - follow it under Feed status.' mod='amazonmarketplacepro' js=1}',
+        multiSyncNone: '{l s='No marketplace has Products switched on.' mod='amazonmarketplacepro' js=1}',
         comparisonReset: '{l s='Comparison emptied: %1$s row(s) removed. Run "Sync PS to Amazon" to rebuild it.' mod='amazonmarketplacepro' js=1}',
         sendingPending: '{l s='Sending pending changes to Amazon...' mod='amazonmarketplacepro' js=1}',
         skusSkipped: '{l s='%1$s SKU(s) skipped' mod='amazonmarketplacepro' js=1}',
@@ -4217,11 +4225,12 @@
                 var syncStock = document.getElementById('mp-sync-stock').checked ? 1 : 0;
 
                 btnSave.disabled = true;
-                var params = 'marketplace_id='+encodeURIComponent(mpId)
-                    +'&seller_id='+encodeURIComponent(sellerId)
-                    +'&sync_orders='+syncOrders
-                    +'&sync_products='+syncProducts
-                    +'&sync_stock='+syncStock;
+                // Field names as runSaveMarketplace() reads them.
+                var params = 'mp_marketplace_id='+encodeURIComponent(mpId)
+                    +'&mp_seller_id='+encodeURIComponent(sellerId)
+                    +'&mp_sync_orders='+syncOrders
+                    +'&mp_sync_products='+syncProducts
+                    +'&mp_sync_stock='+syncStock;
 
                 ajaxPost('{$ajax_save_marketplace_url|escape:'javascript':'UTF-8'}', function (data) {
                     btnSave.disabled = false;
@@ -4247,8 +4256,39 @@
                     var row = btn.closest('tr');
                     if (row) row.remove();
                 }
-            }, 'marketplace_id='+encodeURIComponent(id));
+            }, 'mp_marketplace_id='+encodeURIComponent(id));
         });
+
+        // Compare and send to every added marketplace with Products on.
+        var btnSync = document.getElementById('btn-multi-sync-products');
+        var syncOut = document.getElementById('multi-sync-result');
+        if (btnSync && syncOut) {
+            btnSync.addEventListener('click', function () {
+                btnSync.disabled = true;
+                syncOut.innerHTML = '';
+                ajaxPost('{$ajax_multi_sync_products_url|escape:'javascript':'UTF-8'}', function (data) {
+                    btnSync.disabled = false;
+                    if (!data || !data.success) {
+                        syncOut.innerHTML = '<div class="alert alert-danger">'+esc((data && data.error) ? data.error : T.unexpected)+'</div>';
+                        return;
+                    }
+                    var html = '';
+                    var list = data.marketplaces || [];
+                    if (!list.length) html += '<div class="alert alert-warning">'+esc(T.multiSyncNone)+'</div>';
+                    for (var i = 0; i < list.length; i++) {
+                        var m = list[i];
+                        var line = fmt(T.multiSyncLine, m.marketplace, m.staged, m.sent);
+                        if (m.method === 'feed' && m.feed_id) line += ' ' + fmt(T.multiSyncFeed, m.feed_id);
+                        html += '<div class="alert alert-success">'+esc(line)+'</div>';
+                    }
+                    var notices = data.notices || [];
+                    for (var n = 0; n < notices.length; n++) {
+                        html += '<div class="alert alert-warning">'+esc(notices[n])+'</div>';
+                    }
+                    syncOut.innerHTML = html;
+                });
+            });
+        }
     })();
 
     /* ──────── LISTING PROFILES (Amazon product type schemas) ──────── */
@@ -5245,7 +5285,7 @@
             'sync-products-ps', 'match-catalog', 'send-pending', 'sync-products-amazon', 'import-catalog',
             'amz-update-run', 'feed-poll', 'list-amazon-products', 'pt-search-btn', 'pt-load', 'pt-refresh',
             'queue-run', 'import-returns', 'process-returns', 'btn-sync-fba', 'btn-fba-stock-ps', 'btn-create-mcf',
-            'btn-save-mp', 'btn-fetch-pricing', 'btn-apply-rules', 'btn-push-prices', 'btn-fetch-fees',
+            'btn-save-mp', 'btn-multi-sync-products', 'btn-fetch-pricing', 'btn-apply-rules', 'btn-push-prices', 'btn-fetch-fees',
             'btn-report-listings', 'btn-report-settlement', 'btn-report-fba-inv', 'btn-poll-reports',
             'btn-import-promos', 'btn-export-promos', 'btn-create-cart-rules', 'deletions-list', 'deletions-send'];
         var buttons = [];
