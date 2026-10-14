@@ -417,9 +417,11 @@ class AmazonProductSync
 
         $psRows = $this->collectPrestashopProducts();
 
-        // The main marketplace gets the shop's prices as they are, as it
-        // always has. A marketplace added under Multi-Account gets the same
-        // prices, converted at PrestaShop's own rate when it sells in another
+        // Amazon's price means "VAT included": with "Prices sent to Amazon:
+        // tax included" the product's tax rate is added (priceTaxFactor()).
+        // The main marketplace gets the shop's currency as it always has; a
+        // marketplace added under Multi-Account gets the same prices,
+        // converted at PrestaShop's own rate when it sells in another
         // currency. Without that currency in the shop nothing is staged,
         // rather than listing every product at a number in the wrong currency.
         $rate = $this->marketplaceCurrencyRate();
@@ -430,11 +432,18 @@ class AmazonProductSync
                 AmazonSpApiClient::currencyForMarketplace($this->marketplaceId)
             );
             $psRows = [];
-        } elseif ($rate !== 1.0) {
+        } else {
+            $overrides = AmazonProductOverride::all();
             foreach ($psRows as $i => $row) {
+                $idProduct = isset($row['id_product']) ? (int) $row['id_product'] : 0;
+                $tax = $this->priceTaxFactor($idProduct);
                 foreach (['price', 'list_price', 'sale_price'] as $field) {
-                    if (isset($row[$field]) && (float) $row[$field] > 0) {
-                        $psRows[$i][$field] = AmazonListingSettings::applyRounding((float) $row[$field] * $rate);
+                    // A fixed Amazon price is sent as entered: no tax added.
+                    $fixed = ($field === 'price' && isset($overrides[$idProduct])
+                        && (float) $overrides[$idProduct]['override_price'] > 0);
+                    $factor = $rate * ($fixed ? 1.0 : $tax);
+                    if ($factor !== 1.0 && isset($row[$field]) && (float) $row[$field] > 0) {
+                        $psRows[$i][$field] = AmazonListingSettings::applyRounding((float) $row[$field] * $factor);
                     }
                 }
             }
@@ -490,6 +499,149 @@ class AmazonProductSync
         }
 
         return $summary;
+    }
+
+    /**
+     * 1 + the product's tax rate when the shop sends prices tax included
+     * ("Prices sent to Amazon"), else 1. The rate is PrestaShop's for the
+     * shop's own country.
+     *
+     * @param int $idProduct
+     *
+     * @return float
+     */
+    private function priceTaxFactor($idProduct)
+    {
+        static $rates = [];
+        if ((string) AmzproShop::get('AMZPRO_PRICE_TAX', $this->shopId()) !== 'incl' || (int) $idProduct <= 0) {
+            return 1.0;
+        }
+        $key = $this->shopId() . '-' . (int) $idProduct;
+        if (!isset($rates[$key])) {
+            $rates[$key] = (float) Tax::getProductTaxRate((int) $idProduct, null, AmzproShop::context());
+        }
+
+        return 1.0 + $rates[$key] / 100;
+    }
+
+    /**
+     * Send one product's current price and quantity to the listing it already
+     * has on this marketplace - the real-time update after a stock or product
+     * change. Uses the same price and stock rules as the scan, and only a
+     * partial update (price and quantity), so nothing else on the listing
+     * changes. A product the comparison does not show live on Amazon, or that
+     * is switched off, is left alone: there is nothing to update.
+     *
+     * @param int $idProduct
+     * @param array $sent signatures already sent in this request, so a save
+     *                    that fires several hooks sends each change once
+     *
+     * @return array|null sku, price, quantity and Amazon's status; null when
+     *                    nothing was sent
+     */
+    public function pushOfferForProduct($idProduct, array &$sent)
+    {
+        require_once dirname(__FILE__) . '/AmazonListingSettings.php';
+        $this->ensureTables();
+        $idProduct = (int) $idProduct;
+        $idShop = (int) $this->shopId();
+        if ($this->sellerId === '' || !AmazonListingSettings::isSyncEnabled($idProduct)) {
+            return null;
+        }
+
+        $product = Db::getInstance()->getRow(
+            'SELECT p.`reference`, p.`ean13`, p.`supplier_reference`, ps.`price`
+             FROM `' . _DB_PREFIX_ . 'product` p
+             INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
+                 ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
+             WHERE p.`id_product` = ' . $idProduct
+        );
+        if (!$product) {
+            return null;
+        }
+        $overrides = AmazonProductOverride::all();
+        $sku = (string) AmazonProductOverride::effectiveSku($idProduct, AmazonListingSettings::buildSku($product), $overrides);
+        if ($sku === '') {
+            return null;
+        }
+        $row = Db::getInstance()->getRow(
+            'SELECT `amazon_product_type` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE `id_shop` = ' . $idShop . $this->marketplaceWhere() . '
+               AND `seller_sku` = \'' . pSQL($sku) . '\' AND `amazon_exists` = 1 AND `is_parent` = 0'
+        );
+        if (!$row) {
+            return null;
+        }
+
+        $rate = $this->marketplaceCurrencyRate();
+        if ($rate === null) {
+            return null;
+        }
+        $fixed = isset($overrides[$idProduct]) && (float) $overrides[$idProduct]['override_price'] > 0;
+        $price = $this->effectivePrice((float) $product['price'], $idProduct, 0, $overrides);
+        $factor = $rate * ($fixed ? 1.0 : $this->priceTaxFactor($idProduct));
+        if ($factor !== 1.0) {
+            $price = AmazonListingSettings::applyRounding($price * $factor);
+        }
+        $quantity = $this->effectiveStock($this->getQuantity($idProduct, 0, $idShop), $idProduct, $overrides);
+
+        $signature = $this->marketplaceId . '|' . $sku . '|' . $price . '|' . $quantity;
+        if (isset($sent[$signature])) {
+            return null;
+        }
+        $sent[$signature] = true;
+
+        $staged = [
+            'ps_price' => $price,
+            'ps_quantity' => $quantity,
+            'amazon_product_type' => $row['amazon_product_type'],
+        ];
+        $patches = [];
+        $ov = isset($overrides[$idProduct]) ? $overrides[$idProduct] : null;
+        if (!$ov || (int) $ov['sync_price']) {
+            $body = $this->buildPatchBody($staged, 'price');
+            $patches[] = $body['patches'][0];
+        }
+        if (!$ov || (int) $ov['sync_quantity']) {
+            $body = $this->buildPatchBody($staged, 'quantity');
+            $patches[] = $body['patches'][0];
+        }
+        if (!$patches) {
+            return null;
+        }
+
+        $result = ['sku' => $sku, 'price' => $price, 'quantity' => $quantity, 'status' => 'unknown'];
+        if ($this->useMock) {
+            $result['status'] = 'ACCEPTED (mock)';
+
+            return $result;
+        }
+        // "Delete listings when out of stock" behaves as in the push.
+        $path = '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku);
+        if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop) && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)
+            && AmazonSpApiClient::effectiveQuantity($quantity) <= 0) {
+            $result['deleted'] = true;
+            $resp = $this->client->request('DELETE', $path, ['marketplaceIds' => $this->marketplaceId]);
+        } else {
+            $resp = $this->client->request(
+                'PATCH',
+                $path,
+                ['marketplaceIds' => $this->marketplaceId],
+                ['productType' => $body['productType'], 'patches' => $patches]
+            );
+        }
+        if ($resp === false) {
+            $result['status'] = 'ERROR: ' . (string) $this->client->getLastError();
+        } elseif (is_array($resp['body']) && isset($resp['body']['status'])) {
+            $result['status'] = $resp['body']['status'];
+            if (!empty($resp['body']['issues'])) {
+                $result['issues'] = json_encode($resp['body']['issues']);
+            }
+        } else {
+            $result['status'] = 'HTTP ' . $resp['status'];
+        }
+
+        return $result;
     }
 
     /**

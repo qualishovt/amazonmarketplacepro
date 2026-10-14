@@ -734,6 +734,16 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Prices sent to Amazon' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_price_tax" class="form-control">
+                    <option value="incl"{if $mkpro_price_tax == 'incl'} selected="selected"{/if}>{l s='Tax included' mod='amazonmarketplacepro'}</option>
+                    <option value="excl"{if $mkpro_price_tax != 'incl'} selected="selected"{/if}>{l s='Tax excluded' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Amazon shows the price you send as the price the buyer pays, VAT included. With "Tax included" the module adds the product\'s tax rate from PrestaShop to the price with your markups, then rounds it; with "Tax excluded" it sends the price without tax, and any VAT has to come from your markups. A fixed Amazon price set on a product is sent as entered.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Send sale prices' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_send_sale_price" class="form-control">

@@ -199,6 +199,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_c348ac7c7d546d649a541ac6e4
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_665eed2e67466367c7ee6622dbd32665'] = 'Inteligente: redondear al alza a ,99 (15,93 pasa a 15,99)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b710819cae215bb2f6a97405113b6d6'] = 'Número entero (15,99 pasa a 16)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_adaf7e66b4bb58ce05072d129e9f17a5'] = 'Se aplica después de los márgenes y los precios específicos, a todos los precios exportados, incluidos los de oferta y los de referencia.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3173e73184cb0c14d1eaf247b5a170c8'] = 'Precios enviados a Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4a0d7cb0cd45214c8ca5912c970de13'] = 'Impuestos incluidos';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_befcac0f9644a7abee43e69f49252ac4'] = 'Impuestos excluidos';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_8e88d762c50b4a0cb260c92e643362e8'] = 'Amazon muestra el precio que envías como el precio que paga el comprador, IVA incluido. Con «Impuestos incluidos», el módulo añade el tipo impositivo del producto en PrestaShop al precio con tus recargos y luego lo redondea; con «Impuestos excluidos» envía el precio sin impuestos, y el IVA debe venir de tus recargos. Un precio fijo de Amazon definido en un producto se envía tal cual.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb8cd8d9ecfd2a9ff5253bfa55fbf3ea'] = 'Enviar los precios de oferta';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2396cd0ab01cac22e5f2ddc64bda200b'] = 'Activado: exportar los precios específicos con fechas como ofertas de Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_39a51d65e58dc7d5b46af995d11594e1'] = 'Un precio específico de PrestaShop con fecha de inicio Y de fin se convierte en un precio de oferta con esa misma ventana. Amazon muestra el descuento solo dentro de ella, así que puedes enviar las promociones futuras por adelantado. Los precios específicos sin fechas los gestiona el ajuste «Usar precios específicos».';

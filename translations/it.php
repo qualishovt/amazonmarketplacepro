@@ -199,6 +199,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_c348ac7c7d546d649a541ac6e4
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_665eed2e67466367c7ee6622dbd32665'] = 'Intelligente: arrotonda per eccesso a ,99 (15,93 diventa 15,99)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b710819cae215bb2f6a97405113b6d6'] = 'Numero intero (15,99 diventa 16)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_adaf7e66b4bb58ce05072d129e9f17a5'] = 'Applicato dopo ricarichi e prezzi specifici a ogni prezzo esportato, compresi i prezzi promozionali e i prezzi di listino.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3173e73184cb0c14d1eaf247b5a170c8'] = 'Prezzi inviati ad Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4a0d7cb0cd45214c8ca5912c970de13'] = 'Tasse incluse';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_befcac0f9644a7abee43e69f49252ac4'] = 'Tasse escluse';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_8e88d762c50b4a0cb260c92e643362e8'] = 'Amazon mostra il prezzo che invii come prezzo pagato dall\'acquirente, IVA inclusa. Con «Tasse incluse» il modulo aggiunge l\'aliquota del prodotto in PrestaShop al prezzo con i tuoi ricarichi, poi lo arrotonda; con «Tasse escluse» invia il prezzo senza tasse, e l\'IVA deve venire dai tuoi ricarichi. Un prezzo Amazon fisso impostato su un prodotto viene inviato così com\'è.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb8cd8d9ecfd2a9ff5253bfa55fbf3ea'] = 'Invia i prezzi promozionali';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2396cd0ab01cac22e5f2ddc64bda200b'] = 'Attivo: esporta i prezzi specifici con date come promozioni Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_39a51d65e58dc7d5b46af995d11594e1'] = 'Un prezzo specifico PrestaShop con data di inizio E di fine diventa un prezzo promozionale con la stessa finestra. Amazon mostra lo sconto solo al suo interno, quindi le promozioni future possono essere inviate in anticipo. I prezzi specifici senza date sono gestiti dall\'impostazione «Usa i prezzi specifici».';

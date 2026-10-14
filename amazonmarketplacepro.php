@@ -238,6 +238,9 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_INVOICE_ATTACHMENT', '');
         Configuration::updateValue('AMZPRO_SEND_SALE_PRICE', '0');
         Configuration::updateValue('AMZPRO_SEND_LIST_PRICE', '0');
+        // Amazon's price means "including VAT"; installs before 1.6.4 keep tax
+        // excluded (upgrade-1.6.4.php) so no live price changes on update.
+        Configuration::updateValue('AMZPRO_PRICE_TAX', 'incl');
         Configuration::updateValue('AMZPRO_PREORDER', '0');
         Configuration::updateValue('AMZPRO_CONDITION_MAP', json_encode([
             'new' => 'new_new',
@@ -342,7 +345,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_PRIORITIZE_ASIN', 'AMZPRO_FAKE_EMAIL', 'AMZPRO_CUSTOMER_GROUP',
             'AMZPRO_SKIP_NO_STOCK', 'AMZPRO_TITLE_FORMAT', 'AMZPRO_ORDER_MATCH',
             'AMZPRO_PII_PURGE', 'AMZPRO_PII_RETENTION_DAYS', 'AMZPRO_PII_PURGE_PS',
-            'AMZPRO_ROUNDING', 'AMZPRO_SEND_SALE_PRICE', 'AMZPRO_SEND_LIST_PRICE',
+            'AMZPRO_ROUNDING', 'AMZPRO_SEND_SALE_PRICE', 'AMZPRO_SEND_LIST_PRICE', 'AMZPRO_PRICE_TAX',
             'AMZPRO_PREORDER', 'AMZPRO_CONDITION_MAP',
             'AMZPRO_CARRIER_MAP_IN', 'AMZPRO_STATUS_RULES', 'AMZPRO_INVOICE_EMAIL',
             'AMZPRO_INVOICE_EMAIL_STATE', 'AMZPRO_INVOICE_ATTACHMENT',
@@ -909,6 +912,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_invoice_attachment' => AmzproShop::get('AMZPRO_INVOICE_ATTACHMENT'),
             'mkpro_send_sale_price' => AmzproShop::get('AMZPRO_SEND_SALE_PRICE'),
             'mkpro_send_list_price' => AmzproShop::get('AMZPRO_SEND_LIST_PRICE'),
+            'mkpro_price_tax' => AmzproShop::get('AMZPRO_PRICE_TAX') === 'incl' ? 'incl' : 'excl',
             'mkpro_preorder' => AmzproShop::get('AMZPRO_PREORDER'),
             'mkpro_condition_map' => array_merge(
                 ['new' => 'new_new', 'used' => 'used_good', 'refurbished' => 'refurbished_refurbished'],
@@ -1124,6 +1128,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_IMAP_PASSWORD' => 'mkpro_imap_password',
             'AMZPRO_SEND_SALE_PRICE' => 'mkpro_send_sale_price',
             'AMZPRO_SEND_LIST_PRICE' => 'mkpro_send_list_price',
+            'AMZPRO_PRICE_TAX' => 'mkpro_price_tax',
             'AMZPRO_PREORDER' => 'mkpro_preorder',
             'AMZPRO_INVOICE_EMAIL' => 'mkpro_invoice_email',
             'AMZPRO_INVOICE_EMAIL_STATE' => 'mkpro_invoice_email_state',
@@ -4087,6 +4092,12 @@ class AmazonMarketplacePro extends Module
     /* ─────────────────── Hook helpers ─────────────────── */
 
     /**
+     * Offers sent to Amazon in this request, so a save that fires several
+     * hooks (product, quantity, combination) sends each change once.
+     */
+    private static $offersSent = [];
+
+    /**
      * Push a product's stock and price to every shop's Amazon listing the
      * change affects. Two shops can list the same SKU with the same seller
      * account on the same marketplace only through a shared marketplace
@@ -4097,7 +4108,6 @@ class AmazonMarketplacePro extends Module
      */
     private function pushProductStockToShops($idProduct, $params)
     {
-        $pushed = [];
         foreach ($this->stockPushShopIds($idProduct, $params) as $idShop) {
             if (!AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK', $idShop)) {
                 continue;
@@ -4109,8 +4119,8 @@ class AmazonMarketplacePro extends Module
             }
             $module = $this;
             try {
-                AmzproShop::runInShop($idShop, function ($idShop) use ($module, $idProduct, &$pushed) {
-                    $module->pushProductStockToAmazon($idProduct, $idShop, $pushed);
+                AmzproShop::runInShop($idShop, function ($idShop) use ($module, $idProduct) {
+                    $module->pushProductStockToAmazon($idProduct, $idShop);
                 });
             } catch (Exception $e) {
                 // A failed push must never break the product or stock save.
@@ -4123,17 +4133,20 @@ class AmazonMarketplacePro extends Module
      * Push a single product's current stock/price to one shop's Amazon
      * listing. Runs inside that shop (see pushProductStockToShops).
      *
+     * Only a product the comparison shows live on Amazon is updated, with
+     * the scan's own price and stock rules and a partial update of price and
+     * quantity (AmazonProductSync::pushOfferForProduct()). Products that are
+     * switched off or not listed are left alone; the push sends new ones.
+     *
      * Public only so the closure that switches shop can call it.
      *
      * @param int $idProduct
      * @param int $idShop
-     * @param array $pushed seller|marketplace|SKU already sent in this request
      */
-    public function pushProductStockToAmazon($idProduct, $idShop, array &$pushed)
+    public function pushProductStockToAmazon($idProduct, $idShop)
     {
         require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
-        require_once dirname(__FILE__) . '/classes/AmazonListingSettings.php';
-        require_once dirname(__FILE__) . '/classes/AmazonProductOverride.php';
+        require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
 
         $idShop = (int) $idShop;
 
@@ -4146,117 +4159,18 @@ class AmazonMarketplacePro extends Module
             return;
         }
 
-        // The SKU as the product sync builds it for this shop.
-        $row = Db::getInstance()->getRow(
-            'SELECT `reference`, `ean13`, `supplier_reference` FROM `' . _DB_PREFIX_ . 'product`
-             WHERE `id_product` = ' . (int) $idProduct
-        );
-        if (!$row) {
+        $sync = new AmazonProductSync($this->buildAmazonClient(), $this->getMarketplaceId(), $sellerId);
+        $result = $sync->pushOfferForProduct($idProduct, self::$offersSent);
+        if ($result === null) {
             return;
-        }
-        $overrides = [(int) $idProduct => AmazonProductOverride::get($idProduct)];
-        $sku = (string) AmazonProductOverride::effectiveSku(
-            $idProduct, AmazonListingSettings::buildSku($row), $overrides
-        );
-        if ($sku === '') {
-            return;
-        }
-
-        $marketplaceId = $this->getMarketplaceId();
-        $offerKey = $sellerId . '|' . $marketplaceId . '|' . $sku;
-        if (isset($pushed[$offerKey])) {
-            return;
-        }
-        $pushed[$offerKey] = true;
-
-        $client = $this->buildAmazonClient();
-
-        $qty = (int) StockAvailable::getQuantityAvailableByProduct($idProduct, 0, $idShop);
-        $price = $this->shopPriceTaxIncl($idProduct, $idShop);
-
-        $effectiveQty = AmazonSpApiClient::effectiveQuantity($qty, $idShop);
-
-        // Out-of-stock delisting (optional): remove the listing instead of
-        // publishing zero stock.
-        if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop) && $effectiveQty <= 0) {
-            $resp = $client->request(
-                'DELETE',
-                '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-                ['marketplaceIds' => $marketplaceId]
-            );
-            $status = ($resp !== false && is_array($resp['body']) && isset($resp['body']['status']))
-                ? $resp['body']['status'] : 'unknown';
-            $this->logActivity('info', 'hook_stock_push',
-                'SKU ' . $sku . ': out of stock, deletion requested, status=' . $status
-            );
-
-            return;
-        }
-
-        $attributes = [
-            'condition_type' => [['value' => AmazonSpApiClient::listingCondition($idShop)]],
-            'purchasable_offer' => [[
-                'currency' => AmazonSpApiClient::currencyForMarketplace($marketplaceId),
-                'marketplace_id' => $marketplaceId,
-                'our_price' => [[
-                    'schedule' => [['value_with_tax' => $price]],
-                ]],
-            ]],
-            'fulfillment_availability' => [[
-                'fulfillment_channel_code' => 'DEFAULT',
-                'quantity' => $effectiveQty,
-            ]],
-        ];
-        $attributes = AmazonSpApiClient::enrichOfferAttributes($attributes, $marketplaceId, $price, null, $idShop);
-
-        $body = [
-            'productType' => 'PRODUCT',
-            'requirements' => 'LISTING_OFFER_ONLY',
-            'attributes' => $attributes,
-        ];
-
-        $resp = $client->request(
-            'PUT',
-            '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-            ['marketplaceIds' => $marketplaceId],
-            $body
-        );
-
-        $status = 'unknown';
-        if ($resp !== false && is_array($resp['body']) && isset($resp['body']['status'])) {
-            $status = $resp['body']['status'];
         }
 
         $this->logActivity('info', 'hook_stock_push',
-            'SKU ' . $sku . ': qty=' . $qty . ', price=' . $price . ', status=' . $status
+            'SKU ' . $result['sku'] . ': qty=' . $result['quantity'] . ', price=' . $result['price']
+            . (!empty($result['deleted']) ? ', out of stock, deletion requested' : '')
+            . ', status=' . $result['status']
+            . (!empty($result['issues']) ? ', issues=' . $result['issues'] : '')
         );
-    }
-
-    /**
-     * A product's price in a shop, tax included, before discounts: what the
-     * offer's value_with_tax means. Called inside that shop.
-     *
-     * Product::getPriceStatic() refuses to run without a cart or an employee
-     * in the context (a web service or command line stock update has
-     * neither), so there the shop's price and the product's tax rate are
-     * combined directly.
-     *
-     * @return float
-     */
-    private function shopPriceTaxIncl($idProduct, $idShop)
-    {
-        $context = $this->context;
-        if (is_object($context->cart) || isset($context->employee)) {
-            return (float) Product::getPriceStatic((int) $idProduct, true, 0, 6, null, false, false);
-        }
-
-        $priceExcl = (float) Db::getInstance()->getValue(
-            'SELECT `price` FROM `' . _DB_PREFIX_ . 'product_shop`
-             WHERE `id_product` = ' . (int) $idProduct . ' AND `id_shop` = ' . (int) $idShop
-        );
-        $rate = (float) Tax::getProductTaxRate((int) $idProduct, null, $context);
-
-        return (float) Tools::ps_round($priceExcl * (1 + $rate / 100), 6);
     }
 
     /**

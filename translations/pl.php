@@ -199,6 +199,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_c348ac7c7d546d649a541ac6e4
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_665eed2e67466367c7ee6622dbd32665'] = 'Inteligentne — zaokrąglanie w górę do ,99 (15,93 staje się 15,99)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b710819cae215bb2f6a97405113b6d6'] = 'Liczba całkowita (15,99 staje się 16)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_adaf7e66b4bb58ce05072d129e9f17a5'] = 'Stosowane po narzutach i cenach specjalnych do każdej eksportowanej ceny, w tym cen promocyjnych i cen katalogowych.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3173e73184cb0c14d1eaf247b5a170c8'] = 'Ceny wysyłane do Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4a0d7cb0cd45214c8ca5912c970de13'] = 'Z podatkiem';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_befcac0f9644a7abee43e69f49252ac4'] = 'Bez podatku';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_8e88d762c50b4a0cb260c92e643362e8'] = 'Amazon pokazuje wysłaną cenę jako cenę, którą płaci kupujący, z VAT. Przy „Z podatkiem” moduł dodaje stawkę podatku produktu z PrestaShop do ceny z Twoimi narzutami, a potem ją zaokrągla; przy „Bez podatku” wysyła cenę bez podatku, a VAT musi pochodzić z Twoich narzutów. Stała cena Amazon ustawiona dla produktu jest wysyłana bez zmian.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb8cd8d9ecfd2a9ff5253bfa55fbf3ea'] = 'Wysyłaj ceny promocyjne';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2396cd0ab01cac22e5f2ddc64bda200b'] = 'Włączone — eksportuj ceny specjalne z datami jako promocje Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_39a51d65e58dc7d5b46af995d11594e1'] = 'Cena specjalna PrestaShop z datą początku ORAZ końca staje się ceną promocyjną w tym samym okresie. Amazon pokazuje rabat tylko w jego obrębie, więc przyszłe promocje można wysłać z wyprzedzeniem. Cenami specjalnymi bez dat zarządza ustawienie „Używaj cen specjalnych”.';

@@ -199,6 +199,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_c348ac7c7d546d649a541ac6e4
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_665eed2e67466367c7ee6622dbd32665'] = 'Intelligent — arrondi supérieur à ,99 (15,93 devient 15,99)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b710819cae215bb2f6a97405113b6d6'] = 'Nombre entier (15,99 devient 16)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_adaf7e66b4bb58ce05072d129e9f17a5'] = 'Appliqué après les majorations et les prix spécifiques, à chaque prix exporté, y compris les prix promotionnels et les prix barrés.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3173e73184cb0c14d1eaf247b5a170c8'] = 'Prix envoyés à Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4a0d7cb0cd45214c8ca5912c970de13'] = 'TTC';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_befcac0f9644a7abee43e69f49252ac4'] = 'HT';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_8e88d762c50b4a0cb260c92e643362e8'] = 'Amazon affiche le prix que vous envoyez comme le prix payé par l\'acheteur, TVA comprise. Avec « TTC », le module ajoute le taux de taxe du produit dans PrestaShop au prix avec vos majorations, puis l\'arrondit ; avec « HT », il envoie le prix sans taxe, et la TVA doit alors venir de vos majorations. Un prix Amazon fixe défini sur un produit est envoyé tel quel.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb8cd8d9ecfd2a9ff5253bfa55fbf3ea'] = 'Envoyer les prix promotionnels';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2396cd0ab01cac22e5f2ddc64bda200b'] = 'Activé — exporter les prix spécifiques datés comme promotions Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_39a51d65e58dc7d5b46af995d11594e1'] = 'Un prix spécifique PrestaShop doté d\'une date de début ET de fin devient un prix promotionnel sur la même période. Amazon n\'affiche la remise qu\'à l\'intérieur de celle-ci, ce qui permet d\'envoyer les promotions à venir à l\'avance. Les prix spécifiques sans dates relèvent du réglage « Utiliser les prix spécifiques ».';

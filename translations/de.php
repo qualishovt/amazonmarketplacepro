@@ -199,6 +199,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_c348ac7c7d546d649a541ac6e4
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_665eed2e67466367c7ee6622dbd32665'] = 'Intelligent — auf ,99 aufrunden (15,93 wird zu 15,99)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7b710819cae215bb2f6a97405113b6d6'] = 'Ganze Zahl (15,99 wird zu 16)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_adaf7e66b4bb58ce05072d129e9f17a5'] = 'Wird nach Aufschlägen und Sonderpreisen auf jeden exportierten Preis angewendet, einschließlich Aktions- und Listenpreisen.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3173e73184cb0c14d1eaf247b5a170c8'] = 'An Amazon gesendete Preise';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f4a0d7cb0cd45214c8ca5912c970de13'] = 'Inklusive Steuer';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_befcac0f9644a7abee43e69f49252ac4'] = 'Ohne Steuer';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_8e88d762c50b4a0cb260c92e643362e8'] = 'Amazon zeigt den Preis, den Sie senden, als Preis an, den der Käufer zahlt, inklusive MwSt. Mit „Inklusive Steuer“ addiert das Modul den Steuersatz des Produkts aus PrestaShop zum Preis mit Ihren Aufschlägen und rundet ihn dann; mit „Ohne Steuer“ sendet es den Preis ohne Steuer, und die MwSt. muss aus Ihren Aufschlägen kommen. Ein fester Amazon-Preis an einem Produkt wird unverändert gesendet.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb8cd8d9ecfd2a9ff5253bfa55fbf3ea'] = 'Aktionspreise senden';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2396cd0ab01cac22e5f2ddc64bda200b'] = 'Aktiviert — datierte Sonderpreise als Amazon-Aktionen exportieren';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_39a51d65e58dc7d5b46af995d11594e1'] = 'Ein PrestaShop-Sonderpreis mit Start- UND Enddatum wird zu einem Aktionspreis mit demselben Zeitfenster. Amazon zeigt den Rabatt nur darin an, sodass künftige Aktionen im Voraus übertragen werden können. Sonderpreise ohne Datum regelt stattdessen die Einstellung „Sonderpreise verwenden“.';
