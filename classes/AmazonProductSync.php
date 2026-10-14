@@ -627,7 +627,7 @@ class AmazonProductSync
                 'PATCH',
                 $path,
                 ['marketplaceIds' => $this->marketplaceId],
-                ['productType' => $body['productType'], 'patches' => $patches]
+                ['productType' => !empty($row['amazon_product_type']) ? $row['amazon_product_type'] : 'PRODUCT', 'patches' => $patches]
             );
         }
         if ($resp === false) {
