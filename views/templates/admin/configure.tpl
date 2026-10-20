@@ -2701,7 +2701,7 @@
     </div>
 
     <div class="panel">
-        <div class="panel-heading"><i class="icon-plus"></i> {l s='Pricing Rules' mod='amazonmarketplacepro'}</div>
+        <div class="panel-heading"><i class="icon-list"></i> {l s='Pricing Rules' mod='amazonmarketplacepro'}</div>
         <div class="form-inline" style="margin-bottom:15px;">
             <input type="text" id="rule-name" class="form-control" placeholder="{l s='Rule Name' mod='amazonmarketplacepro'}" />
             <select id="rule-type" class="form-control">
@@ -4040,7 +4040,8 @@
                 if (!name) { out.innerHTML='<div class="alert alert-danger">'+esc(T.enterRuleName)+'</div>'; return; }
 
                 btnSave.disabled = true;
-                var params = 'name='+encodeURIComponent(name)+'&rule_type='+encodeURIComponent(type)
+                // Field names as runSavePricingRule() reads them.
+                var params = 'rule_name='+encodeURIComponent(name)+'&rule_type='+encodeURIComponent(type)
                     +'&price_adjustment='+encodeURIComponent(adj)+'&adjustment_type='+encodeURIComponent(adjType)
                     +'&min_price='+encodeURIComponent(minP)+'&max_price='+encodeURIComponent(maxP);
 
