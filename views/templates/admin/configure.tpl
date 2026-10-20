@@ -555,6 +555,7 @@
                     <option value="reference"{if $mkpro_sku_source == 'reference' || !$mkpro_sku_source} selected="selected"{/if}>{l s='Reference' mod='amazonmarketplacepro'}</option>
                     <option value="ean13"{if $mkpro_sku_source == 'ean13'} selected="selected"{/if}>{l s='EAN code' mod='amazonmarketplacepro'}</option>
                     <option value="supplier_reference"{if $mkpro_sku_source == 'supplier_reference'} selected="selected"{/if}>{l s='Supplier reference' mod='amazonmarketplacepro'}</option>
+                    <option value="id"{if $mkpro_sku_source == 'id'} selected="selected"{/if}>{l s='PrestaShop IDs (Amazon SKU looks like 123 or 123_45)' mod='amazonmarketplacepro'}</option>
                 </select>
                 <p class="help-block">{l s='Which PrestaShop field becomes the Amazon SKU. Products with an empty source field are not exported. Changing this on a live catalog creates NEW listings under the new SKUs.' mod='amazonmarketplacepro'}</p>
             </div>

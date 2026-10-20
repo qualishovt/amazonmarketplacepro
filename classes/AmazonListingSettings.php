@@ -702,7 +702,8 @@ class AmazonListingSettings
      * Build the Amazon SKU for a product row according to the configured
      * source field and optional prefix ("PREFIX-VALUE").
      *
-     * @param array $row Needs keys: reference, ean13, supplier_reference
+     * @param array $row Needs keys: reference, ean13, supplier_reference, and
+     *                   id_product / id_product_attribute for the id source
      *
      * @return string '' when the source field is empty for this product
      */
@@ -710,7 +711,14 @@ class AmazonListingSettings
     {
         $source = (string) AmzproShop::get('AMZPRO_SKU_SOURCE');
         $value = '';
-        if ($source === 'ean13') {
+        if ($source === 'id') {
+            // PrestaShop ids: 123 for a product, 123_45 for a combination - the
+            // shape feed services such as ShoppingFeed use, and the one the
+            // order import reads back (AmazonOrderImporter).
+            $idProduct = isset($row['id_product']) ? (int) $row['id_product'] : 0;
+            $idAttribute = isset($row['id_product_attribute']) ? (int) $row['id_product_attribute'] : 0;
+            $value = $idProduct > 0 ? ($idProduct . ($idAttribute > 0 ? '_' . $idAttribute : '')) : '';
+        } elseif ($source === 'ean13') {
             $value = isset($row['ean13']) ? trim((string) $row['ean13']) : '';
         } elseif ($source === 'supplier_reference') {
             $value = isset($row['supplier_reference']) ? trim((string) $row['supplier_reference']) : '';

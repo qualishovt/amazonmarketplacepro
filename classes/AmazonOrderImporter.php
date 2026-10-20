@@ -641,9 +641,15 @@ class AmazonOrderImporter
             }
         }
 
-        // "SKU is built from PrestaShop ids" shops: 123 or 123_45.
-        if ($strategy === 'id') {
-            if (preg_match('/^(\d+)(?:[_-](\d+))?$/', $sku, $m)) {
+        // "SKU is built from PrestaShop ids" shops: 123 or 123_45, also when
+        // the listings' SKU source is the ids, behind the optional prefix.
+        if ($strategy === 'id' || (string) AmzproShop::get('AMZPRO_SKU_SOURCE', $idShop) === 'id') {
+            $idSku = $sku;
+            $idPrefix = trim((string) AmzproShop::get('AMZPRO_SKU_PREFIX', $idShop));
+            if ($idPrefix !== '' && strpos($idSku, $idPrefix . '-') === 0) {
+                $idSku = (string) Tools::substr($idSku, Tools::strlen($idPrefix) + 1);
+            }
+            if (preg_match('/^(\d+)(?:[_-](\d+))?$/', $idSku, $m)) {
                 $idProduct = (int) Db::getInstance()->getValue(
                     'SELECT p.`id_product` FROM `' . $p . 'product` p' . $inShop . '
                      WHERE p.`id_product` = ' . (int) $m[1]

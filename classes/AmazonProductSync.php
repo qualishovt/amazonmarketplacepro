@@ -550,7 +550,7 @@ class AmazonProductSync
         }
 
         $product = Db::getInstance()->getRow(
-            'SELECT p.`reference`, p.`ean13`, p.`supplier_reference`, ps.`price`
+            'SELECT p.`id_product`, p.`reference`, p.`ean13`, p.`supplier_reference`, ps.`price`
              FROM `' . _DB_PREFIX_ . 'product` p
              INNER JOIN `' . _DB_PREFIX_ . 'product_shop` ps
                  ON (ps.`id_product` = p.`id_product` AND ps.`id_shop` = ' . $idShop . ')
@@ -1211,6 +1211,8 @@ class AmazonProductSync
             foreach ($rows as $r) {
                 // Combination falls back to the base product's identifiers.
                 $skuRow = [
+                    'id_product' => $r['id_product'],
+                    'id_product_attribute' => $r['id_product_attribute'],
                     'reference' => $r['reference'],
                     'ean13' => (trim((string) $r['combo_ean']) !== '') ? $r['combo_ean'] : $r['product_ean'],
                     'supplier_reference' => (trim((string) $r['supplier_reference']) !== '')
