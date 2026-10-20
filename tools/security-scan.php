@@ -27,7 +27,7 @@ $root = dirname(dirname(__FILE__));
 $quiet = in_array('--quiet', $argv, true) || in_array('-q', $argv, true);
 
 /** Directories never scanned: not shipped, or not ours. */
-$skipDirs = array('.git', 'website', 'node_modules', 'vendor', 'docs', 'marketing');
+$skipDirs = array('.git', 'website', 'node_modules', 'vendor', 'docs', 'marketing', 'test');
 
 /**
  * Rules. Each: pattern, level, message, and an optional "unless" pattern that
