@@ -142,6 +142,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_e2dd9ae704ab6d198c76b98ad5
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_63d5049791d9d79d86e9a108b0a999ca'] = 'Référence';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7206fe210055a651f87536d9be0c3b36'] = 'Code EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8284ae5df53e6e7ffc1f2cc67ae68765'] = 'Référence fournisseur';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'Identifiants PrestaShop (le SKU Amazon ressemble à 123 ou 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_03d858118c8baa5b72a89851f2ac0229'] = 'Quel champ PrestaShop devient le SKU Amazon. Les produits dont ce champ est vide ne sont pas exportés. Le modifier sur un catalogue en production crée de NOUVELLES offres sous les nouveaux SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6bcdc945ed00d9a6c6fe561a514efef8'] = 'Préfixe du SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_131fc302f3243929dbc42da064657b06'] = 'Ajouté devant le SKU, séparé par un tiret (par ex. le préfixe AMZ donne AMZ-REF123).';
@@ -275,7 +276,6 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a004368ac4331ebad97f065977
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b643488f7d4a03d20508ce06ce664e0d'] = 'Statut PS des commandes qu\'Amazon signale déjà comme expédiées au moment de l\'import.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1fc3ea2c52ebeb9ad8a2350ec1c244b5'] = 'Rapprocher les lignes de commande par';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec49b6b8ecdffb089e0cd3d5231b27d5'] = 'Référence / SKU personnalisé (recommandé)';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'Identifiants PrestaShop (le SKU Amazon ressemble à 123 ou 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3990182636031e8f99e6010da64cab6f'] = 'Le mode par défaut essaie d\'abord le SKU personnalisé du produit, puis la référence, puis l\'EAN. Ne choisissez le mode identifiants que si vos SKU Amazon ont été construits à partir des identifiants produit et déclinaison de PrestaShop.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6f3833e41e44d2535ff9cad75c762544'] = 'Donner la priorité à l\'ASIN pour rapprocher les produits';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a506ab17773b9c7f985ab3bedecc53f1'] = 'Non (rapprocher d\'abord par SKU)';
@@ -517,7 +517,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_b7a662fe9a8fa71b9302ab210c
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5d3d95cb74ad59528ab385023f8a2a39'] = 'Enregistrer le profil';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea4788705e6873b424c65e91c2846b19'] = 'Annuler';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fbdcf01a6b5c291e3a7c5ac2452e4099'] = 'Majoration de prix, délai de traitement et GPSR';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_68a5c8aba0c1a7642b64771b21a953c2'] = 'Les majorations sont des valeurs fixes (« 5.99 ») ou des pourcentages (« 10% »), appliqués au prix exporté. Les règles se cascadent produit par produit : catégorie, puis fabricant, puis fournisseur — la première source pourvue d\'une valeur l\'emporte ; les valeurs par défaut ci-dessous s\'appliquent lorsqu\'aucune ne correspond.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_11e72df7e5641ed6d4702f6df5bc399b'] = 'Les majorations sont des valeurs fixes (« 5.99 ») ou des pourcentages (« 10% »), appliqués au prix exporté. Les règles se cascadent produit par produit : sa propre majoration (fiche produit, section Amazon), puis sa catégorie par défaut, puis le fabricant, puis le fournisseur — la première source pourvue d\'une valeur l\'emporte ; les valeurs par défaut ci-dessous s\'appliquent lorsqu\'aucune ne correspond.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f945f7a8be9f6131dd23a0dc2d733251'] = 'Majoration de prix par défaut';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_22c83b5ba501ae6e5cfa570f49addffe'] = 'par ex. 10% ou 2.50';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c3eb5e24f2b9f039a25498d1f2a568a0'] = 'Récupérer les majorations de prix depuis';
@@ -540,7 +540,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_5be125ad8292cf70c6486afbc9
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f48407a2c2f16aefb9826bb7304f9c6c'] = 'L\'enregistrement met les produits concernés en file d\'attente afin que la prochaine synchronisation différentielle les renvoie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f22ec15c5f673273e7ec593807d5287d'] = 'Règles par produit';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_15a92eec688ad7fe8309f97a54551c6c'] = '500 premiers produits';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_c447f5e9064bc7d392dbda43c78f4645'] = 'Excluez certains produits de la synchronisation Amazon, ou attribuez à un produit son propre contact GPSR (qui prime sur les contacts fabricant et fournisseur).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c57044531e2e255c9f2866053bd22a33'] = 'Excluez des produits de la synchronisation Amazon, donnez à un produit son propre contact GPSR (prioritaire sur ceux du fabricant/fournisseur), ou sa propre majoration de prix (« 10% » ou « 2.50 », prioritaire sur les majorations de catégorie, de fabricant et de fournisseur). Les mêmes réglages se trouvent sur chaque fiche produit, dans la section Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_686cf2ffd88893ce5adc70c5f12fba5e'] = 'Filtrer par nom ou référence...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_edcb18c476ff169d9def9ed879da0e2b'] = 'Aucun produit actif trouvé.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9b91fd689613f4a37e8ffce0e6ef615b'] = 'File d\'attente des modifications';
@@ -921,6 +921,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e570149
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Toujours en rupture (envoyer 0)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Prix imposé';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Envoyé à la place du prix boutique (les majorations et les règles tarifaires sont ignorées). Vide = utiliser le prix boutique.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Majoration de prix';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Majoration propre à ce produit sur Amazon : un pourcentage (« 10% ») ou un montant (« 2.50 »). Elle remplace pour ce produit les majorations de catégorie, de fabricant et de fournisseur. Vide = utiliser celles-ci.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'SKU personnalisé';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'À utiliser lorsque ce produit existe déjà dans votre inventaire Amazon sous un autre SKU vendeur. Sert à la fois aux mises à jour d\'offre et au rapprochement des commandes.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8db07d2e99c2a6161d6dc93c2fe4efff'] = 'ASIN';

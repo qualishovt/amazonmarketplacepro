@@ -43,7 +43,7 @@ class AmazonProductOverride
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points',
-        'condition_type', 'condition_note'];
+        'condition_type', 'condition_note', 'price_markup'];
 
     public static function ensureTable()
     {
@@ -88,6 +88,9 @@ class AmazonProductOverride
             'bullet_points' => 'TEXT NULL',
             'condition_type' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'condition_note' => 'TEXT NULL',
+            // "10%" or "2.50": this product's own markup, ahead of the
+            // category, manufacturer and supplier ones.
+            'price_markup' => 'VARCHAR(16) NOT NULL DEFAULT \'\'',
         ];
 
         $existing = [];
@@ -119,7 +122,7 @@ class AmazonProductOverride
             'sync_price' => 1, 'sync_quantity' => 1, 'is_fba' => 0, 'lead_time' => -1,
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
-            'condition_type' => '', 'condition_note' => '',
+            'condition_type' => '', 'condition_note' => '', 'price_markup' => '',
         ];
     }
 

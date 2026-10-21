@@ -2051,7 +2051,7 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-sliders"></i> {l s='Price Markup, Handling Delay & GPSR' mod='amazonmarketplacepro'}</div>
         <p class="help-block">
-            {l s='Markups are fixed values ("5.99") or percentages ("10%"), applied to the exported price. Rules cascade per product: category, then manufacturer, then supplier — the first source with a value wins; the defaults below apply when none matches.' mod='amazonmarketplacepro'}
+            {l s='Markups are fixed values ("5.99") or percentages ("10%"), applied to the exported price. Rules cascade per product: its own markup (product page, Amazon section), then its default category, then manufacturer, then supplier — the first source with a value wins; the defaults below apply when none matches.' mod='amazonmarketplacepro'}
         </p>
         <form method="post" class="form-horizontal" action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}">
             <input type="hidden" name="mkpro_id_shop" value="{$mkpro_shop_id|intval}" />
@@ -2162,7 +2162,7 @@
 
     <div class="panel">
         <div class="panel-heading"><i class="icon-check-square-o"></i> {l s='Per-Product Rules' mod='amazonmarketplacepro'} <small>({l s='first 500 products' mod='amazonmarketplacepro'})</small></div>
-        <p class="help-block">{l s='Switch individual products out of the Amazon sync, or give a product its own GPSR contact (overrides manufacturer/supplier contacts).' mod='amazonmarketplacepro'}</p>
+        <p class="help-block">{l s='Switch individual products out of the Amazon sync, give a product its own GPSR contact (overrides manufacturer/supplier contacts), or its own price markup ("10%" or "2.50", ahead of the category, manufacturer and supplier markups). The same settings are on each product page, in the Amazon section.' mod='amazonmarketplacepro'}</p>
         <input type="text" id="prodrules-filter" class="form-control" placeholder="{l s='Filter by name or reference...' mod='amazonmarketplacepro'}" style="max-width:320px; margin-bottom:10px;" />
         <div class="table-responsive" style="max-height:480px; overflow-y:auto;">
             <table class="table" id="prodrules-table">
@@ -2172,6 +2172,7 @@
                     <th>{l s='Name' mod='amazonmarketplacepro'}</th>
                     <th>{l s='Sync' mod='amazonmarketplacepro'}</th>
                     <th>{l s='GPSR e-mail or link' mod='amazonmarketplacepro'}</th>
+                    <th>{l s='Price markup' mod='amazonmarketplacepro'}</th>
                 </tr></thead>
                 <tbody>
                     {if $product_rules}
@@ -2187,10 +2188,11 @@
                                 </select>
                             </td>
                             <td><input type="text" class="form-control input-sm pr-gpsr" value="{$pr.gpsr_contact|escape:'htmlall':'UTF-8'}" style="min-width:200px;" /></td>
+                            <td><input type="text" class="form-control input-sm pr-markup" value="{$pr.price_markup|escape:'htmlall':'UTF-8'}" placeholder="10% / 2.50" style="width:90px;" /></td>
                         </tr>
                         {/foreach}
                     {else}
-                        <tr><td colspan="5" class="text-center text-muted">{l s='No active products found.' mod='amazonmarketplacepro'}</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted">{l s='No active products found.' mod='amazonmarketplacepro'}</td></tr>
                     {/if}
                 </tbody>
             </table>
@@ -4690,7 +4692,8 @@
                 rows.push({
                     id: trs[i].getAttribute('data-id'),
                     sync: trs[i].querySelector('.pr-sync').value,
-                    gpsr: trs[i].querySelector('.pr-gpsr').value
+                    gpsr: trs[i].querySelector('.pr-gpsr').value,
+                    markup: trs[i].querySelector('.pr-markup').value
                 });
             }
             btn.disabled = true;

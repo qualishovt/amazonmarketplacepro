@@ -142,6 +142,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_e2dd9ae704ab6d198c76b98ad5
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_63d5049791d9d79d86e9a108b0a999ca'] = 'Riferimento';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7206fe210055a651f87536d9be0c3b36'] = 'Codice EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8284ae5df53e6e7ffc1f2cc67ae68765'] = 'Riferimento fornitore';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'ID PrestaShop (lo SKU Amazon ha la forma 123 o 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_03d858118c8baa5b72a89851f2ac0229'] = 'Quale campo PrestaShop diventa lo SKU Amazon. I prodotti con il campo di origine vuoto non vengono esportati. Modificarlo su un catalogo attivo crea NUOVE inserzioni con i nuovi SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6bcdc945ed00d9a6c6fe561a514efef8'] = 'Prefisso dello SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_131fc302f3243929dbc42da064657b06'] = 'Viene aggiunto davanti allo SKU, separato da un trattino (ad es. il prefisso AMZ produce AMZ-REF123).';
@@ -275,7 +276,6 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a004368ac4331ebad97f065977
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b643488f7d4a03d20508ce06ce664e0d'] = 'Stato PS per gli ordini che Amazon segnala già come spediti al momento dell\'importazione.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1fc3ea2c52ebeb9ad8a2350ec1c244b5'] = 'Abbina le righe d\'ordine tramite';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec49b6b8ecdffb089e0cd3d5231b27d5'] = 'Riferimento / SKU personalizzato (consigliato)';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'ID PrestaShop (lo SKU Amazon ha la forma 123 o 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3990182636031e8f99e6010da64cab6f'] = 'La modalità predefinita prova prima lo SKU personalizzato del prodotto, poi il riferimento e infine l\'EAN. Scegli la modalità ID solo se i tuoi SKU Amazon sono stati costruiti dagli ID prodotto e combinazione di PrestaShop.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6f3833e41e44d2535ff9cad75c762544'] = 'Dai priorità all\'ASIN nell\'abbinamento dei prodotti';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a506ab17773b9c7f985ab3bedecc53f1'] = 'No (abbina prima tramite SKU)';
@@ -517,7 +517,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_b7a662fe9a8fa71b9302ab210c
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5d3d95cb74ad59528ab385023f8a2a39'] = 'Salva il profilo';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea4788705e6873b424c65e91c2846b19'] = 'Annulla';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fbdcf01a6b5c291e3a7c5ac2452e4099'] = 'Ricarico sul prezzo, tempo di gestione e GPSR';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_68a5c8aba0c1a7642b64771b21a953c2'] = 'I ricarichi sono valori fissi («5.99») o percentuali («10%») applicati al prezzo esportato. Le regole si applicano a cascata per prodotto: categoria, poi produttore, poi fornitore — vince la prima fonte che ha un valore; se nessuna corrisponde valgono i valori predefiniti qui sotto.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_11e72df7e5641ed6d4702f6df5bc399b'] = 'I ricarichi sono valori fissi («5.99») o percentuali («10%») applicati al prezzo esportato. Le regole si applicano a cascata per prodotto: il suo ricarico (scheda prodotto, sezione Amazon), poi la sua categoria predefinita, poi produttore, poi fornitore — vince la prima fonte che ha un valore; se nessuna corrisponde valgono i valori predefiniti qui sotto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f945f7a8be9f6131dd23a0dc2d733251'] = 'Ricarico predefinito sul prezzo';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_22c83b5ba501ae6e5cfa570f49addffe'] = 'ad es. 10% o 2.50';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c3eb5e24f2b9f039a25498d1f2a568a0'] = 'Preleva i ricarichi sul prezzo da';
@@ -540,7 +540,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_5be125ad8292cf70c6486afbc9
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f48407a2c2f16aefb9826bb7304f9c6c'] = 'Il salvataggio mette in coda i prodotti interessati, così la prossima sincronizzazione differenziale li reinvia.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f22ec15c5f673273e7ec593807d5287d'] = 'Regole per singolo prodotto';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_15a92eec688ad7fe8309f97a54551c6c'] = 'primi 500 prodotti';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_c447f5e9064bc7d392dbda43c78f4645'] = 'Escludi singoli prodotti dalla sincronizzazione con Amazon oppure assegna a un prodotto un proprio contatto GPSR (che prevale su quelli di produttore e fornitore).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c57044531e2e255c9f2866053bd22a33'] = 'Escludi singoli prodotti dalla sincronizzazione Amazon, assegna a un prodotto un proprio contatto GPSR (prioritario su quelli di produttore/fornitore) o un proprio ricarico di prezzo («10%» o «2.50», prioritario sui ricarichi di categoria, produttore e fornitore). Le stesse impostazioni sono in ogni scheda prodotto, nella sezione Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_686cf2ffd88893ce5adc70c5f12fba5e'] = 'Filtra per nome o riferimento...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_edcb18c476ff169d9def9ed879da0e2b'] = 'Nessun prodotto attivo trovato.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9b91fd689613f4a37e8ffce0e6ef615b'] = 'Coda delle modifiche';
@@ -921,6 +921,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e570149
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Sempre esaurito (invia 0)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Prezzo sostitutivo';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Inviato al posto del prezzo del negozio (ricarichi e regole di prezzo vengono ignorati). Vuoto = usa il prezzo del negozio.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Ricarico sul prezzo';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Ricarico proprio di questo prodotto su Amazon: una percentuale («10%») o un importo («2.50»). Sostituisce per questo prodotto i ricarichi di categoria, produttore e fornitore. Vuoto = usare quelli.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'SKU personalizzato';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Da usare quando questo prodotto esiste già nel tuo inventario Amazon con un altro SKU venditore. Serve sia per aggiornare l\'inserzione sia per abbinare gli ordini.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8db07d2e99c2a6161d6dc93c2fe4efff'] = 'ASIN';

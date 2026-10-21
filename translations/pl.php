@@ -142,6 +142,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_e2dd9ae704ab6d198c76b98ad5
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_63d5049791d9d79d86e9a108b0a999ca'] = 'Referencja';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7206fe210055a651f87536d9be0c3b36'] = 'Kod EAN';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8284ae5df53e6e7ffc1f2cc67ae68765'] = 'Referencja dostawcy';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'Identyfikatory PrestaShop (SKU w Amazon wygląda jak 123 lub 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_03d858118c8baa5b72a89851f2ac0229'] = 'Które pole PrestaShop staje się SKU w Amazon. Produkty z pustym polem źródłowym nie są eksportowane. Zmiana tego ustawienia w działającym katalogu tworzy NOWE oferty pod nowymi SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6bcdc945ed00d9a6c6fe561a514efef8'] = 'Prefiks SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_131fc302f3243929dbc42da064657b06'] = 'Dodawany przed SKU i oddzielony myślnikiem (np. prefiks AMZ daje AMZ-REF123).';
@@ -275,7 +276,6 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a004368ac4331ebad97f065977
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b643488f7d4a03d20508ce06ce664e0d'] = 'Status PS dla zamówień, które Amazon w chwili importu zgłasza już jako wysłane.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1fc3ea2c52ebeb9ad8a2350ec1c244b5'] = 'Dopasowuj pozycje zamówienia według';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ec49b6b8ecdffb089e0cd3d5231b27d5'] = 'Referencja / własne SKU (zalecane)';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_5973f6290c6eb1d84e7f55a8f1283bce'] = 'Identyfikatory PrestaShop (SKU w Amazon wygląda jak 123 lub 123_45)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3990182636031e8f99e6010da64cab6f'] = 'Tryb domyślny sprawdza najpierw własne SKU produktu, potem referencję, a na końcu EAN. Wybierz tryb identyfikatorów tylko wtedy, gdy Twoje SKU w Amazon powstały z identyfikatorów produktu i kombinacji PrestaShop.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6f3833e41e44d2535ff9cad75c762544'] = 'Preferuj ASIN przy dopasowywaniu produktów';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a506ab17773b9c7f985ab3bedecc53f1'] = 'Nie (najpierw dopasuj po SKU)';
@@ -517,7 +517,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_b7a662fe9a8fa71b9302ab210c
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5d3d95cb74ad59528ab385023f8a2a39'] = 'Zapisz profil';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ea4788705e6873b424c65e91c2846b19'] = 'Anuluj';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fbdcf01a6b5c291e3a7c5ac2452e4099'] = 'Narzut cenowy, czas przygotowania i GPSR';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_68a5c8aba0c1a7642b64771b21a953c2'] = 'Narzuty to wartości stałe („5.99”) lub procentowe („10%”), stosowane do ceny eksportowanej. Reguły działają kaskadowo dla każdego produktu: kategoria, potem producent, potem dostawca — wygrywa pierwsze źródło z wartością; gdy żadne nie pasuje, obowiązują wartości domyślne poniżej.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_11e72df7e5641ed6d4702f6df5bc399b'] = 'Narzuty to wartości stałe („5.99”) lub procentowe („10%”), stosowane do ceny eksportowanej. Reguły działają kaskadowo dla każdego produktu: jego własny narzut (strona produktu, sekcja Amazon), potem jego kategoria domyślna, potem producent, potem dostawca — wygrywa pierwsze źródło z wartością; gdy żadne nie pasuje, obowiązują wartości domyślne poniżej.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f945f7a8be9f6131dd23a0dc2d733251'] = 'Domyślny narzut cenowy';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_22c83b5ba501ae6e5cfa570f49addffe'] = 'np. 10% lub 2.50';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c3eb5e24f2b9f039a25498d1f2a568a0'] = 'Pobieraj narzuty cenowe z';
@@ -540,7 +540,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_5be125ad8292cf70c6486afbc9
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f48407a2c2f16aefb9826bb7304f9c6c'] = 'Zapis dodaje objęte zmianą produkty do kolejki, aby następna synchronizacja różnicowa wysłała je ponownie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f22ec15c5f673273e7ec593807d5287d'] = 'Reguły dla pojedynczych produktów';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_15a92eec688ad7fe8309f97a54551c6c'] = 'pierwszych 500 produktów';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_c447f5e9064bc7d392dbda43c78f4645'] = 'Wyłącz pojedyncze produkty z synchronizacji z Amazon lub nadaj produktowi własny kontakt GPSR (ma pierwszeństwo przed kontaktami producenta i dostawcy).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c57044531e2e255c9f2866053bd22a33'] = 'Wyłącz pojedyncze produkty z synchronizacji z Amazon, nadaj produktowi własny kontakt GPSR (przed kontaktami producenta/dostawcy) lub własny narzut cenowy („10%” lub „2.50”, przed narzutami kategorii, producenta i dostawcy). Te same ustawienia są na stronie każdego produktu, w sekcji Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_686cf2ffd88893ce5adc70c5f12fba5e'] = 'Filtruj po nazwie lub referencji...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_edcb18c476ff169d9def9ed879da0e2b'] = 'Nie znaleziono aktywnych produktów.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9b91fd689613f4a37e8ffce0e6ef615b'] = 'Kolejka zmian';
@@ -921,6 +921,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e570149
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Zawsze niedostępny (wysyłaj 0)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Cena zastępcza';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Wysyłana zamiast ceny sklepowej (narzuty i reguły cenowe są pomijane). Puste = użyj ceny sklepowej.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Narzut cenowy';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Własny narzut tego produktu na Amazon: procent („10%”) lub kwota („2.50”). Zastępuje dla tego produktu narzuty kategorii, producenta i dostawcy. Puste = użyj tamtych.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'Własne SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Użyj, gdy ten produkt istnieje już w Twoim asortymencie Amazon pod innym SKU sprzedawcy. Służy zarówno do aktualizacji oferty, jak i do dopasowywania zamówień.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8db07d2e99c2a6161d6dc93c2fe4efff'] = 'ASIN';

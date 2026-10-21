@@ -271,15 +271,22 @@ class AmazonListingSettings
         return AmazonProductOverride::all();
     }
 
-    /** Save a product's sync switch and GPSR contact for the scope being edited. */
-    public static function saveProductSetting($idProduct, $sync, $gpsr)
+    /**
+     * Save a product's sync switch, GPSR contact and, when given, its own
+     * price markup, for the scope being edited.
+     */
+    public static function saveProductSetting($idProduct, $sync, $gpsr, $markup = null)
     {
         self::ensureTables();
-
-        return AmazonProductOverride::save((int) $idProduct, [
+        $data = [
             'sync' => $sync ? 1 : 0,
             'gpsr_contact' => trim((string) $gpsr),
-        ]);
+        ];
+        if ($markup !== null) {
+            $data['price_markup'] = trim((string) $markup);
+        }
+
+        return AmazonProductOverride::save((int) $idProduct, $data);
     }
 
     /* ─────────────────── Product context lookup ─────────────────── */
@@ -364,6 +371,13 @@ class AmazonListingSettings
      */
     public static function applyMarkup($price, $idProduct)
     {
+        // A markup set on the product itself comes first.
+        $overrides = AmazonProductOverride::all();
+        if (isset($overrides[(int) $idProduct]['price_markup'])
+            && trim((string) $overrides[(int) $idProduct]['price_markup']) !== '') {
+            return self::applyMarkupString($price, trim((string) $overrides[(int) $idProduct]['price_markup']));
+        }
+
         $markup = self::resolveFromCascade(
             $idProduct,
             self::enabledSources('AMZPRO_MARKUP_SOURCES'),

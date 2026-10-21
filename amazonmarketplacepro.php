@@ -1590,6 +1590,21 @@ class AmazonMarketplacePro extends Module
      *
      * @return string
      */
+    /**
+     * A product's markup as typed: "10%", "-5 %", "2,50" or "2.50". Anything
+     * else is dropped, so a typo never changes a price.
+     *
+     * @param string $markup
+     *
+     * @return string "10%" / "2.50" style, or ''
+     */
+    private static function normalizeMarkup($markup)
+    {
+        $markup = str_replace([' ', ','], ['', '.'], trim((string) $markup));
+
+        return preg_match('/^[+-]?\d+(\.\d+)?%?$/', $markup) ? ltrim($markup, '+') : '';
+    }
+
     private static function randomHex($length)
     {
         $bytes = (int) ceil($length / 2);
@@ -1884,6 +1899,7 @@ class AmazonMarketplacePro extends Module
             $s = isset($settings[$id]) ? $settings[$id] : null;
             $row['sync'] = $s ? (int) $s['sync'] : 1;
             $row['gpsr_contact'] = $s ? $s['gpsr_contact'] : '';
+            $row['price_markup'] = ($s && isset($s['price_markup'])) ? $s['price_markup'] : '';
         }
         unset($row);
 
@@ -1983,14 +1999,16 @@ class AmazonMarketplacePro extends Module
             }
             $sync = isset($row['sync']) ? (int) $row['sync'] : 1;
             $gpsr = isset($row['gpsr']) ? trim((string) $row['gpsr']) : '';
+            $markup = self::normalizeMarkup(isset($row['markup']) ? $row['markup'] : '');
 
             $old = isset($before[$id]) ? $before[$id] : null;
-            if (!$old && $sync == 1 && $gpsr === '') {
+            if (!$old && $sync == 1 && $gpsr === '' && $markup === '') {
                 continue;
             }
-            $changed = !$old || (int) $old['sync'] !== $sync || $old['gpsr_contact'] !== $gpsr;
+            $changed = !$old || (int) $old['sync'] !== $sync || $old['gpsr_contact'] !== $gpsr
+                || (string) $old['price_markup'] !== $markup;
 
-            AmazonListingSettings::saveProductSetting($id, $sync, $gpsr);
+            AmazonListingSettings::saveProductSetting($id, $sync, $gpsr, $markup);
             ++$saved;
             if ($changed) {
                 AmazonListingSettings::enqueueProduct($id, 'product rules changed');
@@ -3761,6 +3779,7 @@ class AmazonMarketplacePro extends Module
             'force_in_stock' => ($stockForce === 'in') ? 1 : 0,
             'force_out_of_stock' => ($stockForce === 'out') ? 1 : 0,
             'override_price' => (float) Tools::getValue('amzpro_override_price', 0),
+            'price_markup' => self::normalizeMarkup(Tools::getValue('amzpro_price_markup', '')),
             'override_sku' => trim((string) Tools::getValue('amzpro_override_sku', '')),
             'asin' => trim((string) Tools::getValue('amzpro_asin', '')),
             'is_fba' => (int) Tools::getValue('amzpro_is_fba', 0),

@@ -73,6 +73,14 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Price markup' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-4">
+            <input type="text" name="amzpro_price_markup" value="{$amzpro.price_markup|escape:'htmlall':'UTF-8'}" class="form-control" placeholder="10% / 2.50" />
+            <p class="help-block">{l s='This product\'s own markup on Amazon: a percentage ("10%") or an amount ("2.50"). It replaces the category, manufacturer and supplier markups for this product. Empty = use those.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="control-label col-lg-3">{l s='Override SKU' mod='amazonmarketplacepro'}</label>
         <div class="col-lg-4">
             <input type="text" name="amzpro_override_sku" value="{$amzpro.override_sku|escape:'htmlall':'UTF-8'}" class="form-control" />
