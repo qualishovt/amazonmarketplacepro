@@ -21,6 +21,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/AmzproShop.php';
+require_once dirname(__FILE__) . '/AmazonListingSettings.php';
 
 class AmazonCatalogMatcher
 {
@@ -78,21 +79,36 @@ class AmazonCatalogMatcher
 
         $summary['candidates'] = count($rows);
 
-        // ean => list of SKUs carrying it (combinations may share the product EAN)
+        // barcode => SKUs carrying it (combinations may share the product's),
+        // and the barcodes of each type: Amazon looks up one type per request,
+        // and a shop's EAN-13 field can mix EAN-13, UPC-12, EAN-8 and GTIN-14.
         $skusByEan = [];
+        $byType = [];
         foreach ($rows as $r) {
-            $ean = trim($r['ps_ean13']);
+            $barcode = AmazonListingSettings::barcode($r['ps_ean13']);
+            if ($barcode === null) {
+                ++$summary['not_found'];
+                continue;
+            }
+            $ean = $barcode['value'];
             if (!isset($skusByEan[$ean])) {
                 $skusByEan[$ean] = [];
+                $byType[$barcode['type']][] = $ean;
             }
             $skusByEan[$ean][] = $r['seller_sku'];
         }
 
-        $eans = array_keys($skusByEan);
-        foreach (array_chunk($eans, self::$BATCH_SIZE) as $chunk) {
+        $chunks = [];
+        foreach ($byType as $type => $codes) {
+            foreach (array_chunk($codes, self::$BATCH_SIZE) as $chunk) {
+                $chunks[] = [$type, $chunk];
+            }
+        }
+        foreach ($chunks as $typedChunk) {
+            list($type, $chunk) = $typedChunk;
             ++$summary['batches'];
 
-            $found = $this->lookupAsinsByEan($chunk);
+            $found = $this->lookupAsinsByEan($chunk, $type);
             if ($found === false) {
                 return false; // lastError set
             }
@@ -115,11 +131,12 @@ class AmazonCatalogMatcher
     /**
      * Look up ASINs for a batch of EANs (max 20).
      *
-     * @param array $eans
+     * @param array $eans barcodes of one type
+     * @param string $idType EAN, UPC or GTIN; guessed from the first code when empty
      *
      * @return array|false ean => asin for the ones found, or false on error
      */
-    public function lookupAsinsByEan($eans)
+    public function lookupAsinsByEan($eans, $idType = '')
     {
         $this->lastError = null;
 
@@ -136,7 +153,16 @@ class AmazonCatalogMatcher
             return $out;
         }
 
-        $idType = (Tools::strlen((string) $eans[0]) >= 13) ? 'EAN' : 'UPC';
+        if ($idType === '') {
+            $guess = AmazonListingSettings::barcode($eans[0]);
+            $idType = $guess ? $guess['type'] : 'EAN';
+        }
+        // Amazon may answer with the same code in another length (a UPC as a
+        // 13-digit EAN with a leading 0): compare without leading zeros.
+        $asked = [];
+        foreach ($eans as $ean) {
+            $asked[ltrim((string) $ean, '0')] = $ean;
+        }
 
         $resp = $this->client->request('GET', '/catalog/2022-04-01/items', [
             'identifiers' => implode(',', $eans),
@@ -171,9 +197,9 @@ class AmazonCatalogMatcher
                         continue;
                     }
                     foreach ($marketplaceIdentifiers['identifiers'] as $ident) {
-                        if (isset($ident['identifier']) && in_array($ident['identifier'], $eans)
-                            && !isset($out[$ident['identifier']])) {
-                            $out[$ident['identifier']] = $item['asin'];
+                        $key = isset($ident['identifier']) ? ltrim((string) $ident['identifier'], '0') : '';
+                        if ($key !== '' && isset($asked[$key]) && !isset($out[$asked[$key]])) {
+                            $out[$asked[$key]] = $item['asin'];
                         }
                     }
                 }

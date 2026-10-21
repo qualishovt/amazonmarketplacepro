@@ -694,10 +694,10 @@
             <label class="control-label col-lg-3">{l s='Treat PrestaShop EAN-13 field as' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_ean_as" class="form-control">
-                    <option value="EAN"{if $mkpro_ean_as != 'UPC'} selected="selected"{/if}>EAN</option>
-                    <option value="UPC"{if $mkpro_ean_as == 'UPC'} selected="selected"{/if}>UPC</option>
+                    <option value="EAN"{if $mkpro_ean_as != 'UPC'} selected="selected"{/if}>{l s='Automatic: by the number of digits' mod='amazonmarketplacepro'}</option>
+                    <option value="UPC"{if $mkpro_ean_as == 'UPC'} selected="selected"{/if}>{l s='Always UPC' mod='amazonmarketplacepro'}</option>
                 </select>
-                <p class="help-block">{l s='Choose UPC if you store 12-digit US barcodes in the EAN field.' mod='amazonmarketplacepro'}</p>
+                <p class="help-block">{l s='Automatic reads each product\'s barcode on its own: 13 or 8 digits are sent as EAN, 12 digits as UPC, 14 digits as GTIN, so one field can hold all of them, as ERPs often do. Spaces are ignored. Amazon treats a 12-digit UPC and the same code with a leading 0 as one product. Choose "Always UPC" only if every code in the field is a US UPC.' mod='amazonmarketplacepro'}</p>
             </div>
         </div>
         <div class="form-group">

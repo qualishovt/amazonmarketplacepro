@@ -2674,18 +2674,12 @@ class AmazonProductSync
             ]];
         }
 
-        // EAN / external product ID. The merchant can force the field to be
-        // treated as UPC (US barcodes stored in the EAN-13 field).
-        $ean = isset($r['ps_ean13']) ? trim((string) $r['ps_ean13']) : '';
-        if ($ean !== '' && strlen($ean) >= 8) {
-            if (AmzproShop::get('AMZPRO_EAN_AS', $this->shopId()) === 'UPC') {
-                $idType = 'UPC';
-            } else {
-                $idType = (strlen($ean) === 13) ? 'EAN' : 'UPC';
-            }
+        // EAN / UPC / GTIN, by the barcode's length (AmazonListingSettings::barcode()).
+        $barcode = AmazonListingSettings::barcode(isset($r['ps_ean13']) ? $r['ps_ean13'] : '');
+        if ($barcode !== null) {
             $attributes['externally_assigned_product_identifier'] = [[
-                'type' => $idType,
-                'value' => $ean,
+                'type' => $barcode['type'],
+                'value' => $barcode['value'],
                 'marketplace_id' => $this->marketplaceId,
             ]];
         }

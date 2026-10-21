@@ -710,6 +710,32 @@ class AmazonListingSettings
         return true;
     }
 
+    /* ─────────────────── Barcodes ─────────────────── */
+
+    /**
+     * The product identifier Amazon gets for a PrestaShop barcode. ERPs often
+     * put every kind of barcode in the EAN-13 field, so the type follows the
+     * number of digits: 13 or 8 = EAN, 12 = UPC, 14 = GTIN. Spaces and other
+     * separators are dropped. "Treat the EAN-13 field as: Always UPC" keeps
+     * sending every code as UPC, as before.
+     *
+     * @param string $raw the PrestaShop field
+     *
+     * @return array|null array('type' => 'EAN'|'UPC'|'GTIN', 'value' => digits), or
+     *                    null when it is not a barcode Amazon takes
+     */
+    public static function barcode($raw)
+    {
+        $digits = preg_replace('/\D/', '', (string) $raw);
+        $types = [8 => 'EAN', 12 => 'UPC', 13 => 'EAN', 14 => 'GTIN'];
+        if (!isset($types[strlen($digits)])) {
+            return null;
+        }
+        $type = (AmzproShop::get('AMZPRO_EAN_AS') === 'UPC') ? 'UPC' : $types[strlen($digits)];
+
+        return ['type' => $type, 'value' => $digits];
+    }
+
     /* ─────────────────── SKU building ─────────────────── */
 
     /**

@@ -183,7 +183,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_bafd7322c6e97d25b6299b5d6f
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b41d5c9143a2feaa0857098058808665'] = 'Ogranicz eksport do N wierszy';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_af605ea55ee39e54c444f217e346048f'] = 'Bez limitu';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_51573af880ce8640ad2e0cfa001b942b'] = 'Traktuj pole EAN-13 w PrestaShop jako';
-$_MODULE['<{amazonmarketplacepro}prestashop>configure_86ba649449a7f0c33427947130ce59e9'] = 'Wybierz UPC, jeśli w polu EAN przechowujesz 12-cyfrowe kody amerykańskie.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_3d48ee104fee51140458b5d67861a6a0'] = 'Automatycznie: według liczby cyfr';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_ee1629be47d3fa104cb8c5cd275bcc94'] = 'Zawsze UPC';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1d63b82ce827c53f3133a01ebdd77595'] = 'Automatycznie odczytuje kod kreskowy każdego produktu osobno: 13 lub 8 cyfr jest wysyłanych jako EAN, 12 cyfr jako UPC, 14 cyfr jako GTIN, więc jedno pole może zawierać je wszystkie, jak często robią systemy ERP. Spacje są pomijane. Amazon traktuje 12-cyfrowy UPC i ten sam kod z wiodącym 0 jako jeden produkt. Wybierz „Zawsze UPC” tylko wtedy, gdy wszystkie kody w polu to amerykańskie UPC.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7ecc962e0c3a14e15c4f0b6dae7f16e8'] = 'Eksportuj tylko produkty zmienione w ciągu ostatnich';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c3832587da89abe64b98a97c196de77a'] = 'Ignoruj (eksportuj wszystko)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_72ab9d0304d3e84c6aa2dd15eda282f2'] = '1 godzina';
