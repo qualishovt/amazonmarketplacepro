@@ -1202,6 +1202,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonrelayschedule_deaa9a4b156ce2f5
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_925d544a0bfb2367fa854ffa7f9f5e8c'] = 'Aucun produit avec un ASIN trouvé. Synchronisez d\'abord les produits.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_10184b7bb4a991f25e1bc9f742e3b343'] = 'Aucune règle tarifaire active trouvée.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_efe2f9e5767d2f4a124b23c03e3fea56'] = 'Impossible d\'envoyer les prix : votre identifiant vendeur est manquant. Cliquez sur « Se connecter à Amazon » dans Paramètres > Connexion pour le renseigner.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_7a96fa2c7f4b5f54cc9d259f3d294026'] = '%1$s : prix non envoyé, l\'annonce est introuvable sur Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_d24660e3a47f41df074185a9d413cd98'] = 'Cette règle tarifaire est introuvable. Rechargez la page et réessayez.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_1e7a8ec01449fe9b6a481484ea906571'] = 'Cette règle tarifaire est partagée par toutes les boutiques. Sélectionnez « Toutes les boutiques » en haut de la page pour la modifier.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonreturnmanager_6fb566fa8bacbd6c6a26f12a3211fd30'] = 'Retour #%1$d : commande PrestaShop #%2$d introuvable';

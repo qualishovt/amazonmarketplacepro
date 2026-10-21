@@ -1202,6 +1202,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonrelayschedule_deaa9a4b156ce2f5
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_925d544a0bfb2367fa854ffa7f9f5e8c'] = 'Nie znaleziono produktów z ASIN. Najpierw zsynchronizuj produkty.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_10184b7bb4a991f25e1bc9f742e3b343'] = 'Nie znaleziono aktywnych reguł cenowych.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_efe2f9e5767d2f4a124b23c03e3fea56'] = 'Nie można wysłać cen: brakuje Twojego identyfikatora sprzedawcy. Kliknij „Połącz z Amazon” w Ustawienia > Połączenie, aby go uzupełnić.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_7a96fa2c7f4b5f54cc9d259f3d294026'] = '%1$s: cena nie została wysłana, oferty nie znaleziono na Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_d24660e3a47f41df074185a9d413cd98'] = 'Nie znaleziono tej reguły cenowej. Przeładuj stronę i spróbuj ponownie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_1e7a8ec01449fe9b6a481484ea906571'] = 'Ta reguła cenowa jest współdzielona przez wszystkie sklepy. Wybierz „Wszystkie sklepy” u góry strony, aby ją zmienić.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonreturnmanager_6fb566fa8bacbd6c6a26f12a3211fd30'] = 'Zwrot nr %1$d: nie znaleziono zamówienia PrestaShop nr %2$d';

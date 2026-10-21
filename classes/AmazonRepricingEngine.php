@@ -244,6 +244,7 @@ class AmazonRepricingEngine
 
         $summary = [
             'rules_applied' => 0,
+            'products_evaluated' => 0,
             'prices_suggested' => 0,
             'prices_pushed' => 0,
             'prices_capped' => 0,
@@ -294,6 +295,7 @@ class AmazonRepricingEngine
             }
 
             foreach ($prices as $cp) {
+                ++$summary['products_evaluated'];
                 $suggested = $this->calculateSuggestedPrice($cp, $rule);
                 if ($suggested === false) {
                     continue;
@@ -381,30 +383,40 @@ class AmazonRepricingEngine
             $sku = $r['seller_sku'];
             $newPrice = (float) $r['suggested_price'];
 
-            // Push to Amazon via Listings API
-            $body = [
-                'productType' => 'PRODUCT',
-                'requirements' => 'LISTING_OFFER_ONLY',
-                'attributes' => [
-                    'condition_type' => [['value' => AmazonSpApiClient::listingCondition()]],
-                    'purchasable_offer' => [[
-                        'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
-                        'marketplace_id' => $this->marketplaceId,
-                        'our_price' => [[
-                            'schedule' => [['value_with_tax' => $newPrice]],
+            // Change only the price of the existing listing, under the listing's
+            // own product type: a full PUT as "PRODUCT" is refused by Amazon
+            // for listings of any other type.
+            $path = '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku);
+            $productType = $this->productTypeFor($path, $sku, $idShop);
+            if ($productType === '') {
+                ++$summary['failed'];
+                $this->notices[] = sprintf(AmazonI18n::get()->l('%1$s: price not sent, the listing was not found on Amazon.', 'amazonrepricingengine'), $sku);
+                continue;
+            }
+            $resp = $this->client->request(
+                'PATCH',
+                $path,
+                ['marketplaceIds' => $this->marketplaceId],
+                [
+                    'productType' => $productType,
+                    'patches' => [[
+                        'op' => 'replace',
+                        'path' => '/attributes/purchasable_offer',
+                        'value' => [[
+                            'currency' => AmazonSpApiClient::currencyForMarketplace($this->marketplaceId),
+                            'marketplace_id' => $this->marketplaceId,
+                            'audience' => 'ALL',
+                            'our_price' => [[
+                                'schedule' => [['value_with_tax' => $newPrice]],
+                            ]],
                         ]],
                     ]],
-                ],
-            ];
-
-            $resp = $this->client->request(
-                'PUT',
-                '/listings/2021-08-01/items/' . rawurlencode($sellerId) . '/' . rawurlencode($sku),
-                ['marketplaceIds' => $this->marketplaceId],
-                $body
+                ]
             );
 
-            if ($resp !== false && $resp['status'] < 400) {
+            // Amazon answers 200 with status INVALID when it refuses the change.
+            $status = ($resp !== false && is_array($resp['body']) && isset($resp['body']['status'])) ? $resp['body']['status'] : '';
+            if ($resp !== false && $resp['status'] < 400 && $status === 'ACCEPTED') {
                 // Update our_price and last_repriced
                 Db::getInstance()->execute(
                     'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` SET
@@ -422,10 +434,64 @@ class AmazonRepricingEngine
                 ++$summary['pushed'];
             } else {
                 ++$summary['failed'];
+                $this->notices[] = $sku . ': ' . $this->refusalReason($resp);
             }
         }
 
         return $summary;
+    }
+
+    /**
+     * The listing's product type: from the last product scan, else asked
+     * from Amazon.
+     *
+     * @return string '' when Amazon has no such listing
+     */
+    private function productTypeFor($path, $sku, $idShop)
+    {
+        $type = (string) Db::getInstance()->getValue(
+            'SELECT `amazon_product_type` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
+             WHERE `seller_sku` = \'' . pSQL($sku) . '\' AND `id_shop` = ' . (int) $idShop . '
+               AND `amazon_product_type` <> \'\'
+             ORDER BY `marketplace_id` ASC'
+        );
+        if ($type !== '') {
+            return $type;
+        }
+        $resp = $this->client->request('GET', $path, ['marketplaceIds' => $this->marketplaceId, 'includedData' => 'summaries']);
+        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body']) || empty($resp['body']['summaries'])) {
+            return '';
+        }
+        foreach ($resp['body']['summaries'] as $s) {
+            if (!empty($s['productType'])) {
+                return (string) $s['productType'];
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Amazon's own words for a refused price change.
+     */
+    private function refusalReason($resp)
+    {
+        if ($resp === false) {
+            return (string) $this->client->getLastError();
+        }
+        $messages = [];
+        if (is_array($resp['body']) && !empty($resp['body']['issues'])) {
+            foreach ($resp['body']['issues'] as $issue) {
+                if (isset($issue['severity']) && $issue['severity'] !== 'ERROR') {
+                    continue;
+                }
+                $messages[] = isset($issue['message']) ? $issue['message'] : json_encode($issue);
+            }
+        } elseif (is_array($resp['body']) && !empty($resp['body']['errors'][0]['message'])) {
+            $messages[] = $resp['body']['errors'][0]['message'];
+        }
+
+        return $messages ? implode(' ', $messages) : 'HTTP ' . $resp['status'] . (isset($resp['body']['status']) ? ' ' . $resp['body']['status'] : '');
     }
 
     /**

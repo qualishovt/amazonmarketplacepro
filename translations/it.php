@@ -1202,6 +1202,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonrelayschedule_deaa9a4b156ce2f5
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_925d544a0bfb2367fa854ffa7f9f5e8c'] = 'Nessun prodotto con ASIN trovato. Sincronizza prima i prodotti.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_10184b7bb4a991f25e1bc9f742e3b343'] = 'Nessuna regola di prezzo attiva trovata.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_efe2f9e5767d2f4a124b23c03e3fea56'] = 'Non è possibile inviare i prezzi: il tuo ID venditore manca. Fai clic su «Connetti ad Amazon» in Impostazioni > Connessione per completarlo.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_7a96fa2c7f4b5f54cc9d259f3d294026'] = '%1$s: prezzo non inviato, l\'offerta non è stata trovata su Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_d24660e3a47f41df074185a9d413cd98'] = 'Questa regola di prezzo non è stata trovata. Ricarica la pagina e riprova.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonrepricingengine_1e7a8ec01449fe9b6a481484ea906571'] = 'Questa regola di prezzo è condivisa da tutti i negozi. Seleziona «Tutti i negozi» in alto nella pagina per modificarla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonreturnmanager_6fb566fa8bacbd6c6a26f12a3211fd30'] = 'Reso #%1$d: ordine PrestaShop #%2$d non trovato';

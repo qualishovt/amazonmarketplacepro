@@ -3983,7 +3983,7 @@
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(fmt(T.pricingSummary, s.total, s.buybox_wins, s.updated))+'</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.pricingSummary, s.checked, s.buybox_wins, s.updated))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
@@ -4002,7 +4002,7 @@
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(fmt(T.rulesSummary, s.evaluated, s.repriced, s.capped))+'</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.rulesSummary, s.products_evaluated, s.prices_suggested, s.prices_capped))+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';
