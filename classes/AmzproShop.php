@@ -115,6 +115,8 @@ class AmzproShop
             'backfill' => 'default',
         ],
         'amazonmarketplacepro_competitive_price' => [
+            // Shipping of our own offer, which the repricer adds to the item price
+            'columns' => ['our_shipping' => 'DECIMAL(20,6) NOT NULL DEFAULT 0'],
             'unique' => ['sku_marketplace' => ['seller_sku', 'marketplace_id']],
             'keys' => [],
             'backfill' => 'default',
@@ -180,7 +182,7 @@ class AmzproShop
     ];
 
     /** The schema version ensureSchema() brings the tables to. */
-    public static $SCHEMA = '1.6.3';
+    public static $SCHEMA = '1.6.10';
 
     /** @var Context|null The module's context, handed over by its constructor */
     private static $context;

@@ -2762,12 +2762,12 @@
                         {if $mkpro_all_shops}<td>{if isset($cp.shop_name)}{$cp.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                         <td><code>{$cp.seller_sku|escape:'htmlall':'UTF-8'}</code></td>
                         <td>{$cp.ps_name|truncate:30|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.our_price|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.buybox_landed|escape:'htmlall':'UTF-8'}</td>
-                        <td>{$cp.lowest_landed|escape:'htmlall':'UTF-8'}</td>
+                        <td>{$cp.our_price|string_format:'%.2f'|escape:'htmlall':'UTF-8'}{if isset($cp.our_shipping) && $cp.our_shipping > 0} <small class="text-muted">+ {$cp.our_shipping|string_format:'%.2f'|escape:'htmlall':'UTF-8'}</small>{/if}</td>
+                        <td>{$cp.buybox_landed|string_format:'%.2f'|escape:'htmlall':'UTF-8'}</td>
+                        <td>{if $cp.lowest_landed > 0}{$cp.lowest_landed|string_format:'%.2f'|escape:'htmlall':'UTF-8'}{else}-{/if}</td>
                         <td>{if $cp.is_buybox_winner}<span class="label label-success">{l s='YES' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='NO' mod='amazonmarketplacepro'}</span>{/if}</td>
                         <td>{$cp.number_of_offers|escape:'htmlall':'UTF-8'}</td>
-                        <td>{if $cp.suggested_price > 0}<strong>{$cp.suggested_price|escape:'htmlall':'UTF-8'}</strong>{else}-{/if}</td>
+                        <td>{if $cp.suggested_price > 0}<strong>{$cp.suggested_price|string_format:'%.2f'|escape:'htmlall':'UTF-8'}</strong>{else}-{/if}</td>
                         <td><small>{$cp.last_repriced|escape:'htmlall':'UTF-8'}</small></td>
                     </tr>
                     {/foreach}
@@ -3591,8 +3591,8 @@
                 +'</tr></thead><tbody>';
             for (var i=0; i<products.length; i++) {
                 var p = products[i];
-                var ps = parseInt(p.ps_exists,10) ? esc(p.ps_name)+' &middot; '+esc(p.ps_price)+' &middot; '+esc(fmt(T.qty, p.ps_quantity)) : '<em>&mdash;</em>';
-                var az = parseInt(p.amazon_exists,10) ? esc(p.amazon_title)+' &middot; '+esc(p.amazon_price)+' &middot; '+esc(fmt(T.qty, p.amazon_quantity)) : '<em>&mdash;</em>';
+                var ps = parseInt(p.ps_exists,10) ? esc(p.ps_name)+' &middot; '+esc((+p.ps_price).toFixed(2))+' &middot; '+esc(fmt(T.qty, p.ps_quantity)) : '<em>&mdash;</em>';
+                var az = parseInt(p.amazon_exists,10) ? esc(p.amazon_title)+' &middot; '+esc((+p.amazon_price).toFixed(2))+' &middot; '+esc(fmt(T.qty, p.amazon_quantity)) : '<em>&mdash;</em>';
                 h += '<tr>'
                     +'<td>'+esc(p.seller_sku)+'</td>'
                     +'<td>'+ps+'</td>'

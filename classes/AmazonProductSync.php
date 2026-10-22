@@ -583,6 +583,10 @@ class AmazonProductSync
         if ($factor !== 1.0) {
             $price = AmazonListingSettings::applyRounding($price * $factor);
         }
+        $managed = $this->repricedPrices();
+        if (isset($managed[$sku])) {
+            $price = $managed[$sku];
+        }
         $quantity = $this->effectiveStock($this->getQuantity($idProduct, 0, $idShop), $idProduct, $overrides);
 
         $signature = $this->marketplaceId . '|' . $sku . '|' . $price . '|' . $quantity;
@@ -642,6 +646,38 @@ class AmazonProductSync
         }
 
         return $result;
+    }
+
+    /**
+     * Rows whose Amazon price the repricer manages carry that price instead
+     * of the shop's, and no sale price, so a sync does not undo the
+     * repricing.
+     */
+    private function holdRepricedPrices(array $rows)
+    {
+        $managed = $this->repricedPrices();
+        foreach ($rows as &$r) {
+            if (isset($managed[$r['seller_sku']])) {
+                $r['ps_price'] = $managed[$r['seller_sku']];
+                $r['sale_price'] = 0;
+            }
+        }
+        unset($r);
+
+        return $rows;
+    }
+
+    /**
+     * sku => price the repricer manages; it works on the main marketplace only.
+     */
+    private function repricedPrices()
+    {
+        if ($this->marketplaceKey() !== '') {
+            return [];
+        }
+        require_once dirname(__FILE__) . '/AmazonRepricingEngine.php';
+
+        return AmazonRepricingEngine::managedPrices($this->shopId(), (string) AmzproShop::get('AMZPRO_MARKETPLACE_ID', $this->shopId()));
     }
 
     /**
@@ -733,9 +769,11 @@ class AmazonProductSync
         foreach ($skus as $sku) {
             $listing = $this->fetchAmazonListing($sku);
             ++$amazonChecked;
-            if ($listing !== null) {
+            if (is_array($listing)) {
                 $this->updateAmazonSide($sku, $listing, $now);
                 ++$amazonFound;
+            } elseif ($listing === null) {
+                $this->clearAmazonSide($sku, $now);
             }
         }
 
@@ -749,12 +787,18 @@ class AmazonProductSync
      */
     private function recomputeDirections()
     {
+        // The repricer sets these prices on Amazon; they differ from the shop's on purpose.
+        $priceDiffers = '`ps_price` <> `amazon_price`';
+        $managed = array_keys($this->repricedPrices());
+        if ($managed) {
+            $priceDiffers = '(' . $priceDiffers . ' AND `seller_sku` NOT IN (\'' . implode('\', \'', array_map('pSQL', $managed)) . '\'))';
+        }
         Db::getInstance()->execute(
             'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` SET `sync_direction` = CASE
                 WHEN `ps_exists` = 1 AND `amazon_exists` = 0 THEN \'ps_only\'
                 WHEN `ps_exists` = 0 AND `amazon_exists` = 1 THEN \'amazon_only\'
                 WHEN `is_parent` = 1 THEN \'in_sync\'
-                WHEN `ps_price` <> `amazon_price` OR `ps_quantity` <> `amazon_quantity` THEN \'conflict\'
+                WHEN ' . $priceDiffers . ' OR `ps_quantity` <> `amazon_quantity` THEN \'conflict\'
                 ELSE \'in_sync\'
             END
             WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere()
@@ -1676,7 +1720,9 @@ class AmazonProductSync
      * Look up a single Amazon listing by SKU (best-effort).
      * Now extracts full product attributes (description, bullets, brand, images).
      *
-     * @return array|null Normalized listing fields, or null if not found
+     * @return array|null|false Normalized listing fields, null when Amazon has
+     *                          no listing for it on this marketplace, false
+     *                          when the call failed
      */
     private function fetchAmazonListing($sku)
     {
@@ -1695,11 +1741,19 @@ class AmazonProductSync
             ]
         );
 
-        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body'])) {
+        if ($resp !== false && (int) $resp['status'] === 404) {
             return null;
+        }
+        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body'])) {
+            return false;
         }
 
         $body = $resp['body'];
+        // Amazon also answers for a SKU the seller has only on other
+        // marketplaces, with no summary for this one: not a listing here.
+        if (empty($body['summaries'])) {
+            return null;
+        }
 
         $title = '';
         $asin = '';
@@ -1773,6 +1827,22 @@ class AmazonProductSync
             'browse_node' => $browseNode,
             'raw' => json_encode($body),
         ];
+    }
+
+    /**
+     * Forget what an earlier scan saw on Amazon for a SKU that has no
+     * listing there now. An ASIN found by EAN matching stays: it is where a
+     * new offer goes.
+     */
+    private function clearAmazonSide($sku, $now)
+    {
+        Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` SET
+                `amazon_exists` = 0, `amazon_price` = 0, `amazon_quantity` = 0, `amazon_status` = \'\',
+                `amazon_product_type` = \'\', `date_upd` = \'' . pSQL($now) . '\'
+             WHERE `seller_sku` = \'' . pSQL($sku) . '\' AND `amazon_exists` = 1
+               AND `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere()
+        );
     }
 
     private function updateAmazonSide($sku, $listing, $now)
@@ -2002,7 +2072,7 @@ class AmazonProductSync
         if (!is_array($rows)) {
             $rows = [];
         }
-        $rows = $this->adaptRowsForMarketplace($rows);
+        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($rows));
 
         if (empty($rows)) {
             $notice = AmazonI18n::get()->l('Nothing to push. Run "Sync PS to Amazon" first, and make sure some rows are marked PS only or Conflict.', 'amazonproductsync');
@@ -2326,7 +2396,7 @@ class AmazonProductSync
             $rows = [];
         }
 
-        $rows = $this->adaptRowsForMarketplace($rows);
+        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($rows));
 
         $messages = [];
         $skipped = [];

@@ -212,6 +212,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_co
     `lowest_landed` DECIMAL(20,6) NOT NULL DEFAULT 0,
     `number_of_offers` INT(11) NOT NULL DEFAULT 0,
     `our_price` DECIMAL(20,6) NOT NULL DEFAULT 0,
+    `our_shipping` DECIMAL(20,6) NOT NULL DEFAULT 0,
     `suggested_price` DECIMAL(20,6) NOT NULL DEFAULT 0,
     `last_repriced` DATETIME NULL,
     `marketplace_id` VARCHAR(32) NOT NULL DEFAULT \'\',

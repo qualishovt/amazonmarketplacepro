@@ -72,6 +72,36 @@ class AmazonRepricingEngine
     }
 
     /**
+     * The Amazon prices the repricer manages in a shop: the SKUs it has
+     * pushed a price for, while a pricing rule is active. The product sync
+     * sends these prices instead of the shop's, so it does not undo the
+     * repricing.
+     *
+     * @return array sku => price last sent by the repricer
+     */
+    public static function managedPrices($idShop, $marketplaceId)
+    {
+        $idShop = (int) $idShop;
+        $rows = Db::getInstance()->executeS(
+            'SELECT cp.`seller_sku`, cp.`our_price`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
+             WHERE cp.`id_shop` = ' . $idShop . '
+               AND cp.`marketplace_id` = \'' . pSQL($marketplaceId) . '\'
+               AND cp.`last_repriced` IS NOT NULL AND cp.`our_price` > 0
+               AND EXISTS (SELECT 1 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule` r
+                   WHERE r.`active` = 1
+                     AND (r.`marketplace_id` = \'' . pSQL($marketplaceId) . '\' OR r.`marketplace_id` = \'\')
+                     AND ' . AmzproShop::sqlShared('r', $idShop) . ')'
+        );
+        $out = [];
+        foreach ((is_array($rows) ? $rows : []) as $r) {
+            $out[$r['seller_sku']] = (float) $r['our_price'];
+        }
+
+        return $out;
+    }
+
+    /**
      * Fetch competitive pricing data for all synced products.
      *
      * Uses the Product Pricing API to get Buy Box prices and lowest offers.
@@ -92,14 +122,20 @@ class AmazonRepricingEngine
             'errors' => 0,
         ];
 
-        // Get the shop's products with ASINs
+        $idShop = (int) AmzproShop::actingId();
+        // The shop's live listings (Amazon gave them a product type), the
+        // ones checked longest ago first, so repeated fetches go round the
+        // whole catalogue 200 at a time.
         $products = Db::getInstance()->executeS(
-            'SELECT `seller_sku`, `amazon_asin`, `ps_price`
-             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
-             WHERE `amazon_asin` <> \'\'
-               AND `amazon_exists` = 1 AND `marketplace_id` = \'\'
-               AND `id_shop` = ' . (int) AmzproShop::actingId() . '
-             ORDER BY `seller_sku` ASC
+            'SELECT p.`seller_sku`, p.`amazon_asin`, p.`amazon_price`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
+                 ON (cp.`id_shop` = p.`id_shop` AND cp.`seller_sku` = p.`seller_sku`
+                     AND cp.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\')
+             WHERE p.`amazon_asin` <> \'\' AND p.`amazon_product_type` <> \'\'
+               AND p.`amazon_exists` = 1 AND p.`is_parent` = 0 AND p.`marketplace_id` = \'\'
+               AND p.`id_shop` = ' . $idShop . '
+             ORDER BY cp.`date_upd` IS NOT NULL, cp.`date_upd` ASC, p.`seller_sku` ASC
              LIMIT 200'
         );
 
@@ -109,124 +145,223 @@ class AmazonRepricingEngine
             return $summary;
         }
 
-        // Process in batches of 20 (API limit)
-        $batches = array_chunk($products, 20);
+        @set_time_limit(0);
+        $needLowest = $this->rulesNeedLowest($idShop);
         $now = date('Y-m-d H:i:s');
 
-        foreach ($batches as $batch) {
-            $asins = [];
+        // 20 per request, the API's limit
+        foreach (array_chunk($products, 20) as $batch) {
             $skuByAsin = [];
-            $priceByAsin = [];
-
+            $fallbackPrice = [];
             foreach ($batch as $p) {
-                $asin = $p['amazon_asin'];
-                $asins[] = $asin;
-                $skuByAsin[$asin] = $p['seller_sku'];
-                $priceByAsin[$asin] = (float) $p['ps_price'];
+                $skuByAsin[$p['amazon_asin']] = $p['seller_sku'];
+                $fallbackPrice[$p['seller_sku']] = (float) $p['amazon_price'];
             }
 
-            $resp = $this->client->request(
-                'GET',
-                '/products/pricing/v0/competitivePrice',
-                [
-                    'MarketplaceId' => $this->marketplaceId,
-                    'Asins' => implode(',', $asins),
-                    'ItemType' => 'Asin',
-                ]
-            );
-
+            $resp = $this->pricingRequest('GET', '/products/pricing/v0/competitivePrice', [
+                'MarketplaceId' => $this->marketplaceId,
+                'Asins' => implode(',', array_keys($skuByAsin)),
+                'ItemType' => 'Asin',
+            ]);
             if ($resp === false || $resp['status'] >= 400) {
                 $summary['errors'] += count($batch);
                 continue;
             }
+            $payload = (is_array($resp['body']) && isset($resp['body']['payload'])) ? $resp['body']['payload'] : [];
 
-            $payload = [];
-            if (is_array($resp['body']) && isset($resp['body']['payload'])) {
-                $payload = $resp['body']['payload'];
-            }
+            $own = $this->fetchOwnOffers(array_values($skuByAsin));
+            $lowest = $needLowest ? $this->fetchLowestOffers(array_keys($skuByAsin)) : [];
 
             foreach ($payload as $item) {
                 $asin = isset($item['ASIN']) ? $item['ASIN'] : '';
                 if ($asin === '' || !isset($skuByAsin[$asin])) {
                     continue;
                 }
-
                 $sku = $skuByAsin[$asin];
-                $ourPrice = $priceByAsin[$asin];
                 ++$summary['checked'];
 
-                $buyboxPrice = 0;
-                $buyboxShipping = 0;
-                $buyboxLanded = 0;
-                $buyboxSeller = '';
-                $isBuyboxWinner = 0;
-                $lowestPrice = 0;
-                $lowestShipping = 0;
-                $lowestLanded = 0;
-                $numberOfOffers = 0;
+                $offer = [
+                    'sku' => $sku,
+                    'asin' => $asin,
+                    'buybox_price' => 0,
+                    'buybox_shipping' => 0,
+                    'buybox_landed' => 0,
+                    'buybox_seller' => '',
+                    'is_buybox_winner' => 0,
+                    'lowest_price' => 0,
+                    'lowest_shipping' => 0,
+                    'lowest_landed' => 0,
+                    'number_of_offers' => 0,
+                    // Our own offer on Amazon, not the shop's price
+                    'our_price' => isset($own[$sku]) ? $own[$sku]['price'] : $fallbackPrice[$sku],
+                    'our_shipping' => isset($own[$sku]) ? $own[$sku]['shipping'] : 0,
+                ];
 
-                // Extract competitive prices
-                if (isset($item['Product']['CompetitivePricing']['CompetitivePrices'])) {
-                    foreach ($item['Product']['CompetitivePricing']['CompetitivePrices'] as $cp) {
-                        $type = isset($cp['CompetitivePriceId']) ? $cp['CompetitivePriceId'] : '';
-                        $lpAmount = isset($cp['Price']['ListingPrice']['Amount'])
-                            ? (float) $cp['Price']['ListingPrice']['Amount'] : 0;
-                        $shipAmount = isset($cp['Price']['Shipping']['Amount'])
-                            ? (float) $cp['Price']['Shipping']['Amount'] : 0;
-                        $landedAmount = isset($cp['Price']['LandedPrice']['Amount'])
-                            ? (float) $cp['Price']['LandedPrice']['Amount'] : 0;
-
-                        if ($type === '1') {
-                            // Buy Box price
-                            $buyboxPrice = $lpAmount;
-                            $buyboxShipping = $shipAmount;
-                            $buyboxLanded = $landedAmount > 0 ? $landedAmount : ($lpAmount + $shipAmount);
-                            $belongsToMe = isset($cp['belongsToRequester']) && $cp['belongsToRequester'];
-                            $isBuyboxWinner = $belongsToMe ? 1 : 0;
-                        } elseif ($type === '2') {
-                            // Lowest price
-                            $lowestPrice = $lpAmount;
-                            $lowestShipping = $shipAmount;
-                            $lowestLanded = $landedAmount > 0 ? $landedAmount : ($lpAmount + $shipAmount);
+                $competitive = isset($item['Product']['CompetitivePricing']) ? $item['Product']['CompetitivePricing'] : [];
+                if (isset($competitive['CompetitivePrices'])) {
+                    foreach ($competitive['CompetitivePrices'] as $cp) {
+                        // Id 1 is the Buy Box for new items; 2 is the one for used items.
+                        $condition = isset($cp['condition']) ? Tools::strtolower($cp['condition']) : 'new';
+                        if ((isset($cp['CompetitivePriceId']) ? (string) $cp['CompetitivePriceId'] : '') !== '1' || $condition !== 'new') {
+                            continue;
+                        }
+                        $listing = isset($cp['Price']['ListingPrice']['Amount']) ? (float) $cp['Price']['ListingPrice']['Amount'] : 0;
+                        $shipping = isset($cp['Price']['Shipping']['Amount']) ? (float) $cp['Price']['Shipping']['Amount'] : 0;
+                        $landed = isset($cp['Price']['LandedPrice']['Amount']) ? (float) $cp['Price']['LandedPrice']['Amount'] : 0;
+                        $offer['buybox_price'] = $listing;
+                        $offer['buybox_shipping'] = $shipping;
+                        $offer['buybox_landed'] = $landed > 0 ? $landed : $listing + $shipping;
+                        $offer['is_buybox_winner'] = !empty($cp['belongsToRequester']) ? 1 : 0;
+                    }
+                }
+                if (isset($competitive['NumberOfOfferListings'])) {
+                    foreach ($competitive['NumberOfOfferListings'] as $nol) {
+                        if (isset($nol['Count']) && (!isset($nol['condition']) || Tools::strtolower($nol['condition']) === 'new')) {
+                            $offer['number_of_offers'] += (int) $nol['Count'];
                         }
                     }
                 }
-
-                // Number of offers
-                if (isset($item['Product']['CompetitivePricing']['NumberOfOfferListings'])) {
-                    foreach ($item['Product']['CompetitivePricing']['NumberOfOfferListings'] as $nol) {
-                        if (isset($nol['Count'])) {
-                            $numberOfOffers += (int) $nol['Count'];
-                        }
-                    }
+                if (isset($lowest[$asin])) {
+                    $offer['lowest_price'] = $lowest[$asin]['price'];
+                    $offer['lowest_shipping'] = $lowest[$asin]['shipping'];
+                    $offer['lowest_landed'] = $lowest[$asin]['price'] + $lowest[$asin]['shipping'];
                 }
 
-                if ($isBuyboxWinner) {
+                if ($offer['is_buybox_winner']) {
                     ++$summary['buybox_wins'];
                 } else {
                     ++$summary['buybox_losses'];
                 }
 
-                // Upsert competitive price data
-                $this->upsertCompetitivePrice([
-                    'sku' => $sku,
-                    'asin' => $asin,
-                    'buybox_price' => $buyboxPrice,
-                    'buybox_shipping' => $buyboxShipping,
-                    'buybox_landed' => $buyboxLanded,
-                    'buybox_seller' => $buyboxSeller,
-                    'is_buybox_winner' => $isBuyboxWinner,
-                    'lowest_price' => $lowestPrice,
-                    'lowest_shipping' => $lowestShipping,
-                    'lowest_landed' => $lowestLanded,
-                    'number_of_offers' => $numberOfOffers,
-                    'our_price' => $ourPrice,
-                ], $now);
+                $this->upsertCompetitivePrice($offer, $now);
                 ++$summary['updated'];
             }
         }
 
         return $summary;
+    }
+
+    /**
+     * Our own offer for each SKU: item price and shipping, as buyers see it.
+     *
+     * @param string[] $skus at most 20
+     *
+     * @return array sku => array('price' => float, 'shipping' => float)
+     */
+    private function fetchOwnOffers(array $skus)
+    {
+        $out = [];
+        // A comma would split the SKU in the list Amazon expects.
+        $skus = array_values(array_filter($skus, function ($sku) {
+            return strpos($sku, ',') === false;
+        }));
+        if (!$skus) {
+            return $out;
+        }
+        $resp = $this->pricingRequest('GET', '/products/pricing/v0/price', [
+            'MarketplaceId' => $this->marketplaceId,
+            'ItemType' => 'Sku',
+            'Skus' => implode(',', $skus),
+        ]);
+        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body']) || empty($resp['body']['payload'])) {
+            return $out;
+        }
+        foreach ($resp['body']['payload'] as $item) {
+            $sku = isset($item['SellerSKU']) ? (string) $item['SellerSKU'] : '';
+            if ($sku === '' || empty($item['Product']['Offers'])) {
+                continue;
+            }
+            foreach ($item['Product']['Offers'] as $o) {
+                if (!isset($o['BuyingPrice']['ListingPrice']['Amount'])) {
+                    continue;
+                }
+                $out[$sku] = [
+                    'price' => (float) $o['BuyingPrice']['ListingPrice']['Amount'],
+                    'shipping' => isset($o['BuyingPrice']['Shipping']['Amount']) ? (float) $o['BuyingPrice']['Shipping']['Amount'] : 0.0,
+                ];
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The cheapest new offer from another seller for each ASIN.
+     *
+     * @param string[] $asins at most 20
+     *
+     * @return array asin => array('price' => float, 'shipping' => float)
+     */
+    private function fetchLowestOffers(array $asins)
+    {
+        $requests = [];
+        foreach ($asins as $asin) {
+            $requests[] = [
+                'uri' => '/products/pricing/v0/items/' . rawurlencode($asin) . '/offers',
+                'method' => 'GET',
+                'MarketplaceId' => $this->marketplaceId,
+                'ItemCondition' => 'New',
+                'CustomerType' => 'Consumer',
+            ];
+        }
+        $resp = $this->pricingRequest('POST', '/batches/products/pricing/v0/itemOffers', [], ['requests' => $requests]);
+        $out = [];
+        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body']) || empty($resp['body']['responses'])) {
+            return $out;
+        }
+        foreach ($resp['body']['responses'] as $r) {
+            $payload = isset($r['body']['payload']) ? $r['body']['payload'] : [];
+            $asin = isset($payload['ASIN']) ? $payload['ASIN'] : '';
+            if ($asin === '' || empty($payload['Offers'])) {
+                continue;
+            }
+            foreach ($payload['Offers'] as $o) {
+                if (!empty($o['MyOffer']) || !isset($o['ListingPrice']['Amount'])) {
+                    continue;
+                }
+                $price = (float) $o['ListingPrice']['Amount'];
+                $shipping = isset($o['Shipping']['Amount']) ? (float) $o['Shipping']['Amount'] : 0.0;
+                if (!isset($out[$asin]) || $price + $shipping < $out[$asin]['price'] + $out[$asin]['shipping']) {
+                    $out[$asin] = ['price' => $price, 'shipping' => $shipping];
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Whether an active rule for this shop compares with the lowest offer,
+     * which costs one slow extra request per 20 products.
+     */
+    private function rulesNeedLowest($idShop)
+    {
+        return (bool) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_pricing_rule`
+             WHERE `active` = 1
+               AND `rule_type` IN (\'' . pSQL(self::$RULE_MATCH_LOWEST) . '\', \'' . pSQL(self::$RULE_BEAT_LOWEST) . '\')
+               AND (`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' OR `marketplace_id` = \'\')
+               AND ' . AmzproShop::sqlShared('', $idShop)
+        );
+    }
+
+    /**
+     * A pricing API call, waited out and retried when Amazon throttles it:
+     * these calls allow one request every 2 to 10 seconds.
+     */
+    private function pricingRequest($method, $path, array $query, $body = null)
+    {
+        $waits = [2, 5, 10, 10];
+        foreach ($waits as $wait) {
+            $resp = $this->client->request($method, $path, $query, $body);
+            if ($resp === false || (int) $resp['status'] !== 429) {
+                return $resp;
+            }
+            sleep($wait);
+        }
+
+        return $this->client->request($method, $path, $query, $body);
     }
 
     /**
@@ -270,24 +405,33 @@ class AmazonRepricingEngine
 
         $now = date('Y-m-d H:i:s');
 
+        // Only what the rules suggest now is pushed, not an older suggestion.
+        Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` SET `suggested_price` = 0
+             WHERE `marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' AND `id_shop` = ' . $idShop
+        );
+
         foreach ($rules as $rule) {
             ++$summary['rules_applied'];
 
             // Get the shop's products matching this rule
-            $where = '`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' AND `id_shop` = ' . $idShop;
+            $where = 'cp.`marketplace_id` = \'' . pSQL($this->marketplaceId) . '\' AND cp.`id_shop` = ' . $idShop;
             if ((int) $rule['id_category'] > 0) {
-                $where .= ' AND `seller_sku` IN (
+                $where .= ' AND cp.`seller_sku` IN (
                     SELECT `seller_sku` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product`
                     WHERE `ps_id_category_default` = ' . (int) $rule['id_category'] . '
                       AND `id_shop` = ' . $idShop . ' AND `marketplace_id` = \'\')';
             }
 
             $prices = Db::getInstance()->executeS(
-                'SELECT `seller_sku`, `asin`, `buybox_price`, `buybox_landed`,
-                        `lowest_price`, `lowest_landed`, `our_price`, `is_buybox_winner`
-                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price`
+                'SELECT cp.`seller_sku`, cp.`asin`, cp.`buybox_price`, cp.`buybox_landed`,
+                        cp.`lowest_price`, cp.`lowest_landed`, cp.`our_price`, cp.`our_shipping`,
+                        cp.`is_buybox_winner`, p.`ps_price`
+                 FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price` cp
+                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p
+                     ON (p.`id_shop` = cp.`id_shop` AND p.`seller_sku` = cp.`seller_sku` AND p.`marketplace_id` = \'\')
                  WHERE ' . $where . '
-                 ORDER BY `seller_sku` ASC'
+                 ORDER BY cp.`seller_sku` ASC'
             );
 
             if (!is_array($prices)) {
@@ -428,9 +572,6 @@ class AmazonRepricingEngine
                        AND `id_shop` = ' . $idShop
                 );
 
-                // Also update PS product price
-                $this->updatePsPrice($sku, $newPrice, $idShop);
-
                 ++$summary['pushed'];
             } else {
                 ++$summary['failed'];
@@ -511,7 +652,20 @@ class AmazonRepricingEngine
         $buyboxLanded = (float) $cp['buybox_landed'];
         $lowestLanded = (float) $cp['lowest_landed'];
         $ourPrice = (float) $cp['our_price'];
+        $ourShipping = (float) $cp['our_shipping'];
+        if ($ourPrice <= 0) {
+            // No offer of ours on Amazon to reprice
+            return false;
+        }
+        // Holding the Buy Box already: matching or beating it would only
+        // undercut ourselves.
+        if ((int) $cp['is_buybox_winner']
+            && ($ruleType === self::$RULE_MATCH_BUYBOX || $ruleType === self::$RULE_BEAT_BUYBOX)) {
+            return false;
+        }
 
+        // Competitor prices are landed (item + shipping) and so is the
+        // target; our shipping comes on top of the item price we send.
         $targetPrice = 0;
 
         switch ($ruleType) {
@@ -544,16 +698,21 @@ class AmazonRepricingEngine
                 break;
 
             case self::$RULE_FIXED_MARGIN:
-                // Fixed margin above cost (use PS price as base cost)
-                $targetPrice = $this->applyAdjustment($ourPrice, $adjustment, $adjustmentType, 'above');
+                // A margin above the shop's price as prepared for Amazon
+                if ((float) $cp['ps_price'] <= 0) {
+                    return false;
+                }
+                $targetPrice = $this->applyAdjustment((float) $cp['ps_price'], $adjustment, $adjustmentType, 'above') + $ourShipping;
                 break;
 
             default:
                 return false;
         }
 
-        // Round to 2 decimal places
-        $targetPrice = round($targetPrice, 2);
+        $targetPrice = round($targetPrice - $ourShipping, 2);
+        if ($targetPrice <= 0) {
+            return false;
+        }
 
         // Don't suggest if already at target
         if (abs($targetPrice - $ourPrice) < 0.01) {
@@ -582,85 +741,12 @@ class AmazonRepricingEngine
     }
 
     /**
-     * Update the PrestaShop price of the product or combination with this
-     * reference in one shop. The shop's price (product_shop /
-     * product_attribute_shop) always changes; the product's own row, which
-     * PrestaShop keeps in step with the product's default shop, only when
-     * this is that shop (always with multistore off).
-     */
-    private function updatePsPrice($sku, $newPrice, $idShop)
-    {
-        $db = Db::getInstance();
-        $p = _DB_PREFIX_;
-        $ref = pSQL(trim($sku));
-        $idShop = (int) $idShop;
-        $oneShop = !AmzproShop::isMultistore();
-
-        // Try combination first
-        $row = $db->getRow(
-            'SELECT pa.`id_product`, pa.`id_product_attribute`, pr.`id_shop_default`
-             FROM `' . $p . 'product_attribute` pa
-             INNER JOIN `' . $p . 'product_attribute_shop` pas
-                 ON (pas.`id_product_attribute` = pa.`id_product_attribute` AND pas.`id_shop` = ' . $idShop . ')
-             INNER JOIN `' . $p . 'product` pr ON (pr.`id_product` = pa.`id_product`)
-             WHERE pa.`reference` = \'' . $ref . '\''
-        );
-
-        if ($row && (int) $row['id_product_attribute']) {
-            $idProduct = (int) $row['id_product'];
-            $idPa = (int) $row['id_product_attribute'];
-            // Update combination price impact (delta from the shop's base price)
-            $basePrice = (float) $db->getValue(
-                'SELECT `price` FROM `' . $p . 'product_shop`
-                 WHERE `id_product` = ' . $idProduct . ' AND `id_shop` = ' . $idShop
-            );
-            $impact = (float) ($newPrice - $basePrice);
-            $db->execute(
-                'UPDATE `' . $p . 'product_attribute_shop` SET `price` = ' . $impact . '
-                 WHERE `id_product_attribute` = ' . $idPa . ' AND `id_shop` = ' . $idShop
-            );
-            if ($oneShop || (int) $row['id_shop_default'] === $idShop) {
-                $db->execute(
-                    'UPDATE `' . $p . 'product_attribute` SET `price` = ' . $impact . '
-                     WHERE `id_product_attribute` = ' . $idPa
-                );
-            }
-            Product::flushPriceCache();
-
-            return;
-        }
-
-        // Try base product
-        $products = $db->executeS(
-            'SELECT pr.`id_product`, pr.`id_shop_default`
-             FROM `' . $p . 'product` pr
-             INNER JOIN `' . $p . 'product_shop` ps
-                 ON (ps.`id_product` = pr.`id_product` AND ps.`id_shop` = ' . $idShop . ')
-             WHERE pr.`reference` = \'' . $ref . '\''
-        );
-        foreach ((is_array($products) ? $products : []) as $product) {
-            $idProduct = (int) $product['id_product'];
-            $db->execute(
-                'UPDATE `' . $p . 'product_shop` SET `price` = ' . (float) $newPrice . '
-                 WHERE `id_product` = ' . $idProduct . ' AND `id_shop` = ' . $idShop
-            );
-            if ($oneShop || (int) $product['id_shop_default'] === $idShop) {
-                $db->execute(
-                    'UPDATE `' . $p . 'product` SET `price` = ' . (float) $newPrice . '
-                     WHERE `id_product` = ' . $idProduct
-                );
-            }
-        }
-        Product::flushPriceCache();
-    }
-
-    /**
      * Upsert competitive price data.
      *
      * @param array $offer sku, asin, buybox_price, buybox_shipping,
      *                     buybox_landed, buybox_seller, is_buybox_winner,
      *                     lowest_price, lowest_shipping, lowest_landed,
-     *                     number_of_offers, our_price
+     *                     number_of_offers, our_price, our_shipping
      * @param string $now
      */
     private function upsertCompetitivePrice(array $offer, $now)
@@ -668,7 +754,7 @@ class AmazonRepricingEngine
         $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_competitive_price`
             (`id_shop`, `seller_sku`, `asin`, `buybox_price`, `buybox_shipping`, `buybox_landed`,
              `buybox_seller`, `is_buybox_winner`, `lowest_price`, `lowest_shipping`,
-             `lowest_landed`, `number_of_offers`, `our_price`, `marketplace_id`,
+             `lowest_landed`, `number_of_offers`, `our_price`, `our_shipping`, `marketplace_id`,
              `date_add`, `date_upd`)
             VALUES (
                 ' . (int) AmzproShop::actingId() . ',
@@ -684,6 +770,7 @@ class AmazonRepricingEngine
                 ' . (float) $offer['lowest_landed'] . ',
                 ' . (int) $offer['number_of_offers'] . ',
                 ' . (float) $offer['our_price'] . ',
+                ' . (float) $offer['our_shipping'] . ',
                 \'' . pSQL($this->marketplaceId) . '\',
                 \'' . pSQL($now) . '\',
                 \'' . pSQL($now) . '\'
@@ -699,6 +786,7 @@ class AmazonRepricingEngine
                 `lowest_landed` = VALUES(`lowest_landed`),
                 `number_of_offers` = VALUES(`number_of_offers`),
                 `our_price` = VALUES(`our_price`),
+                `our_shipping` = VALUES(`our_shipping`),
                 `date_upd` = VALUES(`date_upd`)';
         Db::getInstance()->execute($sql);
     }
