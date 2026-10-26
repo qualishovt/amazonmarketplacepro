@@ -29,7 +29,7 @@ class AmazonProductOverride
     public static $propagatable = [
         'sync', 'sync_price', 'sync_quantity', 'force_in_stock', 'force_out_of_stock',
         'is_fba', 'lead_time', 'gift_option', 'shipping_template', 'browse_node',
-        'brand', 'condition_type', 'condition_note', 'gpsr_contact',
+        'brand', 'condition_type', 'condition_note', 'gpsr_contact', 'gtin_exempt',
     ];
 
     /** Cache: id_shop => id_product => row */
@@ -39,7 +39,7 @@ class AmazonProductOverride
     private static $tableEnsured = false;
 
     private static $intCols = ['sync', 'force_in_stock', 'force_out_of_stock', 'sync_price',
-        'sync_quantity', 'is_fba', 'gift_option'];
+        'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt'];
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points',
@@ -91,6 +91,9 @@ class AmazonProductOverride
             // "10%" or "2.50": this product's own markup, ahead of the
             // category, manufacturer and supplier ones.
             'price_markup' => 'VARCHAR(16) NOT NULL DEFAULT \'\'',
+            // Own-brand product listed under Amazon's GTIN exemption: no
+            // EAN is sent and it is never matched to an ASIN by EAN.
+            'gtin_exempt' => 'TINYINT(1) NOT NULL DEFAULT 0',
         ];
 
         $existing = [];
@@ -122,7 +125,7 @@ class AmazonProductOverride
             'sync_price' => 1, 'sync_quantity' => 1, 'is_fba' => 0, 'lead_time' => -1,
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
-            'condition_type' => '', 'condition_note' => '', 'price_markup' => '',
+            'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
         ];
     }
 

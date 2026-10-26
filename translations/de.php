@@ -929,6 +929,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bb
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Verwenden Sie dies, wenn das Produkt in Ihrem Amazon-Bestand bereits unter einer anderen Verkäufer-SKU existiert. Wird sowohl für Angebotsaktualisierungen als auch für die Bestellzuordnung genutzt.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8db07d2e99c2a6161d6dc93c2fe4efff'] = 'ASIN';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_744ca9a72b82aebd6172d50a8b80c9d0'] = 'Hängt das Angebot an eine bekannte Amazon-Katalogseite, statt Amazon die Zuordnung über den Barcode zu überlassen.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4ffea6d4faf428a51bf00940316613c7'] = 'GTIN-Befreiung (Eigenmarke)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c61b5b7eda8c9939e3867d9f9f3181ae'] = 'Ohne EAN listen, mit meiner GTIN-Befreiung';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_e95fc00a95e7587cb3786b7369bcc504'] = 'Für Ihre Eigenmarke: Die EAN wird nicht gesendet und das Produkt wird nie per EAN einer bestehenden Amazon-Seite zugeordnet, es erhält also eine eigene Seite unter Ihrer Marke. Amazon muss Ihrer Marke eine GTIN-Befreiung erteilt haben. Um es auf die ganze Marke anzuwenden, speichern Sie unten mit „Alle Produkte desselben Herstellers“.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_1f8f0bb22eb51b205af6ec426a5c7aec'] = 'Versand durch Amazon (FBA)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_62761c2833a6df3d42ef4aae7f6dfaa1'] = 'Nein — ich versende selbst (MFN)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_212f82f3442066aa2d71df070fc5f5d6'] = 'Ja — Amazon versendet (AFN)';

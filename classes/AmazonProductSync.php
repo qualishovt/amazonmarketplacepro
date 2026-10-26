@@ -425,6 +425,7 @@ class AmazonProductSync
         // currency. Without that currency in the shop nothing is staged,
         // rather than listing every product at a number in the wrong currency.
         $rate = $this->marketplaceCurrencyRate();
+        $exempt = [];
         if ($rate === null) {
             $this->notices[] = sprintf(
                 AmazonI18n::get()->l('Prices for this marketplace are converted from %1$s to %2$s, and PrestaShop needs both currencies for that. Add the missing one under International > Localization > Currencies, then sync again.', 'amazonproductsync'),
@@ -436,6 +437,12 @@ class AmazonProductSync
             $overrides = AmazonProductOverride::all();
             foreach ($psRows as $i => $row) {
                 $idProduct = isset($row['id_product']) ? (int) $row['id_product'] : 0;
+                // Own-brand product under GTIN exemption: its EAN is the
+                // manufacturer's, so it is neither sent nor used to match.
+                if (!empty($overrides[$idProduct]['gtin_exempt'])) {
+                    $psRows[$i]['ean13'] = '';
+                    $exempt[] = $idProduct;
+                }
                 $tax = $this->priceTaxFactor($idProduct);
                 foreach (['price', 'list_price', 'sale_price'] as $field) {
                     // A fixed Amazon price is sent as entered: no tax added.
@@ -447,6 +454,16 @@ class AmazonProductSync
                     }
                 }
             }
+        }
+
+        // An ASIN found earlier by EAN would attach the offer to the
+        // manufacturer's product page.
+        if ($exempt) {
+            Db::getInstance()->execute(
+                'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` SET `amazon_asin` = \'\'
+                 WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . '
+                   AND `amazon_exists` = 0 AND `id_product` IN (' . implode(',', array_map('intval', $exempt)) . ')'
+            );
         }
 
         // A full scan is the whole truth about what this shop exports, so a
@@ -2059,7 +2076,8 @@ class AmazonProductSync
                     ov.`bullet_points` AS ov_bullet_points,
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
-                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
+                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity,
+                    ov.`gtin_exempt` AS ov_gtin_exempt
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere('p') . '
@@ -2382,7 +2400,8 @@ class AmazonProductSync
                     ov.`bullet_points` AS ov_bullet_points,
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
-                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity
+                    ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity,
+                    ov.`gtin_exempt` AS ov_gtin_exempt
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . $idShop . $this->marketplaceWhere('p') . '
@@ -2826,8 +2845,9 @@ class AmazonProductSync
         }
 
         // Brand-registered sellers can list without an EAN/UPC when Amazon
-        // granted them a GTIN exemption for the product type.
-        if (!empty($r['profile_gtin_exemption'])) {
+        // granted them a GTIN exemption: for a profile's product type, or
+        // for one product (own brand).
+        if (!empty($r['profile_gtin_exemption']) || !empty($r['ov_gtin_exempt'])) {
             unset($attributes['externally_assigned_product_identifier']);
             $attributes['supplier_declared_has_product_identifier_exemption'] = [[
                 'value' => true,

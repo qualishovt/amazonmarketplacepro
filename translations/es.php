@@ -929,6 +929,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bb
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Úsalo cuando este producto ya exista en tu inventario de Amazon con otro SKU de vendedor. Sirve tanto para actualizar el anuncio como para emparejar pedidos.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8db07d2e99c2a6161d6dc93c2fe4efff'] = 'ASIN';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_744ca9a72b82aebd6172d50a8b80c9d0'] = 'Asocia la oferta a una ficha de catálogo de Amazon conocida en lugar de dejar que Amazon la empareje por el código de barras.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4ffea6d4faf428a51bf00940316613c7'] = 'Exención de GTIN (marca propia)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c61b5b7eda8c9939e3867d9f9f3181ae'] = 'Publicar sin EAN, con mi exención de GTIN';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_e95fc00a95e7587cb3786b7369bcc504'] = 'Para tu propia marca: el EAN no se envía y el producto nunca se asocia por EAN a una página existente de Amazon, así que obtiene su propia página con tu marca. Amazon debe haber concedido a tu marca una exención de GTIN. Para aplicarlo a toda la marca, guarda con «Todos los productos del mismo fabricante» abajo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_1f8f0bb22eb51b205af6ec426a5c7aec'] = 'Gestionado por Logística de Amazon (FBA)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_62761c2833a6df3d42ef4aae7f6dfaa1'] = 'No: lo envío yo (MFN)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_212f82f3442066aa2d71df070fc5f5d6'] = 'Sí: lo envía Amazon (AFN)';

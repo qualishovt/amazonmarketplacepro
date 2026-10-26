@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.11';
+        $this->version = '1.6.12';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -3792,6 +3792,7 @@ class AmazonMarketplacePro extends Module
             'bullet_points' => trim((string) Tools::getValue('amzpro_bullet_points', '')),
             'gpsr_contact' => trim((string) Tools::getValue('amzpro_gpsr_contact', '')),
             'gift_option' => Tools::getIsset('amzpro_gift_option') ? 1 : 0,
+            'gtin_exempt' => Tools::getIsset('amzpro_gtin_exempt') ? 1 : 0,
             'transparency_code' => trim((string) Tools::getValue('amzpro_transparency_code', '')),
         ];
 

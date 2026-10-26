@@ -97,6 +97,14 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label col-lg-3">{l s='GTIN exemption (own brand)' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-6">
+            <label class="checkbox-inline"><input type="checkbox" name="amzpro_gtin_exempt" value="1"{if $amzpro.gtin_exempt} checked="checked"{/if} /> {l s='List without EAN, under my GTIN exemption' mod='amazonmarketplacepro'}</label>
+            <p class="help-block">{l s='For your own brand: the EAN is not sent and the product is never matched to an existing Amazon page by EAN, so it gets its own page under your brand. Amazon must have granted your brand a GTIN exemption. To apply it to the whole brand, save with "All products of the same manufacturer" below.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="control-label col-lg-3">{l s='Fulfilled by Amazon (FBA)' mod='amazonmarketplacepro'}</label>
         <div class="col-lg-4">
             <select name="amzpro_is_fba" class="form-control">
