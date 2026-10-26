@@ -61,7 +61,7 @@ checkable against Amazon's own logs.
 > *Describe why your organization requires Restricted roles containing
 > Personally Identifiable Information to build your application or feature.*
 
-**One role is requested: Direct-to-Consumer Shipping.**
+**Two roles are requested: Direct-to-Consumer Shipping and Tax Invoicing.**
 
 The module imports Amazon orders into PrestaShop so the merchant can fulfil
 them from the back office they already use. Creating a PrestaShop order
@@ -83,8 +83,12 @@ IntelliPresta.
 present on the order and performs no remittance calculation, so there is no
 defensible need.
 
-**Tax Invoicing is not requested** at this time. It would only become relevant
-if VCS invoice upload ships as a supported feature.
+**Tax Invoicing is requested** (added 26 October 2026). The module offers VAT
+invoice upload for sellers enrolled in Amazon's VAT Calculation Service: it
+sends the invoice PrestaShop generates for an Amazon order through the
+`UPLOAD_VAT_INVOICE` feed, so Amazon can deliver it to the buyer. A valid VAT
+invoice must carry the buyer's billing name and address. The feature is off
+by default and switched on per shop (`AmazonVcsInvoiceUploader`).
 
 ## 2. Network Protection 1.1
 
