@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.10';
+        $this->version = '1.6.11';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -4335,6 +4335,9 @@ class AmazonMarketplacePro extends Module
     protected function logActivity($level, $source, $message)
     {
         $now = date('Y-m-d H:i:s');
+        // No buyer data in the log: an error from the mailer or an API can
+        // quote an e-mail address.
+        $message = self::maskEmails($message);
         Db::getInstance()->execute(
             'INSERT INTO `' . _DB_PREFIX_ . 'amazonmarketplacepro_log`
              (`id_shop`, `level`, `source`, `message`, `date_add`)
@@ -4346,6 +4349,14 @@ class AmazonMarketplacePro extends Module
                 \'' . pSQL($now) . '\'
              )'
         );
+    }
+
+    /**
+     * Replace every e-mail address in a log message.
+     */
+    public static function maskEmails($message)
+    {
+        return preg_replace('/[^\s@<>()\[\]"\',;:]+@[^\s@<>()\[\]"\',;:]+\.[a-z]{2,}/i', '[e-mail removed]', (string) $message);
     }
 
     /**

@@ -217,43 +217,67 @@ the account.
 > including monitoring mechanisms for suspicious activities, and incident
 > investigation procedures.*
 
-**Logging.** Web server access and error logs cover every relay endpoint. The
-hosting provider rotates its own copies on a short cycle, so
-`relay-server/log-archive.php archive` runs daily and appends the relay's
-request lines to a monthly archive held outside the web root at 0600, **retained
-for 12 months** and pruned automatically beyond that. Amazon's own authorisation
-and API logs provide an independent record of every call made with our
-credentials.
+*Revised 26 October 2026 after case 21847001071, which noted that the earlier
+answer did not say whether PII is stored in logs.*
 
-The archived lines are web server access records — path, status, client address,
-user agent. They contain no Amazon Information: the relay receives none, and the
-tokens it does handle travel in POST bodies, which are not logged.
+**No PII is stored in any log.** This is a rule, enforced in two places:
+
+- **The relay** (`intellipresta.com/spapi/`, the only server we operate that
+  talks to Amazon) receives no buyer data. Its log lines hold path, status,
+  client IP and user agent only. Tokens travel in POST bodies, which are not
+  logged.
+- **The module** keeps an activity log in the merchant's own database. It
+  records what each job did: Amazon order IDs, counts and statuses. It never
+  writes names, addresses, e-mail addresses or phone numbers. As a safeguard,
+  every message is filtered before it is stored and any e-mail address is
+  removed, so an error quoted from a mail server or an API cannot carry one
+  (since 1.6.11, covered by an automated test). Buyer PII in imported orders
+  is deleted 30 days after delivery by the module's purge, unless tax law
+  requires the merchant to keep it.
+
+Logs are readable only by the sole operator (SSH key only, control panel with
+two-factor authentication), and in the module only by back-office employees
+with access to it.
+
+**Retention.** The hosting provider rotates its own copies on a short cycle, so
+`relay-server/log-archive.php archive` runs daily and appends the relay's
+request lines to a monthly archive outside the web root, mode 0600. The archive
+is **kept for 12 months** and pruned automatically after that. Amazon's own
+authorisation and API logs give an independent record of every call made with
+our credentials.
 
 **Automated monitoring.** A weekly scheduled task runs
-`secret-tool.php check --quiet`, which verifies that the master key remains
-readable and that every stored credential remains encrypted. It is silent when
-healthy and emails a failure report otherwise, so that mail arriving means
-something. Tested on 1 September 2026 by removing the key file and confirming
-the alert fired.
+`secret-tool.php check --quiet`. It checks that the master key is readable and
+that every stored credential is still encrypted. It stays silent when healthy
+and e-mails a failure report otherwise, so any mail it sends needs action.
+Tested on 1 September 2026 by removing the key file and confirming the alert
+fired.
 
-**Review.** `log-archive.php review` is run **fortnightly**. It summarises the
-window by endpoint, status and client, and separately lists every request for a
-file that must never be served — `config.php`, `secrets.php`, `secret-tool.php`,
-`*.key`, `*.env`. Those are expected to appear, because the internet scans for
-them; what matters is that each is answered 403. A 200 in that list is treated
-as an incident and starts the response plan at containment. Reducing the review
-to one question with an unambiguous wrong answer is what makes a fortnightly
-cadence sustainable for a single operator.
+**Review.** `log-archive.php review` runs **every two weeks**. It summarises
+the period by endpoint, status and client, which shows:
 
-**Investigation.** Twelve months of archived relay requests are searchable
-directly, so an investigation can establish what reached the relay and when
-rather than inferring it. On indication of compromise the incident response plan
-applies (see `incident-response.md`).
+- bursts of unauthorised calls (401/403);
+- unexpected request rates from one client;
+- unusual access patterns.
 
-**Limitations, stated plainly.** There is no SIEM, no real-time intrusion
-detection and no 24/7 monitoring. For a stateless service holding no Amazon
-Information, operated by one person, the controls above are proportionate. We
-would rather state this than imply capability we do not have.
+It also lists every request for a file that must never be served:
+`config.php`, `secrets.php`, `secret-tool.php`, `*.key`, `*.env`. These requests
+are expected, because the internet scans for them. Each one must be answered
+403. A 200 in that list is treated as an incident.
+
+**Investigation.** Twelve months of archived relay requests can be searched
+directly, so an investigation can show what reached the relay and when. Any
+suspicious finding starts the incident response plan (`incident-response.md`):
+
+1. Contain: rotate the LWA client secret and revoke authorisations.
+2. Assess the scope against our logs and Amazon's.
+3. Notify security@amazon.com within 24 hours of detection.
+4. Notify the affected merchants.
+5. Remediate, and record the cause and the fix.
+
+**Limitations.** There is no SIEM, no real-time intrusion detection and no 24/7
+monitoring. For a stateless service that holds no Amazon Information and is run
+by one person, these controls are proportionate.
 
 ## 6. Risk Management and Incident Response 1.6
 
@@ -282,39 +306,42 @@ what an attacker obtained.
 > systems handling Amazon information as it relates to required length,
 > complexity and expiration period?*
 
-**Two-factor authentication is enabled on every account with access to
-in-scope systems**: the hosting control panel, the source repository, the
-Amazon developer account, and the password manager itself.
+*Revised 26 October 2026 after case 21847001071 ("password complexity does not
+comply"). The policy now covers each point of DPP 1.4 explicitly.*
 
-**Passwords** are generated by a password manager, **at least 20 characters**
-of mixed random case, digits and symbols — beyond the length any of these
-services enforces — unique per service, never reused, and never recorded in
-source, configuration or documentation. Recovery codes are stored in the same
-vault.
+**Scope.** Every account that can reach Amazon information or credentials:
 
-**Shell access** is by SSH key. A single 4096-bit RSA key pair, generated
+- the hosting control panel and server;
+- the source repository;
+- the Amazon Solution Provider Portal and Seller Central;
+- the password manager.
+
+One person has access. There are no shared accounts and no third-party access.
+
+**Password policy for all of these accounts:**
+
+| Requirement | Our rule |
+|---|---|
+| Length and complexity | At least 12 characters, with upper-case and lower-case letters, numbers and special characters. In practice each password is generated by the password manager, 20 or more random characters using all four types. |
+| Personal information | A password never contains any part of the user's name or other personal data. Generated passwords are random. |
+| Reuse | Reusing any of the last 10 passwords is prohibited. Each new password is newly generated and unique to one service. |
+| Minimum age | 1 day. A password is not changed again within 24 hours, except after a suspected compromise. |
+| Expiry | 365 days at most. Every password is changed at least once a year, and immediately on suspicion of compromise, a change of personnel, or an exposure reported by a service. Due dates are tracked in `schedule.md`. |
+| Lockout | An account is locked after 10 or fewer failed sign-in attempts. The hosting login is protected by the provider's brute-force protection (Imunify360/cPHulk), which blocks repeated failures. The repository and Amazon accounts apply their own lockout. |
+| Multi-factor authentication | Two-factor authentication is on for every account above. |
+
+**Shell access** is by SSH key only. A single 4096-bit RSA key pair, generated
 1 September 2026, is authorised for the sole operator. Three stale authorised
-keys of unknown provenance were identified and removed on the same date, and
-the private key generated server-side by the control panel was deleted after
-transfer, so no private key remains on the server it unlocks.
+keys of unknown origin were found and removed on the same date. The private key
+generated server-side by the control panel was deleted after transfer, so no
+private key remains on the server it unlocks.
 
-**Rotation.** Passwords for all in-scope accounts — hosting control panel,
-source repository, Amazon developer account, password manager — are rotated
-**at least annually**, and immediately on suspicion of compromise, on personnel
-change, or when a service reports exposure. Because every password is generated
-rather than remembered, rotation is a replacement, not a variation on the
-previous value; the failure mode that makes scheduled expiry counterproductive
-elsewhere does not arise here.
+**The LWA client secret** is encrypted at rest and rotated on the same yearly
+schedule, and on suspicion of compromise. Rotation takes minutes:
+`secret-tool.php encrypt`, update `config.php`, then `secret-tool.php check`.
 
-The LWA client secret is rotated on the same annual schedule and on suspicion.
-It can be rotated, re-encrypted and verified in minutes:
-`secret-tool.php encrypt`, update `config.php`, `secret-tool.php check`.
-
-Due dates are tracked in `schedule.md`.
-
-**Access review.** One person has access to all in-scope systems. There are no
-shared accounts and no third-party access. The stale-key removal above is the
-first such review; it is now performed on any change to hosting or tooling.
+**Access review.** The stale-key removal above was the first review. A review
+now runs on any change to hosting or tooling.
 
 ## 8. Vulnerability Management 2.7 — tracking remediation
 
