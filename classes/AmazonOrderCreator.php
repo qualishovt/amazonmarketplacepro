@@ -306,14 +306,36 @@ class AmazonOrderCreator
      */
     private static function carrierForShop($idCarrier, $idShop)
     {
+        return self::currentCarrier($idCarrier, $idShop);
+    }
+
+    /**
+     * The carrier's current id. PrestaShop gives a carrier a new id each time
+     * it is edited and keeps the old one as deleted, so a saved id is followed
+     * through its reference to the live carrier.
+     *
+     * @param int $idCarrier a saved id, current or replaced
+     * @param int|null $idShop only a carrier this shop offers; null = any shop
+     *
+     * @return int 0 when the carrier is gone (or not offered by the shop)
+     */
+    public static function currentCarrier($idCarrier, $idShop = null)
+    {
         if ((int) $idCarrier <= 0) {
             return 0;
         }
+        $p = _DB_PREFIX_;
 
         return (int) Db::getInstance()->getValue(
-            'SELECT `id_carrier` FROM `' . _DB_PREFIX_ . 'carrier_shop`
-             WHERE `id_carrier` = ' . (int) $idCarrier . '
-               AND `id_shop` = ' . (int) $idShop
+            'SELECT c2.`id_carrier`
+             FROM `' . $p . 'carrier` c1
+             INNER JOIN `' . $p . 'carrier` c2
+                 ON (c2.`id_reference` = c1.`id_reference` AND c2.`deleted` = 0)'
+            . ($idShop === null ? '' : '
+             INNER JOIN `' . $p . 'carrier_shop` cs
+                 ON (cs.`id_carrier` = c2.`id_carrier` AND cs.`id_shop` = ' . (int) $idShop . ')') . '
+             WHERE c1.`id_carrier` = ' . (int) $idCarrier . '
+             ORDER BY c2.`id_carrier` DESC'
         );
     }
 
@@ -419,8 +441,9 @@ class AmazonOrderCreator
         // Carrier: the one mapped to the shipping speed or the configured
         // default, as long as this shop offers it; else the shop's default.
         $idCarrier = self::resolveCarrier($stagedOrder, $this->idCarrier, $idShop);
-        if ($idCarrier !== 0 && !self::carrierForShop($idCarrier, $idShop)) {
-            $idCarrier = $env['id_carrier'];
+        if ($idCarrier !== 0) {
+            $current = self::carrierForShop($idCarrier, $idShop);
+            $idCarrier = $current ? $current : $env['id_carrier'];
         }
 
         // 4. Create cart + add products
@@ -662,10 +685,11 @@ class AmazonOrderCreator
             $map = json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN', $idShop), true);
             if (is_array($map)) {
                 foreach ($map as $amazonLevel => $idCarrier) {
-                    if ((int) $idCarrier > 0 && Tools::strtolower($amazonLevel) === Tools::strtolower($level)
-                        && ($idShop === null || self::carrierForShop($idCarrier, $idShop))
-                    ) {
-                        return (int) $idCarrier;
+                    if ((int) $idCarrier > 0 && Tools::strtolower($amazonLevel) === Tools::strtolower($level)) {
+                        $current = self::currentCarrier($idCarrier, $idShop);
+                        if ($current) {
+                            return $current;
+                        }
                     }
                 }
             }

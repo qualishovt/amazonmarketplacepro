@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.12';
+        $this->version = '1.6.13';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -661,7 +661,10 @@ class AmazonMarketplacePro extends Module
         $cronBase = $allShops ? '' : $this->getCronBaseUrl($idShop);
 
         // ── Get carriers and order states for settings form ──
-        $carriers = Carrier::getCarriers($this->context->language->id, true);
+        // Every carrier, including those a carrier module created (Colissimo,
+        // Chronopost, Mondial Relay, DPD...): getCarriers() leaves them out by default.
+        require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
+        $carriers = Carrier::getCarriers($this->context->language->id, true, false, false, null, Carrier::ALL_CARRIERS);
         $orderStates = OrderState::getOrderStates($this->context->language->id);
 
         // ── Get PS categories for category mapping ──
@@ -759,7 +762,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_marketplace_id' => AmzproShop::get('AMZPRO_MARKETPLACE_ID'),
             'mkpro_environment' => AmazonSpApiClient::environment(),
             'mkpro_use_mock' => AmzproShop::get('AMZPRO_USE_MOCK'),
-            'mkpro_default_carrier' => AmzproShop::get('AMZPRO_DEFAULT_CARRIER'),
+            'mkpro_default_carrier' => AmazonOrderCreator::currentCarrier((int) AmzproShop::get('AMZPRO_DEFAULT_CARRIER')),
             'mkpro_default_order_state' => AmzproShop::get('AMZPRO_DEFAULT_ORDER_STATE'),
             'mkpro_sync_stock_hook' => AmzproShop::get('AMZPRO_SYNC_STOCK_HOOK'),
             'mkpro_sync_order_hook' => AmzproShop::get('AMZPRO_SYNC_ORDER_STATUS_HOOK'),
@@ -777,7 +780,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_vcs_enabled' => AmzproShop::get('AMZPRO_VCS_ENABLED'),
             'mkpro_dev_mode' => (bool) AmzproShop::get('AMZPRO_DEV_MODE'),
 
-            'mkpro_carrier_map' => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true),
+            'mkpro_carrier_map' => self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true)),
             'amazon_carrier_codes' => self::$amazonCarrierCodes,
 
             // Connect with Amazon
@@ -904,7 +907,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_imap_folder' => AmzproShop::get('AMZPRO_IMAP_FOLDER'),
             'mkpro_imap_ssl' => AmzproShop::get('AMZPRO_IMAP_SSL'),
             'mkpro_imap_available' => AmazonBuyerInbox::isAvailable(),
-            'mkpro_carrier_map_in' => (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true),
+            'mkpro_carrier_map_in' => array_map(['AmazonOrderCreator', 'currentCarrier'], (array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP_IN'), true)),
             'amazon_ship_levels' => ['Standard', 'Expedited', 'NextDay', 'SecondDay', 'Priority', 'SameDay', 'Scheduled'],
             'mkpro_status_rules' => (array) json_decode((string) AmzproShop::get('AMZPRO_STATUS_RULES'), true),
             'mkpro_invoice_email' => AmzproShop::get('AMZPRO_INVOICE_EMAIL'),
@@ -4295,15 +4298,34 @@ class AmazonMarketplacePro extends Module
     ];
 
     /**
+     * A carrier map keyed by carrier id, re-keyed to the carriers' current
+     * ids (PrestaShop replaces a carrier's id each time it is edited).
+     */
+    public static function currentCarrierKeys(array $map)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
+        $out = [];
+        foreach ($map as $idCarrier => $value) {
+            $current = AmazonOrderCreator::currentCarrier((int) $idCarrier);
+            $out[$current ? $current : (int) $idCarrier] = $value;
+        }
+
+        return $out;
+    }
+
+    /**
      * Map a PS carrier to an Amazon carrier code: explicit merchant mapping
      * first (the current shop's), name heuristics as fallback.
      */
     private function mapCarrierToAmazon($carrierName, $idCarrier = 0)
     {
         if ($idCarrier) {
-            $map = json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true);
-            if (is_array($map) && !empty($map[$idCarrier])) {
-                return $map[$idCarrier];
+            $map = self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true));
+            $current = AmazonOrderCreator::currentCarrier($idCarrier);
+            foreach ([(int) $idCarrier, $current] as $id) {
+                if ($id && !empty($map[$id])) {
+                    return $map[$id];
+                }
             }
         }
 
