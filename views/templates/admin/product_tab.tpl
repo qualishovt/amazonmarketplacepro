@@ -189,6 +189,7 @@
         #amzpro-combo-settings .amzpro-combo > summary { cursor: pointer; padding: 4px 0; }
         #amzpro-combo-settings .amzpro-combo[open] > summary { margin-bottom: 10px; border-bottom: 1px solid #eef1f2; }
         #amzpro-combo-settings .badge { margin-left: 6px; }
+        #amzpro-combo-settings select.form-control, #amzpro-combo-settings input.form-control { min-width: 260px; }
     </style>
     <script>
         (function () {
