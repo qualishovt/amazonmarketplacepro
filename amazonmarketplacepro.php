@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.14';
+        $this->version = '1.6.15';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -553,6 +553,7 @@ class AmazonMarketplacePro extends Module
             'ajaxPollReports' => 'runPollReports',
             'ajaxSaveMarketplace' => 'runSaveMarketplace',
             'ajaxDeleteMarketplace' => 'runDeleteMarketplace',
+            'ajaxToggleMarketplace' => 'runToggleMarketplace',
             'ajaxImportPromotions' => 'runImportPromotions',
             'ajaxExportPromotions' => 'runExportPromotions',
             'ajaxCreatePromoCartRules' => 'runCreatePromoCartRules',
@@ -978,6 +979,7 @@ class AmazonMarketplacePro extends Module
             'ajax_save_marketplace_url' => $baseUrl . '&ajaxSaveMarketplace=1',
             'ajax_multi_sync_products_url' => $baseUrl . '&ajaxMultiSyncProducts=1',
             'ajax_delete_marketplace_url' => $baseUrl . '&ajaxDeleteMarketplace=1',
+            'ajax_toggle_marketplace_url' => $baseUrl . '&ajaxToggleMarketplace=1',
             'ajax_import_promotions_url' => $baseUrl . '&ajaxImportPromotions=1',
             'ajax_export_promotions_url' => $baseUrl . '&ajaxExportPromotions=1',
             'ajax_create_promo_cart_rules_url' => $baseUrl . '&ajaxCreatePromoCartRules=1',
@@ -3534,6 +3536,23 @@ class AmazonMarketplacePro extends Module
         ];
     }
 
+    /**
+     * Switch Orders, Products, Stock or Active on a marketplace in the
+     * Active Marketplaces table.
+     */
+    protected function runToggleMarketplace()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
+        $mm = new AmazonMultiMarketplace();
+        $ok = $mm->setMarketplaceFlag(
+            (string) Tools::getValue('mp_marketplace_id', ''),
+            (string) Tools::getValue('mp_field', ''),
+            (int) Tools::getValue('mp_value', 0)
+        );
+
+        return ['success' => (bool) $ok, 'error' => $mm->getLastError()];
+    }
+
     protected function runDeleteMarketplace()
     {
         require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
@@ -3740,6 +3759,7 @@ class AmazonMarketplacePro extends Module
         $this->context->smarty->assign([
             'amzpro' => $overrides,
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
+            'mkpro_ps17' => version_compare(_PS_VERSION_, '1.7', '>='),
             'amzpro_multistore' => $multistore,
             'amzpro_id_shop' => $idShop,
             'amzpro_scope_all' => $multistore && !$idShop,

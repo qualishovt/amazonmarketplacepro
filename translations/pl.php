@@ -647,7 +647,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_1656ce6f15a36bb566c97adfb8
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eb1af6f7f3c93a78fea6a92a67a85650'] = 'Dodaj marketplace';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c89e2169c60e7f7519e8909929701e40'] = 'Aktywne marketplace\'y';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3126e180423b2256ea60fb1df8c9a8cf'] = 'Identyfikator sprzedawcy';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_041bf6aa244fc7a04422160635044ea6'] = 'Kliknij, aby przełączyć';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_008fc9f5b2aac515e7f30164bb1d0cca'] = 'Nie skonfigurowano dodatkowych marketplace\'ów. Główny marketplace z zakładki Ustawienia jest zawsze aktywny.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_d6849d01699a87caf1a55f31000d3c86'] = 'Kliknij Tak lub Nie w tabeli, aby przełączyć to ustawienie dla marketplace.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46cbf659d077130d195115c6fe841661'] = 'Wyślij produkty do tych marketplace\'ów';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9faab7ab55f8428bdf5a3fc310d5096a'] = 'Dla każdego marketplace\'u powyżej z włączonymi Produktami: porównuje Twój katalog z tym marketplace\'em i wysyła to, czego brakuje lub co się różni. Obowiązują te same reguły eksportu, profile i przypisania kategorii. Produkty, które mają już ASIN na Twoim głównym marketplace\'ie, są oferowane na tej samej stronie Amazon. Gdy marketplace używa innej waluty, ceny są przeliczane według kursów w PrestaShop. Zadanie cron „Synchronizacja produktów, wszystkie marketplace\'y” robi to samo automatycznie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ca1440bb8617e45d505d84543ea57952'] = 'Repricing';

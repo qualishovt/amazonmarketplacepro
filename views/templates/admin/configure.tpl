@@ -150,21 +150,8 @@
         color: #25b2a8; border-bottom-color: #25b2a8; }
     ul.nav-tabs.mkpro-section-tabs > li > a .badge { margin-left: 5px; }
 
-    /* Checkboxes as PrestaShop 1.7+ draws them (.md-checkbox), on the plain
-       inputs, so no markup or script changes. PrestaShop 1.6 keeps its own. */
-    .mkpro-ps17 input[type=checkbox] { -webkit-appearance: none; -moz-appearance: none; appearance: none;
-        position: relative; display: inline-block; width: 20px; height: 20px; margin: 0 6px 0 0;
-        vertical-align: middle; background: #fff; border: 2px solid #b3c7cd; border-radius: 2px;
-        cursor: pointer; transition: background .3s; box-shadow: none; flex-shrink: 0; }
-    .mkpro-ps17 input[type=checkbox]:checked { background: #25b9d7; border-color: #25b9d7; }
-    .mkpro-ps17 input[type=checkbox]:checked::after { content: ""; position: absolute; top: 2.5px; left: 1px;
-        width: 14px; height: 7px; border: 2px solid #fff; border-top-style: none; border-right-style: none;
-        transform: rotate(-45deg); }
-    .mkpro-ps17 input[type=checkbox]:focus { outline: none; box-shadow: 0 0 0 3px rgba(37, 185, 215, .25); }
-    .mkpro-ps17 input[type=checkbox]:disabled { opacity: .5; cursor: not-allowed; }
-    .mkpro-ps17 label > input[type=checkbox] { margin-top: -2px; }
-    .mkpro-ps17 .form-inline > label { margin-right: 12px; font-weight: normal; }
 </style>
+{include file=$smarty.current_dir|cat:'/form_controls.tpl'}
 
 <div class="row{if $mkpro_ps17} mkpro-ps17{/if}">
 <div class="col-lg-2 col-md-3">
@@ -2672,10 +2659,10 @@
                     {if $mkpro_all_shops}<td>{if isset($mp.shop_name)}{$mp.shop_name|escape:'htmlall':'UTF-8'}{/if}</td>{/if}
                     <td><strong>{$mp.marketplace_name|escape:'htmlall':'UTF-8'}</strong><br><small class="text-muted">{$mp.marketplace_id|escape:'htmlall':'UTF-8'}</small></td>
                     <td>{$mp.seller_id|escape:'htmlall':'UTF-8'}</td>
-                    <td>{if $mp.sync_orders}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.sync_products}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.sync_stock}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-default">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
-                    <td>{if $mp.active}<span class="label label-success">{l s='Yes' mod='amazonmarketplacepro'}</span>{else}<span class="label label-danger">{l s='No' mod='amazonmarketplacepro'}</span>{/if}</td>
+                    <td><button type="button" class="label mp-toggle {if $mp.sync_orders}label-success{else}label-default{/if}" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}" data-field="sync_orders" data-value="{if $mp.sync_orders}1{else}0{/if}" data-off="label-default" title="{l s='Click to switch' mod='amazonmarketplacepro'}">{if $mp.sync_orders}{l s='Yes' mod='amazonmarketplacepro'}{else}{l s='No' mod='amazonmarketplacepro'}{/if}</button></td>
+                    <td><button type="button" class="label mp-toggle {if $mp.sync_products}label-success{else}label-default{/if}" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}" data-field="sync_products" data-value="{if $mp.sync_products}1{else}0{/if}" data-off="label-default" title="{l s='Click to switch' mod='amazonmarketplacepro'}">{if $mp.sync_products}{l s='Yes' mod='amazonmarketplacepro'}{else}{l s='No' mod='amazonmarketplacepro'}{/if}</button></td>
+                    <td><button type="button" class="label mp-toggle {if $mp.sync_stock}label-success{else}label-default{/if}" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}" data-field="sync_stock" data-value="{if $mp.sync_stock}1{else}0{/if}" data-off="label-default" title="{l s='Click to switch' mod='amazonmarketplacepro'}">{if $mp.sync_stock}{l s='Yes' mod='amazonmarketplacepro'}{else}{l s='No' mod='amazonmarketplacepro'}{/if}</button></td>
+                    <td><button type="button" class="label mp-toggle {if $mp.active}label-success{else}label-danger{/if}" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}" data-field="active" data-value="{if $mp.active}1{else}0{/if}" data-off="label-danger" title="{l s='Click to switch' mod='amazonmarketplacepro'}">{if $mp.active}{l s='Yes' mod='amazonmarketplacepro'}{else}{l s='No' mod='amazonmarketplacepro'}{/if}</button></td>
                     <td><button type="button" class="btn btn-xs btn-danger btn-delete-mp" data-id="{$mp.marketplace_id|escape:'htmlall':'UTF-8'}"><i class="icon-trash"></i></button></td>
                 </tr>
                 {/foreach}
@@ -2685,6 +2672,7 @@
             </tbody>
         </table>
         {if $marketplace_configs}
+        <p class="help-block">{l s='Click Yes or No in the table to switch that setting for the marketplace.' mod='amazonmarketplacepro'}</p>
         <button type="button" id="btn-multi-sync-products" class="btn btn-primary"><i class="icon-upload"></i> {l s='Send products to these marketplaces' mod='amazonmarketplacepro'}</button>
         <p class="help-block">{l s='For each marketplace above with Products on: compares your catalogue with that marketplace and sends what is missing or different. The same export rules, profiles and category mappings apply. Products that already have an ASIN on your main marketplace are offered on the same Amazon page. Prices are converted with the exchange rates in PrestaShop when the marketplace uses another currency. The cron task "Product sync, all marketplaces" does the same automatically.' mod='amazonmarketplacepro'}</p>
         <div id="multi-sync-result"></div>
@@ -4288,6 +4276,25 @@
             }, 'mp_marketplace_id='+encodeURIComponent(id));
         });
 
+        // Switch Orders / Products / Stock / Active on an added marketplace.
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.mp-toggle');
+            if (!btn || btn.disabled) return;
+            var next = btn.getAttribute('data-value') === '1' ? 0 : 1;
+            btn.disabled = true;
+            ajaxPost('{$ajax_toggle_marketplace_url|escape:'javascript':'UTF-8'}', function (data) {
+                btn.disabled = false;
+                if (!data || !data.success) {
+                    out.innerHTML = '<div class="alert alert-danger">'+esc(data && data.error ? data.error : T.mpFailed)+'</div>';
+                    return;
+                }
+                btn.setAttribute('data-value', String(next));
+                btn.className = 'label mp-toggle ' + (next ? 'label-success' : btn.getAttribute('data-off'));
+                btn.textContent = next ? T.yes : T.no;
+            }, 'mp_marketplace_id='+encodeURIComponent(btn.getAttribute('data-id'))
+                +'&mp_field='+encodeURIComponent(btn.getAttribute('data-field'))+'&mp_value='+next);
+        });
+
         // Compare and send to every added marketplace with Products on.
         var btnSync = document.getElementById('btn-multi-sync-products');
         var syncOut = document.getElementById('multi-sync-result');
@@ -5323,7 +5330,7 @@
             var b = document.getElementById(ids[i]);
             if (b) buttons.push(b);
         }
-        var byClass = document.querySelectorAll('.pending-create, .pending-delete, .btn-delete-mp');
+        var byClass = document.querySelectorAll('.pending-create, .pending-delete, .btn-delete-mp, .mp-toggle');
         for (var c = 0; c < byClass.length; c++) buttons.push(byClass[c]);
 
         for (var k = 0; k < buttons.length; k++) {

@@ -647,7 +647,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_1656ce6f15a36bb566c97adfb8
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eb1af6f7f3c93a78fea6a92a67a85650'] = 'Marktplatz hinzufügen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c89e2169c60e7f7519e8909929701e40'] = 'Aktive Marktplätze';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3126e180423b2256ea60fb1df8c9a8cf'] = 'Verkäufer-ID';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_041bf6aa244fc7a04422160635044ea6'] = 'Zum Umschalten klicken';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_008fc9f5b2aac515e7f30164bb1d0cca'] = 'Keine weiteren Marktplätze eingerichtet. Der Hauptmarktplatz aus der Registerkarte Einstellungen ist immer aktiv.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_d6849d01699a87caf1a55f31000d3c86'] = 'Klicken Sie in der Tabelle auf Ja oder Nein, um diese Einstellung für den Marktplatz umzuschalten.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46cbf659d077130d195115c6fe841661'] = 'Produkte an diese Marktplätze senden';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9faab7ab55f8428bdf5a3fc310d5096a'] = 'Für jeden Marktplatz oben mit aktivierten Produkten: vergleicht Ihren Katalog mit diesem Marktplatz und sendet, was fehlt oder abweicht. Es gelten dieselben Exportregeln, Profile und Kategoriezuordnungen. Produkte, die auf Ihrem Hauptmarktplatz schon eine ASIN haben, werden auf derselben Amazon-Seite angeboten. Verwendet der Marktplatz eine andere Währung, werden die Preise mit den Wechselkursen in PrestaShop umgerechnet. Die Cron-Aufgabe „Produktsynchronisierung, alle Marktplätze“ macht dasselbe automatisch.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ca1440bb8617e45d505d84543ea57952'] = 'Repricing';

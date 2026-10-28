@@ -647,7 +647,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_1656ce6f15a36bb566c97adfb8
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eb1af6f7f3c93a78fea6a92a67a85650'] = 'Ajouter une place de marché';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c89e2169c60e7f7519e8909929701e40'] = 'Places de marché actives';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_3126e180423b2256ea60fb1df8c9a8cf'] = 'Identifiant vendeur';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_041bf6aa244fc7a04422160635044ea6'] = 'Cliquer pour basculer';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_008fc9f5b2aac515e7f30164bb1d0cca'] = 'Aucune place de marché supplémentaire configurée. La place de marché principale définie dans l\'onglet Paramètres est toujours active.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_d6849d01699a87caf1a55f31000d3c86'] = 'Cliquez sur Oui ou Non dans le tableau pour basculer ce réglage pour la marketplace.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_46cbf659d077130d195115c6fe841661'] = 'Envoyer les produits vers ces places de marché';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9faab7ab55f8428bdf5a3fc310d5096a'] = 'Pour chaque place de marché ci-dessus avec Produits activé : compare votre catalogue avec cette place de marché et envoie ce qui manque ou diffère. Les mêmes règles d\'export, profils et correspondances de catégories s\'appliquent. Les produits qui ont déjà un ASIN sur votre place de marché principale sont proposés sur la même page Amazon. Les prix sont convertis avec les taux de change de PrestaShop quand la place de marché utilise une autre devise. La tâche cron « Synchronisation des produits, toutes places de marché » fait la même chose automatiquement.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ca1440bb8617e45d505d84543ea57952'] = 'Repricing';

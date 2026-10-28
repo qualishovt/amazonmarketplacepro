@@ -10,7 +10,8 @@
  * Every control here overrides the profile / rules / global settings.
  *}
 
-<div class="panel" id="amzpro-product-panel">
+{include file=$smarty.current_dir|cat:'/form_controls.tpl'}
+<div class="panel{if $mkpro_ps17} mkpro-ps17{/if}" id="amzpro-product-panel">
     <h3><i class="icon-amazon"></i> {l s='Amazon Marketplace Pro' mod='amazonmarketplacepro'}</h3>
 
     <input type="hidden" name="amzpro_tab_present" value="1" />

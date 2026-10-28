@@ -231,6 +231,34 @@ class AmazonMultiMarketplace
      *
      * @return bool
      */
+    /**
+     * Switch one setting of a marketplace already added (Orders, Products,
+     * Stock or Active) and leave the rest of its configuration as it is.
+     *
+     * @return bool
+     */
+    public function setMarketplaceFlag($marketplaceId, $field, $value)
+    {
+        $shopError = AmzproShop::requireShop();
+        if ($shopError !== null) {
+            $this->lastError = $shopError;
+
+            return false;
+        }
+        if (!in_array($field, ['sync_orders', 'sync_products', 'sync_stock', 'active'], true)) {
+            $this->lastError = 'Unknown setting.';
+
+            return false;
+        }
+
+        return Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_marketplace_config`
+             SET `' . bqSQL($field) . '` = ' . ($value ? 1 : 0) . ', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+             WHERE ' . AmzproShop::sqlWhere('', AmzproShop::actingId()) . '
+               AND `marketplace_id` = \'' . pSQL($marketplaceId) . '\''
+        );
+    }
+
     public function deleteMarketplaceConfig($marketplaceId)
     {
         $shopError = AmzproShop::requireShop();
