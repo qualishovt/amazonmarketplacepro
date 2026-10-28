@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.16';
+        $this->version = '1.6.17';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -3771,11 +3771,15 @@ class AmazonMarketplacePro extends Module
              ORDER BY pa.`id_product_attribute` ASC'
         );
         foreach ((is_array($resume) ? $resume : []) as $c) {
+            $own = AmazonProductOverride::combinationSettings($overrides, $c['id_product_attribute']);
             $combinations[] = [
                 'id' => (int) $c['id_product_attribute'],
                 'name' => (string) $c['attribute_designation'],
                 'reference' => isset($c['reference']) ? (string) $c['reference'] : '',
                 'send' => !AmazonProductOverride::skipsCombination($overrides, $c['id_product_attribute']),
+                // Its own settings, and how many (stock forcing is one setting).
+                'own' => $own,
+                'own_count' => count($own) - (isset($own['force_in_stock'], $own['force_out_of_stock']) ? 1 : 0),
             ];
         }
 
@@ -3783,6 +3787,8 @@ class AmazonMarketplacePro extends Module
             'amzpro' => $overrides,
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
             'amzpro_combinations' => $combinations,
+            'amzpro_condition_types' => ['new_new', 'used_like_new', 'used_very_good', 'used_good',
+                'used_acceptable', 'collectible_like_new', 'refurbished_refurbished', ],
             'mkpro_ps17' => version_compare(_PS_VERSION_, '1.7', '>='),
             'amzpro_multistore' => $multistore,
             'amzpro_id_shop' => $idShop,
@@ -3855,6 +3861,25 @@ class AmazonMarketplacePro extends Module
                 }
             }
             $data['skip_combinations'] = implode(',', $skip);
+
+            // Combinations as separate products, each with its own settings.
+            // Kept while listed as options too, so switching back and forth
+            // loses nothing.
+            $data['separate_combinations'] = (int) Tools::getValue('amzpro_separate_combinations', 0) ? 1 : 0;
+            $posted = Tools::getValue('amzpro_combo');
+            $own = [];
+            foreach ((array) Db::getInstance()->executeS(
+                'SELECT `id_product_attribute` FROM `' . _DB_PREFIX_ . 'product_attribute` WHERE `id_product` = ' . (int) $idProduct
+            ) as $c) {
+                $idPa = (int) $c['id_product_attribute'];
+                if (is_array($posted) && isset($posted[$idPa]) && is_array($posted[$idPa])) {
+                    $values = AmazonProductOverride::normalizeCombinationValues($posted[$idPa]);
+                    if ($values) {
+                        $own[$idPa] = $values;
+                    }
+                }
+            }
+            $data['combination_settings'] = $own ? json_encode($own) : '';
         }
 
         AmazonProductOverride::save($idProduct, $data);

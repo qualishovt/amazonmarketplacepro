@@ -369,13 +369,16 @@ class AmazonListingSettings
      * Apply the resolved markup to a price. Markup strings are either a
      * fixed amount ("5.99") or a percentage ("10%" / "10.5%"). Empty = none.
      */
-    public static function applyMarkup($price, $idProduct)
+    public static function applyMarkup($price, $idProduct, $override = null)
     {
-        // A markup set on the product itself comes first.
-        $overrides = AmazonProductOverride::all();
-        if (isset($overrides[(int) $idProduct]['price_markup'])
-            && trim((string) $overrides[(int) $idProduct]['price_markup']) !== '') {
-            return self::applyMarkupString($price, trim((string) $overrides[(int) $idProduct]['price_markup']));
+        // A markup set on the product itself (or the combination's own,
+        // passed as $override) comes first.
+        if ($override === null) {
+            $overrides = AmazonProductOverride::all();
+            $override = isset($overrides[(int) $idProduct]) ? $overrides[(int) $idProduct] : null;
+        }
+        if (isset($override['price_markup']) && trim((string) $override['price_markup']) !== '') {
+            return self::applyMarkupString($price, trim((string) $override['price_markup']));
         }
 
         $markup = self::resolveFromCascade(

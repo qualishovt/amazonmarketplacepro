@@ -437,17 +437,18 @@ class AmazonProductSync
             $overrides = AmazonProductOverride::all();
             foreach ($psRows as $i => $row) {
                 $idProduct = isset($row['id_product']) ? (int) $row['id_product'] : 0;
+                $idPa = isset($row['id_product_attribute']) ? (int) $row['id_product_attribute'] : 0;
+                $ov = AmazonProductOverride::forCombination(isset($overrides[$idProduct]) ? $overrides[$idProduct] : null, $idPa);
                 // Own-brand product under GTIN exemption: its EAN is the
                 // manufacturer's, so it is neither sent nor used to match.
-                if (!empty($overrides[$idProduct]['gtin_exempt'])) {
+                if (!empty($ov['gtin_exempt'])) {
                     $psRows[$i]['ean13'] = '';
-                    $exempt[] = $idProduct;
+                    $exempt[] = '(`id_product` = ' . $idProduct . ' AND `id_product_attribute` = ' . $idPa . ')';
                 }
                 $tax = $this->priceTaxFactor($idProduct);
                 foreach (['price', 'list_price', 'sale_price'] as $field) {
                     // A fixed Amazon price is sent as entered: no tax added.
-                    $fixed = ($field === 'price' && isset($overrides[$idProduct])
-                        && (float) $overrides[$idProduct]['override_price'] > 0);
+                    $fixed = ($field === 'price' && $ov && (float) $ov['override_price'] > 0);
                     $factor = $rate * ($fixed ? 1.0 : $tax);
                     if ($factor !== 1.0 && isset($row[$field]) && (float) $row[$field] > 0) {
                         $psRows[$i][$field] = AmazonListingSettings::applyRounding((float) $row[$field] * $factor);
@@ -462,7 +463,7 @@ class AmazonProductSync
             Db::getInstance()->execute(
                 'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` SET `amazon_asin` = \'\'
                  WHERE `id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere() . '
-                   AND `amazon_exists` = 0 AND `id_product` IN (' . implode(',', array_map('intval', $exempt)) . ')'
+                   AND `amazon_exists` = 0 AND (' . implode(' OR ', $exempt) . ')'
             );
         }
 
@@ -684,6 +685,33 @@ class AmazonProductSync
         return $rows;
     }
 
+    /**
+     * Push/feed rows of combinations take the settings they are listed with:
+     * never their product's SKU or ASIN, and their own values where the
+     * product lists its combinations as separate products.
+     */
+    private function withCombinationSettings(array $rows)
+    {
+        $overrides = AmazonProductOverride::all();
+        $fields = [
+            'asin', 'is_fba', 'lead_time', 'gift_option', 'transparency_code', 'shipping_template',
+            'browse_node', 'bullet_points', 'condition_type', 'condition_note', 'sync_price',
+            'sync_quantity', 'gtin_exempt', 'gpsr_contact',
+        ];
+        foreach ($rows as &$r) {
+            $idProduct = (int) $r['id_product'];
+            if ((int) $r['id_product_attribute'] <= 0 || !isset($overrides[$idProduct])) {
+                continue;
+            }
+            $ov = AmazonProductOverride::forCombination($overrides[$idProduct], (int) $r['id_product_attribute']);
+            foreach ($fields as $c) {
+                $r['ov_' . $c] = $ov[$c];
+            }
+        }
+        unset($r);
+
+        return $rows;
+    }
     /**
      * sku => price the repricer manages; it works on the main marketplace only.
      */
@@ -1169,6 +1197,12 @@ class AmazonProductSync
                 ORDER BY p.`id_product`
                 LIMIT ' . (int) self::$MAX_PRODUCTS;
         $rows = Db::getInstance()->executeS($sql);
+        $withCombinations = [];
+        foreach ((array) Db::getInstance()->executeS(
+            'SELECT DISTINCT `id_product` FROM `' . _DB_PREFIX_ . 'product_attribute`'
+        ) as $c) {
+            $withCombinations[(int) $c['id_product']] = true;
+        }
         $this->warnIfScanCapped(
             is_array($rows) ? count($rows) : 0,
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'product_shop` ps
@@ -1187,6 +1221,11 @@ class AmazonProductSync
 
                 if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
                     ++$filteredOut;
+                    continue;
+                }
+                // Combinations listed as separate products: the product
+                // itself is not something a buyer can order.
+                if (!empty($overrides[$idProduct]['separate_combinations']) && isset($withCombinations[$idProduct])) {
                     continue;
                 }
                 if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
@@ -1279,12 +1318,17 @@ class AmazonProductSync
                     'supplier_reference' => (trim((string) $r['supplier_reference']) !== '')
                         ? $r['supplier_reference'] : $r['product_supplier_ref'],
                 ];
-                $sku = AmazonListingSettings::buildSku($skuRow);
+                $idProduct = (int) $r['id_product'];
+                $idPa = (int) $r['id_product_attribute'];
+                // The settings this combination is listed with (its own
+                // where the product lists combinations as separate products).
+                $ov = AmazonProductOverride::forCombination(isset($overrides[$idProduct]) ? $overrides[$idProduct] : null, $idPa);
+                $comboOverrides = $ov ? [$idProduct => $ov] : [];
+                $separate = !empty($ov['separate_combinations']);
+                $sku = AmazonProductOverride::effectiveSku($idProduct, AmazonListingSettings::buildSku($skuRow), $comboOverrides);
                 if ($sku === '' || isset($seen[$sku])) {
                     continue;
                 }
-                $idProduct = (int) $r['id_product'];
-                $idPa = (int) $r['id_product_attribute'];
 
                 if (!AmazonListingSettings::isSyncEnabled($idProduct)) {
                     ++$filteredOut;
@@ -1300,9 +1344,9 @@ class AmazonProductSync
                     continue;
                 }
 
-                $price = $this->effectivePrice((float) $r['price'], $idProduct, $idPa, $overrides);
+                $price = $this->effectivePrice((float) $r['price'], $idProduct, $idPa, $comboOverrides);
                 $quantity = $this->effectiveStock(
-                    $this->getQuantity($idProduct, $idPa, $idShop), $idProduct, $overrides
+                    $this->getQuantity($idProduct, $idPa, $idShop), $idProduct, $comboOverrides
                 );
 
                 if (($priceMin > 0 && $price < $priceMin) || ($priceMax > 0 && $price > $priceMax)
@@ -1330,7 +1374,7 @@ class AmazonProductSync
 
                 // Amazon-mappable variation attributes (color / size) for this combination
                 $amzAttrs = $this->getCombinationAmazonAttributes($idPa, $idLang);
-                if (!empty($amzAttrs)) {
+                if (!empty($amzAttrs) && !$separate) {
                     if (!isset($familyAttrKeys[$idProduct])) {
                         $familyAttrKeys[$idProduct] = [];
                     }
@@ -1425,7 +1469,7 @@ class AmazonProductSync
         }
 
         $price = AmazonListingSettings::applySpecificPrice($basePrice, $idProduct, $idProductAttribute);
-        $price = AmazonListingSettings::applyMarkup($price, $idProduct);
+        $price = AmazonListingSettings::applyMarkup($price, $idProduct, isset($overrides[$idProduct]) ? $overrides[$idProduct] : null);
 
         return AmazonListingSettings::applyRounding($price);
     }
@@ -2095,7 +2139,7 @@ class AmazonProductSync
         if (!is_array($rows)) {
             $rows = [];
         }
-        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($rows));
+        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($this->withCombinationSettings($rows)));
 
         if (empty($rows)) {
             $notice = AmazonI18n::get()->l('Nothing to push. Run "Sync PS to Amazon" first, and make sure some rows are marked PS only or Conflict.', 'amazonproductsync');
@@ -2420,7 +2464,7 @@ class AmazonProductSync
             $rows = [];
         }
 
-        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($rows));
+        $rows = $this->holdRepricedPrices($this->adaptRowsForMarketplace($this->withCombinationSettings($rows)));
 
         $messages = [];
         $skipped = [];
@@ -2712,7 +2756,8 @@ class AmazonProductSync
         }
 
         // GPSR responsible-person contact (product > manufacturer/supplier priority)
-        $gpsr = AmazonListingSettings::resolveGpsrContact($idProduct);
+        $gpsr = !empty($r['ov_gpsr_contact']) ? trim((string) $r['ov_gpsr_contact'])
+            : AmazonListingSettings::resolveGpsrContact($idProduct);
         if ($gpsr !== '') {
             if (filter_var($gpsr, FILTER_VALIDATE_EMAIL)) {
                 $attributes['gpsr_manufacturer_email_address'] = [[

@@ -39,11 +39,26 @@ class AmazonProductOverride
     private static $tableEnsured = false;
 
     private static $intCols = ['sync', 'force_in_stock', 'force_out_of_stock', 'sync_price',
-        'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt'];
+        'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt', 'separate_combinations'];
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points',
-        'condition_type', 'condition_note', 'price_markup', 'skip_combinations'];
+        'condition_type', 'condition_note', 'price_markup', 'skip_combinations', 'combination_settings'];
+
+    /**
+     * Settings a combination can have of its own when its product's
+     * combinations are listed as separate products. The brand is the
+     * product's in PrestaShop, so it stays the product's.
+     */
+    public static $combinationFields = [
+        'sync_price', 'sync_quantity', 'force_in_stock', 'force_out_of_stock', 'override_price',
+        'price_markup', 'override_sku', 'asin', 'gtin_exempt', 'is_fba', 'lead_time',
+        'shipping_template', 'browse_node', 'condition_type', 'condition_note', 'bullet_points',
+        'gpsr_contact', 'gift_option', 'transparency_code',
+    ];
+
+    /** Identifiers of one listing: a combination never takes its product's. */
+    private static $listingIdentity = ['override_sku', 'asin'];
 
     public static function ensureTable()
     {
@@ -96,6 +111,11 @@ class AmazonProductOverride
             'gtin_exempt' => 'TINYINT(1) NOT NULL DEFAULT 0',
             // Combinations kept off Amazon: id_product_attribute, comma-separated.
             'skip_combinations' => 'TEXT NULL',
+            // 1: each combination is a product of its own on Amazon (no
+            // variation family) and can carry its own settings, kept in
+            // combination_settings as JSON: id_product_attribute => values.
+            'separate_combinations' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            'combination_settings' => 'MEDIUMTEXT NULL',
         ];
 
         $existing = [];
@@ -128,7 +148,7 @@ class AmazonProductOverride
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
             'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
-            'skip_combinations' => '',
+            'skip_combinations' => '', 'separate_combinations' => 0, 'combination_settings' => '',
         ];
     }
 
@@ -400,6 +420,91 @@ class AmazonProductOverride
         }
 
         return in_array((int) $idProductAttribute, array_map('intval', explode(',', $override['skip_combinations'])), true);
+    }
+
+    /**
+     * A combination's own settings, as saved: field => value, only the
+     * fields it sets itself (the others follow the product).
+     *
+     * @param array|null $override the product's row from all() / get()
+     *
+     * @return array
+     */
+    public static function combinationSettings($override, $idProductAttribute)
+    {
+        if (empty($override['combination_settings'])) {
+            return [];
+        }
+        $all = json_decode((string) $override['combination_settings'], true);
+        $own = (is_array($all) && isset($all[(int) $idProductAttribute]) && is_array($all[(int) $idProductAttribute]))
+            ? $all[(int) $idProductAttribute] : [];
+
+        return array_intersect_key($own, array_flip(self::$combinationFields));
+    }
+
+    /**
+     * The settings a combination is listed with: its product's, minus the
+     * product's SKU and ASIN (they identify the product's own listing), plus
+     * the combination's own values when the product lists its combinations
+     * as separate products.
+     *
+     * @param array|null $override the product's row from all() / get()
+     *
+     * @return array|null null when the product has no settings saved
+     */
+    public static function forCombination($override, $idProductAttribute)
+    {
+        if (!$override || (int) $idProductAttribute <= 0) {
+            return $override;
+        }
+        foreach (self::$listingIdentity as $c) {
+            $override[$c] = '';
+        }
+        if (!empty($override['separate_combinations'])) {
+            foreach (self::combinationSettings($override, $idProductAttribute) as $c => $v) {
+                $override[$c] = $v;
+            }
+        }
+
+        return $override;
+    }
+
+    /**
+     * Turn the values posted for one combination into what is stored: a
+     * field left empty (or on "Same as the product") is not stored, so it
+     * keeps following the product.
+     *
+     * @param array $posted field => raw value; stock_force in/out/'' and the
+     *                      Yes/No fields as '1' / '0' / ''
+     *
+     * @return array
+     */
+    public static function normalizeCombinationValues(array $posted)
+    {
+        $out = [];
+        if (isset($posted['stock_force']) && $posted['stock_force'] !== '') {
+            $out['force_in_stock'] = ($posted['stock_force'] === 'in') ? 1 : 0;
+            $out['force_out_of_stock'] = ($posted['stock_force'] === 'out') ? 1 : 0;
+        }
+        foreach (['sync_price', 'sync_quantity', 'gtin_exempt', 'is_fba', 'gift_option'] as $c) {
+            if (isset($posted[$c]) && $posted[$c] !== '') {
+                $out[$c] = (int) $posted[$c] ? 1 : 0;
+            }
+        }
+        if (isset($posted['override_price']) && (float) $posted['override_price'] > 0) {
+            $out['override_price'] = (float) $posted['override_price'];
+        }
+        if (isset($posted['lead_time']) && trim((string) $posted['lead_time']) !== '') {
+            $out['lead_time'] = max(0, (int) $posted['lead_time']);
+        }
+        foreach (['price_markup', 'override_sku', 'asin', 'shipping_template', 'browse_node', 'condition_type',
+            'condition_note', 'bullet_points', 'gpsr_contact', 'transparency_code', ] as $c) {
+            if (isset($posted[$c]) && trim((string) $posted[$c]) !== '') {
+                $out[$c] = trim((string) $posted[$c]);
+            }
+        }
+
+        return $out;
     }
 
     /**

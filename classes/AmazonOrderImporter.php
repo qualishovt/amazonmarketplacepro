@@ -639,6 +639,30 @@ class AmazonOrderImporter
 
                 return $res;
             }
+
+            // A combination listed as a separate product, under its own SKU.
+            require_once dirname(__FILE__) . '/AmazonProductOverride.php';
+            AmazonProductOverride::ensureTable();
+            $rows = Db::getInstance()->executeS(
+                'SELECT s.`id_product`, s.`combination_settings` FROM `' . $p . 'amazonmarketplacepro_product_setting` s
+                 WHERE s.`separate_combinations` = 1 AND s.`combination_settings` LIKE \'%"override_sku"%\'
+                   AND ' . AmzproShop::sqlShared('s', $idShop) . '
+                   AND (s.`id_shop` = ' . $idShop . ' OR NOT EXISTS (
+                       SELECT 1 FROM `' . $p . 'amazonmarketplacepro_product_setting` own
+                       WHERE own.`id_product` = s.`id_product` AND own.`id_shop` = ' . $idShop . '))
+                 ORDER BY s.`id_shop` DESC'
+            );
+            foreach ((array) $rows as $row) {
+                $combinations = json_decode((string) $row['combination_settings'], true);
+                foreach ((is_array($combinations) ? $combinations : []) as $idPa => $own) {
+                    if (isset($own['override_sku']) && (string) $own['override_sku'] === $sku) {
+                        $res['id_product'] = (int) $row['id_product'];
+                        $res['id_product_attribute'] = (int) $idPa;
+
+                        return $res;
+                    }
+                }
+            }
         }
 
         // "SKU is built from PrestaShop ids" shops: 123 or 123_45, also when

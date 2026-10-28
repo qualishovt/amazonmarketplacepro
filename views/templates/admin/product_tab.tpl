@@ -59,6 +59,148 @@
             <p class="help-block">{l s='Untick a combination to keep it off Amazon; the ticked ones are sent as usual. If an unticked one is already on Amazon, it appears in System > Tools > Delete Listings from Amazon after the next full sync, where you can remove it.' mod='amazonmarketplacepro'}</p>
         </div>
     </div>
+
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Combinations on Amazon are' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-6">
+            <select name="amzpro_separate_combinations" id="amzpro-separate" class="form-control">
+                <option value="0"{if !$amzpro.separate_combinations} selected="selected"{/if}>{l s='Options of this product (one Amazon page with variations)' mod='amazonmarketplacepro'}</option>
+                <option value="1"{if $amzpro.separate_combinations} selected="selected"{/if}>{l s='Separate products, each with its own settings' mod='amazonmarketplacepro'}</option>
+            </select>
+            <p class="help-block">{l s='Separate products: each combination gets its own Amazon page, named after the product and its attributes, and can have its own settings below. A setting left empty follows the settings of the product on this tab. The brand is always the product\'s.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div id="amzpro-combo-settings"{if !$amzpro.separate_combinations} style="display:none;"{/if}>
+        {foreach from=$amzpro_combinations item=combo}
+            {assign var=own value=$combo.own}
+            {assign var=cid value=$combo.id|intval}
+            <details class="amzpro-combo"{if $own} open="open"{/if}>
+                <summary>
+                    <strong>{$combo.name|escape:'htmlall':'UTF-8'}</strong>{if $combo.reference} <span class="text-muted">({$combo.reference|escape:'htmlall':'UTF-8'})</span>{/if}
+                    {if $combo.own_count}<span class="badge">{$combo.own_count|intval}</span>{/if}
+                </summary>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Send price / send quantity' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][sync_price]" class="form-control" title="{l s='Price' mod='amazonmarketplacepro'}">
+                            <option value="">{l s='Price' mod='amazonmarketplacepro'}: {l s='same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($own.sync_price) && $own.sync_price} selected="selected"{/if}>{l s='Price' mod='amazonmarketplacepro'}: {l s='Yes' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($own.sync_price) && !$own.sync_price} selected="selected"{/if}>{l s='Price' mod='amazonmarketplacepro'}: {l s='No' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][sync_quantity]" class="form-control" title="{l s='Quantity' mod='amazonmarketplacepro'}">
+                            <option value="">{l s='Quantity' mod='amazonmarketplacepro'}: {l s='same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($own.sync_quantity) && $own.sync_quantity} selected="selected"{/if}>{l s='Quantity' mod='amazonmarketplacepro'}: {l s='Yes' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($own.sync_quantity) && !$own.sync_quantity} selected="selected"{/if}>{l s='Quantity' mod='amazonmarketplacepro'}: {l s='No' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Stock forcing' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-4">
+                        <select name="amzpro_combo[{$cid|intval}][stock_force]" class="form-control">
+                            <option value="">{l s='Same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="real"{if isset($own.force_in_stock) && !$own.force_in_stock && !$own.force_out_of_stock} selected="selected"{/if}>{l s='Send the real quantity' mod='amazonmarketplacepro'}</option>
+                            <option value="in"{if !empty($own.force_in_stock)} selected="selected"{/if}>{l s='Always in stock (send 999)' mod='amazonmarketplacepro'}</option>
+                            <option value="out"{if !empty($own.force_out_of_stock)} selected="selected"{/if}>{l s='Always out of stock (send 0)' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Override price' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="number" step="0.01" min="0" name="amzpro_combo[{$cid|intval}][override_price]" value="{if isset($own.override_price)}{$own.override_price|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                    <label class="control-label col-lg-2">{l s='Price markup' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][price_markup]" value="{if isset($own.price_markup)}{$own.price_markup|escape:'htmlall':'UTF-8'}{/if}" class="form-control" placeholder="10% / 2.50" /></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Override SKU' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][override_sku]" value="{if isset($own.override_sku)}{$own.override_sku|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                    <label class="control-label col-lg-2">{l s='ASIN' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][asin]" value="{if isset($own.asin)}{$own.asin|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='GTIN exemption (own brand)' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][gtin_exempt]" class="form-control">
+                            <option value="">{l s='Same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($own.gtin_exempt) && $own.gtin_exempt} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($own.gtin_exempt) && !$own.gtin_exempt} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                    <label class="control-label col-lg-2">{l s='Fulfilled by Amazon (FBA)' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][is_fba]" class="form-control">
+                            <option value="">{l s='Same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($own.is_fba) && !$own.is_fba} selected="selected"{/if}>{l s='No — I ship it (MFN)' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($own.is_fba) && $own.is_fba} selected="selected"{/if}>{l s='Yes — Amazon ships it (AFN)' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Handling time (days)' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="number" min="0" name="amzpro_combo[{$cid|intval}][lead_time]" value="{if isset($own.lead_time)}{$own.lead_time|intval}{/if}" class="form-control" /></div>
+                    <label class="control-label col-lg-2">{l s='Shipping template' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][shipping_template]" value="{if isset($own.shipping_template)}{$own.shipping_template|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Browse node' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][browse_node]" value="{if isset($own.browse_node)}{$own.browse_node|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                    <label class="control-label col-lg-2">{l s='Condition' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][condition_type]" class="form-control">
+                            <option value="">{l s='Same as the product' mod='amazonmarketplacepro'}</option>
+                            {foreach from=$amzpro_condition_types item=ckey}
+                                <option value="{$ckey|escape:'htmlall':'UTF-8'}"{if isset($own.condition_type) && $own.condition_type == $ckey} selected="selected"{/if}>{if $ckey == 'new_new'}{l s='New' mod='amazonmarketplacepro'}{elseif $ckey == 'used_like_new'}{l s='Used - Like New' mod='amazonmarketplacepro'}{elseif $ckey == 'used_very_good'}{l s='Used - Very Good' mod='amazonmarketplacepro'}{elseif $ckey == 'used_good'}{l s='Used - Good' mod='amazonmarketplacepro'}{elseif $ckey == 'used_acceptable'}{l s='Used - Acceptable' mod='amazonmarketplacepro'}{elseif $ckey == 'collectible_like_new'}{l s='Collectible - Like New' mod='amazonmarketplacepro'}{else}{l s='Refurbished' mod='amazonmarketplacepro'}{/if}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Condition note' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-6"><textarea name="amzpro_combo[{$cid|intval}][condition_note]" class="form-control" rows="2" maxlength="2000">{if isset($own.condition_note)}{$own.condition_note|escape:'htmlall':'UTF-8'}{/if}</textarea></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Key product features' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-6"><textarea name="amzpro_combo[{$cid|intval}][bullet_points]" class="form-control" rows="3" placeholder="{l s='One bullet point per line (max 5 lines, 500 characters each)' mod='amazonmarketplacepro'}">{if isset($own.bullet_points)}{$own.bullet_points|escape:'htmlall':'UTF-8'}{/if}</textarea></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='GPSR contact' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][gpsr_contact]" value="{if isset($own.gpsr_contact)}{$own.gpsr_contact|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                    <label class="control-label col-lg-2">{l s='Transparency code' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="text" name="amzpro_combo[{$cid|intval}][transparency_code]" value="{if isset($own.transparency_code)}{$own.transparency_code|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Gift options' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2">
+                        <select name="amzpro_combo[{$cid|intval}][gift_option]" class="form-control">
+                            <option value="">{l s='Same as the product' mod='amazonmarketplacepro'}</option>
+                            <option value="1"{if isset($own.gift_option) && $own.gift_option} selected="selected"{/if}>{l s='Yes' mod='amazonmarketplacepro'}</option>
+                            <option value="0"{if isset($own.gift_option) && !$own.gift_option} selected="selected"{/if}>{l s='No' mod='amazonmarketplacepro'}</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
+        {/foreach}
+    </div>
+    <style>
+        #amzpro-combo-settings .amzpro-combo { border: 1px solid #dfe5e7; border-radius: 4px; margin: 0 0 8px; padding: 6px 12px; }
+        #amzpro-combo-settings .amzpro-combo > summary { cursor: pointer; padding: 4px 0; }
+        #amzpro-combo-settings .amzpro-combo[open] > summary { margin-bottom: 10px; border-bottom: 1px solid #eef1f2; }
+        #amzpro-combo-settings .badge { margin-left: 6px; }
+    </style>
+    <script>
+        (function () {
+            var select = document.getElementById('amzpro-separate');
+            var block = document.getElementById('amzpro-combo-settings');
+            if (select && block) {
+                select.addEventListener('change', function () {
+                    block.style.display = (select.value === '1') ? '' : 'none';
+                });
+            }
+        })();
+    </script>
     {/if}
 
     <div class="form-group">
