@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.13';
+        $this->version = '1.6.14';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -779,6 +779,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_b2b_discount' => (float) AmzproShop::get('AMZPRO_B2B_DISCOUNT'),
             'mkpro_vcs_enabled' => AmzproShop::get('AMZPRO_VCS_ENABLED'),
             'mkpro_dev_mode' => (bool) AmzproShop::get('AMZPRO_DEV_MODE'),
+            'mkpro_ps17' => version_compare(_PS_VERSION_, '1.7', '>='),
 
             'mkpro_carrier_map' => self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true)),
             'amazon_carrier_codes' => self::$amazonCarrierCodes,
