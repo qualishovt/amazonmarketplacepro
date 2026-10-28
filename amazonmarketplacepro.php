@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.15';
+        $this->version = '1.6.16';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -3756,9 +3756,33 @@ class AmazonMarketplacePro extends Module
         $multistore = AmzproShop::isMultistore();
         $idShop = AmzproShop::id();
 
+        // The product's combinations, each ticked unless kept off Amazon.
+        $combinations = [];
+        $resume = Db::getInstance()->executeS(
+            'SELECT pa.`id_product_attribute`, pa.`reference`,
+                    GROUP_CONCAT(al.`name` ORDER BY pac.`id_attribute` SEPARATOR \' / \') AS attribute_designation
+             FROM `' . _DB_PREFIX_ . 'product_attribute` pa
+             LEFT JOIN `' . _DB_PREFIX_ . 'product_attribute_combination` pac
+                 ON (pac.`id_product_attribute` = pa.`id_product_attribute`)
+             LEFT JOIN `' . _DB_PREFIX_ . 'attribute_lang` al
+                 ON (al.`id_attribute` = pac.`id_attribute` AND al.`id_lang` = ' . (int) $this->context->language->id . ')
+             WHERE pa.`id_product` = ' . (int) $idProduct . '
+             GROUP BY pa.`id_product_attribute`
+             ORDER BY pa.`id_product_attribute` ASC'
+        );
+        foreach ((is_array($resume) ? $resume : []) as $c) {
+            $combinations[] = [
+                'id' => (int) $c['id_product_attribute'],
+                'name' => (string) $c['attribute_designation'],
+                'reference' => isset($c['reference']) ? (string) $c['reference'] : '',
+                'send' => !AmazonProductOverride::skipsCombination($overrides, $c['id_product_attribute']),
+            ];
+        }
+
         $this->context->smarty->assign([
             'amzpro' => $overrides,
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
+            'amzpro_combinations' => $combinations,
             'mkpro_ps17' => version_compare(_PS_VERSION_, '1.7', '>='),
             'amzpro_multistore' => $multistore,
             'amzpro_id_shop' => $idShop,
@@ -3819,6 +3843,19 @@ class AmazonMarketplacePro extends Module
             'gtin_exempt' => Tools::getIsset('amzpro_gtin_exempt') ? 1 : 0,
             'transparency_code' => trim((string) Tools::getValue('amzpro_transparency_code', '')),
         ];
+        // Combinations left unticked are kept off Amazon.
+        if (Tools::getIsset('amzpro_combos_present')) {
+            $send = array_map('intval', (array) Tools::getValue('amzpro_combo_send', []));
+            $skip = [];
+            foreach ((array) Db::getInstance()->executeS(
+                'SELECT `id_product_attribute` FROM `' . _DB_PREFIX_ . 'product_attribute` WHERE `id_product` = ' . (int) $idProduct
+            ) as $c) {
+                if (!in_array((int) $c['id_product_attribute'], $send, true)) {
+                    $skip[] = (int) $c['id_product_attribute'];
+                }
+            }
+            $data['skip_combinations'] = implode(',', $skip);
+        }
 
         AmazonProductOverride::save($idProduct, $data);
 

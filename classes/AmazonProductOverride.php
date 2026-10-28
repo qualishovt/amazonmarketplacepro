@@ -43,7 +43,7 @@ class AmazonProductOverride
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points',
-        'condition_type', 'condition_note', 'price_markup'];
+        'condition_type', 'condition_note', 'price_markup', 'skip_combinations'];
 
     public static function ensureTable()
     {
@@ -94,6 +94,8 @@ class AmazonProductOverride
             // Own-brand product listed under Amazon's GTIN exemption: no
             // EAN is sent and it is never matched to an ASIN by EAN.
             'gtin_exempt' => 'TINYINT(1) NOT NULL DEFAULT 0',
+            // Combinations kept off Amazon: id_product_attribute, comma-separated.
+            'skip_combinations' => 'TEXT NULL',
         ];
 
         $existing = [];
@@ -126,6 +128,7 @@ class AmazonProductOverride
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
             'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
+            'skip_combinations' => '',
         ];
     }
 
@@ -383,6 +386,20 @@ class AmazonProductOverride
         }
 
         return array_unique($out);
+    }
+
+    /**
+     * Whether a combination is kept off Amazon on its product's page.
+     *
+     * @param array|null $override the product's row from all() / get()
+     */
+    public static function skipsCombination($override, $idProductAttribute)
+    {
+        if (empty($override['skip_combinations']) || (int) $idProductAttribute <= 0) {
+            return false;
+        }
+
+        return in_array((int) $idProductAttribute, array_map('intval', explode(',', $override['skip_combinations'])), true);
     }
 
     /**

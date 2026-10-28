@@ -915,6 +915,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8ce00040577818534c89794c
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_efbdbfee2f06fe431e92788f16ac4163'] = 'Sincronizar este producto con Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_93cba07454f06a4a960172bbd6e2a435'] = 'Sí';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_7d33312c8488d1c12a4eca32153eadcb'] = 'No: excluirlo de todas las exportaciones';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c27d1ce4faa43c28108f47afce846d4d'] = 'Combinaciones enviadas a Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_03f0ef4a112df2d0642f036fd342530c'] = 'Desmarca una combinación para no enviarla a Amazon; las marcadas se envían como siempre. Si una desmarcada ya está en Amazon, aparece en Sistema > Herramientas > Eliminar anuncios de Amazon tras la próxima sincronización completa, donde puedes retirarla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0163f3c2afa4c3e1d71f795a94000b6f'] = 'Enviar precio / enviar cantidad';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_3601146c4e948c32b6424d2c0a7f0118'] = 'Precio';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_694e8d1f2ee056f98ee488bdc4982d73'] = 'Cantidad';

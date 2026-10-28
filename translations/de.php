@@ -915,6 +915,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8ce00040577818534c89794c
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_efbdbfee2f06fe431e92788f16ac4163'] = 'Dieses Produkt mit Amazon abgleichen';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_93cba07454f06a4a960172bbd6e2a435'] = 'Ja';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_7d33312c8488d1c12a4eca32153eadcb'] = 'Nein — von jedem Export ausschließen';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c27d1ce4faa43c28108f47afce846d4d'] = 'An Amazon gesendete Kombinationen';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_03f0ef4a112df2d0642f036fd342530c'] = 'Entfernen Sie das Häkchen bei einer Kombination, um sie nicht an Amazon zu senden; die angehakten werden wie gewohnt gesendet. Ist eine nicht angehakte bereits auf Amazon, erscheint sie nach der nächsten vollständigen Synchronisierung unter System > Werkzeuge > Angebote bei Amazon löschen, wo Sie sie entfernen können.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0163f3c2afa4c3e1d71f795a94000b6f'] = 'Preis senden / Menge senden';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_3601146c4e948c32b6424d2c0a7f0118'] = 'Preis';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_694e8d1f2ee056f98ee488bdc4982d73'] = 'Menge';

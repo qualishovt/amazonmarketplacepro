@@ -1290,6 +1290,11 @@ class AmazonProductSync
                     ++$filteredOut;
                     continue;
                 }
+                // A combination unticked on the product page stays off Amazon.
+                if (AmazonProductOverride::skipsCombination(isset($overrides[$idProduct]) ? $overrides[$idProduct] : null, $idPa)) {
+                    ++$filteredOut;
+                    continue;
+                }
                 if ($deltaCutoff !== null && !isset($queuedIds[$idProduct])
                     && $r['date_upd'] < $deltaCutoff) {
                     continue;

@@ -45,6 +45,22 @@
         </div>
     </div>
 
+    {if $amzpro_combinations}
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Combinations sent to Amazon' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-6">
+            <input type="hidden" name="amzpro_combos_present" value="1" />
+            {foreach from=$amzpro_combinations item=combo}
+                <div class="checkbox"><label>
+                    <input type="checkbox" name="amzpro_combo_send[]" value="{$combo.id|intval}"{if $combo.send} checked="checked"{/if} />
+                    {$combo.name|escape:'htmlall':'UTF-8'}{if $combo.reference} <span class="text-muted">({$combo.reference|escape:'htmlall':'UTF-8'})</span>{/if}
+                </label></div>
+            {/foreach}
+            <p class="help-block">{l s='Untick a combination to keep it off Amazon; the ticked ones are sent as usual. If an unticked one is already on Amazon, it appears in System > Tools > Delete Listings from Amazon after the next full sync, where you can remove it.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+    {/if}
+
     <div class="form-group">
         <label class="control-label col-lg-3">{l s='Send price / send quantity' mod='amazonmarketplacepro'}</label>
         <div class="col-lg-4">
