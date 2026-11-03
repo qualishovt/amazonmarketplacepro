@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.17';
+        $this->version = '1.6.18';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -329,7 +329,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_OAUTH_BETA', 'AMZPRO_OAUTH_NONCE', 'AMZPRO_OAUTH_RETURN_URL',
             'AMZPRO_SELLING_PARTNER_ID', 'AMZPRO_AUTO_REVIEW_REQUEST',
             'AMZPRO_STOCK_BUFFER', 'AMZPRO_DELETE_WHEN_OOS', 'AMZPRO_CONDITION_TYPE',
-            'AMZPRO_TAX_MODE', 'AMZPRO_LISTING_LANG',
+            'AMZPRO_TAX_MODE', 'AMZPRO_LISTING_LANG', 'AMZPRO_EXPORT_CATEGORIES',
             'AMZPRO_CARRIER_MAP', 'AMZPRO_SHIPPING_TEMPLATE', 'AMZPRO_B2B_DISCOUNT',
             'AMZPRO_VCS_ENABLED', 'AMZPRO_DEV_MODE',
             'AMZPRO_SKU_PREFIX', 'AMZPRO_SKU_SOURCE', 'AMZPRO_PRICE_MIN', 'AMZPRO_PRICE_MAX',
@@ -852,6 +852,9 @@ class AmazonMarketplacePro extends Module
             'mkpro_price_min' => (float) AmzproShop::get('AMZPRO_PRICE_MIN'),
             'mkpro_price_max' => (float) AmzproShop::get('AMZPRO_PRICE_MAX'),
             'mkpro_qty_min' => (int) AmzproShop::get('AMZPRO_QTY_MIN'),
+            'mkpro_export_categories' => array_values(array_filter(array_map('intval',
+                explode(',', (string) AmzproShop::get('AMZPRO_EXPORT_CATEGORIES'))))),
+            'mkpro_export_category_tree' => $this->exportCategoryTree(),
             'mkpro_use_specific_prices' => AmzproShop::get('AMZPRO_USE_SPECIFIC_PRICES'),
             'mkpro_specific_price_group' => (int) AmzproShop::get('AMZPRO_SPECIFIC_PRICE_GROUP'),
             'mkpro_report_email' => AmzproShop::get('AMZPRO_REPORT_EMAIL'),
@@ -1291,6 +1294,19 @@ class AmazonMarketplacePro extends Module
                 'used' => (string) Tools::getValue('mkpro_cond_map_used'),
                 'refurbished' => (string) Tools::getValue('mkpro_cond_map_refurbished'),
             ]));
+        }
+
+        // Products sent to Amazon: all, or only those in the chosen categories.
+        if (Tools::getIsset('mkpro_export_scope')) {
+            $chosen = [];
+            if (Tools::getValue('mkpro_export_scope') === 'categories') {
+                $chosen = array_values(array_unique(array_filter(array_map('intval',
+                    (array) Tools::getValue('mkpro_export_categories', [])))));
+                if (!$chosen) {
+                    $errors[] = $this->l('Choose at least one category to send only the products in it. Until then every active product is sent.');
+                }
+            }
+            AmzproShop::set('AMZPRO_EXPORT_CATEGORIES', implode(',', $chosen));
         }
 
         // Markup / delay cascade sources arrive as checkbox arrays.
@@ -1744,6 +1760,40 @@ class AmazonMarketplacePro extends Module
         $rows = Db::getInstance()->executeS($sql);
 
         return is_array($rows) ? $rows : [];
+    }
+
+    /**
+     * Every category of the shop in tree order, with its depth, for "Products
+     * sent to Amazon". Hidden ones are included: a category kept only to
+     * group the products for Amazon is usually hidden from customers.
+     *
+     * @return array
+     */
+    private function exportCategoryTree()
+    {
+        $idLang = (int) $this->context->language->id;
+        $idShop = AmzproShop::id();
+        $rows = Db::getInstance()->executeS(
+            'SELECT c.`id_category`, c.`level_depth`, c.`active`, cl.`name`
+             FROM `' . _DB_PREFIX_ . 'category` c
+             ' . $this->categoryShopJoin('c', $idShop) . '
+             INNER JOIN `' . _DB_PREFIX_ . 'category_lang` cl
+                 ON (cl.`id_category` = c.`id_category` AND cl.`id_lang` = ' . $idLang . '
+                     AND cl.`id_shop` = ' . ($idShop ? $idShop : 'c.`id_shop_default`') . ')
+             WHERE c.`id_parent` > 0 AND c.`is_root_category` = 0
+             ORDER BY c.`nleft` ASC, cl.`name` ASC'
+        );
+        $out = [];
+        foreach ((is_array($rows) ? $rows : []) as $r) {
+            $out[] = [
+                'id' => (int) $r['id_category'],
+                'depth' => max(0, (int) $r['level_depth'] - 2),
+                'name' => (string) $r['name'],
+                'active' => (int) $r['active'],
+            ];
+        }
+
+        return $out;
     }
 
     /**

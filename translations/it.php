@@ -150,6 +150,11 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_5126e08cda716880239d4c860f
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ab26d441907757297ede0cc7fe9928db'] = 'Esporta solo i prodotti il cui prezzo finale (dopo il ricarico) rientra in questa fascia. 0 disattiva il limite.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1e32be4199278af472fb13f76b4006b3'] = 'Quantità min.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6c8c07cc332f92f283a13818f48c672b'] = 'Esporta solo i prodotti con almeno questa giacenza. 0 disattiva il filtro.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a5039f03a0647bfdc7b4e0a34eec7482'] = 'Prodotti inviati ad Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_eefc85c645030b98fbf9c02700a58bda'] = 'Tutti i prodotti attivi';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_949017a8f8f207e25a18cd8f1a7d40ff'] = 'Solo i prodotti di queste categorie';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_662f707d5491e9bce8238a6c0be92190'] = 'nascosta';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_991c9c308c210fb8e62b895b44656f39'] = 'Vengono inviati solo i prodotti presenti in una delle categorie selezionate; conta qualsiasi categoria del prodotto, non solo quella predefinita. Suggerimento: crea una categoria Amazon, nascondila nel negozio e aggiungici i prodotti che vendi su Amazon. Ctrl+clic seleziona più categorie. I prodotti già su Amazon che non vengono più inviati compaiono in Sistema > Strumenti > Elimina inserzioni da Amazon dopo la prossima sincronizzazione completa.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2bbcf0f0feec9b7fed3e6ed91bb489dc'] = 'Usa i prezzi specifici';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_00d23a76e43b46dae9ec7aa9dcbebb32'] = 'Attivo';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70008c77df282cffefda067f5e85fad6'] = 'Gruppo di clienti per i prezzi';
@@ -1001,6 +1006,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_b1734f430bac920
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3c9f4e2fcfe16f1c7750c557daaf2392'] = 'Da collezione - come nuovo';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_6da03a74721a0554b7143254225cc08a'] = 'Ricondizionato';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_5480d7039db34ca4b40c984fd35070e3'] = 'Il negozio %s è già connesso a questo account venditore Amazon su questo marketplace. Ogni negozio ha bisogno di un proprio account venditore o marketplace, quindi l\'ID venditore e il marketplace non sono stati salvati.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_abe0fd5056580f1d8f7316ab9fc1f1f3'] = 'Scegli almeno una categoria per inviare solo i suoi prodotti. Fino ad allora vengono inviati tutti i prodotti attivi.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_5834adbb41c4e5248d1b38a2b9c4149f'] = 'La selezione del negozio è cambiata da quando questa pagina è stata aperta. Ricarica la pagina.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_804ccd6219996d12eda865d1c0707423'] = 'Tutti i negozi';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_f2c19a689032cb1e1e35e4e7ec7efdf2'] = 'Ora è il tuo cron a governare la pianificazione e questo negozio è stato rimosso dallo scheduler IntelliPresta.';

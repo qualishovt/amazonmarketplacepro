@@ -587,6 +587,32 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Products sent to Amazon' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_export_scope" id="mkpro-export-scope" class="form-control" style="max-width:420px;">
+                    <option value="all"{if !$mkpro_export_categories} selected="selected"{/if}>{l s='All active products' mod='amazonmarketplacepro'}</option>
+                    <option value="categories"{if $mkpro_export_categories} selected="selected"{/if}>{l s='Only the products in these categories' mod='amazonmarketplacepro'}</option>
+                </select>
+                <div id="mkpro-export-categories"{if !$mkpro_export_categories} style="display:none;"{/if}>
+                    <select name="mkpro_export_categories[]" multiple="multiple" size="12" class="form-control" style="max-width:420px;margin-top:8px;height:auto;">
+                        {foreach from=$mkpro_export_category_tree item=cat}
+                            <option value="{$cat.id|intval}"{if in_array($cat.id, $mkpro_export_categories)} selected="selected"{/if}>{section name=d loop=$cat.depth}&nbsp;&nbsp;&nbsp;{/section}{$cat.name|escape:'htmlall':'UTF-8'}{if !$cat.active} ({l s='hidden' mod='amazonmarketplacepro'}){/if}</option>
+                        {/foreach}
+                    </select>
+                </div>
+                <p class="help-block">{l s='Only the products in one of the selected categories are sent; any category of the product counts, not only its default one. Tip: create a category named Amazon, hide it from your shop, and add to it the products you sell on Amazon. Ctrl+click selects several categories. Products already on Amazon that are no longer sent appear in System > Tools > Delete Listings from Amazon after the next full sync.' mod='amazonmarketplacepro'}</p>
+                <script>
+                    (function () {
+                        var scope = document.getElementById('mkpro-export-scope');
+                        var list = document.getElementById('mkpro-export-categories');
+                        scope.addEventListener('change', function () {
+                            list.style.display = (scope.value === 'categories') ? '' : 'none';
+                        });
+                    })();
+                </script>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Use specific prices' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_use_specific_prices" class="form-control">

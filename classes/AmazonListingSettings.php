@@ -693,6 +693,12 @@ class AmazonListingSettings
         if (isset($products[(int) $idProduct]) && !(int) $products[(int) $idProduct]['sync']) {
             return false;
         }
+        // "Only products in these categories": a product in none of them
+        // (in any of its categories, not only the default one) stays off.
+        $only = self::exportCategoryProducts();
+        if ($only !== null && !isset($only[(int) $idProduct])) {
+            return false;
+        }
 
         $ctx = self::productContext($idProduct);
         $map = [
@@ -711,6 +717,36 @@ class AmazonListingSettings
         }
 
         return true;
+    }
+
+    /**
+     * Products allowed by "Products sent to Amazon: only those in these
+     * categories", as id_product => true; null when every product may go.
+     * A product counts when it is in one of the categories in any way, so a
+     * hidden "Amazon" category that only groups products works.
+     *
+     * @return array|null
+     */
+    public static function exportCategoryProducts()
+    {
+        static $cache = [];
+        $idShop = (int) AmzproShop::actingId();
+        $ids = array_filter(array_map('intval', explode(',', (string) AmzproShop::get('AMZPRO_EXPORT_CATEGORIES', $idShop))));
+        if (!$ids) {
+            return null;
+        }
+        $key = $idShop . '|' . implode(',', $ids);
+        if (!isset($cache[$key])) {
+            $cache[$key] = [];
+            foreach ((array) Db::getInstance()->executeS(
+                'SELECT DISTINCT `id_product` FROM `' . _DB_PREFIX_ . 'category_product`
+                 WHERE `id_category` IN (' . implode(',', $ids) . ')'
+            ) as $r) {
+                $cache[$key][(int) $r['id_product']] = true;
+            }
+        }
+
+        return $cache[$key];
     }
 
     /* ─────────────────── Barcodes ─────────────────── */

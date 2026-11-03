@@ -150,6 +150,11 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_5126e08cda716880239d4c860f
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ab26d441907757297ede0cc7fe9928db'] = 'Eksportuj tylko produkty, których cena końcowa (po narzucie) mieści się w tym zakresie. Wartość 0 wyłącza dane ograniczenie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1e32be4199278af472fb13f76b4006b3'] = 'Ilość min.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_6c8c07cc332f92f283a13818f48c672b'] = 'Eksportuj tylko produkty o co najmniej takim stanie magazynowym. Wartość 0 wyłącza filtr.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a5039f03a0647bfdc7b4e0a34eec7482'] = 'Produkty wysyłane do Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_eefc85c645030b98fbf9c02700a58bda'] = 'Wszystkie aktywne produkty';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_949017a8f8f207e25a18cd8f1a7d40ff'] = 'Tylko produkty z tych kategorii';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_662f707d5491e9bce8238a6c0be92190'] = 'ukryta';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_991c9c308c210fb8e62b895b44656f39'] = 'Wysyłane są tylko produkty z jednej z wybranych kategorii; liczy się każda kategoria produktu, nie tylko domyślna. Wskazówka: utwórz kategorię Amazon, ukryj ją w sklepie i dodaj do niej produkty sprzedawane na Amazon. Ctrl+klik zaznacza kilka kategorii. Produkty już obecne na Amazon, które nie są już wysyłane, pojawią się w System > Narzędzia > Usuń oferty z Amazon po następnej pełnej synchronizacji.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2bbcf0f0feec9b7fed3e6ed91bb489dc'] = 'Używaj cen specjalnych';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_00d23a76e43b46dae9ec7aa9dcbebb32'] = 'Włączone';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70008c77df282cffefda067f5e85fad6'] = 'Grupa klientów dla cen';
@@ -1001,6 +1006,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_b1734f430bac920
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_3c9f4e2fcfe16f1c7750c557daaf2392'] = 'Kolekcjonerski - jak nowy';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_6da03a74721a0554b7143254225cc08a'] = 'Odnowiony';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_5480d7039db34ca4b40c984fd35070e3'] = 'Sklep %s jest już połączony z tym kontem sprzedawcy Amazon na tym marketplace. Każdy sklep potrzebuje własnego konta sprzedawcy lub marketplace\'u, dlatego identyfikator sprzedawcy i marketplace nie zostały zapisane.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_abe0fd5056580f1d8f7316ab9fc1f1f3'] = 'Wybierz co najmniej jedną kategorię, aby wysyłać tylko jej produkty. Do tego czasu wysyłane są wszystkie aktywne produkty.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_5834adbb41c4e5248d1b38a2b9c4149f'] = 'Wybór sklepu zmienił się od otwarcia tej strony. Przeładuj stronę.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_804ccd6219996d12eda865d1c0707423'] = 'Wszystkie sklepy';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_f2c19a689032cb1e1e35e4e7ec7efdf2'] = 'Od teraz harmonogramem steruje Twój własny cron, a ten sklep został usunięty z harmonogramu IntelliPresta.';
