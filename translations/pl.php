@@ -936,6 +936,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c03be1c575af838a4e8cba2b
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ba5036a9b83faff1e22fd2bdf0d2111c'] = 'Wysyłaj rzeczywistą ilość';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e5701492a69ff6a'] = 'Zawsze dostępny (wysyłaj 999)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Zawsze niedostępny (wysyłaj 0)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b2260bd0b6120ff815889b2f8cc179c2'] = 'Bufor magazynowy (margines bezpieczeństwa)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Cena zastępcza';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Narzut cenowy';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'Własne SKU';
@@ -962,6 +963,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_161eaf6f0fa1eba4a10d5a30
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6a40fec55dbad56067279f6d48421a6e'] = 'Kod Transparency';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bf3b3ed0e4fd43efff9c26b3d35c6c2f'] = 'Opcje prezentu';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b867aba6d3b702956bd10a44baf27ffb'] = 'Odznaczenie jednego z tych pól pozostawia daną wartość nietkniętą w Amazon (przydatne, gdy zmieniasz ceny bezpośrednio w Amazon).';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4eac00e699078bb0fdd11530c59b921f'] = 'Sztuki tego produktu wstrzymane dla Amazon: przy 2 i stanie 10 Amazon widzi 8. Puste = bufor magazynowy z ustawień modułu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Wysyłana zamiast ceny sklepowej (narzuty i reguły cenowe są pomijane). Puste = użyj ceny sklepowej.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Własny narzut tego produktu na Amazon: procent („10%”) lub kwota („2.50”). Zastępuje dla tego produktu narzuty kategorii, producenta i dostawcy. Puste = użyj tamtych.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Użyj, gdy ten produkt istnieje już w Twoim asortymencie Amazon pod innym SKU sprzedawcy. Służy zarówno do aktualizacji oferty, jak i do dopasowywania zamówień.';

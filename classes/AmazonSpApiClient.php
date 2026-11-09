@@ -274,16 +274,20 @@ class AmazonSpApiClient
      *
      * @param int $rawQuantity Real PrestaShop stock
      * @param int|null $idShop Null = the shop the request acts for
+     * @param int|null $buffer The product's own buffer; null = the global one
      *
      * @return int
      */
-    public static function effectiveQuantity($rawQuantity, $idShop = null)
+    public static function effectiveQuantity($rawQuantity, $idShop = null, $buffer = null)
     {
         // Panic switch: publish 0 for everything (e.g. before holidays).
         if (AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)) {
             return 0;
         }
-        $buffer = (int) AmzproShop::get('AMZPRO_STOCK_BUFFER', $idShop);
+        // A product's own buffer (product page) replaces the global one.
+        if ($buffer === null) {
+            $buffer = (int) AmzproShop::get('AMZPRO_STOCK_BUFFER', $idShop);
+        }
         $qty = (int) $rawQuantity - max(0, $buffer);
 
         return ($qty > 0) ? $qty : 0;

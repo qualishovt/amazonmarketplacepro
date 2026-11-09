@@ -109,6 +109,10 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="control-label col-lg-3">{l s='Stock buffer (security margin)' mod='amazonmarketplacepro'}</label>
+                    <div class="col-lg-2"><input type="number" min="0" name="amzpro_combo[{$cid|intval}][stock_buffer]" value="{if isset($own.stock_buffer)}{$own.stock_buffer|intval}{/if}" class="form-control" /></div>
+                </div>
+                <div class="form-group">
                     <label class="control-label col-lg-3">{l s='Override price' mod='amazonmarketplacepro'}</label>
                     <div class="col-lg-2"><input type="number" step="0.01" min="0" name="amzpro_combo[{$cid|intval}][override_price]" value="{if isset($own.override_price)}{$own.override_price|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></div>
                     <label class="control-label col-lg-2">{l s='Price markup' mod='amazonmarketplacepro'}</label>
@@ -221,6 +225,14 @@
                 <option value="in"{if $amzpro.force_in_stock} selected="selected"{/if}>{l s='Always in stock (send 999)' mod='amazonmarketplacepro'}</option>
                 <option value="out"{if $amzpro.force_out_of_stock} selected="selected"{/if}>{l s='Always out of stock (send 0)' mod='amazonmarketplacepro'}</option>
             </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Stock buffer (security margin)' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-4">
+            <input type="number" min="0" name="amzpro_stock_buffer" value="{if $amzpro.stock_buffer >= 0}{$amzpro.stock_buffer|intval}{/if}" class="form-control" />
+            <p class="help-block">{l s='Units of this product kept back from Amazon: with 2 and 10 in stock, Amazon sees 8. Empty = the stock buffer of the module settings.' mod='amazonmarketplacepro'}</p>
         </div>
     </div>
 

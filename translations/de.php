@@ -936,6 +936,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c03be1c575af838a4e8cba2b
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ba5036a9b83faff1e22fd2bdf0d2111c'] = 'Die tatsächliche Menge senden';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e5701492a69ff6a'] = 'Immer auf Lager (999 senden)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Immer nicht verfügbar (0 senden)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b2260bd0b6120ff815889b2f8cc179c2'] = 'Lagerpuffer (Sicherheitsmarge)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Abweichender Preis';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Preisaufschlag';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'Abweichende SKU';
@@ -962,6 +963,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_161eaf6f0fa1eba4a10d5a30
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6a40fec55dbad56067279f6d48421a6e'] = 'Transparency-Code';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bf3b3ed0e4fd43efff9c26b3d35c6c2f'] = 'Geschenkoptionen';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b867aba6d3b702956bd10a44baf27ffb'] = 'Wird eines der beiden Häkchen entfernt, bleibt der jeweilige Wert bei Amazon unverändert (nützlich, wenn Sie Ihre Preise direkt bei Amazon anpassen).';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4eac00e699078bb0fdd11530c59b921f'] = 'Einheiten dieses Produkts, die Amazon vorenthalten werden: bei 2 und 10 auf Lager sieht Amazon 8. Leer = der Lagerpuffer der Moduleinstellungen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Wird anstelle des Shop-Preises gesendet (Aufschläge und Preisregeln entfallen). Leer = den Shop-Preis verwenden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Eigener Aufschlag dieses Produkts bei Amazon: ein Prozentsatz („10%“) oder ein Betrag („2.50“). Er ersetzt für dieses Produkt die Aufschläge von Kategorie, Hersteller und Lieferant. Leer = diese verwenden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Verwenden Sie dies, wenn das Produkt in Ihrem Amazon-Bestand bereits unter einer anderen Verkäufer-SKU existiert. Wird sowohl für Angebotsaktualisierungen als auch für die Bestellzuordnung genutzt.';

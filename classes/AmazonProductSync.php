@@ -613,13 +613,14 @@ class AmazonProductSync
         }
         $sent[$signature] = true;
 
+        $ov = isset($overrides[$idProduct]) ? $overrides[$idProduct] : null;
         $staged = [
             'ps_price' => $price,
             'ps_quantity' => $quantity,
             'amazon_product_type' => $row['amazon_product_type'],
+            'ov_stock_buffer' => $ov ? $ov['stock_buffer'] : null,
         ];
         $patches = [];
-        $ov = isset($overrides[$idProduct]) ? $overrides[$idProduct] : null;
         if (!$ov || (int) $ov['sync_price']) {
             $body = $this->buildPatchBody($staged, 'price');
             $patches[] = $body['patches'][0];
@@ -641,7 +642,7 @@ class AmazonProductSync
         // "Delete listings when out of stock" behaves as in the push.
         $path = '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku);
         if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop) && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)
-            && AmazonSpApiClient::effectiveQuantity($quantity) <= 0) {
+            && AmazonSpApiClient::effectiveQuantity($quantity, null, self::rowStockBuffer($staged)) <= 0) {
             $result['deleted'] = true;
             $resp = $this->client->request('DELETE', $path, ['marketplaceIds' => $this->marketplaceId]);
         } else {
@@ -686,6 +687,30 @@ class AmazonProductSync
     }
 
     /**
+     * The brand the listing carries: the brand set on the product's Amazon
+     * tab, else its PrestaShop brand (manufacturer). Staged as such so the
+     * sync summary shows what is sent.
+     */
+    private static function brandSent($overrides, $idProduct, $manufacturer)
+    {
+        if (isset($overrides[$idProduct]['brand']) && trim((string) $overrides[$idProduct]['brand']) !== '') {
+            return trim((string) $overrides[$idProduct]['brand']);
+        }
+
+        return (string) $manufacturer;
+    }
+
+    /**
+     * The product's (or combination's) own stock buffer, null when it
+     * follows the global one.
+     */
+    private static function rowStockBuffer($r)
+    {
+        return (isset($r['ov_stock_buffer']) && $r['ov_stock_buffer'] !== '' && (int) $r['ov_stock_buffer'] >= 0)
+            ? (int) $r['ov_stock_buffer'] : null;
+    }
+
+    /**
      * Push/feed rows of combinations take the settings they are listed with:
      * never their product's SKU or ASIN, and their own values where the
      * product lists its combinations as separate products.
@@ -696,7 +721,7 @@ class AmazonProductSync
         $fields = [
             'asin', 'is_fba', 'lead_time', 'gift_option', 'transparency_code', 'shipping_template',
             'browse_node', 'bullet_points', 'condition_type', 'condition_note', 'sync_price',
-            'sync_quantity', 'gtin_exempt', 'gpsr_contact',
+            'sync_quantity', 'gtin_exempt', 'gpsr_contact', 'stock_buffer',
         ];
         foreach ($rows as &$r) {
             $idProduct = (int) $r['id_product'];
@@ -1265,7 +1290,7 @@ class AmazonProductSync
                     'sale_to' => $sale ? $sale['to'] : null,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
-                    'manufacturer' => (string) $r['manufacturer_name'],
+                    'manufacturer' => self::brandSent($overrides, $idProduct, $r['manufacturer_name']),
                     'ean13' => (string) $r['ean13'],
                     'id_category_default' => (int) $r['id_category_default'],
                     'images' => $images,
@@ -1404,7 +1429,7 @@ class AmazonProductSync
                     'sale_to' => $sale ? $sale['to'] : null,
                     'description' => (string) $r['description'],
                     'description_short' => (string) $r['description_short'],
-                    'manufacturer' => (string) $r['manufacturer_name'],
+                    'manufacturer' => self::brandSent($overrides, $idProduct, $r['manufacturer_name']),
                     'ean13' => $ean,
                     'id_category_default' => (int) $r['id_category_default'],
                     'images' => $images,
@@ -2126,7 +2151,7 @@ class AmazonProductSync
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity,
-                    ov.`gtin_exempt` AS ov_gtin_exempt
+                    ov.`gtin_exempt` AS ov_gtin_exempt, ov.`stock_buffer` AS ov_stock_buffer
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere('p') . '
@@ -2230,7 +2255,7 @@ class AmazonProductSync
         if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $this->shopId())
             && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $this->shopId())
             && empty($r['is_parent'])
-            && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
+            && AmazonSpApiClient::effectiveQuantity($r['ps_quantity'], null, self::rowStockBuffer($r)) <= 0) {
             $resp = $this->client->request(
                 'DELETE',
                 '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
@@ -2450,7 +2475,7 @@ class AmazonProductSync
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
                     ov.`sync_price` AS ov_sync_price, ov.`sync_quantity` AS ov_sync_quantity,
-                    ov.`gtin_exempt` AS ov_gtin_exempt
+                    ov.`gtin_exempt` AS ov_gtin_exempt, ov.`stock_buffer` AS ov_stock_buffer
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_product` p'
              . $this->listingJoins('p') . '
              WHERE p.`id_shop` = ' . $idShop . $this->marketplaceWhere('p') . '
@@ -2495,7 +2520,7 @@ class AmazonProductSync
             if (AmzproShop::get('AMZPRO_DELETE_WHEN_OOS', $idShop)
                 && !AmzproShop::get('AMZPRO_FORCE_ZERO_QTY', $idShop)
                 && empty($r['is_parent'])
-                && AmazonSpApiClient::effectiveQuantity($r['ps_quantity']) <= 0) {
+                && AmazonSpApiClient::effectiveQuantity($r['ps_quantity'], null, self::rowStockBuffer($r)) <= 0) {
                 $messages[] = [
                     'messageId' => $messageId++,
                     'sku' => $sku,
@@ -2543,7 +2568,7 @@ class AmazonProductSync
                 'path' => '/attributes/fulfillment_availability',
                 'value' => [[
                     'fulfillment_channel_code' => 'DEFAULT',
-                    'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+                    'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity'], null, self::rowStockBuffer($r)),
                     'marketplace_id' => $this->marketplaceId,
                 ]],
             ];
@@ -2705,7 +2730,7 @@ class AmazonProductSync
             ? ['fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId)]
             : [
                 'fulfillment_channel_code' => 'DEFAULT',
-                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity'], null, self::rowStockBuffer($r)),
             ];
         // Handling time: profile default first, then the
         // category/manufacturer/supplier cascade and the module default.
@@ -3193,7 +3218,7 @@ class AmazonProductSync
             ? ['fulfillment_channel_code' => AmazonSpApiClient::fbaChannelCode($this->marketplaceId)]
             : [
                 'fulfillment_channel_code' => 'DEFAULT',
-                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity']),
+                'quantity' => AmazonSpApiClient::effectiveQuantity($r['ps_quantity'], null, self::rowStockBuffer($r)),
             ];
         $delay = (isset($r['profile_latency']) && (int) $r['profile_latency'] >= 0)
             ? (int) $r['profile_latency']

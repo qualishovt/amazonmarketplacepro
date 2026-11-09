@@ -29,7 +29,7 @@ class AmazonProductOverride
     public static $propagatable = [
         'sync', 'sync_price', 'sync_quantity', 'force_in_stock', 'force_out_of_stock',
         'is_fba', 'lead_time', 'gift_option', 'shipping_template', 'browse_node',
-        'brand', 'condition_type', 'condition_note', 'gpsr_contact', 'gtin_exempt',
+        'brand', 'condition_type', 'condition_note', 'gpsr_contact', 'gtin_exempt', 'stock_buffer',
     ];
 
     /** Cache: id_shop => id_product => row */
@@ -54,7 +54,7 @@ class AmazonProductOverride
         'sync_price', 'sync_quantity', 'force_in_stock', 'force_out_of_stock', 'override_price',
         'price_markup', 'override_sku', 'asin', 'gtin_exempt', 'is_fba', 'lead_time',
         'shipping_template', 'browse_node', 'condition_type', 'condition_note', 'bullet_points',
-        'gpsr_contact', 'gift_option', 'transparency_code',
+        'gpsr_contact', 'gift_option', 'transparency_code', 'stock_buffer',
     ];
 
     /** Identifiers of one listing: a combination never takes its product's. */
@@ -114,6 +114,9 @@ class AmazonProductOverride
             // 1: each combination is a product of its own on Amazon (no
             // variation family) and can carry its own settings, kept in
             // combination_settings as JSON: id_product_attribute => values.
+            // Units kept back from Amazon for this product; -1 = the global
+            // stock buffer.
+            'stock_buffer' => 'INT(11) NOT NULL DEFAULT -1',
             'separate_combinations' => 'TINYINT(1) NOT NULL DEFAULT 0',
             'combination_settings' => 'MEDIUMTEXT NULL',
         ];
@@ -149,6 +152,7 @@ class AmazonProductOverride
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
             'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
             'skip_combinations' => '', 'separate_combinations' => 0, 'combination_settings' => '',
+            'stock_buffer' => -1,
         ];
     }
 
@@ -220,6 +224,10 @@ class AmazonProductOverride
         if (array_key_exists('lead_time', $data)) {
             $values['lead_time'] = ($data['lead_time'] === '' || $data['lead_time'] === null) ? -1 : (int) $data['lead_time'];
             $assign['lead_time'] = (string) $values['lead_time'];
+        }
+        if (array_key_exists('stock_buffer', $data)) {
+            $values['stock_buffer'] = ($data['stock_buffer'] === '' || $data['stock_buffer'] === null) ? -1 : max(-1, (int) $data['stock_buffer']);
+            $assign['stock_buffer'] = (string) $values['stock_buffer'];
         }
         if (array_key_exists('override_price', $data)) {
             $values['override_price'] = (float) $data['override_price'];
@@ -496,6 +504,9 @@ class AmazonProductOverride
         }
         if (isset($posted['lead_time']) && trim((string) $posted['lead_time']) !== '') {
             $out['lead_time'] = max(0, (int) $posted['lead_time']);
+        }
+        if (isset($posted['stock_buffer']) && trim((string) $posted['stock_buffer']) !== '') {
+            $out['stock_buffer'] = max(0, (int) $posted['stock_buffer']);
         }
         foreach (['price_markup', 'override_sku', 'asin', 'shipping_template', 'browse_node', 'condition_type',
             'condition_note', 'bullet_points', 'gpsr_contact', 'transparency_code', ] as $c) {

@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.18';
+        $this->version = '1.6.19';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -3882,6 +3882,7 @@ class AmazonMarketplacePro extends Module
             'sync_quantity' => Tools::getIsset('amzpro_sync_quantity') ? 1 : 0,
             'force_in_stock' => ($stockForce === 'in') ? 1 : 0,
             'force_out_of_stock' => ($stockForce === 'out') ? 1 : 0,
+            'stock_buffer' => trim((string) Tools::getValue('amzpro_stock_buffer', '')),
             'override_price' => (float) Tools::getValue('amzpro_override_price', 0),
             'price_markup' => self::normalizeMarkup(Tools::getValue('amzpro_price_markup', '')),
             'override_sku' => trim((string) Tools::getValue('amzpro_override_sku', '')),

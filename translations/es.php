@@ -936,6 +936,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c03be1c575af838a4e8cba2b
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ba5036a9b83faff1e22fd2bdf0d2111c'] = 'Enviar la cantidad real';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e5701492a69ff6a'] = 'Siempre disponible (enviar 999)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Siempre agotado (enviar 0)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b2260bd0b6120ff815889b2f8cc179c2'] = 'Reserva de existencias (margen de seguridad)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Precio sustitutivo';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Margen de precio';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'SKU personalizado';
@@ -962,6 +963,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_161eaf6f0fa1eba4a10d5a30
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6a40fec55dbad56067279f6d48421a6e'] = 'Código Transparency';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bf3b3ed0e4fd43efff9c26b3d35c6c2f'] = 'Opciones de regalo';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b867aba6d3b702956bd10a44baf27ffb'] = 'Desmarcar una de las dos casillas deja ese valor intacto en Amazon (útil si ajustas los precios en la propia Amazon).';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4eac00e699078bb0fdd11530c59b921f'] = 'Unidades de este producto que se reservan fuera de Amazon: con 2 y 10 en stock, Amazon ve 8. Vacío = el margen de stock de los ajustes del módulo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Se envía en lugar del precio de la tienda (se omiten los márgenes y las reglas de precio). Vacío = usar el precio de la tienda.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Margen propio de este producto en Amazon: un porcentaje («10%») o un importe («2.50»). Sustituye para este producto los márgenes de categoría, fabricante y proveedor. Vacío = usar esos.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'Úsalo cuando este producto ya exista en tu inventario de Amazon con otro SKU de vendedor. Sirve tanto para actualizar el anuncio como para emparejar pedidos.';

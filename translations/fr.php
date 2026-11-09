@@ -936,6 +936,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c03be1c575af838a4e8cba2b
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ba5036a9b83faff1e22fd2bdf0d2111c'] = 'Envoyer la quantité réelle';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8b69b4ea3301ab041e5701492a69ff6a'] = 'Toujours en stock (envoyer 999)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8bd103b0f7a081f155b6aecd574c2f0c'] = 'Toujours en rupture (envoyer 0)';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b2260bd0b6120ff815889b2f8cc179c2'] = 'Réserve de stock (marge de sécurité)';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_a77122094ec172e3ed00d030c2c73bda'] = 'Prix imposé';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c97903ef3cb035f18449eb7e62135777'] = 'Majoration de prix';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_8fac216845cb9e6d9c3c68bbbecd67ac'] = 'SKU personnalisé';
@@ -962,6 +963,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_161eaf6f0fa1eba4a10d5a30
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6a40fec55dbad56067279f6d48421a6e'] = 'Code Transparency';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bf3b3ed0e4fd43efff9c26b3d35c6c2f'] = 'Options cadeau';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b867aba6d3b702956bd10a44baf27ffb'] = 'Décocher l\'une des deux cases laisse la valeur correspondante inchangée sur Amazon (utile lorsque vous ajustez vos prix directement sur Amazon).';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_4eac00e699078bb0fdd11530c59b921f'] = 'Unités de ce produit non proposées sur Amazon : avec 2 et un stock de 10, Amazon voit 8. Vide = le stock tampon des réglages du module.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_0dfd2b84f189f27f6d06cf4c1957d2c4'] = 'Envoyé à la place du prix boutique (les majorations et les règles tarifaires sont ignorées). Vide = utiliser le prix boutique.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_01ddf4b5ecc5cf5ccf95f95f6a578009'] = 'Majoration propre à ce produit sur Amazon : un pourcentage (« 10% ») ou un montant (« 2.50 »). Elle remplace pour ce produit les majorations de catégorie, de fabricant et de fournisseur. Vide = utiliser celles-ci.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a3fd1fc46'] = 'À utiliser lorsque ce produit existe déjà dans votre inventaire Amazon sous un autre SKU vendeur. Sert à la fois aux mises à jour d\'offre et au rapprochement des commandes.';
