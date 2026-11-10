@@ -87,6 +87,8 @@ class AmzproShop
      */
     public static $shopTables = [
         'amazonmarketplacepro_order' => [
+            // 1: Amazon accepted the shipment confirmation (carrier, tracking)
+            'columns' => ['shipment_confirmed' => 'TINYINT(1) NOT NULL DEFAULT 0'],
             'unique' => [],
             'keys' => ['shop_status' => ['id_shop', 'import_status']],
             'backfill' => 'orders',
@@ -182,7 +184,7 @@ class AmzproShop
     ];
 
     /** The schema version ensureSchema() brings the tables to. */
-    public static $SCHEMA = '1.6.10';
+    public static $SCHEMA = '1.6.20';
 
     /** @var Context|null The module's context, handed over by its constructor */
     private static $context;

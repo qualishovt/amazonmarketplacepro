@@ -947,8 +947,9 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-truck"></i> {l s='Carrier Mapping (shipment confirmations)' mod='amazonmarketplacepro'}</div>
         <p>{l s='Which Amazon carrier code to report when confirming shipments for orders shipped with each PrestaShop carrier. Unmapped carriers fall back to name-based detection.' mod='amazonmarketplacepro'}</p>
-        <table class="table" style="max-width:600px;">
-            <thead><tr><th>{l s='PrestaShop carrier' mod='amazonmarketplacepro'}</th><th>{l s='Amazon carrier code' mod='amazonmarketplacepro'}</th></tr></thead>
+        <p>{l s='When an Amazon order reaches the Shipped status and has a tracking number (or gets one later), Amazon receives the carrier, the shipping method and the tracking number. The shipping method is optional, e.g. DHL Paket; the carrier name is sent for carriers set to Other.' mod='amazonmarketplacepro'}</p>
+        <table class="table" style="max-width:820px;">
+            <thead><tr><th>{l s='PrestaShop carrier' mod='amazonmarketplacepro'}</th><th>{l s='Amazon carrier code' mod='amazonmarketplacepro'}</th><th>{l s='Shipping method' mod='amazonmarketplacepro'}</th></tr></thead>
             <tbody>
                 {foreach from=$carriers item=carrier}
                 <tr>
@@ -961,6 +962,7 @@
                             {/foreach}
                         </select>
                     </td>
+                    <td><input type="text" maxlength="64" name="mkpro_carrier_method[{$carrier.id_carrier|intval}]" value="{if isset($mkpro_carrier_method[$carrier.id_carrier])}{$mkpro_carrier_method[$carrier.id_carrier]|escape:'htmlall':'UTF-8'}{/if}" class="form-control" /></td>
                 </tr>
                 {/foreach}
             </tbody>

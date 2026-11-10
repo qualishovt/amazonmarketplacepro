@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.19';
+        $this->version = '1.6.20';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -288,6 +288,7 @@ class AmazonMarketplacePro extends Module
             && $this->registerHook('actionProductUpdate')
             && $this->registerHook('actionUpdateQuantity')
             && $this->registerHook('actionOrderStatusUpdate')
+            && $this->registerHook('actionAdminOrdersTrackingNumberUpdate')
             && $this->registerHook('displayAdminProductsExtra')
             && $this->registerHook('actionShopDataDuplication');
 
@@ -329,7 +330,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_OAUTH_BETA', 'AMZPRO_OAUTH_NONCE', 'AMZPRO_OAUTH_RETURN_URL',
             'AMZPRO_SELLING_PARTNER_ID', 'AMZPRO_AUTO_REVIEW_REQUEST',
             'AMZPRO_STOCK_BUFFER', 'AMZPRO_DELETE_WHEN_OOS', 'AMZPRO_CONDITION_TYPE',
-            'AMZPRO_TAX_MODE', 'AMZPRO_LISTING_LANG', 'AMZPRO_EXPORT_CATEGORIES',
+            'AMZPRO_TAX_MODE', 'AMZPRO_LISTING_LANG', 'AMZPRO_EXPORT_CATEGORIES', 'AMZPRO_CARRIER_METHOD',
             'AMZPRO_CARRIER_MAP', 'AMZPRO_SHIPPING_TEMPLATE', 'AMZPRO_B2B_DISCOUNT',
             'AMZPRO_VCS_ENABLED', 'AMZPRO_DEV_MODE',
             'AMZPRO_SKU_PREFIX', 'AMZPRO_SKU_SOURCE', 'AMZPRO_PRICE_MIN', 'AMZPRO_PRICE_MAX',
@@ -783,6 +784,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_ps17' => version_compare(_PS_VERSION_, '1.7', '>='),
 
             'mkpro_carrier_map' => self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_MAP'), true)),
+            'mkpro_carrier_method' => self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_METHOD'), true)),
             'amazon_carrier_codes' => self::$amazonCarrierCodes,
 
             // Connect with Amazon
@@ -1252,6 +1254,18 @@ class AmazonMarketplacePro extends Module
                 }
             }
             AmzproShop::set('AMZPRO_CARRIER_MAP', json_encode($clean));
+        }
+        // Shipping method per carrier (e.g. DHL Paket), sent with the confirmation.
+        $carrierMethod = Tools::getValue('mkpro_carrier_method');
+        if (is_array($carrierMethod)) {
+            $clean = [];
+            foreach ($carrierMethod as $idCarrier => $method) {
+                $method = trim((string) $method);
+                if ($method !== '') {
+                    $clean[(int) $idCarrier] = Tools::substr($method, 0, 64);
+                }
+            }
+            AmzproShop::set('AMZPRO_CARRIER_METHOD', json_encode($clean));
         }
 
         // Incoming carrier map: Amazon shipping speed -> PrestaShop carrier.
@@ -4198,6 +4212,26 @@ class AmazonMarketplacePro extends Module
     }
 
     /**
+     * A tracking number entered on an Amazon order that is already shipped:
+     * its shipment is confirmed now, since Amazon needs the number.
+     */
+    public function hookActionAdminOrdersTrackingNumberUpdate($params)
+    {
+        $order = isset($params['order']) ? $params['order'] : null;
+        if (!$order || !Validate::isLoadedObject($order) || !$order->hasBeenShipped()) {
+            return;
+        }
+        AmzproShop::ensureSchema();
+        $idShop = (int) $order->id_shop ? (int) $order->id_shop : AmzproShop::actingId();
+        $module = $this;
+        AmzproShop::runInShop($idShop, function ($idShop) use ($module, $order) {
+            if (AmzproShop::get('AMZPRO_SYNC_ORDER_STATUS_HOOK', $idShop) && $module->isProduction()) {
+                $module->confirmShipmentOnAmazon($order);
+            }
+        });
+    }
+
+    /**
      * hookActionOrderStatusUpdate, inside the order's shop.
      *
      * Public only so the closure that switches shop can call it.
@@ -4333,53 +4367,120 @@ class AmazonMarketplacePro extends Module
     /**
      * Send shipment confirmation to Amazon for an order. Runs in the order's shop.
      */
-    private function confirmShipmentOnAmazon($order)
+    public function confirmShipmentOnAmazon($order)
     {
-        $amazonOrderId = Db::getInstance()->getValue(
-            'SELECT `amazon_order_id` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
-             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', (int) $order->id_shop)
-        );
+        $built = $this->shipmentConfirmation($order);
+        if (isset($built['skip'])) {
+            if ($built['skip'] !== '') {
+                $this->logActivity('info', 'hook_shipment', 'Order #' . (int) $order->id . ': ' . $built['skip']);
+            }
 
-        if (!$amazonOrderId) {
             return;
         }
 
-        $trackingNumber = '';
-        $carrierName = '';
-        $idCarrier = 0;
-        $orderCarrier = Db::getInstance()->getRow(
+        require_once dirname(__FILE__) . '/classes/AmazonMultiMarketplace.php';
+        $multi = new AmazonMultiMarketplace();
+        $client = $multi->buildClientForMarketplace($built['marketplace_id'], (int) $order->id_shop);
+        $resp = $client->request(
+            'POST',
+            '/orders/v0/orders/' . rawurlencode($built['amazon_order_id']) . '/shipmentConfirmation',
+            [],
+            $built['body']
+        );
+
+        $ok = ($resp !== false && $resp['status'] < 400);
+        $why = '';
+        if (!$ok && $resp !== false) {
+            $data = is_array($resp['body']) ? $resp['body'] : json_decode((string) $resp['body'], true);
+            $why = isset($data['errors'][0]['message']) ? ' - ' . $data['errors'][0]['message'] : ' - HTTP ' . (int) $resp['status'];
+        }
+        Db::getInstance()->execute(
+            'UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+             SET `shipment_confirmed` = ' . ($ok ? 1 : 0) . '
+             WHERE `id_amazonmarketplacepro_order` = ' . (int) $built['id_staged']
+        );
+        $this->logActivity($ok ? 'info' : 'warning', 'hook_shipment',
+            'Order #' . (int) $order->id . ' (Amazon: ' . $built['amazon_order_id'] . '): '
+            . ($ok ? 'shipment confirmed' : 'shipment confirmation failed' . $why)
+            . ' (' . $built['body']['packageDetail']['carrierCode'] . ', ' . $built['body']['packageDetail']['trackingNumber'] . ')'
+        );
+    }
+
+    /**
+     * The shipment confirmation Amazon gets for a shipped order, or why there
+     * is none: array('skip' => reason) - '' when it is simply not an order to
+     * confirm (not ours, Amazon ships it, already confirmed).
+     *
+     * @param Order $order
+     *
+     * @return array
+     */
+    public function shipmentConfirmation($order)
+    {
+        $staged = Db::getInstance()->getRow(
+            'SELECT `id_amazonmarketplacepro_order`, `amazon_order_id`, `marketplace_id`, `fulfillment_channel`, `shipment_confirmed`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+             WHERE `id_order` = ' . (int) $order->id . ' AND ' . AmzproShop::sqlWhere('', (int) $order->id_shop)
+        );
+        if (!$staged || $staged['fulfillment_channel'] === 'AFN' || (int) $staged['shipment_confirmed']) {
+            return ['skip' => ''];
+        }
+
+        $carrier = Db::getInstance()->getRow(
             'SELECT oc.`tracking_number`, oc.`id_carrier`, c.`name` AS carrier_name
              FROM `' . _DB_PREFIX_ . 'order_carrier` oc
              LEFT JOIN `' . _DB_PREFIX_ . 'carrier` c ON (c.`id_carrier` = oc.`id_carrier`)
              WHERE oc.`id_order` = ' . (int) $order->id . '
              ORDER BY oc.`id_order_carrier` DESC'
         );
-        if ($orderCarrier) {
-            $trackingNumber = (string) $orderCarrier['tracking_number'];
-            $carrierName = (string) $orderCarrier['carrier_name'];
-            $idCarrier = (int) $orderCarrier['id_carrier'];
+        $tracking = $carrier ? trim((string) $carrier['tracking_number']) : '';
+        if ($tracking === '') {
+            return ['skip' => 'shipped without a tracking number; Amazon is told as soon as one is entered on the order.'];
+        }
+        $idCarrier = (int) $carrier['id_carrier'];
+        $carrierName = (string) $carrier['carrier_name'];
+
+        $items = [];
+        foreach ((array) Db::getInstance()->executeS(
+            'SELECT `order_item_id`, `quantity` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item`
+             WHERE `id_amazonmarketplacepro_order` = ' . (int) $staged['id_amazonmarketplacepro_order'] . '
+               AND `order_item_id` <> \'\''
+        ) as $it) {
+            $items[] = ['orderItemId' => (string) $it['order_item_id'], 'quantity' => max(1, (int) $it['quantity'])];
+        }
+        if (!$items) {
+            return ['skip' => 'no Amazon order items stored for this order; the shipment cannot be confirmed.'];
         }
 
-        require_once dirname(__FILE__) . '/classes/AmazonSpApiClient.php';
-        $client = $this->buildAmazonClient();
+        $code = $this->mapCarrierToAmazon($carrierName, $idCarrier);
+        $package = [
+            'packageReferenceId' => '1',
+            'carrierCode' => $code,
+            'trackingNumber' => $tracking,
+            'shipDate' => gmdate('Y-m-d\TH:i:s\Z'),
+            'orderItems' => $items,
+        ];
+        // Amazon shows the carrier's own name when the code is "Other".
+        if ($code === 'Other' && $carrierName !== '') {
+            $package['carrierName'] = $carrierName;
+        }
+        $methods = self::currentCarrierKeys((array) json_decode((string) AmzproShop::get('AMZPRO_CARRIER_METHOD', (int) $order->id_shop), true));
+        $current = AmazonOrderCreator::currentCarrier($idCarrier);
+        foreach ([$idCarrier, $current] as $id) {
+            if ($id && !empty($methods[$id])) {
+                $package['shippingMethod'] = (string) $methods[$id];
+                break;
+            }
+        }
 
-        $resp = $client->request(
-            'POST',
-            '/orders/v0/orders/' . rawurlencode($amazonOrderId) . '/shipmentConfirmation',
-            [],
-            [
-                'marketplaceId' => $this->getMarketplaceId(),
-                'packageDetail' => [
-                    'trackingNumber' => $trackingNumber,
-                    'carrierCode' => $this->mapCarrierToAmazon($carrierName, $idCarrier),
-                ],
-            ]
-        );
+        $marketplaceId = (string) $staged['marketplace_id'] !== '' ? (string) $staged['marketplace_id'] : $this->getMarketplaceId();
 
-        $status = ($resp !== false && $resp['status'] < 400) ? 'OK' : 'FAILED';
-        $this->logActivity('info', 'hook_shipment',
-            'Order #' . $order->id . ' (Amazon: ' . $amazonOrderId . '): ' . $status
-        );
+        return [
+            'id_staged' => (int) $staged['id_amazonmarketplacepro_order'],
+            'amazon_order_id' => (string) $staged['amazon_order_id'],
+            'marketplace_id' => $marketplaceId,
+            'body' => ['marketplaceId' => $marketplaceId, 'packageDetail' => $package],
+        ];
     }
 
     /**

@@ -256,8 +256,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a9e28203eb32759c7fce1fb068
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ffd2e3df3eb2592fb1ed881aa2ea033d'] = 'Bereich hinzufügen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_290c6c6438af2c879de09af163b9ffbd'] = 'Zuordnung der Versanddienstleister (Versandbestätigungen)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5ff55765e2788d2f3bc484106db52337'] = 'Welcher Amazon-Carrier-Code bei der Versandbestätigung für Bestellungen des jeweiligen PrestaShop-Versanddienstleisters gemeldet wird. Nicht zugeordnete Dienstleister werden anhand des Namens erkannt.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f1cbc156da0c225c5432e0ae95e4e75e'] = 'Sobald eine Amazon-Bestellung den Status Versandt erreicht und eine Sendungsnummer hat (oder später eine erhält), erhält Amazon Transporteur, Versandart und Sendungsverfolgungsnummer. Die Versandart ist optional, z. B. DHL Paket; bei Transporteuren mit Other wird ihr eigener Name übermittelt.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2c9525eb0868ea1ac1876153a1589d76'] = 'PrestaShop-Versanddienstleister';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_12f93e10ecbbedf2eaaeab2bcc736a0d'] = 'Amazon-Carrier-Code';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_83d893ae1e34a74ab9a068e1d190c764'] = 'Versandart';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_95d33bc08c375488d6785215fb6cd4a6'] = '-- Automatisch (nach Name) --';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_526470985a9e399cd83dbf853708ab2c'] = 'Einstellungen für den Bestellimport';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2251ea376c330191edd5eb4694fe7159'] = 'Steuern bei importierten Bestellungen';

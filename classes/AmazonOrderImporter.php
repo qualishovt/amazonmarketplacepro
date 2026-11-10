@@ -116,6 +116,7 @@ class AmazonOrderImporter
             `ship_country_code` VARCHAR(8) NOT NULL DEFAULT \'\',
             `ship_phone` VARCHAR(32) NOT NULL DEFAULT \'\',
             `ship_name` VARCHAR(255) NOT NULL DEFAULT \'\',
+            `shipment_confirmed` TINYINT(1) NOT NULL DEFAULT 0,
             `items_matched` INT(11) NOT NULL DEFAULT 0,
             `items_unmatched` INT(11) NOT NULL DEFAULT 0,
             `raw_json` LONGTEXT NULL,
@@ -211,6 +212,7 @@ class AmazonOrderImporter
             // The recipient, filled from an uploaded order report (see
             // AmazonOrderReportImporter) while the API withholds it.
             'ship_name' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
+            'shipment_confirmed' => 'TINYINT(1) NOT NULL DEFAULT 0',
         ];
         foreach ($add as $name => $definition) {
             if (!isset($existing[$name])) {

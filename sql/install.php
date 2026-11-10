@@ -36,6 +36,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'amazonmarketplacepro_or
     `ship_country_code` VARCHAR(8) NOT NULL DEFAULT \'\',
     `ship_phone` VARCHAR(32) NOT NULL DEFAULT \'\',
     `ship_name` VARCHAR(255) NOT NULL DEFAULT \'\',
+    `shipment_confirmed` TINYINT(1) NOT NULL DEFAULT 0,
     `items_matched` INT(11) NOT NULL DEFAULT 0,
     `items_unmatched` INT(11) NOT NULL DEFAULT 0,
     `raw_json` LONGTEXT NULL,

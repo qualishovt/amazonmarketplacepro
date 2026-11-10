@@ -256,8 +256,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a9e28203eb32759c7fce1fb068
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ffd2e3df3eb2592fb1ed881aa2ea033d'] = 'Dodaj zakres';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_290c6c6438af2c879de09af163b9ffbd'] = 'Mapowanie przewoźników (potwierdzenia wysyłki)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5ff55765e2788d2f3bc484106db52337'] = 'Który kod przewoźnika Amazon zgłaszać przy potwierdzaniu wysyłki dla zamówień nadanych każdym przewoźnikiem PrestaShop. Nieprzypisani przewoźnicy są rozpoznawani po nazwie.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f1cbc156da0c225c5432e0ae95e4e75e'] = 'Gdy zamówienie Amazon otrzyma status Wysłane i ma numer przesyłki (lub otrzyma go później), Amazon dostaje przewoźnika, metodę wysyłki i numer przesyłki. Metoda wysyłki jest opcjonalna, np. DHL Paket; dla przewoźników ustawionych na Other wysyłana jest ich nazwa.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2c9525eb0868ea1ac1876153a1589d76'] = 'Przewoźnik PrestaShop';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_12f93e10ecbbedf2eaaeab2bcc736a0d'] = 'Kod przewoźnika Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_83d893ae1e34a74ab9a068e1d190c764'] = 'Metoda wysyłki';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_95d33bc08c375488d6785215fb6cd4a6'] = '-- Automatycznie (po nazwie) --';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_526470985a9e399cd83dbf853708ab2c'] = 'Ustawienia importu zamówień';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2251ea376c330191edd5eb4694fe7159'] = 'Podatki w importowanych zamówieniach';

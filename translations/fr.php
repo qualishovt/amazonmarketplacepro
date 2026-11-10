@@ -256,8 +256,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a9e28203eb32759c7fce1fb068
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ffd2e3df3eb2592fb1ed881aa2ea033d'] = 'Ajouter une tranche';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_290c6c6438af2c879de09af163b9ffbd'] = 'Correspondance des transporteurs (confirmations d\'expédition)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5ff55765e2788d2f3bc484106db52337'] = 'Quel code transporteur Amazon signaler lors de la confirmation d\'expédition, pour chaque transporteur PrestaShop. Les transporteurs sans correspondance sont détectés par leur nom.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f1cbc156da0c225c5432e0ae95e4e75e'] = 'Quand une commande Amazon passe au statut Expédié et a un numéro de suivi (ou en reçoit un plus tard), Amazon reçoit le transporteur, le mode d\'expédition et le numéro de suivi. Le mode d\'expédition est facultatif, par ex. Colissimo Expert ; le nom du transporteur est envoyé pour les transporteurs réglés sur Other.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2c9525eb0868ea1ac1876153a1589d76'] = 'Transporteur PrestaShop';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_12f93e10ecbbedf2eaaeab2bcc736a0d'] = 'Code transporteur Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_83d893ae1e34a74ab9a068e1d190c764'] = 'Mode d\'expédition';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_95d33bc08c375488d6785215fb6cd4a6'] = '-- Auto (par le nom) --';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_526470985a9e399cd83dbf853708ab2c'] = 'Paramètres d\'import des commandes';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2251ea376c330191edd5eb4694fe7159'] = 'Taxes sur les commandes importées';

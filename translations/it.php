@@ -256,8 +256,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a9e28203eb32759c7fce1fb068
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ffd2e3df3eb2592fb1ed881aa2ea033d'] = 'Aggiungi fascia';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_290c6c6438af2c879de09af163b9ffbd'] = 'Corrispondenza dei corrieri (conferme di spedizione)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5ff55765e2788d2f3bc484106db52337'] = 'Quale codice corriere Amazon comunicare quando si confermano le spedizioni per ciascun corriere PrestaShop. I corrieri senza corrispondenza vengono riconosciuti dal nome.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f1cbc156da0c225c5432e0ae95e4e75e'] = 'Quando un ordine Amazon passa allo stato Spedito e ha un numero di tracciamento (o lo riceve più tardi), Amazon riceve il corriere, il metodo di spedizione e il numero di tracciamento. Il metodo di spedizione è facoltativo, ad es. BRT Express; per i corrieri impostati su Other viene inviato il loro nome.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2c9525eb0868ea1ac1876153a1589d76'] = 'Corriere PrestaShop';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_12f93e10ecbbedf2eaaeab2bcc736a0d'] = 'Codice corriere Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_83d893ae1e34a74ab9a068e1d190c764'] = 'Metodo di spedizione';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_95d33bc08c375488d6785215fb6cd4a6'] = '-- Auto (dal nome) --';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_526470985a9e399cd83dbf853708ab2c'] = 'Impostazioni di importazione degli ordini';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2251ea376c330191edd5eb4694fe7159'] = 'Imposte sugli ordini importati';

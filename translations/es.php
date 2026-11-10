@@ -256,8 +256,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_a9e28203eb32759c7fce1fb068
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ffd2e3df3eb2592fb1ed881aa2ea033d'] = 'Añadir intervalo';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_290c6c6438af2c879de09af163b9ffbd'] = 'Correspondencia de transportistas (confirmaciones de envío)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5ff55765e2788d2f3bc484106db52337'] = 'Qué código de transportista de Amazon se comunica al confirmar los envíos de cada transportista de PrestaShop. Los transportistas sin correspondencia se detectan por su nombre.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_f1cbc156da0c225c5432e0ae95e4e75e'] = 'Cuando un pedido de Amazon pasa al estado Enviado y tiene número de seguimiento (o lo recibe más tarde), Amazon recibe el transportista, el método de envío y el número de seguimiento. El método de envío es opcional, p. ej. Correos Paq Premium; el nombre del transportista se envía para los configurados como Other.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2c9525eb0868ea1ac1876153a1589d76'] = 'Transportista de PrestaShop';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_12f93e10ecbbedf2eaaeab2bcc736a0d'] = 'Código de transportista de Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_83d893ae1e34a74ab9a068e1d190c764'] = 'Método de envío';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_95d33bc08c375488d6785215fb6cd4a6'] = '-- Automático (por el nombre) --';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_526470985a9e399cd83dbf853708ab2c'] = 'Ajustes de importación de pedidos';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_2251ea376c330191edd5eb4694fe7159'] = 'Impuestos en los pedidos importados';
