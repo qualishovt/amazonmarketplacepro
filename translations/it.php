@@ -276,6 +276,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_51276f494bfae01ac5644ced84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_44fdec47036f482b68b748f9d786801b'] = 'giorni';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_73cdddd7730abfc13a55efb9f5685a3b'] = 'ore';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_143587787d1273e96ad901c70283a645'] = 'Finestra retroattiva per le importazioni di ordini (manuali e da cron).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76916a7d'] = 'Ordini creati in PrestaShop';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Solo ordini pagati non ancora spediti';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Tutti gli ordini pagati, compresi quelli spediti e annullati';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Passate da un altro modulo Amazon? Mantenete «Solo ordini pagati non ancora spediti», così gli ordini che ha già gestito non vengono creati di nuovo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'Importa gli ordini FBA';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'No (salta gli ordini gestiti da Amazon)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Stato degli ordini FBA';

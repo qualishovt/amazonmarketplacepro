@@ -276,6 +276,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_51276f494bfae01ac5644ced84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_44fdec47036f482b68b748f9d786801b'] = 'Tage';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_73cdddd7730abfc13a55efb9f5685a3b'] = 'Stunden';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_143587787d1273e96ad901c70283a645'] = 'Rückblickzeitraum für Bestellimporte (manuell und per Cron).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76916a7d'] = 'In PrestaShop angelegte Bestellungen';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Nur bezahlte, noch nicht versandte Bestellungen';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Alle bezahlten Bestellungen, auch versandte und stornierte';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Wechseln Sie von einem anderen Amazon-Modul? Behalten Sie „Nur bezahlte, noch nicht versandte Bestellungen“, damit die Bestellungen, die es bereits bearbeitet hat, nicht noch einmal angelegt werden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'FBA-Bestellungen importieren';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'Nein (von Amazon versandte Bestellungen überspringen)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Status für FBA-Bestellungen';

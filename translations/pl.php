@@ -276,6 +276,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_51276f494bfae01ac5644ced84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_44fdec47036f482b68b748f9d786801b'] = 'dni';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_73cdddd7730abfc13a55efb9f5685a3b'] = 'godzin';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_143587787d1273e96ad901c70283a645'] = 'Okno wstecz dla importu zamówień (ręcznego i przez cron).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76916a7d'] = 'Zamówienia tworzone w PrestaShop';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Tylko opłacone zamówienia, jeszcze niewysłane';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Wszystkie opłacone zamówienia, także wysłane i anulowane';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Przechodzisz z innego modułu Amazon? Zostaw „Tylko opłacone zamówienia, jeszcze niewysłane”, aby zamówienia, które już obsłużył, nie zostały utworzone ponownie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'Importuj zamówienia FBA';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'Nie (pomijaj zamówienia realizowane przez Amazon)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Status zamówień FBA';

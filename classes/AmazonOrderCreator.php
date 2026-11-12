@@ -85,6 +85,25 @@ class AmazonOrderCreator
     }
 
     /**
+     * "Only orders not yet shipped": an order Amazon already reports as
+     * shipped or cancelled is not created in PrestaShop, so a shop switching
+     * from another module does not get the orders that module already
+     * handled. The order stays in the staged list and can be created by hand.
+     *
+     * @param int|null $idShop
+     *
+     * @return string SQL condition with its leading AND, or ''
+     */
+    public static function unshippedOnlySql($idShop = null)
+    {
+        if (!(int) AmzproShop::get('AMZPRO_ORDER_UNSHIPPED_ONLY', $idShop)) {
+            return '';
+        }
+
+        return ' AND o.`order_status` IN (\'Unshipped\', \'PartiallyShipped\')';
+    }
+
+    /**
      * Create real PS orders for all staged Amazon orders of the creator's
      * shop that haven't been created yet (import_status = 'imported',
      * id_order = 0). Only orders with at least one matched item are processed.
@@ -101,7 +120,7 @@ class AmazonOrderCreator
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
                     ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
                 WHERE o.`id_order` = 0 AND o.`import_status` = \'imported\'
-                  AND o.`order_status` <> \'Pending\'
+                  AND o.`order_status` <> \'Pending\'' . self::unshippedOnlySql($this->idShop) . '
                   AND ' . AmzproShop::sqlWhere('o', $this->idShop) . '
                 GROUP BY o.`id_amazonmarketplacepro_order`
                 ORDER BY o.`purchase_date` ASC';

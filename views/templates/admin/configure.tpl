@@ -1020,6 +1020,16 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Orders created in PrestaShop' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_order_unshipped_only" class="form-control">
+                    <option value="1"{if $mkpro_order_unshipped_only} selected="selected"{/if}>{l s='Only paid orders not yet shipped' mod='amazonmarketplacepro'}</option>
+                    <option value="0"{if !$mkpro_order_unshipped_only} selected="selected"{/if}>{l s='All paid orders, including shipped and cancelled' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='Switching from another Amazon module? Keep "Only paid orders not yet shipped" so the orders it already handled are not created again.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Import FBA orders' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_import_fba_orders" class="form-control">

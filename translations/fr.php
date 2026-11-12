@@ -276,6 +276,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_51276f494bfae01ac5644ced84
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_44fdec47036f482b68b748f9d786801b'] = 'jours';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_73cdddd7730abfc13a55efb9f5685a3b'] = 'heures';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_143587787d1273e96ad901c70283a645'] = 'Fenêtre de rétrospective pour les imports de commandes (manuels et par cron).';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76916a7d'] = 'Commandes créées dans PrestaShop';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Seulement les commandes payées pas encore expédiées';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Toutes les commandes payées, y compris expédiées et annulées';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Vous passez d\'un autre module Amazon ? Gardez « Seulement les commandes payées pas encore expédiées » pour que les commandes qu\'il a déjà traitées ne soient pas créées une seconde fois.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'Importer les commandes FBA';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'Non (ignorer les commandes expédiées par Amazon)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Statut des commandes FBA';
