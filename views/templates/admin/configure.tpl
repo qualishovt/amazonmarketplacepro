@@ -2933,7 +2933,7 @@
     <div class="panel">
         <div class="panel-heading"><i class="icon-list"></i> {l s='Report History' mod='amazonmarketplacepro'}</div>
         <table class="table" id="reports-table">
-            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th></tr></thead>
+            <thead><tr>{if $mkpro_all_shops}<th>{l s='Shop' mod='amazonmarketplacepro'}</th>{/if}<th>{l s='Report ID' mod='amazonmarketplacepro'}</th><th>{l s='Type' mod='amazonmarketplacepro'}</th><th>{l s='Status' mod='amazonmarketplacepro'}</th><th>{l s='Rows' mod='amazonmarketplacepro'}</th><th>{l s='Requested' mod='amazonmarketplacepro'}</th><th></th></tr></thead>
             <tbody>
             {if $reports}
                 {foreach from=$reports item=rpt}
@@ -2944,10 +2944,11 @@
                     <td>{if $rpt.status == 'DONE'}<span class="label label-success">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{elseif $rpt.status == 'FATAL'}<span class="label label-danger">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{else}<span class="label label-warning">{$rpt.status|escape:'htmlall':'UTF-8'}</span>{/if}</td>
                     <td>{$rpt.row_count|escape:'htmlall':'UTF-8'}</td>
                     <td><small>{$rpt.date_add|escape:'htmlall':'UTF-8'}</small></td>
+                    <td>{if $rpt.status == 'DONE' && $rpt.file_path}<a class="btn btn-default btn-xs" href="{$download_report_url|escape:'htmlall':'UTF-8'}&amp;report_id={$rpt.report_id|escape:'url'}"><i class="icon-download"></i> {l s='Download' mod='amazonmarketplacepro'}</a>{/if}</td>
                 </tr>
                 {/foreach}
             {else}
-                <tr><td colspan="{if $mkpro_all_shops}6{else}5{/if}" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
+                <tr><td colspan="{if $mkpro_all_shops}7{else}6{/if}" class="text-muted text-center">{l s='No reports requested yet.' mod='amazonmarketplacepro'}</td></tr>
             {/if}
             </tbody>
         </table>
@@ -3114,6 +3115,7 @@
         reportFailed: '{l s='Failed to request the report.' mod='amazonmarketplacepro' js=1}',
         pollingReports: '{l s='Polling pending reports...' mod='amazonmarketplacepro' js=1}',
         reportsSummary: '{l s='%1$s reports checked · %2$s completed · %3$s still pending' mod='amazonmarketplacepro' js=1}',
+        reportsReload: '{l s='Reload the page to download the finished reports from Report History.' mod='amazonmarketplacepro' js=1}',
         importingPromos: '{l s='Importing promotions from Amazon orders...' mod='amazonmarketplacepro' js=1}',
         promosSummary: '{l s='%1$s orders scanned · %2$s promotions found · %3$s new · %4$s updated' mod='amazonmarketplacepro' js=1}',
         exportingPromos: '{l s='Exporting PrestaShop cart rules as promotions...' mod='amazonmarketplacepro' js=1}',
@@ -4186,7 +4188,8 @@
                     var html = '';
                     if (data.summary) {
                         var s = data.summary;
-                        html += '<div class="alert alert-success">'+esc(fmt(T.reportsSummary, s.checked, s.completed, s.still_pending))+'</div>';
+                        html += '<div class="alert alert-success">'+esc(fmt(T.reportsSummary, s.pending, s.completed, s.still_processing))+'</div>';
+                        if (s.completed > 0) html += '<div class="alert alert-info">'+esc(T.reportsReload)+'</div>';
                     }
                     if (data.error) html += '<div class="alert alert-danger">'+esc(data.error)+'</div>';
                     out.innerHTML = html || '<div class="alert alert-info">'+esc(T.done)+'</div>';

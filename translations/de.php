@@ -731,6 +731,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_e9485f2b1661d0ab162f87bb17
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d9175a0a13df50924384ac6deb059d43'] = 'Bericht-ID';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_530f488f7a9800411efc6926ab189708'] = 'Zeilen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fcdf8a82eba24e303b63b2e49a507ecb'] = 'Angefordert';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_801ab24683a4a8c433c6eb40c48bcd9d'] = 'Herunterladen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_50dee5a60f4e6b6be99ecdb656bdbe91'] = 'Noch keine Berichte angefordert.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_aa9dc71a6f9121e50333707ed2e7d3d5'] = 'Unerwartete Antwort';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f5940523060652e3a7d9c269ce48de50'] = 'Fertig.';
@@ -843,6 +844,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_05f6e708876cde8a333f92a66f
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_9bfe16a44357d60661db7548575bd53d'] = 'Der Bericht konnte nicht angefordert werden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f2602a9d6a17cb22e9760ed967b7ea89'] = 'Ausstehende Berichte werden abgefragt...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_7dfabfccb61ca85327b81a9d6530f7c7'] = '%1$s Berichte geprüft · %2$s abgeschlossen · %3$s noch ausstehend';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_c3b22229ebdcdbd3a2eb280daf46eadd'] = 'Laden Sie die Seite neu, um die fertigen Berichte im Berichtsverlauf herunterzuladen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_a0782971c4ecae415fa7ab86c650474d'] = 'Aktionen werden aus Amazon-Bestellungen importiert...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_588650694fd6326d72e78aeada5b0365'] = '%1$s Bestellungen durchsucht · %2$s Aktionen gefunden · %3$s neu · %4$s aktualisiert';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_8ca6f01ed158cafe4441ef1e493507ba'] = 'PrestaShop-Warenkorbregeln werden als Aktionen exportiert...';
@@ -1003,6 +1005,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_4d42dd4f85a8be1
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_f6838b622aa7616a19d33e03333e5ffb'] = 'Registrierung nicht möglich: ';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_aee9784c03b80d38d3271cde2b252b8d'] = 'Unbekannter Fehler';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_e6d76658648c4e514df6e5e8ec43898a'] = 'Vom IntelliPresta-Scheduler entfernt. Ab jetzt steuert Ihr eigener Cron den Zeitplan.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_6f04a0467a9e7edb0dd502a41cff8e16'] = 'Für diesen Bericht gibt es noch keine Datei. Prüfen Sie seinen Status mit „Ausstehende Berichte abfragen“.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_9a7e58ee13cb727cb7c4acc68f4cafe5'] = 'Einstellungen gespeichert.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_48cf4bee08b53245c08505d40dbf3454'] = 'Käuferdaten aus %1$d Bestellung(en) gelöscht. %2$d stehen noch aus.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonmarketplacepro_dfd0188bc53a0c90e0dea19e991f32cf'] = 'Ihr Shop ist jetzt mit Amazon verbunden. Sie können mit dem Abgleich beginnen.';

@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.21';
+        $this->version = '1.6.22';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -526,6 +526,21 @@ class AmazonMarketplacePro extends Module
             header('Content-Type: application/json; charset=utf-8');
             header('Content-Disposition: attachment; filename="feed-' . preg_replace('/[^A-Za-z0-9_.-]/', '', $feedId) . '.json"');
             echo ($payload !== '') ? $payload : '{"error":"This feed was submitted before payload retention was added."}';
+            exit;
+        }
+        if (Tools::isSubmit('mkproDownloadReport')) {
+            require_once dirname(__FILE__) . '/classes/AmazonReportManager.php';
+            $file = AmazonReportManager::reportFile((string) Tools::getValue('report_id'));
+            if ($file === null) {
+                header('HTTP/1.1 404 Not Found');
+                header('Content-Type: text/plain; charset=utf-8');
+                echo $this->l('This report has no file yet. Check its status with "Poll Pending Reports".');
+                exit;
+            }
+            header('Content-Type: text/tab-separated-values; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $file['name'] . '"');
+            header('Content-Length: ' . filesize($file['path']));
+            readfile($file['path']);
             exit;
         }
 
@@ -1019,6 +1034,7 @@ class AmazonMarketplacePro extends Module
             'ajax_delete_listings_url' => $baseUrl . '&ajaxDeleteListings=1',
             'export_references_url' => $baseUrl . '&mkproExportReferences=1',
             'download_feed_url' => $baseUrl . '&mkproDownloadFeed=1',
+            'download_report_url' => $baseUrl . '&mkproDownloadReport=1',
 
             // Cron URLs
             'cron_import_orders_url' => $cronBase . '&action=import_orders',

@@ -21,3 +21,6 @@ marketing/ad/render-*.log
 marketing/shots/out-*/
 marketing/shots/*.jpg
 config_*.xml
+
+# Runtime data written by the module (reports)
+/data/

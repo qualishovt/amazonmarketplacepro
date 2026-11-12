@@ -315,6 +315,8 @@ class AmazonReportManager
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
+        self::protectDir(dirname($dir));
+        self::protectDir($dir);
 
         $filename = 'report_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $reportId) . '.tsv';
         $filePath = $dir . '/' . $filename;
@@ -547,6 +549,61 @@ class AmazonReportManager
      *
      * @return array
      */
+    /**
+     * Keep a folder of stored reports out of reach of the web: settlement
+     * reports carry order ids and amounts. The back office serves them
+     * through reportFile() instead. Apache 2.2 and 2.4 rules, plus an
+     * index.php for servers that ignore .htaccess and list directories.
+     *
+     * @param string $dir
+     */
+    public static function protectDir($dir)
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        if (!file_exists($dir . '/.htaccess')) {
+            @file_put_contents($dir . '/.htaccess', "<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n"
+                . "<IfModule !mod_authz_core.c>\n    Order deny,allow\n    Deny from all\n</IfModule>\n");
+        }
+        if (!file_exists($dir . '/index.php')) {
+            @file_put_contents($dir . '/index.php', "<?php\nheader('Location: ../');\nexit;\n");
+        }
+    }
+
+    /**
+     * The downloaded file of one of the current shop's reports, for the
+     * "Download" link in Report History. Only files in data/reports are
+     * served, whatever the stored path says.
+     *
+     * @param string $reportId
+     *
+     * @return array|null ['path' => absolute path, 'name' => download file name], or null
+     */
+    public static function reportFile($reportId)
+    {
+        $reportId = trim((string) $reportId);
+        if ($reportId === '' || !preg_match('/^[A-Za-z0-9_-]+$/', $reportId)) {
+            return null;
+        }
+        $row = Db::getInstance()->getRow(
+            'SELECT `report_type`, `file_path` FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
+             WHERE `report_id` = \'' . pSQL($reportId) . '\' AND `status` = \'DONE\'
+               AND ' . AmzproShop::sqlWhere()
+        );
+        if (!$row || (string) $row['file_path'] === '') {
+            return null;
+        }
+        $dir = realpath(dirname(dirname(__FILE__)) . '/data/reports');
+        $path = realpath($row['file_path']);
+        if ($dir === false || $path === false || strpos($path, $dir . DIRECTORY_SEPARATOR) !== 0 || !is_file($path)) {
+            return null;
+        }
+        $type = preg_replace('/[^A-Za-z0-9_]/', '', strtolower(preg_replace('/^GET_|_DATA$/', '', (string) $row['report_type'])));
+
+        return ['path' => $path, 'name' => 'amazon-' . str_replace('_', '-', $type) . '-' . $reportId . '.tsv'];
+    }
+
     public function listReports($limit = 50)
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_report`
