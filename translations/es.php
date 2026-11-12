@@ -280,6 +280,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Solo pedidos pagados aún no enviados';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Todos los pedidos pagados, incluidos los enviados y cancelados';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = '¿Viene de otro módulo de Amazon? Mantenga «Solo pedidos pagados aún no enviados» para que los pedidos que ya gestionó no se creen de nuevo.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1ca5119d621351f8cb17c92676d2e224'] = 'Crear los pedidos realizados a partir del';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a86c1524176d04c57aad4a70385686dc'] = 'Solo se crean en PrestaShop los pedidos de Amazon realizados a partir de este momento. ¿Cambia desde otro módulo de Amazon? Indique el momento en que lo desactivó, para que los pedidos que ya creó no se creen de nuevo. Déjelo vacío para no poner límite.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'Importar los pedidos FBA';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'No (omitir los pedidos gestionados por Amazon)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Estado de los pedidos FBA';

@@ -104,6 +104,40 @@ class AmazonOrderCreator
     }
 
     /**
+     * "Create orders placed from": only Amazon orders placed at or after
+     * this moment are created in PrestaShop. A shop switching from another
+     * Amazon module sets it to the moment that module stopped importing, so
+     * orders it already created are not created a second time. Empty or
+     * unreadable = no limit. Shop time, like the stored purchase date.
+     *
+     * @param int|null $idShop
+     *
+     * @return string SQL condition with its leading AND, or ''
+     */
+    public static function createFromSql($idShop = null)
+    {
+        $from = self::createFromTime($idShop);
+
+        return $from === null ? '' : ' AND o.`purchase_date` >= \'' . pSQL(date('Y-m-d H:i:s', $from)) . '\'';
+    }
+
+    /**
+     * @param int|null $idShop
+     *
+     * @return int|null timestamp of AMZPRO_ORDER_CREATE_FROM, or null when unset
+     */
+    public static function createFromTime($idShop = null)
+    {
+        $raw = trim(str_replace('T', ' ', (string) AmzproShop::get('AMZPRO_ORDER_CREATE_FROM', $idShop)));
+        if ($raw === '' || !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?$/', $raw)) {
+            return null;
+        }
+        $ts = strtotime($raw);
+
+        return $ts === false ? null : $ts;
+    }
+
+    /**
      * Create real PS orders for all staged Amazon orders of the creator's
      * shop that haven't been created yet (import_status = 'imported',
      * id_order = 0). Only orders with at least one matched item are processed.
@@ -120,7 +154,8 @@ class AmazonOrderCreator
                 LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item` i
                     ON (i.`id_amazonmarketplacepro_order` = o.`id_amazonmarketplacepro_order`)
                 WHERE o.`id_order` = 0 AND o.`import_status` = \'imported\'
-                  AND o.`order_status` <> \'Pending\'' . self::unshippedOnlySql($this->idShop) . '
+                  AND o.`order_status` <> \'Pending\'' . self::unshippedOnlySql($this->idShop)
+                  . self::createFromSql($this->idShop) . '
                   AND ' . AmzproShop::sqlWhere('o', $this->idShop) . '
                 GROUP BY o.`id_amazonmarketplacepro_order`
                 ORDER BY o.`purchase_date` ASC';

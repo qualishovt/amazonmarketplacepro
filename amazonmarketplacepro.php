@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.22';
+        $this->version = '1.6.23';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -344,7 +344,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_SHIP_TPL_ENABLED', 'AMZPRO_SHIP_TPL_BASIS',
             'AMZPRO_ORDER_LOOKBACK_VALUE', 'AMZPRO_ORDER_LOOKBACK_UNIT',
             'AMZPRO_IMPORT_FBA_ORDERS', 'AMZPRO_FBA_ORDER_STATE', 'AMZPRO_ORDER_STATE_SHIPPED',
-            'AMZPRO_ORDER_UNSHIPPED_ONLY',
+            'AMZPRO_ORDER_UNSHIPPED_ONLY', 'AMZPRO_ORDER_CREATE_FROM',
             'AMZPRO_PRIORITIZE_ASIN', 'AMZPRO_FAKE_EMAIL', 'AMZPRO_CUSTOMER_GROUP',
             'AMZPRO_SKIP_NO_STOCK', 'AMZPRO_TITLE_FORMAT', 'AMZPRO_ORDER_MATCH',
             'AMZPRO_PII_PURGE', 'AMZPRO_PII_RETENTION_DAYS', 'AMZPRO_PII_PURGE_PS',
@@ -909,6 +909,7 @@ class AmazonMarketplacePro extends Module
             'mkpro_fba_order_state' => (int) AmzproShop::get('AMZPRO_FBA_ORDER_STATE'),
             'mkpro_order_state_shipped' => (int) AmzproShop::get('AMZPRO_ORDER_STATE_SHIPPED'),
             'mkpro_order_unshipped_only' => (int) AmzproShop::get('AMZPRO_ORDER_UNSHIPPED_ONLY'),
+            'mkpro_order_create_from' => (string) AmzproShop::get('AMZPRO_ORDER_CREATE_FROM'),
             'mkpro_prioritize_asin' => AmzproShop::get('AMZPRO_PRIORITIZE_ASIN'),
             'mkpro_fake_email' => AmzproShop::get('AMZPRO_FAKE_EMAIL'),
             'mkpro_customer_group' => (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP'),
@@ -1137,6 +1138,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_FBA_ORDER_STATE' => 'mkpro_fba_order_state',
             'AMZPRO_ORDER_STATE_SHIPPED' => 'mkpro_order_state_shipped',
             'AMZPRO_ORDER_UNSHIPPED_ONLY' => 'mkpro_order_unshipped_only',
+            'AMZPRO_ORDER_CREATE_FROM' => 'mkpro_order_create_from',
             'AMZPRO_PRIORITIZE_ASIN' => 'mkpro_prioritize_asin',
             'AMZPRO_FAKE_EMAIL' => 'mkpro_fake_email',
             'AMZPRO_CUSTOMER_GROUP' => 'mkpro_customer_group',

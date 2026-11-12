@@ -1030,6 +1030,13 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Create orders placed from' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <input type="datetime-local" name="mkpro_order_create_from" class="form-control" style="max-width:260px;" value="{$mkpro_order_create_from|replace:' ':'T'|escape:'htmlall':'UTF-8'}" />
+                <p class="help-block">{l s='Only Amazon orders placed at or after this time are created in PrestaShop. Switching from another Amazon module? Enter the time you switched it off, so the orders it already created are not created again. Leave empty for no limit.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Import FBA orders' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_import_fba_orders" class="form-control">

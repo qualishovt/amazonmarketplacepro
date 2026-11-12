@@ -280,6 +280,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Nur bezahlte, noch nicht versandte Bestellungen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Alle bezahlten Bestellungen, auch versandte und stornierte';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Wechseln Sie von einem anderen Amazon-Modul? Behalten Sie „Nur bezahlte, noch nicht versandte Bestellungen“, damit die Bestellungen, die es bereits bearbeitet hat, nicht noch einmal angelegt werden.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1ca5119d621351f8cb17c92676d2e224'] = 'Bestellungen anlegen ab';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a86c1524176d04c57aad4a70385686dc'] = 'Nur Amazon-Bestellungen ab diesem Zeitpunkt werden in PrestaShop angelegt. Sie wechseln von einem anderen Amazon-Modul? Tragen Sie den Zeitpunkt ein, an dem Sie es deaktiviert haben, damit die Bestellungen, die es bereits angelegt hat, nicht noch einmal angelegt werden. Leer lassen für keine Begrenzung.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'FBA-Bestellungen importieren';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'Nein (von Amazon versandte Bestellungen überspringen)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Status für FBA-Bestellungen';

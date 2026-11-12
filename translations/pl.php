@@ -280,6 +280,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_171aaf7d4bcff897c9c29eeb76
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1812df0f335adf14bae2b08f394e04bb'] = 'Tylko opłacone zamówienia, jeszcze niewysłane';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_56a880cd4951ab3c2b199fd9848e8f20'] = 'Wszystkie opłacone zamówienia, także wysłane i anulowane';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_5b92a9b7da4b394534578e4efd6b5e25'] = 'Przechodzisz z innego modułu Amazon? Zostaw „Tylko opłacone zamówienia, jeszcze niewysłane”, aby zamówienia, które już obsłużył, nie zostały utworzone ponownie.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1ca5119d621351f8cb17c92676d2e224'] = 'Twórz zamówienia złożone od';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a86c1524176d04c57aad4a70385686dc'] = 'W PrestaShop tworzone są tylko zamówienia Amazon złożone od tego momentu. Przechodzisz z innego modułu Amazon? Wpisz moment, w którym go wyłączyłeś, aby zamówienia, które już utworzył, nie zostały utworzone ponownie. Pozostaw puste, aby nie ustawiać limitu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d27ae0bcd7ad21b311637ce3da902d83'] = 'Importuj zamówienia FBA';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_11b618c5fd837d8d64e13e0ee3b83e90'] = 'Nie (pomijaj zamówienia realizowane przez Amazon)';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_75795ab86e218021c6309c31e514a9cd'] = 'Status zamówień FBA';
