@@ -463,7 +463,8 @@ class AmazonOrderCreator
             $buyerEmail,
             $stagedOrder['buyer_name'],
             $env,
-            $idLang
+            $idLang,
+            self::customerGroupFor($stagedOrder, $env)
         );
         if (!$customer || !$customer->id) {
             $this->lastError = sprintf(
@@ -624,6 +625,10 @@ class AmazonOrderCreator
             $this->createOrderDetail($order, $it, $idLang, $idShop);
         }
 
+        // The order's carrier line ("Shipping" tab, tracking number, carrier
+        // change), which PrestaShop keeps apart from orders.id_carrier.
+        self::ensureOrderCarrier((int) $order->id);
+
         // 8. Create OrderHistory
         $history = new OrderHistory();
         $history->id_order = (int) $order->id;
@@ -766,31 +771,73 @@ class AmazonOrderCreator
      *
      * @return Customer|false
      */
-    private function findOrCreateCustomer($email, $fullName, array $env, $idLang)
+    /**
+     * The customer group an Amazon buyer is filed under: private or Amazon
+     * Business, delivered in the shop's country or abroad. Merchants use the
+     * groups to show each kind of buyer its own carriers and prices.
+     *
+     * A group not set falls back: business abroad -> business -> abroad ->
+     * private; business -> private; abroad -> private; private -> the shop's
+     * default customer group.
+     *
+     * @param array $stagedOrder staged order row (is_business, ship_country_code)
+     * @param array $env shopEnvironment()
+     *
+     * @return int
+     */
+    public static function customerGroupFor($stagedOrder, array $env)
+    {
+        $idShop = (int) $env['id_shop'];
+        $business = !empty($stagedOrder['is_business']);
+        $iso = Tools::strtoupper(trim(isset($stagedOrder['ship_country_code']) ? (string) $stagedOrder['ship_country_code'] : ''));
+        $abroad = $iso !== '' && (int) Country::getByIso($iso) !== (int) $env['id_country'];
+
+        $keys = [];
+        if ($business && $abroad) {
+            $keys = ['AMZPRO_GROUP_BUSINESS_ABROAD', 'AMZPRO_GROUP_BUSINESS', 'AMZPRO_GROUP_ABROAD'];
+        } elseif ($business) {
+            $keys = ['AMZPRO_GROUP_BUSINESS'];
+        } elseif ($abroad) {
+            $keys = ['AMZPRO_GROUP_ABROAD'];
+        }
+        $keys[] = 'AMZPRO_CUSTOMER_GROUP';
+        foreach ($keys as $key) {
+            $idGroup = (int) AmzproShop::get($key, $idShop);
+            if ($idGroup > 0 && Validate::isLoadedObject(new Group($idGroup))) {
+                return $idGroup;
+            }
+        }
+
+        return (int) Configuration::get('PS_CUSTOMER_GROUP', null, $env['id_shop_group'], $idShop);
+    }
+
+    private function findOrCreateCustomer($email, $fullName, array $env, $idLang, $idGroup)
     {
         $email = trim((string) $email);
         if ($email === '') {
             $email = 'amazon-buyer-' . md5(uniqid((string) rand(), true)) . '@marketplace.local';
         }
         $idShop = $env['id_shop'];
+        $idGroup = (int) $idGroup;
 
         $idCustomer = self::findCustomerId($email, $idShop);
         if ($idCustomer) {
             $customer = new Customer($idCustomer);
             if (Validate::isLoadedObject($customer)) {
+                // A returning Amazon buyer (a guest account this module made)
+                // moves to the group of this order, e.g. now delivered abroad.
+                if ($customer->is_guest && $idGroup > 0 && (int) $customer->id_default_group !== $idGroup) {
+                    $customer->addGroups([$idGroup]);
+                    $customer->id_default_group = $idGroup;
+                    $customer->update();
+                }
+
                 return $customer;
             }
         }
 
         // Parse name
         $parts = $this->splitName($fullName);
-
-        // Amazon buyers can be filed under a dedicated customer group (own
-        // pricing/tax rules, easy filtering). Falls back to the shop default.
-        $idGroup = (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP', $idShop);
-        if ($idGroup <= 0) {
-            $idGroup = (int) Configuration::get('PS_CUSTOMER_GROUP', null, $env['id_shop_group'], $idShop);
-        }
 
         $customer = new Customer();
         $customer->email = $email;
@@ -1179,6 +1226,66 @@ class AmazonOrderCreator
         }
 
         return $written;
+    }
+
+    /**
+     * Make sure the order has its order_carrier row with the order's carrier,
+     * weight and shipping cost. Before 1.6.26 none was written, and the
+     * order's "Shipping" tab showed no carrier. A row another module added
+     * without a valid carrier is completed rather than duplicated.
+     *
+     * @param int $idOrder
+     *
+     * @return bool true when a row was added or completed
+     */
+    public static function ensureOrderCarrier($idOrder)
+    {
+        $order = new Order((int) $idOrder);
+        if (!Validate::isLoadedObject($order) || (int) $order->id_carrier <= 0) {
+            return false;
+        }
+        $idCarrier = self::currentCarrier((int) $order->id_carrier);
+        if (!$idCarrier) {
+            $idCarrier = (int) $order->id_carrier;
+        }
+        $weight = (float) $order->getTotalWeight();
+        $rows = Db::getInstance()->executeS('SELECT oc.`id_order_carrier`, oc.`id_carrier`, c.`id_carrier` AS known
+            FROM `' . _DB_PREFIX_ . 'order_carrier` oc
+            LEFT JOIN `' . _DB_PREFIX_ . 'carrier` c ON (c.`id_carrier` = oc.`id_carrier`)
+            WHERE oc.`id_order` = ' . (int) $order->id . '
+            ORDER BY oc.`id_order_carrier` ASC');
+
+        if (!$rows) {
+            $oc = new OrderCarrier();
+            $oc->id_order = (int) $order->id;
+            $oc->id_carrier = $idCarrier;
+            $oc->id_order_invoice = (int) $order->invoice_number
+                ? (int) Db::getInstance()->getValue('SELECT MAX(`id_order_invoice`) FROM `' . _DB_PREFIX_ . 'order_invoice`
+                    WHERE `id_order` = ' . (int) $order->id)
+                : 0;
+            $oc->weight = $weight;
+            $oc->shipping_cost_tax_excl = (float) $order->total_shipping_tax_excl;
+            $oc->shipping_cost_tax_incl = (float) $order->total_shipping_tax_incl;
+            $oc->tracking_number = '';
+
+            return (bool) $oc->add();
+        }
+
+        $changed = false;
+        foreach ($rows as $row) {
+            if ((int) $row['id_carrier'] > 0 && $row['known']) {
+                continue;
+            }
+            Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'order_carrier`
+                SET `id_carrier` = ' . (int) $idCarrier . ',
+                    `weight` = IF(`weight` > 0, `weight`, ' . (float) $weight . '),
+                    `shipping_cost_tax_excl` = IF(`shipping_cost_tax_excl` > 0, `shipping_cost_tax_excl`, ' . (float) $order->total_shipping_tax_excl . '),
+                    `shipping_cost_tax_incl` = IF(`shipping_cost_tax_incl` > 0, `shipping_cost_tax_incl`, ' . (float) $order->total_shipping_tax_incl . ')
+                WHERE `id_order_carrier` = ' . (int) $row['id_order_carrier']);
+            $changed = true;
+        }
+
+        return $changed;
     }
 
     /**

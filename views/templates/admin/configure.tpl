@@ -1150,6 +1150,40 @@
                         <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_customer_group == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
                     {/foreach}
                 </select>
+                <p class="help-block">{l s='Private buyers with a delivery address in your shop\'s country. The groups below file Amazon Business buyers and deliveries abroad separately, for example so each group sees only its own carriers. A group not set falls back: business buyers abroad to the business group, then to the group for abroad; all others to this group.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Customer group for Amazon Business buyers' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_group_business" class="form-control">
+                    <option value="0">{l s='-- Not set --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_group_business == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Customer group for buyers abroad' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_group_abroad" class="form-control">
+                    <option value="0">{l s='-- Not set --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_group_abroad == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Customer group for Amazon Business buyers abroad' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_group_business_abroad" class="form-control">
+                    <option value="0">{l s='-- Not set --' mod='amazonmarketplacepro'}</option>
+                    {foreach from=$customer_groups item=grp}
+                        <option value="{$grp.id_group|escape:'htmlall':'UTF-8'}"{if $mkpro_group_business_abroad == $grp.id_group} selected="selected"{/if}>{$grp.name|escape:'htmlall':'UTF-8'}</option>
+                    {/foreach}
+                </select>
             </div>
         </div>
         <div class="form-group">

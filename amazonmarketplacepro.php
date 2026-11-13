@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.25';
+        $this->version = '1.6.26';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -260,6 +260,9 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_PRIORITIZE_ASIN', '0');
         Configuration::updateValue('AMZPRO_FAKE_EMAIL', '0');
         Configuration::updateValue('AMZPRO_CUSTOMER_GROUP', '0');
+        Configuration::updateValue('AMZPRO_GROUP_BUSINESS', '0');
+        Configuration::updateValue('AMZPRO_GROUP_ABROAD', '0');
+        Configuration::updateValue('AMZPRO_GROUP_BUSINESS_ABROAD', '0');
         Configuration::updateValue('AMZPRO_SKIP_NO_STOCK', '0');
 
         // Buyer data retention. On by default at Amazon's own limit: the
@@ -347,6 +350,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_IMPORT_FBA_ORDERS', 'AMZPRO_FBA_ORDER_STATE', 'AMZPRO_ORDER_STATE_SHIPPED',
             'AMZPRO_ORDER_UNSHIPPED_ONLY', 'AMZPRO_ORDER_CREATE_FROM',
             'AMZPRO_PRIORITIZE_ASIN', 'AMZPRO_FAKE_EMAIL', 'AMZPRO_CUSTOMER_GROUP',
+            'AMZPRO_GROUP_BUSINESS', 'AMZPRO_GROUP_ABROAD', 'AMZPRO_GROUP_BUSINESS_ABROAD',
             'AMZPRO_SKIP_NO_STOCK', 'AMZPRO_TITLE_FORMAT', 'AMZPRO_ORDER_MATCH',
             'AMZPRO_PII_PURGE', 'AMZPRO_PII_RETENTION_DAYS', 'AMZPRO_PII_PURGE_PS',
             'AMZPRO_ROUNDING', 'AMZPRO_SEND_SALE_PRICE', 'AMZPRO_SEND_LIST_PRICE', 'AMZPRO_PRICE_TAX',
@@ -914,6 +918,9 @@ class AmazonMarketplacePro extends Module
             'mkpro_prioritize_asin' => AmzproShop::get('AMZPRO_PRIORITIZE_ASIN'),
             'mkpro_fake_email' => AmzproShop::get('AMZPRO_FAKE_EMAIL'),
             'mkpro_customer_group' => (int) AmzproShop::get('AMZPRO_CUSTOMER_GROUP'),
+            'mkpro_group_business' => (int) AmzproShop::get('AMZPRO_GROUP_BUSINESS'),
+            'mkpro_group_abroad' => (int) AmzproShop::get('AMZPRO_GROUP_ABROAD'),
+            'mkpro_group_business_abroad' => (int) AmzproShop::get('AMZPRO_GROUP_BUSINESS_ABROAD'),
             'mkpro_skip_no_stock' => AmzproShop::get('AMZPRO_SKIP_NO_STOCK'),
             'mkpro_pii_purge' => AmazonPiiPurger::isEnabled(),
             'mkpro_pii_retention_days' => AmazonPiiPurger::retentionDays(),
@@ -1143,6 +1150,9 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_PRIORITIZE_ASIN' => 'mkpro_prioritize_asin',
             'AMZPRO_FAKE_EMAIL' => 'mkpro_fake_email',
             'AMZPRO_CUSTOMER_GROUP' => 'mkpro_customer_group',
+            'AMZPRO_GROUP_BUSINESS' => 'mkpro_group_business',
+            'AMZPRO_GROUP_ABROAD' => 'mkpro_group_abroad',
+            'AMZPRO_GROUP_BUSINESS_ABROAD' => 'mkpro_group_business_abroad',
             'AMZPRO_SKIP_NO_STOCK' => 'mkpro_skip_no_stock',
             'AMZPRO_PII_PURGE' => 'mkpro_pii_purge',
             'AMZPRO_PII_RETENTION_DAYS' => 'mkpro_pii_retention_days',
