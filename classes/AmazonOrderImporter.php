@@ -324,7 +324,7 @@ class AmazonOrderImporter
                 );
                 continue;
             }
-            if ($owner !== false) {
+            if ($owner !== false && !$this->refreshStaged($order, $summary)) {
                 ++$summary['already'];
                 continue;
             }
@@ -442,6 +442,55 @@ class AmazonOrderImporter
      *
      * @return int|false
      */
+    /**
+     * An order staged earlier keeps the status Amazon gave it then. Without
+     * this, an order caught while still Pending (payment not yet taken) stayed
+     * Pending for ever and was never created in PrestaShop.
+     *
+     * Only orders not yet created in PrestaShop are touched. One that leaves
+     * Pending (other than for Canceled) is staged again from scratch, because
+     * Amazon sends the prices and the buyer address only once it is paid.
+     *
+     * @param array $order the order as getOrders returns it now
+     * @param array $summary import summary, counters 'refreshed' / 'restaged'
+     *
+     * @return bool true when the staged row was removed and the order must be
+     *              imported again as new; false when the caller counts it as
+     *              already staged
+     */
+    private function refreshStaged($order, array &$summary)
+    {
+        $amazonId = $order['AmazonOrderId'];
+        $new = isset($order['OrderStatus']) ? (string) $order['OrderStatus'] : '';
+        $p = _DB_PREFIX_;
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_amazonmarketplacepro_order`, `order_status`, `id_order`
+             FROM `' . $p . 'amazonmarketplacepro_order`
+             WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\' AND `id_shop` = ' . (int) $this->idShop
+        );
+        if (!$row || (int) $row['id_order'] > 0 || $new === '' || $new === (string) $row['order_status']) {
+            return false;
+        }
+        $idStaged = (int) $row['id_amazonmarketplacepro_order'];
+
+        if ((string) $row['order_status'] === 'Pending' && $new !== 'Canceled') {
+            Db::getInstance()->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_order_item`
+                WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
+            Db::getInstance()->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_order`
+                WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
+            $summary['restaged'] = (isset($summary['restaged']) ? $summary['restaged'] : 0) + 1;
+
+            return true;
+        }
+
+        Db::getInstance()->execute('UPDATE `' . $p . 'amazonmarketplacepro_order`
+            SET `order_status` = \'' . pSQL($new) . '\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+            WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
+        $summary['refreshed'] = (isset($summary['refreshed']) ? $summary['refreshed'] : 0) + 1;
+
+        return false;
+    }
+
     private function orderOwner($amazonId)
     {
         $row = Db::getInstance()->getRow(
