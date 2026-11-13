@@ -595,6 +595,10 @@ class AmazonOrderCreator
         $order->total_discounts_tax_incl = $totalDiscount;
         $order->total_discounts_tax_excl = $totalDiscount;
         $order->conversion_rate = 1;
+        // The invoice prints the shipping VAT line from this rate.
+        $order->carrier_tax_rate = self::snapRate($shippingTotal > 0 ? $shippingTax / $shippingTotal * 100 : 0);
+        $order->round_mode = (int) Configuration::get('PS_PRICE_ROUND_MODE');
+        $order->round_type = (int) Configuration::get('PS_ROUND_TYPE');
         $order->secure_key = $customer->secure_key;
         $order->reference = Order::generateReference();
 
@@ -1063,11 +1067,183 @@ class AmazonOrderCreator
         $detail->product_reference = $reference;
         $detail->product_ean13 = $ean13;
         $detail->product_upc = '';
-        $detail->tax_rate = round($taxRate, 2);
+        $detail->tax_rate = self::snapRate($taxRate);
+        $detail->id_tax_rules_group = $idProduct ? (int) Product::getIdTaxRulesGroupByIdProduct($idProduct) : 0;
+        $detail->tax_computation_method = 0;
         $detail->id_shop = $idShop;
         $detail->id_warehouse = 0;
 
-        $detail->add();
+        if ($detail->add()) {
+            self::writeDetailTaxes($detail, new Address((int) $order->id_address_delivery));
+        }
+    }
+
+    /**
+     * An effective rate worked out from Amazon's amounts (19.03 for 3.19 on
+     * 16.76) moved to the shop's tax rate it stands for, when one is within
+     * half a point; otherwise rounded to three decimals.
+     *
+     * @param float $rate
+     *
+     * @return float
+     */
+    public static function snapRate($rate)
+    {
+        $rate = (float) $rate;
+        if ($rate <= 0.001) {
+            return 0.0;
+        }
+        $tax = self::taxForRate($rate);
+
+        return $tax ? (float) $tax['rate'] : round($rate, 3);
+    }
+
+    /**
+     * The shop's tax whose rate is closest to $rate, within half a point.
+     *
+     * @return array|false row with id_tax and rate
+     */
+    private static function taxForRate($rate)
+    {
+        $row = Db::getInstance()->getRow(
+            'SELECT `id_tax`, `rate` FROM `' . _DB_PREFIX_ . 'tax`
+             WHERE `deleted` = 0 AND ABS(`rate` - ' . (float) $rate . ') < 0.5
+             ORDER BY ABS(`rate` - ' . (float) $rate . ') ASC, `active` DESC, `id_tax` ASC'
+        );
+
+        return $row ? $row : false;
+    }
+
+    /**
+     * Write the order line's VAT into order_detail_tax, which is what the
+     * invoice reads for the VAT column and the tax breakdown. The amounts are
+     * the line's own (Amazon's, or the shop's tax rules in that tax mode);
+     * the taxes are the product's tax rules for the delivery address when
+     * they add up to the line's rate, else the shop's tax of that rate.
+     *
+     * Does nothing for a tax-free line or one that already has rows.
+     *
+     * @param OrderDetail $detail saved order line
+     * @param Address $address delivery address
+     *
+     * @return int rows written
+     */
+    public static function writeDetailTaxes(OrderDetail $detail, Address $address)
+    {
+        $idDetail = (int) $detail->id;
+        $qty = max(1, (int) $detail->product_quantity);
+        $totalTax = (float) $detail->total_price_tax_incl - (float) $detail->total_price_tax_excl;
+        $base = (float) $detail->total_price_tax_excl;
+        if ($idDetail <= 0 || $totalTax <= 0.000001 || $base <= 0) {
+            return 0;
+        }
+        if (Db::getInstance()->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'order_detail_tax`
+            WHERE `id_order_detail` = ' . $idDetail)) {
+            return 0;
+        }
+        $rate = $totalTax / $base * 100;
+
+        // id_tax => rate
+        $taxes = [];
+        if ((int) $detail->id_tax_rules_group > 0 && Validate::isLoadedObject($address)) {
+            $calc = TaxManagerFactory::getManager($address, (int) $detail->id_tax_rules_group)->getTaxCalculator();
+            if (abs((float) $calc->getTotalRate() - $rate) < 0.5) {
+                foreach ($calc->taxes as $tax) {
+                    if ((float) $tax->rate > 0) {
+                        $taxes[(int) $tax->id] = (float) $tax->rate;
+                    }
+                }
+            }
+        }
+        if (!$taxes) {
+            $tax = self::taxForRate($rate);
+            if (!$tax) {
+                return 0;
+            }
+            $taxes[(int) $tax['id_tax']] = (float) $tax['rate'];
+        }
+
+        // Share the line's tax between its taxes by rate (one tax: all of it).
+        $sumRates = array_sum($taxes);
+        $written = 0;
+        $left = $totalTax;
+        $n = count($taxes);
+        foreach ($taxes as $idTax => $taxRate) {
+            ++$written;
+            $amount = ($written === $n) ? $left : Tools::ps_round($totalTax * $taxRate / $sumRates, 6);
+            $left -= $amount;
+            Db::getInstance()->execute('INSERT INTO `' . _DB_PREFIX_ . 'order_detail_tax`
+                (`id_order_detail`, `id_tax`, `unit_amount`, `total_amount`)
+                VALUES (' . $idDetail . ', ' . (int) $idTax . ', ' . (float) Tools::ps_round($amount / $qty, 6) . ', '
+                . (float) Tools::ps_round($amount, 6) . ')');
+        }
+
+        return $written;
+    }
+
+    /**
+     * Complete the VAT data of an order this module created before 1.6.25:
+     * order_detail_tax rows, the shipping tax rate, and the shipping VAT rows
+     * of invoices already generated. Totals are not changed. Safe to run
+     * again; what exists already is kept.
+     *
+     * @param int $idOrder
+     *
+     * @return bool true when something was added
+     */
+    public static function repairOrderTaxes($idOrder)
+    {
+        $order = new Order((int) $idOrder);
+        if (!Validate::isLoadedObject($order)) {
+            return false;
+        }
+        $changed = false;
+        $address = new Address((int) $order->id_address_delivery);
+
+        foreach ($order->getOrderDetailList() as $row) {
+            $detail = new OrderDetail((int) $row['id_order_detail']);
+            if (!(int) $detail->id_tax_rules_group && (int) $detail->product_id) {
+                $detail->id_tax_rules_group = (int) Product::getIdTaxRulesGroupByIdProduct((int) $detail->product_id);
+            }
+            $base = (float) $detail->total_price_tax_excl;
+            $rate = self::snapRate($base > 0 ? ((float) $detail->total_price_tax_incl - $base) / $base * 100 : 0);
+            Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'order_detail`
+                SET `id_tax_rules_group` = ' . (int) $detail->id_tax_rules_group . ', `tax_rate` = ' . (float) $rate . '
+                WHERE `id_order_detail` = ' . (int) $detail->id);
+            if (self::writeDetailTaxes($detail, $address) > 0) {
+                $changed = true;
+            }
+        }
+
+        $shipExcl = (float) $order->total_shipping_tax_excl;
+        $shipTax = (float) $order->total_shipping_tax_incl - $shipExcl;
+        if ($shipExcl > 0 && $shipTax > 0.000001) {
+            $shipRate = self::snapRate($shipTax / $shipExcl * 100);
+            $storedRate = (float) Db::getInstance()->getValue('SELECT `carrier_tax_rate` FROM `' . _DB_PREFIX_ . 'orders`
+                WHERE `id_order` = ' . (int) $order->id);
+            if ($storedRate <= 0 && $shipRate > 0) {
+                Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'orders`
+                    SET `carrier_tax_rate` = ' . (float) $shipRate . ' WHERE `id_order` = ' . (int) $order->id);
+                $changed = true;
+            }
+            $tax = self::taxForRate($shipRate);
+            $invoices = Db::getInstance()->executeS('SELECT `id_order_invoice`, `total_shipping_tax_incl`, `total_shipping_tax_excl`
+                FROM `' . _DB_PREFIX_ . 'order_invoice` WHERE `id_order` = ' . (int) $order->id);
+            foreach ((array) $invoices as $inv) {
+                $invTax = (float) $inv['total_shipping_tax_incl'] - (float) $inv['total_shipping_tax_excl'];
+                $has = Db::getInstance()->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'order_invoice_tax`
+                    WHERE `type` = \'shipping\' AND `id_order_invoice` = ' . (int) $inv['id_order_invoice']);
+                if ($tax && $invTax > 0.000001 && !$has) {
+                    Db::getInstance()->execute('INSERT INTO `' . _DB_PREFIX_ . 'order_invoice_tax`
+                        (`id_order_invoice`, `type`, `id_tax`, `amount`)
+                        VALUES (' . (int) $inv['id_order_invoice'] . ', \'shipping\', ' . (int) $tax['id_tax'] . ', '
+                        . (float) Tools::ps_round($invTax, 6) . ')');
+                    $changed = true;
+                }
+            }
+        }
+
+        return $changed;
     }
 
     /**

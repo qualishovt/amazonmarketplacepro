@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.24';
+        $this->version = '1.6.25';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -290,6 +290,7 @@ class AmazonMarketplacePro extends Module
             && $this->registerHook('actionUpdateQuantity')
             && $this->registerHook('actionOrderStatusUpdate')
             && $this->registerHook('actionAdminOrdersTrackingNumberUpdate')
+            && $this->registerHook('actionSetInvoice')
             && $this->registerHook('displayAdminProductsExtra')
             && $this->registerHook('actionShopDataDuplication');
 
@@ -4211,6 +4212,24 @@ class AmazonMarketplacePro extends Module
      * Everything runs as the order's shop: its states, its settings and its
      * Amazon connection.
      */
+    /**
+     * A new invoice takes its shipping VAT lines from the carrier's tax rule,
+     * which an Amazon carrier often has none of. For an order this module
+     * created, fill in what the invoice needs from the order's own amounts.
+     */
+    public function hookActionSetInvoice($params)
+    {
+        $order = isset($params['Order']) ? $params['Order'] : null;
+        if (!$order || !Validate::isLoadedObject($order) || $order->module !== $this->name) {
+            return;
+        }
+        require_once dirname(__FILE__) . '/classes/AmazonOrderCreator.php';
+        AmazonOrderCreator::repairOrderTaxes((int) $order->id);
+        // setInvoice() saves this object right after the hook: keep the rate.
+        $order->carrier_tax_rate = (float) Db::getInstance()->getValue('SELECT `carrier_tax_rate` FROM `'
+            . _DB_PREFIX_ . 'orders` WHERE `id_order` = ' . (int) $order->id);
+    }
+
     public function hookActionOrderStatusUpdate($params)
     {
         $newState = isset($params['newOrderStatus']) ? $params['newOrderStatus'] : null;
