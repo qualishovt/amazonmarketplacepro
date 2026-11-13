@@ -462,10 +462,9 @@ class AmazonOrderImporter
     {
         $amazonId = $order['AmazonOrderId'];
         $new = isset($order['OrderStatus']) ? (string) $order['OrderStatus'] : '';
-        $p = _DB_PREFIX_;
         $row = Db::getInstance()->getRow(
             'SELECT `id_amazonmarketplacepro_order`, `order_status`, `id_order`
-             FROM `' . $p . 'amazonmarketplacepro_order`
+             FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\' AND `id_shop` = ' . (int) $this->idShop
         );
         if (!$row || (int) $row['id_order'] > 0 || $new === '' || $new === (string) $row['order_status']) {
@@ -474,16 +473,16 @@ class AmazonOrderImporter
         $idStaged = (int) $row['id_amazonmarketplacepro_order'];
 
         if ((string) $row['order_status'] === 'Pending' && $new !== 'Canceled') {
-            Db::getInstance()->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_order_item`
+            Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item`
                 WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
-            Db::getInstance()->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_order`
+            Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
                 WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
             $summary['restaged'] = (isset($summary['restaged']) ? $summary['restaged'] : 0) + 1;
 
             return true;
         }
 
-        Db::getInstance()->execute('UPDATE `' . $p . 'amazonmarketplacepro_order`
+        Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
             SET `order_status` = \'' . pSQL($new) . '\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
             WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
         $summary['refreshed'] = (isset($summary['refreshed']) ? $summary['refreshed'] : 0) + 1;
