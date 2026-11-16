@@ -87,7 +87,7 @@ class AmazonRefundManager
     {
         self::ensureTable();
         $p = _DB_PREFIX_;
-        $staged = Db::getInstance()->getRow('SELECT * FROM `' . $p . 'amazonmarketplacepro_order`
+        $staged = Db::getInstance()->getRow('SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
             WHERE `id_order` = ' . (int) $idOrder);
         if (!$staged) {
             return null;
@@ -98,7 +98,7 @@ class AmazonRefundManager
 
         // Already refunded, per Amazon order item and for shipping / extra.
         $done = ['items' => [], 'shipping' => 0.0, 'extra' => 0.0, 'total' => 0.0];
-        $history = Db::getInstance()->executeS('SELECT * FROM `' . $p . 'amazonmarketplacepro_refund`
+        $history = Db::getInstance()->executeS('SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_refund`
             WHERE `amazon_order_id` = \'' . pSQL($staged['amazon_order_id']) . '\' ORDER BY `date_add` ASC');
         foreach ((array) $history as $h) {
             $lines = json_decode((string) $h['lines_json'], true);
@@ -111,7 +111,7 @@ class AmazonRefundManager
         }
 
         $items = [];
-        $rows = Db::getInstance()->executeS('SELECT * FROM `' . $p . 'amazonmarketplacepro_order_item`
+        $rows = Db::getInstance()->executeS('SELECT * FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item`
             WHERE `id_amazonmarketplacepro_order` = ' . (int) $staged['id_amazonmarketplacepro_order'] . '
             ORDER BY `id_amazonmarketplacepro_order_item` ASC');
         foreach ((array) $rows as $it) {
