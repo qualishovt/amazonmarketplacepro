@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.26';
+        $this->version = '1.6.27';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -295,7 +295,9 @@ class AmazonMarketplacePro extends Module
             && $this->registerHook('actionAdminOrdersTrackingNumberUpdate')
             && $this->registerHook('actionSetInvoice')
             && $this->registerHook('displayAdminProductsExtra')
-            && $this->registerHook('actionShopDataDuplication');
+            && $this->registerHook('actionShopDataDuplication')
+            && $this->registerOrderPageHooks()
+            && $this->installOrderTab();
 
         if ($installed) {
             // The schedule exists from the first minute, so Automation is
@@ -320,8 +322,48 @@ class AmazonMarketplacePro extends Module
         return $installed;
     }
 
+    /**
+     * The Amazon box on the order page and the Amazon order number in the
+     * order list. 1.7.7+ has its own order page hooks; 1.6 / older 1.7 use
+     * displayAdminOrder and the legacy list hook.
+     *
+     * @return bool
+     */
+    public function registerOrderPageHooks()
+    {
+        $ok = true;
+        foreach (['displayAdminOrder', 'displayAdminOrderMain', 'actionOrderGridDefinitionModifier',
+            'actionOrderGridQueryBuilderModifier', 'actionAdminOrdersListingFieldsModifier'] as $hook) {
+            $ok = $this->registerHook($hook) && $ok;
+        }
+
+        return $ok;
+    }
+
+    /** The hidden admin page the order box sends refunds to. */
+    public function installOrderTab()
+    {
+        if ((int) Tab::getIdFromClassName('AdminAmzproOrder')) {
+            return true;
+        }
+        $tab = new Tab();
+        $tab->class_name = 'AdminAmzproOrder';
+        $tab->module = $this->name;
+        $tab->id_parent = -1;
+        $tab->active = 1;
+        foreach (Language::getLanguages(false) as $lang) {
+            $tab->name[(int) $lang['id_lang']] = 'Amazon order';
+        }
+
+        return (bool) $tab->add();
+    }
+
     public function uninstall()
     {
+        $idTab = (int) Tab::getIdFromClassName('AdminAmzproOrder');
+        if ($idTab) {
+            (new Tab($idTab))->delete();
+        }
         include dirname(__FILE__) . '/sql/uninstall.php';
 
         $keys = [
@@ -4227,6 +4269,155 @@ class AmazonMarketplacePro extends Module
      * which an Amazon carrier often has none of. For an order this module
      * created, fill in what the invoice needs from the order's own amounts.
      */
+    /**
+     * Send a refund for an Amazon order, inside the order's shop (its seller
+     * connection). Called by AdminAmzproOrderController.
+     *
+     * @return array success, feed_id | error
+     */
+    public function refundOnAmazon($idOrder, array $input, $idEmployee = 0)
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonRefundManager.php';
+        $order = new Order((int) $idOrder);
+        if (!Validate::isLoadedObject($order)) {
+            return ['success' => false, 'error' => $this->l('Order not found.')];
+        }
+        $module = $this;
+
+        return AmzproShop::runInShop((int) $order->id_shop, function () use ($module, $order, $input, $idEmployee) {
+            $result = AmazonRefundManager::submit($module->amazonClient(), (int) $order->id, $input, $idEmployee);
+            $module->logActivity($result['success'] ? 'info' : 'warning', 'refund', 'Order #' . (int) $order->id . ': '
+                . ($result['success'] ? 'refund ' . $result['amount'] . ' sent, feed ' . $result['feed_id'] : $result['error']));
+
+            return $result;
+        });
+    }
+
+    /** buildAmazonClient() for the classes and controllers outside the module. */
+    public function amazonClient()
+    {
+        return $this->buildAmazonClient();
+    }
+
+    /** Seller Central's order page for an Amazon order. */
+    public static function sellerCentralOrderUrl($marketplaceId, $amazonOrderId)
+    {
+        $hosts = [
+            'A1PA6795UKMFR9' => 'sellercentral.amazon.de', 'A13V1IB3VIYZZH' => 'sellercentral.amazon.fr',
+            'APJ6JRA9NG5V4' => 'sellercentral.amazon.it', 'A1RKKUPIHCS9HS' => 'sellercentral.amazon.es',
+            'A1F83G8C2ARO7P' => 'sellercentral.amazon.co.uk', 'A1805IZSGTT6HS' => 'sellercentral.amazon.nl',
+            'A1C3SOZRARQ6R3' => 'sellercentral.amazon.pl', 'A2NODRKZP88ZB9' => 'sellercentral.amazon.se',
+            'AMEN7PMS3EDWL' => 'sellercentral.amazon.com.be',
+        ];
+        $host = isset($hosts[$marketplaceId]) ? $hosts[$marketplaceId]
+            : (isset(self::$sellerCentralDomains[$marketplaceId]) ? self::$sellerCentralDomains[$marketplaceId] : 'sellercentral.amazon.de');
+
+        return 'https://' . $host . '/orders-v3/order/' . rawurlencode($amazonOrderId);
+    }
+
+    /** PS 1.7.7+: the Amazon box in the order page's main column. */
+    public function hookDisplayAdminOrderMain($params)
+    {
+        return $this->renderOrderPanel(isset($params['id_order']) ? (int) $params['id_order'] : 0);
+    }
+
+    /** PS 1.6 / 1.7 before 1.7.7 (1.7.7+ shows the box through Main). */
+    public function hookDisplayAdminOrder($params)
+    {
+        if (version_compare(_PS_VERSION_, '1.7.7.0', '>=')) {
+            return '';
+        }
+
+        return $this->renderOrderPanel(isset($params['id_order']) ? (int) $params['id_order'] : (int) Tools::getValue('id_order'));
+    }
+
+    private function renderOrderPanel($idOrder)
+    {
+        if ($idOrder <= 0) {
+            return '';
+        }
+        require_once dirname(__FILE__) . '/classes/AmazonRefundManager.php';
+        $data = AmazonRefundManager::orderData($idOrder);
+        if ($data === null) {
+            return '';
+        }
+        if ($data['sales_channel'] === '') {
+            $data['sales_channel'] = isset(self::$marketplaces[$data['marketplace_id']])
+                ? preg_replace('/\s*\(.*\)$/', '', self::$marketplaces[$data['marketplace_id']]) : 'Amazon';
+        }
+        $this->context->smarty->assign([
+            'amzpro_order' => $data,
+            'amzpro_id_order' => $idOrder,
+            'amzpro_sc_url' => self::sellerCentralOrderUrl($data['marketplace_id'], $data['amazon_order_id']),
+            'amzpro_refund_url' => $this->context->link->getAdminLink('AdminAmzproOrder') . '&ajax=1&action=refund',
+            'amzpro_reasons' => array_keys(AmazonRefundManager::reasons()),
+            'amzpro_logo' => $this->_path . 'logo.png',
+            'amzpro_ps17' => version_compare(_PS_VERSION_, '1.7.7.0', '>='),
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/order_panel.tpl');
+    }
+
+    /** PS 1.7.7+ order list: an "Amazon order" column with its own filter. */
+    public function hookActionOrderGridDefinitionModifier($params)
+    {
+        if (!isset($params['definition'])) {
+            return;
+        }
+        $definition = $params['definition'];
+        $column = new PrestaShop\PrestaShop\Core\Grid\Column\Type\DataColumn('amazon_order_id');
+        $column->setName($this->l('Amazon order'))->setOptions(['field' => 'amazon_order_id']);
+        $columns = $definition->getColumns();
+        try {
+            $columns->addAfter('reference', $column);
+        } catch (Exception $e) {
+            $columns->add($column);
+        }
+        $filter = new PrestaShop\PrestaShop\Core\Grid\Filter\Filter('amazon_order_id', 'Symfony\Component\Form\Extension\Core\Type\TextType');
+        $filter->setTypeOptions(['required' => false, 'attr' => ['placeholder' => $this->l('Amazon order')]])
+            ->setAssociatedColumn('amazon_order_id');
+        $definition->getFilters()->add($filter);
+    }
+
+    public function hookActionOrderGridQueryBuilderModifier($params)
+    {
+        foreach (['search_query_builder', 'count_query_builder'] as $key) {
+            if (!isset($params[$key])) {
+                continue;
+            }
+            $qb = $params[$key];
+            $qb->leftJoin('o', _DB_PREFIX_ . 'amazonmarketplacepro_order', 'amzpro', 'amzpro.id_order = o.id_order');
+            if ($key === 'search_query_builder') {
+                $qb->addSelect('amzpro.amazon_order_id');
+            }
+            if (isset($params['search_criteria'])) {
+                $filters = $params['search_criteria']->getFilters();
+                if (isset($filters['amazon_order_id']) && trim((string) $filters['amazon_order_id']) !== '') {
+                    $qb->andWhere('amzpro.amazon_order_id LIKE :amzpro_order_id')
+                        ->setParameter('amzpro_order_id', '%' . trim((string) $filters['amazon_order_id']) . '%');
+                }
+            }
+        }
+    }
+
+    /** PS 1.6 / older 1.7 order list: the same column and filter. */
+    public function hookActionAdminOrdersListingFieldsModifier($params)
+    {
+        if (isset($params['select'])) {
+            $params['select'] .= ', amzpro.`amazon_order_id`';
+        }
+        if (isset($params['join'])) {
+            $params['join'] .= ' LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_order` amzpro ON (amzpro.`id_order` = a.`id_order`)';
+        }
+        if (isset($params['fields'])) {
+            $params['fields']['amazon_order_id'] = [
+                'title' => $this->l('Amazon order'),
+                'filter_key' => 'amzpro!amazon_order_id',
+                'havingFilter' => false,
+            ];
+        }
+    }
+
     public function hookActionSetInvoice($params)
     {
         $order = isset($params['Order']) ? $params['Order'] : null;

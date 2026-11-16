@@ -1113,6 +1113,8 @@ class AmazonOrderCreator
         $detail->total_price_tax_excl = $itemPrice;
         $detail->product_reference = $reference;
         $detail->product_ean13 = $ean13;
+        // Order weight (shipping tab, carrier line) is the sum of these.
+        $detail->product_weight = self::productWeight($idProduct, $idPa);
         $detail->product_upc = '';
         $detail->tax_rate = self::snapRate($taxRate);
         $detail->id_tax_rules_group = $idProduct ? (int) Product::getIdTaxRulesGroupByIdProduct($idProduct) : 0;
@@ -1123,6 +1125,26 @@ class AmazonOrderCreator
         if ($detail->add()) {
             self::writeDetailTaxes($detail, new Address((int) $order->id_address_delivery));
         }
+    }
+
+    /**
+     * Weight of one unit: the product's, plus the combination's weight impact.
+     *
+     * @return float kg (the shop's weight unit)
+     */
+    public static function productWeight($idProduct, $idProductAttribute = 0)
+    {
+        if ((int) $idProduct <= 0) {
+            return 0.0;
+        }
+        $w = (float) Db::getInstance()->getValue('SELECT `weight` FROM `' . _DB_PREFIX_ . 'product`
+            WHERE `id_product` = ' . (int) $idProduct);
+        if ((int) $idProductAttribute > 0) {
+            $w += (float) Db::getInstance()->getValue('SELECT `weight` FROM `' . _DB_PREFIX_ . 'product_attribute`
+                WHERE `id_product_attribute` = ' . (int) $idProductAttribute);
+        }
+
+        return max(0.0, $w);
     }
 
     /**
@@ -1244,6 +1266,15 @@ class AmazonOrderCreator
         if (!Validate::isLoadedObject($order) || (int) $order->id_carrier <= 0) {
             return false;
         }
+        // Lines created before 1.6.27 have no weight: take the product's.
+        foreach ((array) Db::getInstance()->executeS('SELECT `id_order_detail`, `product_id`, `product_attribute_id`
+            FROM `' . _DB_PREFIX_ . 'order_detail` WHERE `id_order` = ' . (int) $order->id . ' AND `product_weight` <= 0') as $line) {
+            $w = self::productWeight((int) $line['product_id'], (int) $line['product_attribute_id']);
+            if ($w > 0) {
+                Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'order_detail` SET `product_weight` = ' . (float) $w . '
+                    WHERE `id_order_detail` = ' . (int) $line['id_order_detail']);
+            }
+        }
         $idCarrier = self::currentCarrier((int) $order->id_carrier);
         if (!$idCarrier) {
             $idCarrier = (int) $order->id_carrier;
@@ -1274,6 +1305,13 @@ class AmazonOrderCreator
         $changed = false;
         foreach ($rows as $row) {
             if ((int) $row['id_carrier'] > 0 && $row['known']) {
+                // Valid line: only a missing weight is filled in.
+                if ($weight > 0 && Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'order_carrier`
+                        SET `weight` = ' . (float) $weight . '
+                        WHERE `id_order_carrier` = ' . (int) $row['id_order_carrier'] . ' AND `weight` <= 0')
+                    && Db::getInstance()->Affected_Rows() > 0) {
+                    $changed = true;
+                }
                 continue;
             }
             Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'order_carrier`

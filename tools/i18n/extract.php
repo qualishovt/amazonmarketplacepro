@@ -41,10 +41,11 @@ $amzproI18nScan = function () {
     $files = array(
         'views/templates/admin/configure.tpl',
         'views/templates/admin/product_tab.tpl',
+        'views/templates/admin/order_panel.tpl',
         'amazonmarketplacepro.php',
     );
     // Plain classes and front controllers name their source explicitly.
-    foreach (array('classes', 'controllers/front') as $dir) {
+    foreach (array('classes', 'controllers/front', 'controllers/admin') as $dir) {
         foreach (glob($root . $dir . '/*.php') as $path) {
             // AmazonI18n.php is the helper itself: its l() takes variables.
             if (!in_array(basename($path), array('index.php', 'AmazonI18n.php'), true)) {
