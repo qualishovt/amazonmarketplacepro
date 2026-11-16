@@ -447,9 +447,10 @@ class AmazonOrderImporter
      * this, an order caught while still Pending (payment not yet taken) stayed
      * Pending for ever and was never created in PrestaShop.
      *
-     * Only orders not yet created in PrestaShop are touched. One that leaves
-     * Pending (other than for Canceled) is staged again from scratch, because
-     * Amazon sends the prices and the buyer address only once it is paid.
+     * An order not yet created in PrestaShop that leaves Pending (other than
+     * for Canceled) is staged again from scratch, because Amazon sends the
+     * prices and the buyer address only once it is paid. Of an order already
+     * created, only the status is updated.
      *
      * @param array $order the order as getOrders returns it now
      * @param array $summary import summary, counters 'refreshed' / 'restaged'
@@ -467,10 +468,21 @@ class AmazonOrderImporter
              FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
              WHERE `amazon_order_id` = \'' . pSQL($amazonId) . '\' AND `id_shop` = ' . (int) $this->idShop
         );
-        if (!$row || (int) $row['id_order'] > 0 || $new === '' || $new === (string) $row['order_status']) {
+        if (!$row || $new === '' || $new === (string) $row['order_status']) {
             return false;
         }
         $idStaged = (int) $row['id_amazonmarketplacepro_order'];
+
+        // Already created in PrestaShop: only the status follows Amazon (the
+        // order page shows it), the order itself is never staged again.
+        if ((int) $row['id_order'] > 0) {
+            Db::getInstance()->execute('UPDATE `' . _DB_PREFIX_ . 'amazonmarketplacepro_order`
+                SET `order_status` = \'' . pSQL($new) . '\', `date_upd` = \'' . pSQL(date('Y-m-d H:i:s')) . '\'
+                WHERE `id_amazonmarketplacepro_order` = ' . $idStaged);
+            $summary['refreshed'] = (isset($summary['refreshed']) ? $summary['refreshed'] : 0) + 1;
+
+            return false;
+        }
 
         if ((string) $row['order_status'] === 'Pending' && $new !== 'Canceled') {
             Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . 'amazonmarketplacepro_order_item`

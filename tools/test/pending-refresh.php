@@ -115,11 +115,15 @@ try {
           AND o.`order_status` <> \'Pending\'');
     check('paid order passes the Pending filter', (int) $picked, 1);
 
-    // 4. An order already created in PrestaShop is never touched.
-    $db->execute('UPDATE `' . $p . 'amazonmarketplacepro_order` SET `id_order` = 999999, `order_status` = \'Pending\'
+    // 4. An order already created in PrestaShop is never staged again; only
+    //    its status follows Amazon (1.6.28: the order page box shows it).
+    $db->execute('UPDATE `' . $p . 'amazonmarketplacepro_order` SET `id_order` = 999999, `order_status` = \'Unshipped\'
         WHERE `amazon_order_id` = \'ZZP-3\'');
+    $before = (int) $staged('ZZP-3')['id'];
     $s = $importer->importNewOrders('2026-11-01T00:00:00Z');
-    check('created order left alone', [$staged('ZZP-3')['order_status'], (int) $staged('ZZP-3')['id_order']], ['Pending', 999999]);
+    check('created order: status follows Amazon', $staged('ZZP-3')['order_status'], 'Shipped');
+    check('created order: same row, still linked', [(int) $staged('ZZP-3')['id'], (int) $staged('ZZP-3')['id_order']], [$before, 999999]);
+    check('created order: not imported again', isset($s['restaged']) ? $s['restaged'] : 0, 0);
 } finally {
     $cleanup();
 }
