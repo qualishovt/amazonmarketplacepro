@@ -3425,6 +3425,7 @@ class AmazonProductSync
      */
     public function listingTemplate($sku)
     {
+        $this->notices = [];
         $sku = trim((string) $sku);
         if ($sku === '' || $this->sellerId === '') {
             $this->lastError = AmazonI18n::get()->l('Enter the SKU of one of your Amazon listings.', 'amazonproductsync');
@@ -3479,7 +3480,15 @@ class AmazonProductSync
                 if ($type === '' && isset($cat['body']['productTypes'][0]['productType'])) {
                     $type = (string) $cat['body']['productTypes'][0]['productType'];
                 }
+            } else {
+                $this->notices[] = sprintf(
+                    AmazonI18n::get()->l('Amazon sent no attributes for this listing, and its catalogue page could not be read (%s).', 'amazonproductsync'),
+                    $cat === false ? (string) $this->client->getLastError() : 'HTTP ' . $cat['status']
+                );
             }
+        }
+        if (!$attrs) {
+            $this->notices[] = AmazonI18n::get()->l('Amazon sent no attributes for this listing. Fill in the product type\'s attributes yourself, or try another SKU.', 'amazonproductsync');
         }
 
         if (isset($attrs['recommended_browse_nodes']) && is_array($attrs['recommended_browse_nodes'])) {

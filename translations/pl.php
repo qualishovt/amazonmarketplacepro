@@ -1254,6 +1254,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Wariant nadrzędny wymaga mapowania kategorii (typu produktu Amazon). Najpierw zmapuj kategorię nr %d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Wpisz SKU jednej ze swoich ofert w Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon nie ma oferty z SKU %s.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d0ffdf088ca5a11b0ef82909f0fd8071'] = 'Amazon nie przesłał atrybutów tej oferty, a jej strony katalogu nie udało się odczytać (%s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_346a10765df874c8fd5746b828e8238d'] = 'Amazon nie przesłał atrybutów tej oferty. Uzupełnij atrybuty typu produktu samodzielnie albo spróbuj innego SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Dodatkowe atrybuty muszą być poprawnym obiektem JSON.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'To mapowanie dotyczy wszystkich sklepów. Wybierz „Wszystkie sklepy” u góry strony, aby je usunąć.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'To mapowanie należy do innego sklepu. Wybierz tamten sklep u góry strony, aby je usunąć.';

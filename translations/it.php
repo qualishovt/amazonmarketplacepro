@@ -1254,6 +1254,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Il prodotto padre della variante ha bisogno di una corrispondenza di categoria (tipo di prodotto Amazon). Associa prima la categoria #%d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Inserisci lo SKU di una delle tue offerte Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon non ha alcuna offerta con lo SKU %s.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d0ffdf088ca5a11b0ef82909f0fd8071'] = 'Amazon non ha inviato attributi per questa offerta e non è stato possibile leggere la sua pagina di catalogo (%s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_346a10765df874c8fd5746b828e8238d'] = 'Amazon non ha inviato attributi per questa offerta. Inserisci tu gli attributi del tipo di prodotto oppure prova un altro SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Gli attributi aggiuntivi devono essere un oggetto JSON valido.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'Questa corrispondenza si applica a tutti i negozi. Seleziona «Tutti i negozi» in alto nella pagina per eliminarla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'Questa corrispondenza appartiene a un altro negozio. Seleziona quel negozio in alto nella pagina per eliminarla.';

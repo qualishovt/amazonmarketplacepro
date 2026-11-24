@@ -1254,6 +1254,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Übergeordnete Variation benötigt eine Kategoriezuordnung (Amazon-Produkttyp). Ordnen Sie zuerst Kategorie #%d zu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Geben Sie die SKU eines Ihrer Amazon-Angebote ein.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon hat kein Angebot mit der SKU %s.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d0ffdf088ca5a11b0ef82909f0fd8071'] = 'Amazon hat für dieses Angebot keine Attribute gesendet, und seine Katalogseite konnte nicht gelesen werden (%s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_346a10765df874c8fd5746b828e8238d'] = 'Amazon hat für dieses Angebot keine Attribute gesendet. Tragen Sie die Attribute des Produkttyps selbst ein oder versuchen Sie eine andere SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Zusätzliche Attribute müssen ein gültiges JSON-Objekt sein.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'Diese Zuordnung gilt für alle Shops. Wählen Sie „Alle Shops“ oben auf der Seite, um sie zu löschen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'Diese Zuordnung gehört zu einem anderen Shop. Wählen Sie diesen Shop oben auf der Seite aus, um sie zu löschen.';

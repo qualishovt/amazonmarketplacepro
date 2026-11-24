@@ -1254,6 +1254,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Le parent de la déclinaison a besoin d\'une correspondance de catégorie (type de produit Amazon). Faites d\'abord correspondre la catégorie #%d.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Saisissez le SKU de l\'une de vos offres Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon n\'a aucune offre avec le SKU %s.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d0ffdf088ca5a11b0ef82909f0fd8071'] = 'Amazon n\'a envoyé aucun attribut pour cette offre, et sa page catalogue n\'a pas pu être lue (%s).';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_346a10765df874c8fd5746b828e8238d'] = 'Amazon n\'a envoyé aucun attribut pour cette offre. Renseignez vous-même les attributs du type de produit, ou essayez un autre SKU.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Les attributs supplémentaires doivent être un objet JSON valide.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'Cette correspondance s\'applique à toutes les boutiques. Sélectionnez « Toutes les boutiques » en haut de la page pour la supprimer.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'Cette correspondance appartient à une autre boutique. Sélectionnez cette boutique en haut de la page pour la supprimer.';

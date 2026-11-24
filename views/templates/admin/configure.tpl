@@ -3912,8 +3912,8 @@
                 document.getElementById('catmap-browse-node').value = t.browse_nodes || '';
                 var attrsEl = document.getElementById('catmap-attributes');
                 if (attrsEl) { attrsEl.value = JSON.stringify(t.attributes || {}, null, 1); attrsEl.rows = 12; }
-                result.className = 'alert alert-info';
-                result.textContent = T.templateLoaded;
+                result.className = (data.notices && data.notices.length) ? 'alert alert-warning' : 'alert alert-info';
+                result.textContent = T.templateLoaded + ((data.notices && data.notices.length) ? ' ' + data.notices.join(' ') : '');
             }, 'sku=' + encodeURIComponent(sku));
         });
 

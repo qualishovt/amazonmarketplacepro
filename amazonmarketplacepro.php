@@ -3445,7 +3445,7 @@ class AmazonMarketplacePro extends Module
             return ['success' => false, 'error' => $sync->getLastError()];
         }
 
-        return ['success' => true, 'template' => $template];
+        return ['success' => true, 'template' => $template, 'notices' => $sync->getNotices()];
     }
 
     protected function runDeleteCategoryMap()
