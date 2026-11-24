@@ -42,7 +42,7 @@ class AmazonProductOverride
         'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt', 'separate_combinations'];
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
-        'shipping_template', 'browse_node', 'brand', 'bullet_points',
+        'shipping_template', 'browse_node', 'brand', 'bullet_points', 'amazon_title', 'amazon_description', 'manufacturer',
         'condition_type', 'condition_note', 'price_markup', 'skip_combinations', 'combination_settings'];
 
     /**
@@ -101,6 +101,11 @@ class AmazonProductOverride
             'browse_node' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
             'brand' => 'VARCHAR(128) NOT NULL DEFAULT \'\'',
             'bullet_points' => 'TEXT NULL',
+            // 1.6.29: Amazon's own title, description and manufacturer for
+            // this product; empty = the shop's.
+            'amazon_title' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
+            'amazon_description' => 'TEXT NULL',
+            'manufacturer' => 'VARCHAR(128) NOT NULL DEFAULT \'\'',
             'condition_type' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'condition_note' => 'TEXT NULL',
             // "10%" or "2.50": this product's own markup, ahead of the
@@ -150,6 +155,7 @@ class AmazonProductOverride
             'sync_price' => 1, 'sync_quantity' => 1, 'is_fba' => 0, 'lead_time' => -1,
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
+            'amazon_title' => '', 'amazon_description' => '', 'manufacturer' => '',
             'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
             'skip_combinations' => '', 'separate_combinations' => 0, 'combination_settings' => '',
             'stock_buffer' => -1,

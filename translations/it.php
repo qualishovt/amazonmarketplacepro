@@ -168,6 +168,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_9602f75463be0d32c16f8071ca
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d7a4ecf12d6f72d794dc1cdecb20f765'] = 'Solo prezzo';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c5453d1c29d31092a107b73b286aa2f9'] = 'Solo quantità';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1538dc4365ee60078219c88c8a54654d'] = 'Le modalità prezzo/quantità inviano piccoli aggiornamenti parziali anziché l\'inserzione completa: molto più rapido con cataloghi grandi.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9f0e8f7aadcac3b36cf0892eadc47160'] = 'Offerte già su Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1bc889e36f0f4eaf40e469251363dbfa'] = 'Aggiorna solo prezzo e giacenza';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6438b9dcb8faa0afab5705e307ad00cc'] = 'Invia anche titolo, descrizione, marchio e immagini';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a48ece3ad06fcf2d8efde5ea901f83b6'] = 'Per i prodotti già presenti su Amazon. Con «solo prezzo e giacenza» i testi e le immagini su Amazon restano come sono, così come il modello di spedizione e il tempo di gestione impostati in Seller Central. I prodotti non ancora su Amazon vengono sempre inviati completi.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb465fc650896b9f79208c537bbdc510'] = 'Forza tutte le quantità a zero';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d95e108f830def03e72f1c4f135b26c2'] = 'Attivo: pubblica giacenza 0 per tutto';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b8dfdbd38b01c2778274d9cc2fa97108'] = 'Interruttore di emergenza (ferie, blocco delle giacenze): ogni offerta pubblicata riporta quantità 0. Le inserzioni restano online ma risultano non disponibili.';
@@ -987,6 +991,12 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c61b5b7eda8c9939e3867d9f
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_e95fc00a95e7587cb3786b7369bcc504'] = 'Per il tuo marchio: l\'EAN non viene inviato e il prodotto non viene mai abbinato tramite EAN a una pagina Amazon esistente, quindi ottiene una propria pagina con il tuo marchio. Amazon deve aver concesso al tuo marchio un\'esenzione GTIN. Per applicarlo a tutto il marchio, salva con «Tutti i prodotti dello stesso produttore» qui sotto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_7b026657b14c5b3546880e6fa663da24'] = 'Marca sostitutiva';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_533fe51d575df8e51b2fa88789f4e658'] = 'Vuoto = il produttore del prodotto.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_23b5901adc5347337e02e80e7af33a91'] = 'Produttore su Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bd1f51c5a7f19c602bb31452c63e3aa8'] = 'Vuoto = non inviato.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6169c895da00c3bc744453cff1304bc7'] = 'Titolo su Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b66e740aa2ebed714e846ef01ad1af0c'] = 'Vuoto = il nome del prodotto nel negozio. Inviato così com\'è, fino a 200 caratteri.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_05acb0213eebe07848fe757b1ac28309'] = 'Descrizione su Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6435d36b69be09134db21daed1850ed2'] = 'Vuoto = la descrizione del prodotto nel negozio. Fino a 2000 caratteri.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_368c74ef81f13a35af5c238626cfb19f'] = '-- Valore predefinito globale --';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_47063882b9bccca5b5748e594b22e344'] = 'Vuoto = generato dalla descrizione breve.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ed27fe03621551ad0c978f7469d76742'] = 'E-mail o URL della persona responsabile. Prevale sul contatto di produttore o fornitore.';
@@ -1233,6 +1243,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0fec7c422218fb9653
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0c58949089fa2926a456ddba88438bef'] = 'Nota: «Esporta solo i prodotti con ASIN» è attiva.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_5810dc287dd5c536ce66010f5f1f5858'] = 'Il tuo ID venditore manca. Fai clic su «Connetti ad Amazon» in Impostazioni > Connessione per completarlo.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_9eafae55aad260199ede38b734a1b834'] = 'Esaurito: eliminazione dell\'inserzione richiesta.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_82bcbe5706e834b1b66392ac9076f6f9'] = 'La sincronizzazione di prezzo e quantità è disattivata per questo prodotto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_22c5adca5a500c548db827fe4d18ba76'] = 'Nessun prodotto PrestaShop con questo SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_2bc1ec9e8c90c97544600d7609df19ac'] = 'Il prodotto PrestaShop è disattivato';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed257ec8beaf26fa'] = 'Escluso dalla sincronizzazione con Amazon sul prodotto';

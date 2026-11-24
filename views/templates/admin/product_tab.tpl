@@ -316,6 +316,30 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Manufacturer on Amazon' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-4">
+            <input type="text" name="amzpro_manufacturer" value="{if isset($amzpro.manufacturer)}{$amzpro.manufacturer|escape:'htmlall':'UTF-8'}{/if}" class="form-control" maxlength="128" />
+            <p class="help-block">{l s='Empty = not sent.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Title on Amazon' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-6">
+            <input type="text" name="amzpro_amazon_title" value="{if isset($amzpro.amazon_title)}{$amzpro.amazon_title|escape:'htmlall':'UTF-8'}{/if}" class="form-control" maxlength="200" />
+            <p class="help-block">{l s='Empty = the product name in the shop. Sent as written, up to 200 characters.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Description on Amazon' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-6">
+            <textarea name="amzpro_amazon_description" class="form-control" rows="6" maxlength="2000">{if isset($amzpro.amazon_description)}{$amzpro.amazon_description|escape:'htmlall':'UTF-8'}{/if}</textarea>
+            <p class="help-block">{l s='Empty = the product description in the shop. Up to 2000 characters.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="control-label col-lg-3">{l s='Condition' mod='amazonmarketplacepro'}</label>
         <div class="col-lg-4">
             <select name="amzpro_condition_type" class="form-control">

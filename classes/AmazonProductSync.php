@@ -450,7 +450,9 @@ class AmazonProductSync
                     // A fixed Amazon price is sent as entered: no tax added.
                     $fixed = ($field === 'price' && $ov && (float) $ov['override_price'] > 0);
                     $factor = $rate * ($fixed ? 1.0 : $tax);
-                    if ($factor !== 1.0 && isset($row[$field]) && (float) $row[$field] > 0) {
+                    // Rounded here, once, after VAT: a net price of 16.764706
+                    // is 19.95 with 19 %, but 19.94 if the net is rounded first.
+                    if (isset($row[$field]) && (float) $row[$field] > 0) {
                         $psRows[$i][$field] = AmazonListingSettings::applyRounding((float) $row[$field] * $factor);
                     }
                 }
@@ -598,9 +600,7 @@ class AmazonProductSync
         $fixed = isset($overrides[$idProduct]) && (float) $overrides[$idProduct]['override_price'] > 0;
         $price = $this->effectivePrice((float) $product['price'], $idProduct, 0, $overrides);
         $factor = $rate * ($fixed ? 1.0 : $this->priceTaxFactor($idProduct));
-        if ($factor !== 1.0) {
-            $price = AmazonListingSettings::applyRounding($price * $factor);
-        }
+        $price = AmazonListingSettings::applyRounding($price * $factor);
         $managed = $this->repricedPrices();
         if (isset($managed[$sku])) {
             $price = $managed[$sku];
@@ -1496,7 +1496,8 @@ class AmazonProductSync
         $price = AmazonListingSettings::applySpecificPrice($basePrice, $idProduct, $idProductAttribute);
         $price = AmazonListingSettings::applyMarkup($price, $idProduct, isset($overrides[$idProduct]) ? $overrides[$idProduct] : null);
 
-        return AmazonListingSettings::applyRounding($price);
+        // Not rounded yet: the caller adds VAT and the currency rate first.
+        return round((float) $price, 6);
     }
 
     /** Export quantity, honouring the per-product always-in/out-of-stock forcing. */
@@ -2133,6 +2134,7 @@ class AmazonProductSync
                     p.`parent_sku`, p.`is_parent`, p.`variation_theme`, p.`variation_attributes`,
                     p.`ps_condition`, p.`ps_available_date`, p.`ps_list_price`,
                     p.`sale_price`, p.`sale_from`, p.`sale_to`,
+                    p.`amazon_exists`, p.`amazon_product_type` AS listing_product_type,
                     cm.`amazon_product_type`, cm.`amazon_browse_node`, cm.`attributes_json`,
                     pr.`id_amazonmarketplacepro_profile` AS profile_id,
                     pr.`product_type` AS profile_product_type,
@@ -2147,6 +2149,8 @@ class AmazonProductSync
                     ov.`transparency_code` AS ov_transparency_code,
                     ov.`shipping_template` AS ov_shipping_template,
                     ov.`browse_node` AS ov_browse_node, ov.`brand` AS ov_brand,
+                    ov.`amazon_title` AS ov_title, ov.`amazon_description` AS ov_description,
+                    ov.`manufacturer` AS ov_manufacturer,
                     ov.`bullet_points` AS ov_bullet_points,
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
@@ -2157,7 +2161,12 @@ class AmazonProductSync
              WHERE p.`id_shop` = ' . (int) $this->shopId() . $this->marketplaceWhere('p') . '
                AND p.`ps_exists` = 1 AND p.`sync_direction` IN (\'ps_only\', \'conflict\')'
              . $this->syncSwitchWhere()
-             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '') . '
+             . ($onlyWithAsin ? ' AND (p.`amazon_asin` <> \'\' OR p.`is_parent` = 1)' : '')
+             // A product not on Amazon, with no ASIN to offer on and no
+             // product type to create it with, cannot be listed: Amazon
+             // would only reject it, on every run (1.6.29).
+             . ' AND (p.`amazon_exists` = 1 OR p.`amazon_asin` <> \'\' OR p.`is_parent` = 1
+                  OR IFNULL(cm.`amazon_product_type`, \'\') <> \'\' OR pr.`id_amazonmarketplacepro_profile` IS NOT NULL)
              ORDER BY p.`is_parent` DESC, p.`seller_sku` ASC
              LIMIT ' . $limit
         );
@@ -2177,6 +2186,7 @@ class AmazonProductSync
         $results = [];
         $pushed = 0;
         $failed = 0;
+        $skipped = 0;
         $pushedProductIds = [];
         foreach ($rows as $r) {
             $res = $this->pushOne($r);
@@ -2186,6 +2196,8 @@ class AmazonProductSync
                 if (!empty($r['id_product'])) {
                     $pushedProductIds[] = (int) $r['id_product'];
                 }
+            } elseif ($res['status'] === 'SKIPPED') {
+                ++$skipped;
             } else {
                 ++$failed;
             }
@@ -2202,6 +2214,7 @@ class AmazonProductSync
             'candidates' => count($rows),
             'pushed' => $pushed,
             'failed' => $failed,
+            'skipped' => $skipped,
             'results' => $results,
         ];
     }
@@ -2274,6 +2287,21 @@ class AmazonProductSync
             ];
         }
 
+        // A listing already live on Amazon gets its price and stock only,
+        // as a partial update: a full replace would drop what the seller set
+        // up in Seller Central (shipping template, handling time, ...) and,
+        // with a product type, overwrite the Amazon page with the shop's
+        // texts. Full data goes to an existing listing only with a product
+        // type and "Existing Amazon listings: full data" (1.6.29).
+        if (!empty($r['amazon_exists']) && empty($r['is_parent'])) {
+            $prepared = $this->applyProfile($r);
+            $full = !empty($prepared['amazon_product_type'])
+                && (string) AmzproShop::get('AMZPRO_EXISTING_LISTINGS', $this->shopId()) === 'full';
+            if (!$full) {
+                return $this->patchExistingOffer($r);
+            }
+        }
+
         $body = $this->buildListingRequestBody($r);
         if (isset($body['_skip'])) {
             return ['sku' => $sku, 'status' => 'SKIPPED', 'issues' => $body['_skip']];
@@ -2295,6 +2323,48 @@ class AmazonProductSync
 
         $status = isset($resp['body']['status']) ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
         $issues = isset($resp['body']['issues']) ? json_encode($resp['body']['issues']) : '';
+
+        return ['sku' => $sku, 'status' => $status, 'issues' => $issues];
+    }
+
+    /**
+     * Price and stock of a listing that is already on Amazon, as a partial
+     * update (the same one the real-time stock hook sends). The product's
+     * "sync price" / "sync quantity" switches are honoured.
+     *
+     * @return array array('sku' => string, 'status' => string, 'issues' => string)
+     */
+    private function patchExistingOffer($r)
+    {
+        $sku = $r['seller_sku'];
+        $patches = [];
+        if (!isset($r['ov_sync_price']) || (int) $r['ov_sync_price']) {
+            $body = $this->buildPatchBody($r, 'price');
+            $patches[] = $body['patches'][0];
+        }
+        if (empty($r['ov_is_fba']) && (!isset($r['ov_sync_quantity']) || (int) $r['ov_sync_quantity'])) {
+            $body = $this->buildPatchBody($r, 'quantity');
+            $patches[] = $body['patches'][0];
+        }
+        if (!$patches) {
+            return ['sku' => $sku, 'status' => 'SKIPPED',
+                'issues' => AmazonI18n::get()->l('Price and quantity sync are both switched off for this product.', 'amazonproductsync'), ];
+        }
+        $type = !empty($r['listing_product_type']) ? $r['listing_product_type']
+            : (!empty($r['amazon_product_type']) ? $r['amazon_product_type'] : 'PRODUCT');
+        $resp = $this->client->request(
+            'PATCH',
+            '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
+            ['marketplaceIds' => $this->marketplaceId],
+            ['productType' => $type, 'patches' => $patches]
+        );
+        if ($resp === false) {
+            return ['sku' => $sku, 'status' => 'ERROR', 'issues' => (string) $this->client->getLastError()];
+        }
+        $status = (is_array($resp['body']) && isset($resp['body']['status']))
+            ? $resp['body']['status'] : ('HTTP ' . $resp['status']);
+        $issues = (is_array($resp['body']) && isset($resp['body']['issues']))
+            ? json_encode($resp['body']['issues']) : '';
 
         return ['sku' => $sku, 'status' => $status, 'issues' => $issues];
     }
@@ -2471,6 +2541,8 @@ class AmazonProductSync
                     ov.`transparency_code` AS ov_transparency_code,
                     ov.`shipping_template` AS ov_shipping_template,
                     ov.`browse_node` AS ov_browse_node, ov.`brand` AS ov_brand,
+                    ov.`amazon_title` AS ov_title, ov.`amazon_description` AS ov_description,
+                    ov.`manufacturer` AS ov_manufacturer,
                     ov.`bullet_points` AS ov_bullet_points,
                     ov.`condition_type` AS ov_condition_type,
                     ov.`condition_note` AS ov_condition_note,
@@ -2838,6 +2910,14 @@ class AmazonProductSync
             ]];
         }
 
+        // Manufacturer, when the product names one of its own for Amazon.
+        if (!empty($r['ov_manufacturer'])) {
+            $attributes['manufacturer'] = [[
+                'value' => trim((string) $r['ov_manufacturer']),
+                'marketplace_id' => $this->marketplaceId,
+            ]];
+        }
+
         // EAN / UPC / GTIN, by the barcode's length (AmazonListingSettings::barcode()).
         $barcode = AmazonListingSettings::barcode(isset($r['ps_ean13']) ? $r['ps_ean13'] : '');
         if ($barcode !== null) {
@@ -3006,6 +3086,15 @@ class AmazonProductSync
         if (!empty($r['ov_brand'])) {
             $r['ps_manufacturer'] = $r['ov_brand'];
         }
+        // Amazon's own title and description (1.6.29). The title is the
+        // product's, so a combination keeps its own name with its values.
+        if (!empty($r['ov_title']) && empty($r['id_product_attribute']) && empty($r['parent_sku'])) {
+            $r['ps_name'] = $r['ov_title'];
+            $r['title_fixed'] = 1;
+        }
+        if (isset($r['ov_description']) && trim((string) $r['ov_description']) !== '') {
+            $r['ps_description'] = $r['ov_description'];
+        }
         if (!empty($r['ov_asin'])) {
             $r['amazon_asin'] = $r['ov_asin'];
         }
@@ -3028,8 +3117,9 @@ class AmazonProductSync
     private function composeTitle($r)
     {
         $name = trim((string) $r['ps_name']);
-        if (AmzproShop::get('AMZPRO_TITLE_FORMAT', $this->shopId()) !== 'brand_name_attrs') {
-            return $name;
+        if (!empty($r['title_fixed'])
+            || AmzproShop::get('AMZPRO_TITLE_FORMAT', $this->shopId()) !== 'brand_name_attrs') {
+            return Tools::substr($name, 0, 200);
         }
 
         $brand = isset($r['ps_manufacturer']) ? trim((string) $r['ps_manufacturer']) : '';

@@ -117,7 +117,7 @@ class AmazonMarketplacePro extends Module
     {
         $this->name = 'amazonmarketplacepro';
         $this->tab = 'market_place';
-        $this->version = '1.6.28';
+        $this->version = '1.6.29';
         $this->author = 'IntelliPresta';
         $this->need_instance = 1;
         $this->module_key = '90cd26f4540f01bccf36d740e046dea1';
@@ -206,6 +206,8 @@ class AmazonMarketplacePro extends Module
         Configuration::updateValue('AMZPRO_GPSR_PRIORITY', 'manufacturer');
         // Sync modes & options
         Configuration::updateValue('AMZPRO_SYNC_MODE', 'normal');
+        // 1.6.29: listings already on Amazon get price and stock only.
+        Configuration::updateValue('AMZPRO_EXISTING_LISTINGS', 'offer');
         Configuration::updateValue('AMZPRO_FORCE_ZERO_QTY', '0');
         Configuration::updateValue('AMZPRO_ONLY_WITH_ASIN', '0');
         Configuration::updateValue('AMZPRO_EXPORT_LIMIT', '0');
@@ -384,7 +386,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_QTY_MIN', 'AMZPRO_USE_SPECIFIC_PRICES', 'AMZPRO_SPECIFIC_PRICE_GROUP',
             'AMZPRO_REPORT_EMAIL', 'AMZPRO_DEFAULT_MARKUP', 'AMZPRO_MARKUP_SOURCES',
             'AMZPRO_DEFAULT_DELAY', 'AMZPRO_DELAY_SOURCES', 'AMZPRO_GPSR_PRIORITY',
-            'AMZPRO_SYNC_MODE', 'AMZPRO_FORCE_ZERO_QTY', 'AMZPRO_ONLY_WITH_ASIN',
+            'AMZPRO_SYNC_MODE', 'AMZPRO_EXISTING_LISTINGS', 'AMZPRO_FORCE_ZERO_QTY', 'AMZPRO_ONLY_WITH_ASIN',
             'AMZPRO_EXPORT_LIMIT', 'AMZPRO_EAN_AS', 'AMZPRO_DELTA_HOURS',
             'AMZPRO_COND_NOTE_USED', 'AMZPRO_COND_NOTE_REFURB', 'AMZPRO_QUEUE_TTL_DAYS',
             'AMZPRO_SHIP_TPL_ENABLED', 'AMZPRO_SHIP_TPL_BASIS',
@@ -934,6 +936,7 @@ class AmazonMarketplacePro extends Module
 
             // Sync options
             'mkpro_sync_mode' => AmzproShop::get('AMZPRO_SYNC_MODE'),
+            'mkpro_existing_listings' => (string) AmzproShop::get('AMZPRO_EXISTING_LISTINGS'),
             'mkpro_force_zero_qty' => AmzproShop::get('AMZPRO_FORCE_ZERO_QTY'),
             'mkpro_only_with_asin' => AmzproShop::get('AMZPRO_ONLY_WITH_ASIN'),
             'mkpro_export_limit' => (int) AmzproShop::get('AMZPRO_EXPORT_LIMIT'),
@@ -1171,6 +1174,7 @@ class AmazonMarketplacePro extends Module
             'AMZPRO_DEFAULT_DELAY' => 'mkpro_default_delay',
             'AMZPRO_GPSR_PRIORITY' => 'mkpro_gpsr_priority',
             'AMZPRO_SYNC_MODE' => 'mkpro_sync_mode',
+            'AMZPRO_EXISTING_LISTINGS' => 'mkpro_existing_listings',
             'AMZPRO_FORCE_ZERO_QTY' => 'mkpro_force_zero_qty',
             'AMZPRO_ONLY_WITH_ASIN' => 'mkpro_only_with_asin',
             'AMZPRO_EXPORT_LIMIT' => 'mkpro_export_limit',
@@ -3981,6 +3985,9 @@ class AmazonMarketplacePro extends Module
             'shipping_template' => trim((string) Tools::getValue('amzpro_shipping_template', '')),
             'browse_node' => trim((string) Tools::getValue('amzpro_browse_node', '')),
             'brand' => trim((string) Tools::getValue('amzpro_brand', '')),
+            'manufacturer' => trim((string) Tools::getValue('amzpro_manufacturer', '')),
+            'amazon_title' => trim((string) Tools::getValue('amzpro_amazon_title', '')),
+            'amazon_description' => trim((string) Tools::getValue('amzpro_amazon_description', '')),
             'condition_type' => trim((string) Tools::getValue('amzpro_condition_type', '')),
             'condition_note' => trim((string) Tools::getValue('amzpro_condition_note', '')),
             'bullet_points' => trim((string) Tools::getValue('amzpro_bullet_points', '')),

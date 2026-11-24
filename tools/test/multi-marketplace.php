@@ -36,8 +36,12 @@ function priceMismatches($t, $mp, $rate)
     foreach (Db::getInstance()->executeS('SELECT a.ps_price m, b.ps_price x FROM `' . $t . '` a
         JOIN `' . $t . '` b ON b.seller_sku = a.seller_sku AND b.id_shop = a.id_shop AND b.marketplace_id = "' . pSQL($mp) . '"
         WHERE a.marketplace_id = "" AND a.ps_exists = 1 AND a.ps_price > 0') as $p) {
-        $want = ($rate === 1.0) ? (float) $p['m'] : AmazonListingSettings::applyRounding((float) $p['m'] * $rate);
-        if (abs((float) $p['x'] - $want) > 0.001) {
+        // 1.6.29: the converted price comes from the unrounded shop price, so
+        // it may differ from "rounded main price x rate" by the main price's
+        // own rounding (half a cent, converted) plus its own half cent.
+        $want = (float) $p['m'] * $rate;
+        $tolerance = ($rate === 1.0) ? 0.001 : 0.005 * $rate + 0.0051;
+        if (abs((float) $p['x'] - $want) > $tolerance) {
             ++$bad;
         }
     }

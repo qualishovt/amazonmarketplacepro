@@ -168,6 +168,10 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_9602f75463be0d32c16f8071ca
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d7a4ecf12d6f72d794dc1cdecb20f765'] = 'Tylko cena';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c5453d1c29d31092a107b73b286aa2f9'] = 'Tylko ilość';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1538dc4365ee60078219c88c8a54654d'] = 'Tryby ceny i ilości wysyłają małe aktualizacje częściowe zamiast pełnej oferty — przy dużych katalogach jest to znacznie szybsze.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_9f0e8f7aadcac3b36cf0892eadc47160'] = 'Oferty już obecne w Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1bc889e36f0f4eaf40e469251363dbfa'] = 'Aktualizuj tylko cenę i stan magazynowy';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_6438b9dcb8faa0afab5705e307ad00cc'] = 'Wysyłaj też tytuł, opis, markę i zdjęcia';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_a48ece3ad06fcf2d8efde5ea901f83b6'] = 'Dla produktów, które już są w Amazon. Przy „tylko cena i stan” teksty i zdjęcia w Amazon pozostają bez zmian, podobnie jak szablon wysyłki i czas realizacji ustawione w Seller Central. Produkty, których jeszcze nie ma w Amazon, są zawsze wysyłane w całości.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_fb465fc650896b9f79208c537bbdc510'] = 'Wymuś zerowe ilości';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d95e108f830def03e72f1c4f135b26c2'] = 'Włączone — publikuj stan 0 dla wszystkiego';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_b8dfdbd38b01c2778274d9cc2fa97108'] = 'Wyłącznik awaryjny (urlop, zamrożenie stanów): każda wysyłana oferta ma ilość 0. Oferty pozostają online, ale są oznaczone jako niedostępne.';
@@ -987,6 +991,12 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c61b5b7eda8c9939e3867d9f
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_e95fc00a95e7587cb3786b7369bcc504'] = 'Dla Twojej marki własnej: EAN nie jest wysyłany, a produkt nigdy nie jest dopasowywany po EAN do istniejącej strony Amazon, więc otrzymuje własną stronę pod Twoją marką. Amazon musi przyznać Twojej marce zwolnienie z GTIN. Aby zastosować to do całej marki, zapisz z opcją „Wszystkie produkty tego samego producenta” poniżej.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_7b026657b14c5b3546880e6fa663da24'] = 'Marka zastępcza';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_533fe51d575df8e51b2fa88789f4e658'] = 'Puste = producent produktu.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_23b5901adc5347337e02e80e7af33a91'] = 'Producent w Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_bd1f51c5a7f19c602bb31452c63e3aa8'] = 'Puste = nie jest wysyłane.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6169c895da00c3bc744453cff1304bc7'] = 'Tytuł w Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_b66e740aa2ebed714e846ef01ad1af0c'] = 'Puste = nazwa produktu w sklepie. Wysyłana bez zmian, do 200 znaków.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_05acb0213eebe07848fe757b1ac28309'] = 'Opis w Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_6435d36b69be09134db21daed1850ed2'] = 'Puste = opis produktu w sklepie. Do 2000 znaków.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_368c74ef81f13a35af5c238626cfb19f'] = '-- Globalna wartość domyślna --';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_47063882b9bccca5b5748e594b22e344'] = 'Puste = generowane z krótkiego opisu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_ed27fe03621551ad0c978f7469d76742'] = 'E-mail lub adres URL osoby odpowiedzialnej. Ma pierwszeństwo przed kontaktem producenta lub dostawcy.';
@@ -1233,6 +1243,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0fec7c422218fb9653
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0c58949089fa2926a456ddba88438bef'] = 'Uwaga: włączona jest opcja „Eksportuj tylko produkty z ASIN”.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_5810dc287dd5c536ce66010f5f1f5858'] = 'Brakuje Twojego identyfikatora sprzedawcy. Kliknij „Połącz z Amazon” w Ustawienia > Połączenie, aby go uzupełnić.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_9eafae55aad260199ede38b734a1b834'] = 'Brak towaru: zażądano usunięcia oferty.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_82bcbe5706e834b1b66392ac9076f6f9'] = 'Synchronizacja ceny i ilości jest wyłączona dla tego produktu.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_22c5adca5a500c548db827fe4d18ba76'] = 'Brak produktu PrestaShop dla tego SKU';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_2bc1ec9e8c90c97544600d7609df19ac'] = 'Produkt PrestaShop jest wyłączony';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed257ec8beaf26fa'] = 'Wykluczony z synchronizacji z Amazon na karcie produktu';

@@ -459,7 +459,8 @@ class AmazonListingSettings
                 ? $sale * (1 - (float) $row['reduction'])
                 : $sale - (float) $row['reduction'];
         }
-        $sale = self::applyRounding(max(0, $sale));
+        // Rounded once, after VAT, by the caller (1.6.29).
+        $sale = round(max(0, $sale), 6);
         if ($sale <= 0 || $sale >= (float) $basePrice) {
             return false;
         }
@@ -601,10 +602,10 @@ class AmazonListingSettings
         if (Tools::substr($markup, -1) === '%') {
             $pct = (float) str_replace(',', '.', rtrim($markup, '%'));
 
-            return round($price * (1 + $pct / 100), 2);
+            return round($price * (1 + $pct / 100), 6);
         }
 
-        return round($price + (float) str_replace(',', '.', $markup), 2);
+        return round($price + (float) str_replace(',', '.', $markup), 6);
     }
 
     /* ─────────────────── Handling / shipping delay ─────────────────── */

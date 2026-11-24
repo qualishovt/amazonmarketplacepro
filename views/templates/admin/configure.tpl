@@ -659,6 +659,16 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="control-label col-lg-3">{l s='Existing Amazon listings' mod='amazonmarketplacepro'}</label>
+            <div class="col-lg-6">
+                <select name="mkpro_existing_listings" class="form-control">
+                    <option value="offer"{if $mkpro_existing_listings != 'full'} selected="selected"{/if}>{l s='Update price and stock only' mod='amazonmarketplacepro'}</option>
+                    <option value="full"{if $mkpro_existing_listings == 'full'} selected="selected"{/if}>{l s='Also send title, description, brand and images' mod='amazonmarketplacepro'}</option>
+                </select>
+                <p class="help-block">{l s='For products that are already on Amazon. With "price and stock only" the texts and pictures on Amazon stay as they are, and so do the shipping template and handling time you set in Seller Central. Products not yet on Amazon are always sent in full.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
+        <div class="form-group">
             <label class="control-label col-lg-3">{l s='Force all quantities to zero' mod='amazonmarketplacepro'}</label>
             <div class="col-lg-6">
                 <select name="mkpro_force_zero_qty" class="form-control">
