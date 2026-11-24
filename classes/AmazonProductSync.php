@@ -3450,22 +3450,25 @@ class AmazonProductSync
         $asin = isset($body['summaries'][0]['asin']) ? (string) $body['summaries'][0]['asin'] : '';
         $attrs = (isset($body['attributes']) && is_array($body['attributes'])) ? $body['attributes'] : [];
 
-        // Older listings (made in Seller Central or by flat file) often come
-        // back without attributes; the catalogue page of the same ASIN has
-        // them, and its browse classification.
-        $nodes = [];
-        if (!$attrs && $asin !== '') {
+        $out = $this->familyAttributes($attrs);
+        $nodes = $this->browseNodesOf($attrs);
+
+        // A listing matched to an existing ASIN, or made in Seller Central,
+        // often carries only its offer; the catalogue page of the same ASIN
+        // has the product's attributes and its browse classification.
+        if ((!$out || !$nodes) && $asin !== '') {
             $cat = $this->client->request(
                 'GET',
                 '/catalog/2022-04-01/items/' . rawurlencode($asin),
                 ['marketplaceIds' => $this->marketplaceId, 'includedData' => 'attributes,classifications,productTypes']
             );
             if ($cat !== false && $cat['status'] < 400 && is_array($cat['body'])) {
-                if (isset($cat['body']['attributes']) && is_array($cat['body']['attributes'])) {
-                    $attrs = $cat['body']['attributes'];
-                    // Catalogue values name the marketplace with "marketplace_id" too.
+                $catAttrs = (isset($cat['body']['attributes']) && is_array($cat['body']['attributes'])) ? $cat['body']['attributes'] : [];
+                $out += $this->familyAttributes($catAttrs);
+                if (!$nodes) {
+                    $nodes = $this->browseNodesOf($catAttrs);
                 }
-                if (!empty($cat['body']['classifications'])) {
+                if (!$nodes && !empty($cat['body']['classifications'])) {
                     foreach ($cat['body']['classifications'] as $group) {
                         if (isset($group['marketplaceId']) && $group['marketplaceId'] !== $this->marketplaceId) {
                             continue;
@@ -3480,17 +3483,25 @@ class AmazonProductSync
                 if ($type === '' && isset($cat['body']['productTypes'][0]['productType'])) {
                     $type = (string) $cat['body']['productTypes'][0]['productType'];
                 }
-            } else {
+            } elseif (!$out) {
                 $this->notices[] = sprintf(
                     AmazonI18n::get()->l('Amazon sent no attributes for this listing, and its catalogue page could not be read (%s).', 'amazonproductsync'),
                     $cat === false ? (string) $this->client->getLastError() : 'HTTP ' . $cat['status']
                 );
             }
         }
-        if (!$attrs) {
+        if (!$out) {
             $this->notices[] = AmazonI18n::get()->l('Amazon sent no attributes for this listing. Fill in the product type\'s attributes yourself, or try another SKU.', 'amazonproductsync');
         }
+        ksort($out);
 
+        return ['product_type' => $type, 'browse_nodes' => implode(';', array_unique($nodes)), 'attributes' => $out];
+    }
+
+    /** Browse node ids in a listing's or catalogue item's attributes. */
+    private function browseNodesOf(array $attrs)
+    {
+        $nodes = [];
         if (isset($attrs['recommended_browse_nodes']) && is_array($attrs['recommended_browse_nodes'])) {
             foreach ($attrs['recommended_browse_nodes'] as $n) {
                 if (isset($n['value']) && $n['value'] !== '') {
@@ -3498,6 +3509,17 @@ class AmazonProductSync
                 }
             }
         }
+
+        return $nodes;
+    }
+
+    /**
+     * The attributes that describe a product family (material, colour, ...),
+     * for this marketplace: what belongs to one item - title, texts,
+     * identifiers, pictures, offer, variation links - is left out.
+     */
+    private function familyAttributes(array $attrs)
+    {
         $perItem = ['item_name', 'product_description', 'bullet_point', 'brand', 'manufacturer',
             'externally_assigned_product_identifier', 'merchant_suggested_asin', 'part_number', 'model_number',
             'model_name', 'generic_keyword', 'recommended_browse_nodes', 'purchasable_offer', 'list_price',
@@ -3510,7 +3532,6 @@ class AmazonProductSync
             if (in_array($name, $perItem, true) || strpos($name, '_image_locator') !== false) {
                 continue;
             }
-            // Only the values for this marketplace.
             $kept = [];
             foreach ((array) $value as $entry) {
                 if (is_array($entry) && isset($entry['marketplace_id']) && $entry['marketplace_id'] !== $this->marketplaceId) {
@@ -3522,9 +3543,8 @@ class AmazonProductSync
                 $out[$name] = $kept;
             }
         }
-        ksort($out);
 
-        return ['product_type' => $type, 'browse_nodes' => implode(';', array_unique($nodes)), 'attributes' => $out];
+        return $out;
     }
 
     public function saveCategoryMapping($idCategory, $amazonProductType, $amazonBrowseNode, $marketplaceId, $attributesJson = '')

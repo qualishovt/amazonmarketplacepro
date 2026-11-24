@@ -129,10 +129,15 @@ class TemplateListingClient extends AmazonSpApiClient
     public function request($method, $path, $query = [], $body = null)
     {
         $m = $query['marketplaceIds'];
-        // An older listing: summaries only, no attributes.
+        // A listing matched to an existing ASIN: its offer, nothing else.
         if (rawurldecode(basename($path)) === '000017') {
             return ['status' => 200, 'body' => ['sku' => '000017',
-                'summaries' => [['productType' => 'SPORTING_GOODS', 'asin' => 'B0B6GR2GLD']]]];
+                'summaries' => [['productType' => 'SPORTING_GOODS', 'asin' => 'B0B6GR2GLD']],
+                // matched to an existing ASIN: the offer only
+                'attributes' => [
+                    'condition_type' => [['value' => 'new_new', 'marketplace_id' => $m]],
+                    'purchasable_offer' => [['marketplace_id' => $m, 'currency' => 'EUR']],
+                ]]];
         }
         if (strpos($path, '/catalog/2022-04-01/items/B0B6GR2GLD') === 0) {
             return ['status' => 200, 'body' => [
