@@ -3947,6 +3947,7 @@ class AmazonMarketplacePro extends Module
 
         $this->context->smarty->assign([
             'amzpro' => $overrides,
+            'amzpro_profiles' => $this->productTabProfiles(),
             'amzpro_propagatable' => AmazonProductOverride::$propagatable,
             'amzpro_combinations' => $combinations,
             'amzpro_condition_types' => ['new_new', 'used_like_new', 'used_very_good', 'used_good',
@@ -3970,6 +3971,20 @@ class AmazonMarketplacePro extends Module
      * Guarded by a marker input so programmatic product saves (imports, other
      * modules) never blank the overrides.
      */
+    /** Active profiles of the main marketplace, for the product tab's choice. */
+    private function productTabProfiles()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonProfile.php';
+        $out = [];
+        foreach (AmazonProfile::getAll((string) AmzproShop::get('AMZPRO_MARKETPLACE_ID')) as $pr) {
+            if (!empty($pr['active'])) {
+                $out[] = ['id' => (int) $pr['id_amazonmarketplacepro_profile'], 'name' => $pr['name'] . ' (' . $pr['product_type'] . ')'];
+            }
+        }
+
+        return $out;
+    }
+
     private function saveProductOverrides($idProduct)
     {
         if (!Tools::getIsset('amzpro_tab_present')) {
@@ -4006,6 +4021,7 @@ class AmazonMarketplacePro extends Module
             'brand' => trim((string) Tools::getValue('amzpro_brand', '')),
             'manufacturer' => trim((string) Tools::getValue('amzpro_manufacturer', '')),
             'amazon_title' => trim((string) Tools::getValue('amzpro_amazon_title', '')),
+            'id_profile' => (int) Tools::getValue('amzpro_id_profile', 0),
             'amazon_description' => trim((string) Tools::getValue('amzpro_amazon_description', '')),
             'condition_type' => trim((string) Tools::getValue('amzpro_condition_type', '')),
             'condition_note' => trim((string) Tools::getValue('amzpro_condition_note', '')),

@@ -301,6 +301,19 @@
     </div>
 
     <div class="form-group">
+        <label class="control-label col-lg-3">{l s='Amazon profile' mod='amazonmarketplacepro'}</label>
+        <div class="col-lg-4">
+            <select name="amzpro_id_profile" class="form-control">
+                <option value="0">{l s='-- The profile of its category --' mod='amazonmarketplacepro'}</option>
+                {foreach from=$amzpro_profiles item=prof}
+                    <option value="{$prof.id|intval}"{if isset($amzpro.id_profile) && $amzpro.id_profile == $prof.id} selected="selected"{/if}>{$prof.name|escape:'htmlall':'UTF-8'}</option>
+                {/foreach}
+            </select>
+            <p class="help-block">{l s='The product type and attributes this product is created with on Amazon. Needed for a product that is not on Amazon yet.' mod='amazonmarketplacepro'}</p>
+        </div>
+    </div>
+
+    <div class="form-group">
         <label class="control-label col-lg-3">{l s='Browse node' mod='amazonmarketplacepro'}</label>
         <div class="col-lg-4">
             <input type="text" name="amzpro_browse_node" value="{$amzpro.browse_node|escape:'htmlall':'UTF-8'}" class="form-control" />

@@ -47,12 +47,16 @@ $catLive = 999901;
 $catNew = 999902;
 $pidNoPrice = 999990;
 $pidTitle = 999991;
-$cleanup = function () use ($db, $p, $catLive, $catNew, $pidNoPrice, $pidTitle) {
+$pidProfile = 999992;
+require_once _PS_MODULE_DIR_ . 'amazonmarketplacepro/classes/AmazonProfile.php';
+AmazonProfile::ensureTables();
+$cleanup = function () use ($db, $p, $catLive, $catNew, $pidNoPrice, $pidTitle, $pidProfile) {
+    $db->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_profile` WHERE `name` = \'ZZE Endkappen\'');
     $db->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_category_map` WHERE `id_category` IN (' . $catLive . ', ' . $catNew . ')');
-    $db->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_product_setting` WHERE `id_product` IN (' . $pidNoPrice . ', ' . $pidTitle . ')');
+    $db->execute('DELETE FROM `' . $p . 'amazonmarketplacepro_product_setting` WHERE `id_product` IN (' . $pidNoPrice . ', ' . $pidTitle . ', ' . $pidProfile . ')');
 };
 
-withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catNew, $pidNoPrice, $pidTitle, $cleanup) {
+withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catNew, $pidNoPrice, $pidTitle, $pidProfile, $cleanup) {
     $cleanup();
     try {
         $db->execute('DELETE FROM `' . $t . '` WHERE `id_shop` = ' . $idShop);
@@ -72,6 +76,16 @@ withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catN
         $row('ZZE-NOID', 0, 'ps_only', '', 0, 0);
         $row('ZZE-ASIN', 0, 'ps_only', 'B0OTHER001', 0, 0);
         $row('ZZE-NEW', 0, 'ps_only', '', $catNew, $pidTitle);
+        // In the shop's home category with everything else: only its own
+        // profile makes it a new Amazon product.
+        $row('ZZE-PROF', 0, 'ps_only', '', 2, $pidProfile);
+        $row('ZZE-SIBLING', 0, 'ps_only', '', 2, 0);
+        $idProfile = AmazonProfile::save(['name' => 'ZZE Endkappen', 'product_type' => 'SPORTING_GOODS', 'marketplace_id' => $main,
+            'browse_nodes' => '2509246031', 'is_variation' => 0, 'variation_attributes' => '', 'attributes' => [],
+            'raw_attributes_json' => json_encode(['supplier_declared_dg_hz_regulation' => [['value' => 'not_applicable', 'marketplace_id' => $main]]]),
+            'latency' => '', 'shipping_template' => '', 'price_markup' => '', 'gtin_exemption' => 0, 'categories' => [], ]);
+        $db->insert('amazonmarketplacepro_product_setting', ['id_shop' => 0, 'id_product' => $pidProfile, 'sync' => 1,
+            'id_profile' => (int) $idProfile, 'date_add' => date('Y-m-d H:i:s'), 'date_upd' => date('Y-m-d H:i:s')]);
         $db->insert('amazonmarketplacepro_product_setting', ['id_shop' => 0, 'id_product' => $pidNoPrice, 'sync' => 1,
             'sync_price' => 0, 'sync_quantity' => 1, 'date_add' => date('Y-m-d H:i:s'), 'date_upd' => date('Y-m-d H:i:s')]);
         $db->insert('amazonmarketplacepro_product_setting', ['id_shop' => 0, 'id_product' => $pidTitle, 'sync' => 1,
@@ -87,7 +101,12 @@ withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catN
         $s = $sync->pushToAmazon(100);
         $c = $client->calls;
         check('a product with no ASIN and no product type is not sent', isset($c['ZZE-NOID']), false);
-        check('five sent, all accepted', [$s['candidates'], $s['pushed'], $s['failed']], [5, 5, 0]);
+        check('six sent, all accepted', [$s['candidates'], $s['pushed'], $s['failed']], [6, 6, 0]);
+        check('a sibling in the same category without a profile is not sent', isset($c['ZZE-SIBLING']), false);
+        $prof = $c['ZZE-PROF'][1];
+        check('product profile: full listing with the profile type', [$c['ZZE-PROF'][0], $prof['requirements'], $prof['productType']], ['PUT', 'LISTING', 'SPORTING_GOODS']);
+        check('product profile: browse node and raw attribute', [$prof['attributes']['recommended_browse_nodes'][0]['value'],
+            $prof['attributes']['supplier_declared_dg_hz_regulation'][0]['value']], ['2509246031', 'not_applicable']);
 
         $paths = function ($call) {
             return array_map(function ($x) {

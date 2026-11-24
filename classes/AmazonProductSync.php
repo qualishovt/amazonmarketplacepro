@@ -232,15 +232,16 @@ class AmazonProductSync
             ['id_category' => $category, 'marketplace_id' => $marketplace],
             $shopExpr
         ) . ')
-             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
-                 ON (pr.`id_amazonmarketplacepro_profile` = pc.`id_profile` AND pr.`active` = 1
-                     AND pr.`id_shop` IN (0, ' . $shopExpr . '))
              LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_product_setting` ov
                  ON (' . self::preferShopJoin(
             'amazonmarketplacepro_product_setting', 'ov',
             ['id_product' => '`' . bqSQL($p) . '`.`id_product`'],
             $shopExpr
-        ) . ')';
+        ) . ')
+             LEFT JOIN `' . _DB_PREFIX_ . 'amazonmarketplacepro_profile` pr
+                 ON (pr.`id_amazonmarketplacepro_profile` = IF(IFNULL(ov.`id_profile`, 0) > 0, ov.`id_profile`, pc.`id_profile`)
+                     AND pr.`active` = 1 AND pr.`marketplace_id` = ' . $marketplace . '
+                     AND pr.`id_shop` IN (0, ' . $shopExpr . '))';
     }
 
     /**

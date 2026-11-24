@@ -39,7 +39,7 @@ class AmazonProductOverride
     private static $tableEnsured = false;
 
     private static $intCols = ['sync', 'force_in_stock', 'force_out_of_stock', 'sync_price',
-        'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt', 'separate_combinations'];
+        'sync_quantity', 'is_fba', 'gift_option', 'gtin_exempt', 'separate_combinations', 'id_profile'];
 
     private static $strCols = ['gpsr_contact', 'asin', 'override_sku', 'transparency_code',
         'shipping_template', 'browse_node', 'brand', 'bullet_points', 'amazon_title', 'amazon_description', 'manufacturer',
@@ -105,6 +105,9 @@ class AmazonProductOverride
             // this product; empty = the shop's.
             'amazon_title' => 'VARCHAR(255) NOT NULL DEFAULT \'\'',
             'amazon_description' => 'TEXT NULL',
+            // 1.6.29: the profile this product is listed with, ahead of the
+            // one bound to its default category; 0 = the category's.
+            'id_profile' => 'INT(11) NOT NULL DEFAULT 0',
             'manufacturer' => 'VARCHAR(128) NOT NULL DEFAULT \'\'',
             'condition_type' => 'VARCHAR(64) NOT NULL DEFAULT \'\'',
             'condition_note' => 'TEXT NULL',
@@ -155,7 +158,7 @@ class AmazonProductOverride
             'sync_price' => 1, 'sync_quantity' => 1, 'is_fba' => 0, 'lead_time' => -1,
             'gift_option' => 0, 'transparency_code' => '', 'shipping_template' => '',
             'browse_node' => '', 'brand' => '', 'bullet_points' => '',
-            'amazon_title' => '', 'amazon_description' => '', 'manufacturer' => '',
+            'amazon_title' => '', 'amazon_description' => '', 'manufacturer' => '', 'id_profile' => 0,
             'condition_type' => '', 'condition_note' => '', 'price_markup' => '', 'gtin_exempt' => 0,
             'skip_combinations' => '', 'separate_combinations' => 0, 'combination_settings' => '',
             'stock_buffer' => -1,

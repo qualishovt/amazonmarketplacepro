@@ -993,6 +993,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_aa06410f1dc6650881b0222a
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_744ca9a72b82aebd6172d50a8b80c9d0'] = 'Collega l\'offerta a una scheda di catalogo Amazon nota, invece di lasciare che Amazon la abbini tramite il codice a barre.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_c61b5b7eda8c9939e3867d9f9f3181ae'] = 'Pubblicare senza EAN, con la mia esenzione GTIN';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_e95fc00a95e7587cb3786b7369bcc504'] = 'Per il tuo marchio: l\'EAN non viene inviato e il prodotto non viene mai abbinato tramite EAN a una pagina Amazon esistente, quindi ottiene una propria pagina con il tuo marchio. Amazon deve aver concesso al tuo marchio un\'esenzione GTIN. Per applicarlo a tutto il marchio, salva con «Tutti i prodotti dello stesso produttore» qui sotto.';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_99c30a6f2de028666da4cad480e4a779'] = 'Profilo Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_eeb49920600be8cc03e3a9ab60e05b80'] = '-- Il profilo della sua categoria --';
+$_MODULE['<{amazonmarketplacepro}prestashop>product_tab_915bc2c06c03c7412d8ec19e2df0f9ab'] = 'Il tipo di prodotto e gli attributi con cui questo prodotto viene creato su Amazon. Necessario per un prodotto non ancora su Amazon.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_7b026657b14c5b3546880e6fa663da24'] = 'Marca sostitutiva';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_533fe51d575df8e51b2fa88789f4e658'] = 'Vuoto = il produttore del prodotto.';
 $_MODULE['<{amazonmarketplacepro}prestashop>product_tab_23b5901adc5347337e02e80e7af33a91'] = 'Produttore su Amazon';
