@@ -127,6 +127,7 @@ withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catN
         check('new product: Amazon description', $new['attributes']['product_description'][0]['value'], 'Amazon-Beschreibung');
         check('new product: manufacturer', $new['attributes']['manufacturer'][0]['value'], 'Schwietz');
         check('new product: brand from the shop', $new['attributes']['brand'][0]['value'], 'LIMLESSPRO');
+        check('new product: EAN type in lower case, as the listing schema wants', $new['attributes']['externally_assigned_product_identifier'][0]['type'], 'ean');
 
         // "Also send title, description, brand and images": a live listing
         // with a product type gets the full data again, as before 1.6.29.

@@ -2923,7 +2923,8 @@ class AmazonProductSync
         $barcode = AmazonListingSettings::barcode(isset($r['ps_ean13']) ? $r['ps_ean13'] : '');
         if ($barcode !== null) {
             $attributes['externally_assigned_product_identifier'] = [[
-                'type' => $barcode['type'],
+                // The listing schema's values are lower case (ean, upc, gtin).
+                'type' => strtolower($barcode['type']),
                 'value' => $barcode['value'],
                 'marketplace_id' => $this->marketplaceId,
             ]];
