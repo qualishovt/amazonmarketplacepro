@@ -485,6 +485,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_bcaf9c3b028818c3904c470aec
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_90d01c45418d6f25ecc9d8654236fee3'] = 'Dodaj mapowanie';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_06d2e74551f243bd580ce4d550194fd0'] = 'Dodatkowe atrybuty (opcjonalny JSON), np. {\"target_gender\": \"male\", \"material\": \"feature:Material\", \"country_of_origin\": \"CN\"}';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f6a9f3b13024eb0018500d8e4116dd5a'] = 'Atrybuty właściwe dla typu produktu, wysyłane z każdą pełną ofertą w tej kategorii. Użyj „feature:Nazwa”, aby pobrać wartość cechy produktu z PrestaShop. Pola GPSR i zgodności również trafiają tutaj. Zaawansowane: wartość będąca tablicą JSON jest przekazywana do Amazon bez zmian.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_54e6fcf9f898d93b86ff0b2d29cf2832'] = 'SKU podobnej oferty w Amazon';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_2145fde719a9d1b18ab4d828635ab6a9'] = 'Przejmij typ produktu i atrybuty z tej oferty';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1f84c7ac19e94e671d1dcb2620913149'] = 'Wypełnia pola powyżej na podstawie jednego z Twoich produktów, który już jest w Amazon: typ produktu, węzeł kategorii i atrybuty, takie jak materiał czy kolor. Tytuł, teksty, EAN i zdjęcia pochodzą z każdego produktu. Sprawdź wartości, a potem zapisz.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ef8b577cfb43d2f529fb43c597aa79c3'] = 'Kategoria PS';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c63292b1eecb50db0bc45f67177c0dbb'] = 'Typ produktu Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_24404532f7b6027aecbe961cfc214edb'] = 'Browse node';
@@ -824,6 +827,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_33f94559b190e15d64608274b0
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4325f602663d49f261007b8c49427e73'] = 'Dodatkowe atrybuty muszą być poprawnym JSON-em: %1$s';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70a1a60ca53f8d20cd8ecdf7aaaeaa4e'] = 'Nie udało się zapisać mapowania.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_e51641731bbc0cadcb147f58f667ef20'] = 'Mapowanie zapisane.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1555f524a4f852718f61746729c24de5'] = 'Przejęto z oferty. Wybierz kategorię PrestaShop, sprawdź wartości, a potem kliknij Dodaj mapowanie.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1e42722763b4e26a797cb11e4aac011e'] = 'Importowanie zwrotów z Amazon...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d8d04fc628eca16face3e988197d11d7'] = 'Sprawdzone: %1$s · nowe zwroty: %2$s · nowe anulowania: %3$s · już zaimportowane: %4$s';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eebccd77e190390117694640c229dfd9'] = 'Nie znaleziono nowych zwrotów.';
@@ -1248,6 +1252,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_22c5adca5a500c548d
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_2bc1ec9e8c90c97544600d7609df19ac'] = 'Produkt PrestaShop jest wyłączony';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed257ec8beaf26fa'] = 'Wykluczony z synchronizacji z Amazon na karcie produktu';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Wariant nadrzędny wymaga mapowania kategorii (typu produktu Amazon). Najpierw zmapuj kategorię nr %d.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Wpisz SKU jednej ze swoich ofert w Amazon.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon nie ma oferty z SKU %s.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Dodatkowe atrybuty muszą być poprawnym obiektem JSON.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'To mapowanie dotyczy wszystkich sklepów. Wybierz „Wszystkie sklepy” u góry strony, aby je usunąć.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'To mapowanie należy do innego sklepu. Wybierz tamten sklep u góry strony, aby je usunąć.';

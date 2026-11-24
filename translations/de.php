@@ -485,6 +485,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_bcaf9c3b028818c3904c470aec
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_90d01c45418d6f25ecc9d8654236fee3'] = 'Zuordnung hinzufügen';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_06d2e74551f243bd580ce4d550194fd0'] = 'Zusätzliche Attribute (optionales JSON), z. B. {\"target_gender\": \"male\", \"material\": \"feature:Material\", \"country_of_origin\": \"CN\"}';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f6a9f3b13024eb0018500d8e4116dd5a'] = 'Produkttypspezifische Attribute, die mit jedem vollständigen Angebot dieser Kategorie gesendet werden. Verwenden Sie „feature:Name“, um den Wert eines PrestaShop-Produktmerkmals zu übernehmen. GPSR- und Konformitätsfelder gehören ebenfalls hierher. Fortgeschritten: Ein JSON-Array-Wert wird unverändert an Amazon übergeben.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_54e6fcf9f898d93b86ff0b2d29cf2832'] = 'SKU eines ähnlichen Amazon-Angebots';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_2145fde719a9d1b18ab4d828635ab6a9'] = 'Produkttyp und Attribute aus diesem Angebot übernehmen';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1f84c7ac19e94e671d1dcb2620913149'] = 'Füllt die Felder oben aus einem Ihrer Produkte, das schon bei Amazon ist: Produkttyp, Browse-Node und Attribute wie Material oder Farbe. Titel, Texte, EAN und Bilder kommen vom jeweiligen Produkt. Prüfen Sie die Werte und speichern Sie dann.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ef8b577cfb43d2f529fb43c597aa79c3'] = 'PS-Kategorie';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c63292b1eecb50db0bc45f67177c0dbb'] = 'Amazon-Produkttyp';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_24404532f7b6027aecbe961cfc214edb'] = 'Browse-Node';
@@ -824,6 +827,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_33f94559b190e15d64608274b0
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4325f602663d49f261007b8c49427e73'] = 'Zusätzliche Attribute müssen gültiges JSON sein: %1$s';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70a1a60ca53f8d20cd8ecdf7aaaeaa4e'] = 'Die Zuordnung konnte nicht gespeichert werden.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_e51641731bbc0cadcb147f58f667ef20'] = 'Zuordnung gespeichert.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1555f524a4f852718f61746729c24de5'] = 'Aus dem Angebot übernommen. Wählen Sie die PrestaShop-Kategorie, prüfen Sie die Werte und klicken Sie dann auf Zuordnung hinzufügen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1e42722763b4e26a797cb11e4aac011e'] = 'Retouren werden von Amazon importiert...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d8d04fc628eca16face3e988197d11d7'] = '%1$s geprüft · %2$s neue Retouren · %3$s neue Stornierungen · %4$s bereits importiert';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eebccd77e190390117694640c229dfd9'] = 'Keine neuen Retouren gefunden.';
@@ -1248,6 +1252,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_22c5adca5a500c548d
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_2bc1ec9e8c90c97544600d7609df19ac'] = 'PrestaShop-Produkt ist deaktiviert';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed257ec8beaf26fa'] = 'Am Produkt vom Amazon-Abgleich ausgeschlossen';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Übergeordnete Variation benötigt eine Kategoriezuordnung (Amazon-Produkttyp). Ordnen Sie zuerst Kategorie #%d zu.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Geben Sie die SKU eines Ihrer Amazon-Angebote ein.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon hat kein Angebot mit der SKU %s.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Zusätzliche Attribute müssen ein gültiges JSON-Objekt sein.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'Diese Zuordnung gilt für alle Shops. Wählen Sie „Alle Shops“ oben auf der Seite, um sie zu löschen.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'Diese Zuordnung gehört zu einem anderen Shop. Wählen Sie diesen Shop oben auf der Seite aus, um sie zu löschen.';

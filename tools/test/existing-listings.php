@@ -123,6 +123,41 @@ withStagedSnapshot(function () use ($db, $p, $t, $main, $idShop, $catLive, $catN
     }
 });
 
+// A live listing as the start of a category mapping.
+class TemplateListingClient extends AmazonSpApiClient
+{
+    public function request($method, $path, $query = [], $body = null)
+    {
+        if (rawurldecode(basename($path)) !== '000063') {
+            return ['status' => 404, 'body' => ['errors' => [['message' => 'NOT_FOUND']]]];
+        }
+        $m = $query['marketplaceIds'];
+
+        return ['status' => 200, 'body' => [
+            'sku' => '000063',
+            'summaries' => [['productType' => 'SPORTING_GOODS', 'asin' => 'B0BXSY3BWN']],
+            'attributes' => [
+                'item_name' => [['value' => 'Endkappe klein', 'marketplace_id' => $m]],
+                'brand' => [['value' => 'LIMLESSPRO', 'marketplace_id' => $m]],
+                'externally_assigned_product_identifier' => [['type' => 'ean', 'value' => '4251907700999', 'marketplace_id' => $m]],
+                'main_product_image_locator' => [['media_location' => 'https://m.media-amazon.com/x.jpg', 'marketplace_id' => $m]],
+                'purchasable_offer' => [['marketplace_id' => $m, 'currency' => 'EUR']],
+                'recommended_browse_nodes' => [['value' => '2301009031', 'marketplace_id' => $m]],
+                'material' => [['value' => 'Kunststoff', 'language_tag' => 'de_DE', 'marketplace_id' => $m],
+                    ['value' => 'Plastique', 'language_tag' => 'fr_FR', 'marketplace_id' => 'A13V1IB3VIYZZH']],
+                'color' => [['value' => 'Weiß', 'language_tag' => 'de_DE', 'marketplace_id' => $m]],
+                'country_of_origin' => [['value' => 'DE', 'marketplace_id' => $m]],
+            ],
+        ]];
+    }
+}
+$tsync = new AmazonProductSync(new TemplateListingClient('id', 'secret', 'token', 'https://sellingpartnerapi-eu.amazon.com'), $main, 'SELLERTEST');
+$tpl = $tsync->listingTemplate('000063');
+check('template: product type and browse node', [$tpl['product_type'], $tpl['browse_nodes']], ['SPORTING_GOODS', '2301009031']);
+check('template: only shared attributes, for this marketplace', array_keys($tpl['attributes']), ['color', 'country_of_origin', 'material']);
+check('template: one material value (this marketplace)', count($tpl['attributes']['material']), 1);
+check('template: unknown SKU is reported', [$tsync->listingTemplate('NOPE'), strpos((string) $tsync->getLastError(), 'NOPE') !== false], [false, true]);
+
 // Rounding: once, after VAT.
 // A product under a temporary 19 % rule for the shop's country, so the net
 // price really has to be rounded (16.764706 + 19 %).

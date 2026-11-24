@@ -485,6 +485,9 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_bcaf9c3b028818c3904c470aec
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_90d01c45418d6f25ecc9d8654236fee3'] = 'Aggiungi corrispondenza';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_06d2e74551f243bd580ce4d550194fd0'] = 'Attributi aggiuntivi (JSON facoltativo), ad es. {\"target_gender\": \"male\", \"material\": \"feature:Material\", \"country_of_origin\": \"CN\"}';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_f6a9f3b13024eb0018500d8e4116dd5a'] = 'Attributi specifici del tipo di prodotto, inviati con ogni inserzione completa di questa categoria. Usa «feature:Nome» per riprendere il valore di una caratteristica prodotto di PrestaShop. Anche i campi GPSR e di conformità vanno qui. Avanzato: un valore di tipo array JSON viene passato ad Amazon senza modifiche.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_54e6fcf9f898d93b86ff0b2d29cf2832'] = 'SKU di un\'offerta Amazon simile';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_2145fde719a9d1b18ab4d828635ab6a9'] = 'Prendi tipo di prodotto e attributi da questa offerta';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1f84c7ac19e94e671d1dcb2620913149'] = 'Compila i campi qui sopra da uno dei tuoi prodotti già su Amazon: tipo di prodotto, nodo di navigazione e attributi come materiale o colore. Titolo, testi, EAN e immagini arrivano da ciascun prodotto. Controlla i valori, poi salva.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_ef8b577cfb43d2f529fb43c597aa79c3'] = 'Categoria PS';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_c63292b1eecb50db0bc45f67177c0dbb'] = 'Tipo di prodotto Amazon';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_24404532f7b6027aecbe961cfc214edb'] = 'Browse node';
@@ -824,6 +827,7 @@ $_MODULE['<{amazonmarketplacepro}prestashop>configure_33f94559b190e15d64608274b0
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_4325f602663d49f261007b8c49427e73'] = 'Gli attributi aggiuntivi devono essere JSON valido: %1$s';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_70a1a60ca53f8d20cd8ecdf7aaaeaa4e'] = 'Non è stato possibile salvare la corrispondenza.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_e51641731bbc0cadcb147f58f667ef20'] = 'Corrispondenza salvata.';
+$_MODULE['<{amazonmarketplacepro}prestashop>configure_1555f524a4f852718f61746729c24de5'] = 'Preso dall\'offerta. Scegli la categoria PrestaShop, controlla i valori, poi fai clic su Aggiungi corrispondenza.';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_1e42722763b4e26a797cb11e4aac011e'] = 'Importazione dei resi da Amazon in corso...';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_d8d04fc628eca16face3e988197d11d7'] = 'Verificati %1$s · %2$s nuovi resi · %3$s nuovi annullamenti · %4$s già importati';
 $_MODULE['<{amazonmarketplacepro}prestashop>configure_eebccd77e190390117694640c229dfd9'] = 'Nessun nuovo reso trovato.';
@@ -1248,6 +1252,8 @@ $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_22c5adca5a500c548d
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_2bc1ec9e8c90c97544600d7609df19ac'] = 'Il prodotto PrestaShop è disattivato';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_215089f989c0f3a4ed257ec8beaf26fa'] = 'Escluso dalla sincronizzazione con Amazon sul prodotto';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_755376903343fa4d50608285ddbb5992'] = 'Il prodotto padre della variante ha bisogno di una corrispondenza di categoria (tipo di prodotto Amazon). Associa prima la categoria #%d.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_8feea1e473f48f1f14ff741068ff778b'] = 'Inserisci lo SKU di una delle tue offerte Amazon.';
+$_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_0bab205b7c4b789b45d86b86f28e952f'] = 'Amazon non ha alcuna offerta con lo SKU %s.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_3770eaf733fe5635d4bbb4e5cf515811'] = 'Gli attributi aggiuntivi devono essere un oggetto JSON valido.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_a43a7b14cdd93e7eac552ab9c0a6d220'] = 'Questa corrispondenza si applica a tutti i negozi. Seleziona «Tutti i negozi» in alto nella pagina per eliminarla.';
 $_MODULE['<{amazonmarketplacepro}prestashop>amazonproductsync_d36c1b5a52c68952315f1ec9515eef1c'] = 'Questa corrispondenza appartiene a un altro negozio. Seleziona quel negozio in alto nella pagina per eliminarla.';

@@ -3412,6 +3412,79 @@ class AmazonProductSync
     /**
      * Save a category mapping.
      */
+    /**
+     * Product type, browse nodes and attributes of a listing the seller
+     * already has on Amazon, to start a category mapping for similar
+     * products from (1.6.29). What belongs to that one item - its title,
+     * texts, identifiers, pictures, offer and variation links - is left out;
+     * the products sent with the mapping bring their own.
+     *
+     * @param string $sku
+     *
+     * @return array|false array('product_type', 'browse_nodes', 'attributes'); false with getLastError()
+     */
+    public function listingTemplate($sku)
+    {
+        $sku = trim((string) $sku);
+        if ($sku === '' || $this->sellerId === '') {
+            $this->lastError = AmazonI18n::get()->l('Enter the SKU of one of your Amazon listings.', 'amazonproductsync');
+
+            return false;
+        }
+        $resp = $this->client->request(
+            'GET',
+            '/listings/2021-08-01/items/' . rawurlencode($this->sellerId) . '/' . rawurlencode($sku),
+            ['marketplaceIds' => $this->marketplaceId, 'includedData' => 'summaries,attributes']
+        );
+        if ($resp === false || $resp['status'] >= 400 || !is_array($resp['body'])) {
+            $this->lastError = sprintf(
+                AmazonI18n::get()->l('Amazon has no listing with the SKU %s.', 'amazonproductsync'),
+                $sku
+            );
+
+            return false;
+        }
+        $body = $resp['body'];
+        $type = isset($body['summaries'][0]['productType']) ? (string) $body['summaries'][0]['productType'] : '';
+        $attrs = (isset($body['attributes']) && is_array($body['attributes'])) ? $body['attributes'] : [];
+
+        $nodes = [];
+        if (isset($attrs['recommended_browse_nodes']) && is_array($attrs['recommended_browse_nodes'])) {
+            foreach ($attrs['recommended_browse_nodes'] as $n) {
+                if (isset($n['value']) && $n['value'] !== '') {
+                    $nodes[] = (string) $n['value'];
+                }
+            }
+        }
+        $perItem = ['item_name', 'product_description', 'bullet_point', 'brand', 'manufacturer',
+            'externally_assigned_product_identifier', 'merchant_suggested_asin', 'part_number', 'model_number',
+            'model_name', 'generic_keyword', 'recommended_browse_nodes', 'purchasable_offer', 'list_price',
+            'fulfillment_availability', 'condition_type', 'condition_note', 'merchant_shipping_group',
+            'merchant_release_date', 'skip_offer', 'child_parent_sku_relationship', 'parentage_level',
+            'variation_theme', 'supplier_declared_has_product_identifier_exemption', 'gpsr_manufacturer_reference',
+            'gpsr_manufacturer_email_address', 'max_order_quantity', 'product_site_launch_date', ];
+        $out = [];
+        foreach ($attrs as $name => $value) {
+            if (in_array($name, $perItem, true) || strpos($name, '_image_locator') !== false) {
+                continue;
+            }
+            // Only the values for this marketplace.
+            $kept = [];
+            foreach ((array) $value as $entry) {
+                if (is_array($entry) && isset($entry['marketplace_id']) && $entry['marketplace_id'] !== $this->marketplaceId) {
+                    continue;
+                }
+                $kept[] = $entry;
+            }
+            if ($kept) {
+                $out[$name] = $kept;
+            }
+        }
+        ksort($out);
+
+        return ['product_type' => $type, 'browse_nodes' => implode(';', $nodes), 'attributes' => $out];
+    }
+
     public function saveCategoryMapping($idCategory, $amazonProductType, $amazonBrowseNode, $marketplaceId, $attributesJson = '')
     {
         $attributesJson = trim((string) $attributesJson);

@@ -606,6 +606,7 @@ class AmazonMarketplacePro extends Module
             'ajaxImportReturns' => 'runImportReturns',
             'ajaxProcessReturns' => 'runProcessReturns',
             'ajaxSaveCategoryMap' => 'runSaveCategoryMap',
+            'ajaxListingTemplate' => 'runListingTemplate',
             'ajaxDeleteCategoryMap' => 'runDeleteCategoryMap',
             'ajaxSyncFbaInventory' => 'runSyncFbaInventory',
             'ajaxCreateMcfOrder' => 'runCreateMcfOrder',
@@ -1041,6 +1042,7 @@ class AmazonMarketplacePro extends Module
             'ajax_import_returns_url' => $baseUrl . '&ajaxImportReturns=1',
             'ajax_process_returns_url' => $baseUrl . '&ajaxProcessReturns=1',
             'ajax_save_category_map_url' => $baseUrl . '&ajaxSaveCategoryMap=1',
+            'ajax_listing_template_url' => $baseUrl . '&ajaxListingTemplate=1',
             'ajax_delete_category_map_url' => $baseUrl . '&ajaxDeleteCategoryMap=1',
             'ajax_sync_fba_inventory_url' => $baseUrl . '&ajaxSyncFbaInventory=1',
             'ajax_create_mcf_order_url' => $baseUrl . '&ajaxCreateMcfOrder=1',
@@ -3427,6 +3429,23 @@ class AmazonMarketplacePro extends Module
             'success' => true,
             'mappings' => $sync->getCategoryMappings(),
         ];
+    }
+
+    /**
+     * A live listing's product type, browse nodes and attributes, to fill the
+     * category mapping form from (1.6.29). Reads only.
+     */
+    protected function runListingTemplate()
+    {
+        require_once dirname(__FILE__) . '/classes/AmazonProductSync.php';
+
+        $sync = new AmazonProductSync($this->buildAmazonClient(), $this->getMarketplaceId(), AmzproShop::get('AMZPRO_SELLER_ID'));
+        $template = $sync->listingTemplate(Tools::getValue('sku', ''));
+        if ($template === false) {
+            return ['success' => false, 'error' => $sync->getLastError()];
+        }
+
+        return ['success' => true, 'template' => $template];
     }
 
     protected function runDeleteCategoryMap()

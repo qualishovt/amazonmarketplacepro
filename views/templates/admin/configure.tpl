@@ -1920,6 +1920,15 @@
                 </p>
             </div>
         </div>
+        <div class="row" style="margin-bottom:15px;">
+            <div class="col-lg-3">
+                <input type="text" id="catmap-from-sku" class="form-control" placeholder="{l s='SKU of a similar Amazon listing' mod='amazonmarketplacepro'}" />
+            </div>
+            <div class="col-lg-5">
+                <button type="button" id="catmap-from-listing" class="btn btn-default"><i class="icon-download"></i> {l s='Take product type and attributes from this listing' mod='amazonmarketplacepro'}</button>
+                <p class="help-block">{l s='Fills the fields above from one of your products already on Amazon: product type, browse node and attributes such as material or colour. Title, texts, EAN and pictures come from each product. Check the values, then save.' mod='amazonmarketplacepro'}</p>
+            </div>
+        </div>
         <div id="catmap-result" style="display:none;"></div>
 
         <table class="table" id="catmap-table">
@@ -3134,6 +3143,7 @@
         attrsJson: '{l s='Extra attributes must be valid JSON: %1$s' mod='amazonmarketplacepro' js=1}',
         mapSaveFailed: '{l s='Failed to save mapping.' mod='amazonmarketplacepro' js=1}',
         mapSaved: '{l s='Mapping saved.' mod='amazonmarketplacepro' js=1}',
+        templateLoaded: '{l s='Taken from the listing. Choose the PrestaShop category, check the values, then click Add Mapping.' mod='amazonmarketplacepro' js=1}',
         noCatMaps: '{l s='No category mappings configured yet.' mod='amazonmarketplacepro' js=1}',
         importingReturns: '{l s='Importing returns from Amazon...' mod='amazonmarketplacepro' js=1}',
         returnsSummary: '{l s='Checked %1$s · %2$s new returns · %3$s new cancellations · %4$s already imported' mod='amazonmarketplacepro' js=1}',
@@ -3881,6 +3891,30 @@
                 result.textContent = T.mapSaved;
                 if (data.mappings) renderCatmapTable(data.mappings);
             }, params);
+        });
+
+        // Fill the form from a live listing (1.6.29)
+        var btnFrom = document.getElementById('catmap-from-listing');
+        if (btnFrom) btnFrom.addEventListener('click', function () {
+            var sku = document.getElementById('catmap-from-sku').value.trim();
+            if (!sku) return;
+            btnFrom.disabled = true;
+            ajaxPost('{$ajax_listing_template_url|escape:'javascript':'UTF-8'}', function (data) {
+                btnFrom.disabled = false;
+                result.style.display = 'block';
+                if (!data || !data.success) {
+                    result.className = 'alert alert-danger';
+                    result.textContent = (data && data.error) ? data.error : T.mapSaveFailed;
+                    return;
+                }
+                var t = data.template;
+                document.getElementById('catmap-product-type').value = t.product_type || '';
+                document.getElementById('catmap-browse-node').value = t.browse_nodes || '';
+                var attrsEl = document.getElementById('catmap-attributes');
+                if (attrsEl) { attrsEl.value = JSON.stringify(t.attributes || {}, null, 1); attrsEl.rows = 12; }
+                result.className = 'alert alert-info';
+                result.textContent = T.templateLoaded;
+            }, 'sku=' + encodeURIComponent(sku));
         });
 
         // Delete mapping
