@@ -128,6 +128,25 @@ class TemplateListingClient extends AmazonSpApiClient
 {
     public function request($method, $path, $query = [], $body = null)
     {
+        $m = $query['marketplaceIds'];
+        // An older listing: summaries only, no attributes.
+        if (rawurldecode(basename($path)) === '000017') {
+            return ['status' => 200, 'body' => ['sku' => '000017',
+                'summaries' => [['productType' => 'SPORTING_GOODS', 'asin' => 'B0B6GR2GLD']]]];
+        }
+        if (strpos($path, '/catalog/2022-04-01/items/B0B6GR2GLD') === 0) {
+            return ['status' => 200, 'body' => [
+                'asin' => 'B0B6GR2GLD',
+                'attributes' => [
+                    'item_name' => [['value' => 'LIMLESSPRO Endkappe', 'marketplace_id' => $m]],
+                    'material' => [['value' => 'Kunststoff', 'language_tag' => 'de_DE', 'marketplace_id' => $m]],
+                    'color' => [['value' => 'Weiß', 'language_tag' => 'de_DE', 'marketplace_id' => $m]],
+                ],
+                'classifications' => [['marketplaceId' => $m, 'classifications' => [
+                    ['displayName' => 'Abdeckungen', 'classificationId' => '2301009031'],
+                ]]],
+            ]];
+        }
         if (rawurldecode(basename($path)) !== '000063') {
             return ['status' => 404, 'body' => ['errors' => [['message' => 'NOT_FOUND']]]];
         }
@@ -156,6 +175,9 @@ $tpl = $tsync->listingTemplate('000063');
 check('template: product type and browse node', [$tpl['product_type'], $tpl['browse_nodes']], ['SPORTING_GOODS', '2301009031']);
 check('template: only shared attributes, for this marketplace', array_keys($tpl['attributes']), ['color', 'country_of_origin', 'material']);
 check('template: one material value (this marketplace)', count($tpl['attributes']['material']), 1);
+$tpl = $tsync->listingTemplate('000017');
+check('older listing: catalogue attributes and browse node', [$tpl['product_type'], $tpl['browse_nodes'], array_keys($tpl['attributes'])],
+    ['SPORTING_GOODS', '2301009031', ['color', 'material']]);
 check('template: unknown SKU is reported', [$tsync->listingTemplate('NOPE'), strpos((string) $tsync->getLastError(), 'NOPE') !== false], [false, true]);
 
 // Rounding: once, after VAT.
